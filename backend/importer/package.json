@@ -1,0 +1,49 @@
+{
+  "name": "@sutrasparsh/importer",
+  "version": "1.0.0",
+  "description": "SutraSparsh Content Import Engine",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "packageManager": "npm@11.13.0",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest",
+    "lint": "eslint src",
+    "format": "prettier --write .",
+    "clean": "powershell -Command \"if (Test-Path dist) { Remove-Item dist -Recurse -Force }\""
+  },
+  "keywords": [
+    "sutrasparsh",
+    "firebase",
+    "firestore",
+    "importer",
+    "typescript"
+  ],
+  "author": "VGupta",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yds-design/SutraSparsh.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yds-design/SutraSparsh/issues"
+  },
+  "homepage": "https://github.com/yds-design/SutraSparsh#readme",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.1.1",
+    "eslint": "^10.7.0",
+    "globals": "^17.7.0",
+    "prettier": "^3.9.5",
+    "tsx": "^4.23.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.63.0",
+    "vitest": "^4.1.10"
+  }
+}
