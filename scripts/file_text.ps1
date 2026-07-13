@@ -1,0 +1,1 @@
+Get-ChildItem -Path "C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh" -Recurse |Where-Object { $_.FullName -notlike "*\node_modules*" } | Select-Object FullName | Out-File -FilePath "files_list.txt"
