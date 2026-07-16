@@ -2,6 +2,7 @@
 
 # dependencies
 node_modules/
+backend/importer/node_modules/
 
 # Expo
 .expo/
@@ -31,7 +32,8 @@ yarn-error.*
 *.pem
 
 # local env files
-.env*.local
+.env
+.env.local
 
 # typescript
 *.tsbuildinfo
@@ -39,3 +41,20 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Importer secrets
+backend/importer/.env
+backend/importer/config/firebase-service-account.json
+
+# =====================================
+# Logs
+# =====================================
+
+backend/importer/logs/
+*.log
+
+# =====================================
+# Build
+# =====================================
+
+backend/importer/dist/

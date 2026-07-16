@@ -26,6 +26,7 @@
     "importer:lint": "npm --prefix backend/importer run lint",
     "importer:format": "npm --prefix backend/importer run format",
     "importer:clean": "npm --prefix backend/importer run clean",
+    "importer:doctor": "npm --prefix backend/importer run doctor",
 
     "// --------------------------------------------------": "",
     "// Firebase": "",

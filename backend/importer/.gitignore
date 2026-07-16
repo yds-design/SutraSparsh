@@ -10,6 +10,7 @@ logs/
 
 # Environment
 .env
+.env.local
 
 # Firebase
 config/firebase-service-account.json
