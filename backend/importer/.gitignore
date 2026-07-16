@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+
+# Firebase
+config/firebase-service-account.json
+
+# Environment files
+backend/importer/.env
+backend/importer/.env.local
+
+# OS
+.DS_Store
+Thumbs.db

@@ -13,7 +13,7 @@
     "dev": "tsx src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "vitest",
+    "test": "vitest run",
     "lint": "eslint src",
     "format": "prettier --write .",
     "clean": "powershell -Command \"if (Test-Path dist) { Remove-Item dist -Recurse -Force }\""
@@ -45,5 +45,10 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.63.0",
     "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "firebase-admin": "^14.1.0",
+    "winston": "^3.19.0"
   }
 }

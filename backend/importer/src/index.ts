@@ -1,4 +1,7 @@
-console.log("================================");
-console.log(" SutraSparsh Import Engine");
-console.log(" Version 1.0.0");
-console.log("================================");
+import { logger } from "./config/logger.js";
+
+logger.info("Importer started.");
+
+logger.warn("Logger is working.");
+
+logger.error("This is only a test.");

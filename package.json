@@ -1,7 +1,41 @@
 {
   "name": "sutrasparsh",
   "version": "1.0.0",
+  "description": "SutraSparsh - Spiritual Wisdom Platform",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@11.13.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "main": "index.ts",
+  "scripts": {
+    "// ------------------------------------------------": "",
+    "// React Native App": "",
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+
+    "// -------------------------------------------------": "",
+    "// Import Engine": "",
+    "importer": "npm --prefix backend/importer run dev",
+    "importer:build": "npm --prefix backend/importer run build",
+    "importer:start": "npm --prefix backend/importer run start",
+    "importer:test": "npm --prefix backend/importer run test",
+    "importer:lint": "npm --prefix backend/importer run lint",
+    "importer:format": "npm --prefix backend/importer run format",
+    "importer:clean": "npm --prefix backend/importer run clean",
+
+    "// --------------------------------------------------": "",
+    "// Firebase": "",
+    "firebase:emulators": "firebase emulators:start",
+
+    "// ---------------------------------------------------": "",
+    "// Project": "",
+    "clean": "powershell -Command \"if (Test-Path node_modules) { Remove-Item node_modules -Recurse -Force }; if (Test-Path package-lock.json) { Remove-Item package-lock.json -Force }\"",
+    "format": "prettier --write ."
+  },
   "dependencies": {
     "@react-navigation/bottom-tabs": "^7.18.6",
     "@react-navigation/native": "^7.3.6",
@@ -26,15 +60,8 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
-    "eslint": "^10.6.0",
-    "prettier": "^3.9.4",
+    "eslint": "^9.30.1",
+    "prettier": "^3.6.2",
     "typescript": "~6.0.3"
-  },
-  "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
-  },
-  "private": true
+  }
 }
