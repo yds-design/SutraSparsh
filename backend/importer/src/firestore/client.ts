@@ -1,3 +1,16 @@
-import { firestore } from "../config/firebase.js";
+import { Firestore, getFirestore } from "firebase-admin/firestore";
+import { initializeFirebase } from "../config/firebase.js";
 
-export const db = firestore;
+let db: Firestore;
+
+export function firestore(): Firestore {
+  if (db) {
+    return db;
+  }
+
+  initializeFirebase();
+
+  db = getFirestore();
+
+  return db;
+}

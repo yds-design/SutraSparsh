@@ -1,34 +1,30 @@
-import admin from "firebase-admin";
-import fs from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 
-import { env } from "./env.js";
-import { logger } from "./logger.js";
+import { initializeApp, cert, getApps } from "firebase-admin/app";
 
-const serviceAccountPath = path.resolve(
-  process.cwd(),
-  env.firebaseServiceAccountPath
-);
+export function initializeFirebase() {
+  if (getApps().length > 0) {
+    return getApps()[0];
+  }
 
-if (!fs.existsSync(serviceAccountPath)) {
-  throw new Error(
-    `Firebase service account not found: ${serviceAccountPath}`
+  const serviceAccountPath = path.resolve(
+    process.cwd(),
+    "config",
+    "firebase-service-account.json"
   );
-}
 
-const serviceAccount = JSON.parse(
-  fs.readFileSync(serviceAccountPath, "utf8")
-);
+  if (!existsSync(serviceAccountPath)) {
+    throw new Error(
+      `Firebase service account not found:\n${serviceAccountPath}`
+    );
+  }
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    projectId: env.firebaseProjectId,
+  const serviceAccount = JSON.parse(
+    readFileSync(serviceAccountPath, "utf8")
+  );
+
+  return initializeApp({
+    credential: cert(serviceAccount),
   });
-
-  logger.info("Firebase Admin initialized.");
 }
-
-export const firestore = admin.firestore();
-export const auth = admin.auth();
-export const storage = admin.storage();
