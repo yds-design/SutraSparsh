@@ -1,39 +1,41 @@
-import { getApps } from "firebase-admin/app";
-import { firestore } from "./firestore/client.js";
-import { env } from "./config/env.js";
+import { FirestoreService } from "./firestore/service.js";
 
 async function main(): Promise<void> {
   console.log("");
   console.log("================================");
   console.log(" SutraSparsh Import Engine");
-  console.log(" Version 1.0.0");
   console.log("================================");
   console.log("");
 
   try {
-    const db = firestore();
+    const firestore = new FirestoreService();
 
-    const app = getApps()[0];
-
-    console.log("✅ Firebase Admin SDK initialized");
-    console.log(`📦 Firebase Project : ${env.firebaseProjectId}`);
-    console.log("✅ Firestore client connected");
+    console.log("✅ Firebase initialized");
     console.log("");
 
-    console.log("Sprint 2.2 - Phase B completed successfully.");
-    console.log("");
+    console.log("Top-level collections:");
+    console.log("----------------------");
 
-    // Prevent unused variable warning (optional)
-    void db;
+    const collections = await firestore.listCollections();
+
+    if (collections.length === 0) {
+      console.log("(No collections found)");
+    } else {
+      collections.forEach((collection) => {
+        console.log(`• ${collection}`);
+      });
+    }
+
+    console.log("");
+    console.log("Sprint 2.2 – Phase C completed.");
 
   } catch (error) {
     console.error("");
-    console.error("❌ Failed to initialize Firebase");
+    console.error("❌ Firestore read failed");
     console.error("");
 
     if (error instanceof Error) {
       console.error(error.message);
-      console.error(error.stack);
     } else {
       console.error(error);
     }
