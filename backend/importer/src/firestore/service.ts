@@ -1,26 +1,18 @@
+import { FieldValue } from "firebase-admin/firestore";
 import { firestore } from "./client.js";
 
 export class FirestoreService {
   private readonly db = firestore();
 
-  /**
-   * Return Firestore instance
-   */
   public getDb() {
     return this.db;
   }
 
-  /**
-   * List all top-level collections
-   */
   public async listCollections(): Promise<string[]> {
     const collections = await this.db.listCollections();
     return collections.map((collection) => collection.id);
   }
 
-  /**
-   * Read a document
-   */
   public async getDocument(
     collection: string,
     documentId: string
@@ -30,10 +22,26 @@ export class FirestoreService {
       .doc(documentId)
       .get();
 
-    if (!snapshot.exists) {
-      return null;
-    }
+    return snapshot.exists ? (snapshot.data() ?? null) : null;
+  }
 
-    return snapshot.data() ?? null;
+  /**
+   * Verify Firestore write access
+   */
+  public async writeHealthCheck(): Promise<void> {
+    await this.db
+      .collection("system")
+      .doc("importer")
+      .set(
+        {
+          status: "healthy",
+          importerVersion: "1.0.0",
+          nodeVersion: process.version,
+          environment: process.env.NODE_ENV ?? "development",
+          startedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
   }
 }
