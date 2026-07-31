@@ -1,7 +1,9 @@
+import crypto from "node:crypto";
 import process from "node:process";
 
 import { validateEnvironment } from "./config/validator.js";
 import { FirestoreService } from "./firestore/service.js";
+import { Pipeline } from "./shared/index.js";
 
 export async function bootstrap(): Promise<void> {
   console.log("");
@@ -11,27 +13,29 @@ export async function bootstrap(): Promise<void> {
   console.log("================================");
   console.log("");
 
-  //
+  // ----------------------------------------------------------
   // Environment Validation
-  //
+  // ----------------------------------------------------------
+
   const validation = validateEnvironment();
 
   if (!validation.valid) {
     console.error("❌ Environment validation failed.");
     console.error("");
 
-    validation.errors.forEach((error) => {
+    validation.errors.forEach((error: string) => {
       console.error(`• ${error}`);
     });
 
+    console.error("");
     process.exit(1);
   }
 
   if (validation.warnings.length > 0) {
     console.log("Warnings");
-    console.log("--------");
+    console.log("--------------------------------");
 
-    validation.warnings.forEach((warning) => {
+    validation.warnings.forEach((warning: string) => {
       console.log(`⚠ ${warning}`);
     });
 
@@ -41,17 +45,19 @@ export async function bootstrap(): Promise<void> {
   console.log("✅ Environment validation passed.");
   console.log("");
 
-  //
-  // Firestore Initialization
-  //
+  // ----------------------------------------------------------
+  // Firebase / Firestore
+  // ----------------------------------------------------------
+
   const firestore = new FirestoreService();
 
   console.log("✅ Firebase initialized.");
   console.log("");
 
-  //
-  // Read Collections
-  //
+  // ----------------------------------------------------------
+  // List Collections
+  // ----------------------------------------------------------
+
   console.log("Top-level collections");
   console.log("---------------------");
 
@@ -60,16 +66,17 @@ export async function bootstrap(): Promise<void> {
   if (collections.length === 0) {
     console.log("(No collections found)");
   } else {
-    collections.forEach((collection) => {
+    collections.forEach((collection: string) => {
       console.log(`• ${collection}`);
     });
   }
 
   console.log("");
 
-  //
-  // Firestore Write Verification
-  //
+  // ----------------------------------------------------------
+  // Health Check Write
+  // ----------------------------------------------------------
+
   console.log("Writing health document...");
 
   await firestore.writeHealthCheck();
@@ -77,13 +84,26 @@ export async function bootstrap(): Promise<void> {
   console.log("✅ Health document written successfully.");
   console.log("");
 
-  //
+  // ----------------------------------------------------------
+  // Import Pipeline Initialization
+  // ----------------------------------------------------------
+
+  const pipeline = new Pipeline({
+    jobId: crypto.randomUUID(),
+    source: "manual",
+    documents: [],
+  });
+
+  pipeline.summary();
+
+  // ----------------------------------------------------------
   // Ready
-  //
+  // ----------------------------------------------------------
+
   console.log("================================");
   console.log(" Importer Ready");
   console.log("================================");
   console.log("");
 
-  console.log("Sprint 2.2 – Phase F completed.");
+  console.log("Sprint 2.3 – Phase 3.1 completed.");
 }
