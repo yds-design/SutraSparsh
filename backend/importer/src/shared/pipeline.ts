@@ -12,4 +12,12 @@ export class Pipeline {
     console.log(`Documents  : ${this.context.documents.length}`);
     console.log("");
   }
+
+  public setDocuments(documents: PipelineContext["documents"]): void {
+    this.context.documents = documents;
+  }
+
+  public getContext(): PipelineContext {
+    return this.context;
+  }
 }

@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import process from "node:process";
 
+import { CollectorFactory } from "./collector/index.js";
 import { validateEnvironment } from "./config/validator.js";
 import { FirestoreService } from "./firestore/service.js";
 import { Pipeline } from "./shared/index.js";
@@ -55,7 +56,7 @@ export async function bootstrap(): Promise<void> {
   console.log("");
 
   // ----------------------------------------------------------
-  // List Collections
+  // List Firestore Collections
   // ----------------------------------------------------------
 
   console.log("Top-level collections");
@@ -74,7 +75,7 @@ export async function bootstrap(): Promise<void> {
   console.log("");
 
   // ----------------------------------------------------------
-  // Health Check Write
+  // Firestore Write Verification
   // ----------------------------------------------------------
 
   console.log("Writing health document...");
@@ -85,7 +86,7 @@ export async function bootstrap(): Promise<void> {
   console.log("");
 
   // ----------------------------------------------------------
-  // Import Pipeline Initialization
+  // Import Pipeline
   // ----------------------------------------------------------
 
   const pipeline = new Pipeline({
@@ -93,6 +94,12 @@ export async function bootstrap(): Promise<void> {
     source: "manual",
     documents: [],
   });
+
+  const collector = CollectorFactory.create("manual");
+
+  const documents = await collector.collect();
+
+  pipeline.setDocuments(documents);
 
   pipeline.summary();
 
@@ -105,5 +112,5 @@ export async function bootstrap(): Promise<void> {
   console.log("================================");
   console.log("");
 
-  console.log("Sprint 2.3 – Phase 3.1 completed.");
+  console.log("Sprint 2.3 – Phase 3.2 completed.");
 }
