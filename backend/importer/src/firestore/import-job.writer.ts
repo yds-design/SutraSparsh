@@ -12,7 +12,7 @@ export interface ImportJobAudit {
   status: ImportJobStatus;
 
   startedAt: Date;
-  completedAt?: Date;
+  completedAt?: Date | null;
 
   collected: number;
   normalized: number;
@@ -113,25 +113,52 @@ export class ImportJobWriter {
     );
   }
 
+  async resume(
+    jobId: string,
+    source: string,
+    startedAt: Date,
+  ): Promise<void> {
+    const ref = this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .doc(jobId);
+
+    await ref.set(
+      {
+        jobId,
+        source,
+        status: "running",
+        startedAt,
+        completedAt: null,
+        errors: [],
+      },
+      { merge: true },
+    );
+  }
+
   async markFailed(
-  jobId: string,
-  error: unknown,
-): Promise<void> {
-  const ref = this.db
-    .collection("system")
-    .doc("importJobs")
-    .collection("runs")
-    .doc(jobId);
+    jobId: string,
+    error: unknown,
+  ): Promise<void> {
+    const ref = this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .doc(jobId);
 
-  const message =
-    error instanceof Error
-      ? error.message
-      : String(error);
+    const message =
+      error instanceof Error
+        ? error.message
+        : String(error);
 
-  await ref.update({
-    status: "failed",
-    error: message,
-    completedAt: new Date(),
-  });
-}
+    await ref.set(
+      {
+        status: "failed",
+        errors: [message],
+        completedAt: new Date(),
+      },
+      { merge: true },
+    );
+  }
 }
