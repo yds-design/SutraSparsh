@@ -112,4 +112,26 @@ export class ImportJobWriter {
       { merge: true },
     );
   }
+
+  async markFailed(
+  jobId: string,
+  error: unknown,
+): Promise<void> {
+  const ref = this.db
+    .collection("system")
+    .doc("importJobs")
+    .collection("runs")
+    .doc(jobId);
+
+  const message =
+    error instanceof Error
+      ? error.message
+      : String(error);
+
+  await ref.update({
+    status: "failed",
+    error: message,
+    completedAt: new Date(),
+  });
+}
 }
