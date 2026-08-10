@@ -1,7 +1,14 @@
+import crypto from "node:crypto";
 import process from "node:process";
 
+import { CollectorFactory } from "./collector/index.js";
 import { validateEnvironment } from "./config/validator.js";
 import { FirestoreService } from "./firestore/service.js";
+import { ImportJobReader } from "./firestore/import-job.reader.js";
+import { ContentNormalizer } from "./normalizer/index.js";
+import { Pipeline } from "./shared/index.js";
+import { ContentValidator } from "./validator/index.js";
+import { ContentWriter } from "./firestore/content.writer.js";
 import { ImporterPipeline } from "./pipeline/index.js";
 
 export async function bootstrap(): Promise<void> {
@@ -73,7 +80,7 @@ export async function bootstrap(): Promise<void> {
   console.log("");
 
   // ----------------------------------------------------------
-  // Firestore Health Check
+  // Firestore Write Verification
   // ----------------------------------------------------------
 
   console.log("Writing health document...");
@@ -87,24 +94,37 @@ export async function bootstrap(): Promise<void> {
   // Import Pipeline
   // ----------------------------------------------------------
 
-  const pipeline = new ImporterPipeline({
+  const pipeline = new Pipeline({
+    jobId: crypto.randomUUID(),
+    source: "json",
+    documents: [],
+  });
+
+  console.log("## Import Pipeline");
+  console.log("----------------------");
+  console.log("");
+
+  const importerPipeline = new ImporterPipeline({
     source: "json",
   });
 
-  const result = await pipeline.run();
+  const result = await importerPipeline.run();
 
   // ----------------------------------------------------------
-  // Final Import Summary
+  // Keep Pipeline Summary
   // ----------------------------------------------------------
 
-  console.log("");
-  console.log("================================");
-  console.log(" Importer Ready");
-  console.log("================================");
+  pipeline.setDocuments([]);
+
   console.log("");
 
-  console.log("Import Summary");
+  // ----------------------------------------------------------
+  // Import Summary
+  // ----------------------------------------------------------
+
+  console.log("## Import Summary");
   console.log("----------------------");
+
   console.log(`Job ID     : ${result.jobId}`);
   console.log(`Source     : ${result.source}`);
   console.log(`Collected  : ${result.collected}`);
@@ -113,7 +133,42 @@ export async function bootstrap(): Promise<void> {
   console.log(`Created    : ${result.created}`);
   console.log(`Updated    : ${result.updated}`);
   console.log(`Verified   : ${result.verified}`);
+
+  // ----------------------------------------------------------
+  // Import Run History
+  // ----------------------------------------------------------
+
+  console.log("");
+  console.log("## Import Run History");
+  console.log("---------------------");
+
+  const reader = new ImportJobReader();
+
+  const recentRuns = await reader.list(10);
+
+  if (recentRuns.length === 0) {
+    console.log("No import runs found.");
+  } else {
+    recentRuns.forEach((run, index) => {
+      console.log("");
+      console.log(`Run ${index + 1}`);
+      console.log(`Job ID     : ${run.jobId}`);
+      console.log(`Source     : ${run.source}`);
+      console.log(`Status     : ${run.status}`);
+      console.log(`Written    : ${run.written}`);
+      console.log(`Verified   : ${run.verified}`);
+    });
+  }
+
+  // ----------------------------------------------------------
+  // Ready
+  // ----------------------------------------------------------
+
+  console.log("");
+  console.log("================================");
+  console.log(" Importer Ready");
+  console.log("================================");
   console.log("");
 
- console.log("Sprint 2.3 – Phase 3.10 completed.");
+  console.log("Sprint 2.3 – Phase 3.11 completed.");
 }
