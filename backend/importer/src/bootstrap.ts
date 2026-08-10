@@ -5,6 +5,7 @@ import { CollectorFactory } from "./collector/index.js";
 import { validateEnvironment } from "./config/validator.js";
 import { FirestoreService } from "./firestore/service.js";
 import { Pipeline } from "./shared/index.js";
+import { ContentNormalizer } from "./normalizer/index.js";
 
 export async function bootstrap(): Promise<void> {
   console.log("");
@@ -90,14 +91,17 @@ export async function bootstrap(): Promise<void> {
   // ----------------------------------------------------------
 
   const pipeline = new Pipeline({
-    jobId: crypto.randomUUID(),
-    source: "manual",
-    documents: [],
-  });
+  jobId: crypto.randomUUID(),
+  source: "json",
+  documents: [],
+});
 
-  const collector = CollectorFactory.create("manual");
+  // const collector = CollectorFactory.create("manual");
+  const collector = CollectorFactory.create("json");
 
   const documents = await collector.collect();
+const normalizer = new ContentNormalizer();
+const normalizedDocuments = normalizer.normalize(documents);
 
   pipeline.setDocuments(documents);
 
