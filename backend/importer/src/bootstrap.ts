@@ -1,152 +1,71 @@
 import process from "node:process";
-import { FirestoreService } from "./firestore/service.js";
+
 import { ImporterPipeline } from "./pipeline/index.js";
-import { ImportJobReader } from "./firestore/import-job.reader.js";
-import { validateEnvironment } from "./config/validator.js";
 
 export async function bootstrap(): Promise<void> {
-  console.log("");
-  console.log("================================");
-  console.log(" SutraSparsh Import Engine");
-  console.log(" Version 1.0.0");
-  console.log("================================");
-  console.log("");
-  // ----------------------------------------------------------
-  // // Environment Validation
-  // // ----------------------------------------------------------
-  const environmentValidation = validateEnvironment();
+  const args = process.argv.slice(2);
 
-  if (!environmentValidation.valid) {
-    console.error("❌ Environment validation failed.");
-    console.error("");
+  const resumeIndex = args.indexOf("--resume");
 
-    environmentValidation.errors.forEach((error: string) => {
-      console.error(`• ${error}`);
+  if (resumeIndex !== -1) {
+    const jobId = args[resumeIndex + 1];
+
+    if (!jobId) {
+      throw new Error(
+        "Missing job ID. Usage: --resume <jobId>",
+      );
+    }
+
+    const pipeline = new ImporterPipeline({
+      source: "json",
     });
-    console.error("");
-    process.exit(1);
-  }
 
-  if (environmentValidation.warnings.length > 0) {
-    console.log("Warnings");
-    console.log("--------------------------------");
-    environmentValidation.warnings.forEach((warning: string) => {
-      console.log(`⚠ ${warning}`);
-    });
     console.log("");
-  }
-  console.log("✅ Environment validation passed.");
-  console.log("");
-  // ----------------------------------------------------------
-  // // Firebase
-  // / Firestore // ----------------------------------------------------------
-  const firestore = new FirestoreService();
-  console.log("✅ Firebase initialized.");
-  console.log("");
-  // ----------------------------------------------------------
-  // // Firestore Collections // ----------------------------------------------------------
-  console.log("## Top-level collections");
-  console.log("");
+    console.log("================================");
+    console.log(" Import Resume");
+    console.log("================================");
+    console.log("");
+    console.log(`Job ID : ${jobId}`);
+    console.log("");
 
-  const collections = await firestore.listCollections();
-  if (collections.length === 0) {
-    console.log("(No collections found)");
-  } else {
-    collections.forEach((collection: string) => {
-      console.log(`• ${collection}`);
-    });
-  }
-  console.log("");
-  // ----------------------------------------------------------
-  // // Firestore Health Check
-  // // ----------------------------------------------------------
-  console.log("Writing health document...");
-  await firestore.writeHealthCheck();
-  console.log("✅ Health document written successfully.");
-  console.log("");
-  // ----------------------------------------------------------
-  // // Import Pipeline
-  // // ----------------------------------------------------------
-  const importerPipeline = new ImporterPipeline({ source: "json" });
-  const result = await importerPipeline.run();
-  // ----------------------------------------------------------
-  // // Import Audit / Run History // ----------------------------------------------------------
-  const reader = new ImportJobReader();
-  const latestRun = await reader.getLatest();
-  console.log("");
-  console.log("## Latest Import Run");
-  console.log("--------------------");
+    const result = await pipeline.resume(jobId);
 
-  if (!latestRun) {
-    console.log("No import runs found.");
-  } else {
-    console.log(`Job ID : ${latestRun.jobId}`);
-    console.log(`Source : ${latestRun.source}`);
-    console.log(`Status : ${latestRun.status}`);
-    console.log(`Written : ${latestRun.written}`);
-    console.log(`Verified : ${latestRun.verified}`);
-  }
-  // ----------------------------------------------------------
-  // // Import Run Summary
-  // // ----------------------------------------------------------
-  const summary = await reader.getSummary();
-  console.log("");
-  console.log("## Import Run Summary");
-  console.log("");
-  console.log("---");
-  console.log("");
-  console.log(`Total : ${summary.total}`);
-  console.log(`Completed : ${summary.completed}`);
-  console.log(`Failed : ${summary.failed}`);
-  // ----------------------------------------------------------
-  // // Recent Import Runs
-  // // ----------------------------------------------------------
-  const recentRuns = await reader.list(10);
-  console.log("");
-  console.log("## Recent Import Runs");
-  console.log("---------------------");
-  if (recentRuns.length === 0) {
-    console.log("No import runs found.");
-  } else {
-    recentRuns.forEach((run, index) => {
-      console.log("");
-      console.log(`Run ${index + 1}`);
-      console.log(`Job ID : ${run.jobId}`);
-      console.log(`Source : ${run.source}`);
-      console.log(`Status : ${run.status}`);
-      console.log(`Written : ${run.written}`);
-      console.log(`Verified : ${run.verified}`);
-      if (run.errors.length > 0) {
-        console.log(`Errors : ${run.errors.length}`);
-        run.errors.forEach((error: string) => {
-          console.log(`• ${error}`);
-        });
-      }
-    });
-  }
-  // ----------------------------------------------------------
-  // // Import Summary
-  // // ----------------------------------------------------------
-  console.log("");
-  console.log("## Import Summary");
+    console.log("");
+    console.log("================================");
+    console.log(" Import Resume Completed");
+    console.log("================================");
+    console.log("");
+    console.log(`Job ID     : ${result.jobId}`);
+    console.log(`Source     : ${result.source}`);
+    console.log(`Collected  : ${result.collected}`);
+    console.log(`Normalized : ${result.normalized}`);
+    console.log(`Written    : ${result.written}`);
+    console.log(`Created    : ${result.created}`);
+    console.log(`Updated    : ${result.updated}`);
+    console.log(`Verified   : ${result.verified}`);
+    console.log("");
 
-  console.log("");
-  console.log("---");
-  console.log("");
-  console.log(`Job ID : ${result.jobId}`);
-  console.log(`Source : ${result.source}`);
-  console.log(`Collected : ${result.collected}`);
-  console.log(`Normalized : ${result.normalized}`);
-  console.log(`Written : ${result.written}`);
-  console.log(`Created : ${result.created}`);
-  console.log(`Updated : ${result.updated}`);
-  console.log(`Verified : ${result.verified}`);
-  // ----------------------------------------------------------
-  // // Ready // ----------------------------------------------------------
+    return;
+  }
+
+  const pipeline = new ImporterPipeline({
+    source: "json",
+  });
+
+  const result = await pipeline.run();
+
   console.log("");
   console.log("================================");
   console.log(" Importer Ready");
   console.log("================================");
   console.log("");
-  console.log("Sprint 2.3 – Phase 3.15 completed.");
+  console.log(`Job ID     : ${result.jobId}`);
+  console.log(`Source     : ${result.source}`);
+  console.log(`Collected  : ${result.collected}`);
+  console.log(`Normalized : ${result.normalized}`);
+  console.log(`Written    : ${result.written}`);
+  console.log(`Created    : ${result.created}`);
+  console.log(`Updated    : ${result.updated}`);
+  console.log(`Verified   : ${result.verified}`);
+  console.log("");
 }

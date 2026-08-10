@@ -1,4 +1,10 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import {
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import type { ContentDocument } from "../../src/types/index.js";
 
@@ -96,10 +102,17 @@ describe("ContentWriter", () => {
 
     const result = await writer.write(documents);
 
-    expect(mockCollection).toHaveBeenCalledWith("content");
+    expect(mockCollection).toHaveBeenCalledWith(
+      "content",
+    );
 
-    expect(mockDoc).toHaveBeenCalledWith("content-001");
-    expect(mockDoc).toHaveBeenCalledWith("content-002");
+    expect(mockDoc).toHaveBeenCalledWith(
+      "content-001",
+    );
+
+    expect(mockDoc).toHaveBeenCalledWith(
+      "content-002",
+    );
 
     expect(mockSet).toHaveBeenCalledTimes(2);
     expect(mockCommit).toHaveBeenCalledTimes(1);

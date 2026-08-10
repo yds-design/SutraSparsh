@@ -1,1 +1,205 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"; import { ImportJobReader } from "../../src/firestore/import-job.reader.js"; describe("ImportJobReader", () => { let reader: ImportJobReader; let get: ReturnType<typeof vi.fn>; const jobs = [ { jobId: "job-3", source: "json", status: "completed", written: 2, verified: 2, startedAt: "2026-08-10T12:00:00.000Z", }, { jobId: "job-2", source: "json", status: "completed", written: 2, verified: 2, startedAt: "2026-08-10T11:00:00.000Z", }, { jobId: "job-1", source: "manual", status: "failed", written: 0, verified: 0, startedAt: "2026-08-10T10:00:00.000Z", }, ]; function createReader( docs: Array<{ data: () => unknown }>, empty = false, ): ImportJobReader { get = vi.fn().mockResolvedValue({ empty, size: docs.length, docs, }); const orderBy = vi.fn().mockReturnValue({ limit: vi.fn().mockReturnValue({ get, }), where: vi.fn(), }); const where = vi.fn().mockReturnValue({ orderBy: vi.fn().mockReturnValue({ limit: vi.fn().mockReturnValue({ get, }), }), limit: vi.fn().mockReturnValue({ get, }), }); const collection = vi.fn(); const runsCollection = { doc: vi.fn().mockReturnValue({ get, }), collection: vi.fn(), orderBy, where, get, }; collection.mockReturnValue({ doc: vi.fn().mockReturnValue({ collection: vi.fn().mockReturnValue(runsCollection), }), }); reader = Object.create( ImportJobReader.prototype, ) as ImportJobReader; Object.defineProperty(reader, "db", { value: { collection, }, writable: false, }); return reader; } beforeEach(() => { vi.clearAllMocks(); }); it("returns an import job by job ID", async () => { const job = jobs[0]; const mockGet = vi.fn().mockResolvedValue({ exists: true, data: () => job, }); reader = Object.create( ImportJobReader.prototype, ) as ImportJobReader; Object.defineProperty(reader, "db", { value: { collection: vi.fn().mockReturnValue({ doc: vi.fn().mockReturnValue({ collection: vi.fn().mockReturnValue({ doc: vi.fn().mockReturnValue({ doc: vi.fn(), get: mockGet, }), }), }), }), }, }); const result = await reader.get("job-3"); expect(result).toEqual(job); expect(mockGet).toHaveBeenCalledOnce(); }); it("returns null when the job does not exist", async () => { const mockGet = vi.fn().mockResolvedValue({ exists: false, }); reader = Object.create( ImportJobReader.prototype, ) as ImportJobReader; Object.defineProperty(reader, "db", { value: { collection: vi.fn().mockReturnValue({ doc: vi.fn().mockReturnValue({ collection: vi.fn().mockReturnValue({ doc: vi.fn().mockReturnValue({ get: mockGet, }), }), }), }), }, }); const result = await reader.get("missing-job"); expect(result).toBeNull(); }); it("lists recent import jobs", async () => { const docs = jobs.map((job) => ({ data: () => job, })); createReader(docs); const result = await reader.list(10); expect(result).toEqual(jobs); expect(result).toHaveLength(3); expect(get).toHaveBeenCalledOnce(); }); it("returns an empty list when the limit is zero or negative", async () => { createReader([]); expect(await reader.list(0)).toEqual([]); expect(await reader.list(-1)).toEqual([]); expect(get).not.toHaveBeenCalled(); }); it("returns a summary of import jobs", async () => { const docs = jobs.map((job) => ({ data: () => job, })); createReader(docs); const result = await reader.getSummary(); expect(result).toEqual({ total: 3, completed: 2, failed: 1, }); }); it("lists completed jobs by status", async () => { const completedJobs = jobs .filter((job) => job.status === "completed") .map((job) => ({ data: () => job, })); createReader(completedJobs); const result = await reader.listByStatus("completed", 10); expect(result).toHaveLength(2); expect(result.every((job) => job.status === "completed")).toBe( true, ); expect(get).toHaveBeenCalledOnce(); }); it("returns an empty list when listByStatus limit is zero", async () => { createReader([]); const result = await reader.listByStatus("completed", 0); expect(result).toEqual([]); expect(get).not.toHaveBeenCalled(); }); it("lists jobs by source", async () => { const jsonJobs = jobs .filter((job) => job.source === "json") .map((job) => ({ data: () => job, })); createReader(jsonJobs); const result = await reader.listBySource("json", 10); expect(result).toHaveLength(2); expect(result.every((job) => job.source === "json")).toBe(true); expect(get).toHaveBeenCalledOnce(); }); it("returns an empty list when listBySource limit is zero", async () => { createReader([]); const result = await reader.listBySource("json", 0); expect(result).toEqual([]); expect(get).not.toHaveBeenCalled(); }); it("returns the latest import job", async () => { const latestJob = jobs[0]; createReader([ { data: () => latestJob, }, ]); const result = await reader.getLatest(); expect(result).toEqual(latestJob); expect(get).toHaveBeenCalledOnce(); }); it("returns null when there is no latest import job", async () => { createReader([], true); const result = await reader.getLatest(); expect(result).toBeNull(); }); it("returns the latest job for a source", async () => { const latestJsonJob = jobs[0]; createReader([ { data: () => latestJsonJob, }, ]); const result = await reader.getLatestBySource("json"); expect(result).toEqual(latestJsonJob); expect(result?.source).toBe("json"); expect(get).toHaveBeenCalledOnce(); }); it("returns null when there is no latest job for a source", async () => { createReader([], true); const result = await reader.getLatestBySource("json"); expect(result).toBeNull(); }); });
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ImportJobReader } from "../../src/firestore/import-job.reader.js";
+describe("ImportJobReader", () => {
+  let reader: ImportJobReader;
+  let get: ReturnType<typeof vi.fn>;
+  const jobs = [
+    {
+      jobId: "job-3",
+      source: "json",
+      status: "completed",
+      written: 2,
+      verified: 2,
+      startedAt: "2026-08-10T12:00:00.000Z",
+    },
+    {
+      jobId: "job-2",
+      source: "json",
+      status: "completed",
+      written: 2,
+      verified: 2,
+      startedAt: "2026-08-10T11:00:00.000Z",
+    },
+    {
+      jobId: "job-1",
+      source: "manual",
+      status: "failed",
+      written: 0,
+      verified: 0,
+      startedAt: "2026-08-10T10:00:00.000Z",
+    },
+  ];
+  function createReader(
+    docs: Array<{ data: () => unknown }>,
+    empty = false,
+  ): ImportJobReader {
+    get = vi.fn().mockResolvedValue({ empty, size: docs.length, docs });
+    const orderBy = vi
+      .fn()
+      .mockReturnValue({
+        limit: vi.fn().mockReturnValue({ get }),
+        where: vi.fn(),
+      });
+    const where = vi
+      .fn()
+      .mockReturnValue({
+        orderBy: vi
+          .fn()
+          .mockReturnValue({ limit: vi.fn().mockReturnValue({ get }) }),
+        limit: vi.fn().mockReturnValue({ get }),
+      });
+    const collection = vi.fn();
+    const runsCollection = {
+      doc: vi.fn().mockReturnValue({ get }),
+      collection: vi.fn(),
+      orderBy,
+      where,
+      get,
+    };
+    collection.mockReturnValue({
+      doc: vi
+        .fn()
+        .mockReturnValue({
+          collection: vi.fn().mockReturnValue(runsCollection),
+        }),
+    });
+    reader = Object.create(ImportJobReader.prototype) as ImportJobReader;
+    Object.defineProperty(reader, "db", {
+      value: { collection },
+      writable: false,
+    });
+    return reader;
+  }
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+  it("returns an import job by job ID", async () => {
+    const job = jobs[0];
+    const mockGet = vi
+      .fn()
+      .mockResolvedValue({ exists: true, data: () => job });
+    reader = Object.create(ImportJobReader.prototype) as ImportJobReader;
+    Object.defineProperty(reader, "db", {
+      value: {
+        collection: vi
+          .fn()
+          .mockReturnValue({
+            doc: vi
+              .fn()
+              .mockReturnValue({
+                collection: vi
+                  .fn()
+                  .mockReturnValue({
+                    doc: vi
+                      .fn()
+                      .mockReturnValue({ doc: vi.fn(), get: mockGet }),
+                  }),
+              }),
+          }),
+      },
+    });
+    const result = await reader.get("job-3");
+    expect(result).toEqual(job);
+    expect(mockGet).toHaveBeenCalledOnce();
+  });
+  it("returns null when the job does not exist", async () => {
+    const mockGet = vi.fn().mockResolvedValue({ exists: false });
+    reader = Object.create(ImportJobReader.prototype) as ImportJobReader;
+    Object.defineProperty(reader, "db", {
+      value: {
+        collection: vi
+          .fn()
+          .mockReturnValue({
+            doc: vi
+              .fn()
+              .mockReturnValue({
+                collection: vi
+                  .fn()
+                  .mockReturnValue({
+                    doc: vi.fn().mockReturnValue({ get: mockGet }),
+                  }),
+              }),
+          }),
+      },
+    });
+    const result = await reader.get("missing-job");
+    expect(result).toBeNull();
+  });
+  it("lists recent import jobs", async () => {
+    const docs = jobs.map((job) => ({ data: () => job }));
+    createReader(docs);
+    const result = await reader.list(10);
+    expect(result).toEqual(jobs);
+    expect(result).toHaveLength(3);
+    expect(get).toHaveBeenCalledOnce();
+  });
+  it("returns an empty list when the limit is zero or negative", async () => {
+    createReader([]);
+    expect(await reader.list(0)).toEqual([]);
+    expect(await reader.list(-1)).toEqual([]);
+    expect(get).not.toHaveBeenCalled();
+  });
+  it("returns a summary of import jobs", async () => {
+    const docs = jobs.map((job) => ({ data: () => job }));
+    createReader(docs);
+    const result = await reader.getSummary();
+    expect(result).toEqual({ total: 3, completed: 2, failed: 1 });
+  });
+  it("lists completed jobs by status", async () => {
+    const completedJobs = jobs
+      .filter((job) => job.status === "completed")
+      .map((job) => ({ data: () => job }));
+    createReader(completedJobs);
+    const result = await reader.listByStatus("completed", 10);
+    expect(result).toHaveLength(2);
+    expect(result.every((job) => job.status === "completed")).toBe(true);
+    expect(get).toHaveBeenCalledOnce();
+  });
+  it("returns an empty list when listByStatus limit is zero", async () => {
+    createReader([]);
+    const result = await reader.listByStatus("completed", 0);
+    expect(result).toEqual([]);
+    expect(get).not.toHaveBeenCalled();
+  });
+  it("lists jobs by source", async () => {
+    const jsonJobs = jobs
+      .filter((job) => job.source === "json")
+      .map((job) => ({ data: () => job }));
+    createReader(jsonJobs);
+    const result = await reader.listBySource("json", 10);
+    expect(result).toHaveLength(2);
+    expect(result.every((job) => job.source === "json")).toBe(true);
+    expect(get).toHaveBeenCalledOnce();
+  });
+  it("returns an empty list when listBySource limit is zero", async () => {
+    createReader([]);
+    const result = await reader.listBySource("json", 0);
+    expect(result).toEqual([]);
+    expect(get).not.toHaveBeenCalled();
+  });
+  it("returns the latest import job", async () => {
+    const latestJob = jobs[0];
+    createReader([{ data: () => latestJob }]);
+    const result = await reader.getLatest();
+    expect(result).toEqual(latestJob);
+    expect(get).toHaveBeenCalledOnce();
+  });
+  it("returns null when there is no latest import job", async () => {
+    createReader([], true);
+    const result = await reader.getLatest();
+    expect(result).toBeNull();
+  });
+  it("returns the latest job for a source", async () => {
+    const latestJsonJob = jobs[0];
+    createReader([{ data: () => latestJsonJob }]);
+    const result = await reader.getLatestBySource("json");
+    expect(result).toEqual(latestJsonJob);
+    expect(result?.source).toBe("json");
+    expect(get).toHaveBeenCalledOnce();
+  });
+  it("returns null when there is no latest job for a source", async () => {
+    createReader([], true);
+    const result = await reader.getLatestBySource("json");
+    expect(result).toBeNull();
+  });
+});
