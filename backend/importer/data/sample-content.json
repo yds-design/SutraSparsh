@@ -1,0 +1,31 @@
+[
+  {
+    "id": "gita-2-47",
+    "title": "Bhagavad Gita 2.47",
+    "body": "कर्मण्येवाधिकारस्ते मा फलेषु कदाचन",
+    "metadata": {
+      "language": "sa",
+      "source": "json",
+      "author": "Bhagavad Gita",
+      "category": "Verse",
+      "tags": [
+        "karma",
+        "gita"
+      ]
+    }
+  },
+  {
+    "id": "gita-2-48",
+    "title": "Bhagavad Gita 2.48",
+    "body": "योगस्थः कुरु कर्माणि",
+    "metadata": {
+      "language": "sa",
+      "source": "json",
+      "author": "Bhagavad Gita",
+      "category": "Verse",
+      "tags": [
+        "yoga"
+      ]
+    }
+  }
+]
