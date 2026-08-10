@@ -7,9 +7,7 @@ export class ImportJobReader {
   /**
    * Read a single import job by job ID.
    */
-  async get(
-    jobId: string,
-  ): Promise<ImportJobAudit | null> {
+  async get(jobId: string): Promise<ImportJobAudit | null> {
     const ref = this.db
       .collection("system")
       .doc("importJobs")
@@ -30,9 +28,7 @@ export class ImportJobReader {
    *
    * Newest jobs are returned first.
    */
-  async list(
-    limit = 10,
-  ): Promise<ImportJobAudit[]> {
+  async list(limit = 10): Promise<ImportJobAudit[]> {
     if (limit <= 0) {
       return [];
     }
@@ -45,8 +41,39 @@ export class ImportJobReader {
       .limit(limit)
       .get();
 
-    return snapshot.docs.map(
-      (doc) => doc.data() as ImportJobAudit,
-    );
+    return snapshot.docs.map((doc) => doc.data() as ImportJobAudit);
+  }
+
+  async getSummary(): Promise<{
+    total: number;
+    completed: number;
+    failed: number;
+  }> {
+    const snapshot = await this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .get();
+
+    let completed = 0;
+    let failed = 0;
+
+    snapshot.docs.forEach((doc) => {
+      const data = doc.data() as ImportJobAudit;
+
+      if (data.status === "completed") {
+        completed++;
+      }
+
+      if (data.status === "failed") {
+        failed++;
+      }
+    });
+
+    return {
+      total: snapshot.size,
+      completed,
+      failed,
+    };
   }
 }

@@ -160,6 +160,15 @@ export async function bootstrap(): Promise<void> {
     });
   }
 
+  const runSummary = await reader.getSummary();
+
+  console.log("");
+  console.log("## Import Run Summary");
+  console.log("---------------------");
+  console.log(`Total     : ${runSummary.total}`);
+  console.log(`Completed : ${runSummary.completed}`);
+  console.log(`Failed    : ${runSummary.failed}`);
+
   // ----------------------------------------------------------
   // Ready
   // ----------------------------------------------------------
