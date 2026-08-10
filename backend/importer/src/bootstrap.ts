@@ -167,12 +167,27 @@ export async function bootstrap(): Promise<void> {
   console.log("Firestore Content Writer");
   console.log("------------------------");
 
+  // ----------------------------------------------------------
+  // Firestore Content Writer
+  // ----------------------------------------------------------
+
+  console.log("");
+  console.log("Firestore Content Writer");
+  console.log("------------------------");
+
   const contentWriter = new ContentWriter();
 
-  const writtenCount = await contentWriter.write(normalizedDocuments);
+  const writeResult = await contentWriter.write(normalizedDocuments);
 
-  console.log(`✅ Content documents written : ${writtenCount}`);
+  console.log(`✅ Content documents written : ${writeResult.written}`);
 
+  console.log(`   Created  : ${writeResult.created}`);
+
+  console.log(`   Updated  : ${writeResult.updated}`);
+
+  console.log(`   Verified : ${writeResult.verified}`);
+
+  console.log("");
   // ----------------------------------------------------------
   // Ready
   // ----------------------------------------------------------
@@ -182,5 +197,5 @@ export async function bootstrap(): Promise<void> {
   console.log("================================");
   console.log("");
 
-  console.log("Sprint 2.3 – Phase 3.6 completed.");
+  console.log("Sprint 2.3 – Phase 3.7 completed.");
 }
