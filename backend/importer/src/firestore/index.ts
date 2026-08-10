@@ -9,3 +9,4 @@ export * from "./repositories/category.repository.js";
 export * from "./repositories/source.repository.js";
 export * from "./repositories/user.repository.js";
 export * from "./repositories/app-config.repository.js";
+export * from "./content.writer.js";

@@ -7,6 +7,7 @@ import { FirestoreService } from "./firestore/service.js";
 import { ContentNormalizer } from "./normalizer/index.js";
 import { Pipeline } from "./shared/index.js";
 import { ContentValidator } from "./validator/index.js";
+import { ContentWriter } from "./firestore/content.writer.js";
 
 export async function bootstrap(): Promise<void> {
   console.log("");
@@ -111,8 +112,7 @@ export async function bootstrap(): Promise<void> {
 
   const normalizer = new ContentNormalizer();
 
-  const normalizedDocuments =
-    normalizer.normalize(documents);
+  const normalizedDocuments = normalizer.normalize(documents);
 
   // ----------------------------------------------------------
   // Content Validation
@@ -120,17 +120,14 @@ export async function bootstrap(): Promise<void> {
 
   const contentValidator = new ContentValidator();
 
-  const contentValidation =
-    contentValidator.validate(normalizedDocuments);
+  const contentValidation = contentValidator.validate(normalizedDocuments);
 
   console.log("");
   console.log("Content Validation");
   console.log("----------------------");
 
   if (contentValidation.errors.length > 0) {
-    console.error(
-      `❌ Errors : ${contentValidation.errors.length}`,
-    );
+    console.error(`❌ Errors : ${contentValidation.errors.length}`);
 
     contentValidation.errors.forEach((error: string) => {
       console.error(`• ${error}`);
@@ -138,9 +135,7 @@ export async function bootstrap(): Promise<void> {
   }
 
   if (contentValidation.warnings.length > 0) {
-    console.warn(
-      `⚠ Warnings : ${contentValidation.warnings.length}`,
-    );
+    console.warn(`⚠ Warnings : ${contentValidation.warnings.length}`);
 
     contentValidation.warnings.forEach((warning: string) => {
       console.warn(`• ${warning}`);
@@ -165,6 +160,20 @@ export async function bootstrap(): Promise<void> {
   pipeline.summary();
 
   // ----------------------------------------------------------
+  // Firestore Content Writer
+  // ----------------------------------------------------------
+
+  console.log("");
+  console.log("Firestore Content Writer");
+  console.log("------------------------");
+
+  const contentWriter = new ContentWriter();
+
+  const writtenCount = await contentWriter.write(normalizedDocuments);
+
+  console.log(`✅ Content documents written : ${writtenCount}`);
+
+  // ----------------------------------------------------------
   // Ready
   // ----------------------------------------------------------
 
@@ -173,5 +182,5 @@ export async function bootstrap(): Promise<void> {
   console.log("================================");
   console.log("");
 
-  console.log("Sprint 2.3 – Phase 3.5 completed.");
+  console.log("Sprint 2.3 – Phase 3.6 completed.");
 }
