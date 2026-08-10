@@ -10,3 +10,9 @@ export * from "./repositories/source.repository.js";
 export * from "./repositories/user.repository.js";
 export * from "./repositories/app-config.repository.js";
 export * from "./content.writer.js";
+
+export { ImportJobWriter } from "./import-job.writer.js";
+
+export type { ImportJobAudit, ImportJobStatus } from "./import-job.writer.js";
+
+export { ImportJobReader } from "./import-job.reader.js";

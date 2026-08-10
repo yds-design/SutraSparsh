@@ -22,11 +22,9 @@ export async function bootstrap(): Promise<void> {
     console.error("❌ Environment validation failed.");
     console.error("");
 
-    environmentValidation.errors.forEach(
-      (error: string) => {
-        console.error(`• ${error}`);
-      },
-    );
+    environmentValidation.errors.forEach((error: string) => {
+      console.error(`• ${error}`);
+    });
 
     console.error("");
     process.exit(1);
@@ -36,11 +34,9 @@ export async function bootstrap(): Promise<void> {
     console.log("Warnings");
     console.log("--------------------------------");
 
-    environmentValidation.warnings.forEach(
-      (warning: string) => {
-        console.log(`⚠ ${warning}`);
-      },
-    );
+    environmentValidation.warnings.forEach((warning: string) => {
+      console.log(`⚠ ${warning}`);
+    });
 
     console.log("");
   }
@@ -69,11 +65,9 @@ export async function bootstrap(): Promise<void> {
   if (collections.length === 0) {
     console.log("(No collections found)");
   } else {
-    collections.forEach(
-      (collection: string) => {
-        console.log(`• ${collection}`);
-      },
-    );
+    collections.forEach((collection: string) => {
+      console.log(`• ${collection}`);
+    });
   }
 
   console.log("");
@@ -86,9 +80,7 @@ export async function bootstrap(): Promise<void> {
 
   await firestore.writeHealthCheck();
 
-  console.log(
-    "✅ Health document written successfully.",
-  );
+  console.log("✅ Health document written successfully.");
   console.log("");
 
   // ----------------------------------------------------------
@@ -123,7 +115,5 @@ export async function bootstrap(): Promise<void> {
   console.log(`Verified   : ${result.verified}`);
   console.log("");
 
-  console.log(
-    "Sprint 2.3 – Phase 3.8 completed.",
-  );
+ console.log("Sprint 2.3 – Phase 3.10 completed.");
 }
