@@ -169,6 +169,22 @@ export async function bootstrap(): Promise<void> {
   console.log(`Completed : ${runSummary.completed}`);
   console.log(`Failed    : ${runSummary.failed}`);
 
+  console.log("");
+  console.log("## Latest Import Run");
+  console.log("--------------------");
+
+  const latestRun = await reader.getLatest();
+
+  if (!latestRun) {
+    console.log("No import runs found.");
+  } else {
+    console.log(`Job ID     : ${latestRun.jobId}`);
+    console.log(`Source     : ${latestRun.source}`);
+    console.log(`Status     : ${latestRun.status}`);
+    console.log(`Written    : ${latestRun.written}`);
+    console.log(`Verified   : ${latestRun.verified}`);
+  }
+
   // ----------------------------------------------------------
   // Ready
   // ----------------------------------------------------------
@@ -179,5 +195,5 @@ export async function bootstrap(): Promise<void> {
   console.log("================================");
   console.log("");
 
-  console.log("Sprint 2.3 – Phase 3.11 completed.");
+  console.log("Sprint 2.3 – Phase 3.14 completed.");
 }

@@ -76,4 +76,83 @@ export class ImportJobReader {
       failed,
     };
   }
+
+  async listByStatus(
+    status: ImportJobAudit["status"],
+    limit = 10,
+  ): Promise<ImportJobAudit[]> {
+    if (limit <= 0) {
+      return [];
+    }
+
+    const snapshot = await this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .where("status", "==", status)
+      .orderBy("startedAt", "desc")
+      .limit(limit)
+      .get();
+
+    return snapshot.docs.map((doc) => doc.data() as ImportJobAudit);
+  }
+
+  async listBySource(
+    source: ImportJobAudit["source"],
+    limit = 10,
+  ): Promise<ImportJobAudit[]> {
+    if (limit <= 0) {
+      return [];
+    }
+
+    const snapshot = await this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .where("source", "==", source)
+      .orderBy("startedAt", "desc")
+      .limit(limit)
+      .get();
+
+    return snapshot.docs.map((doc) => doc.data() as ImportJobAudit);
+  }
+
+  async getLatest(): Promise<ImportJobAudit | null> {
+    const snapshot = await this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .orderBy("startedAt", "desc")
+      .limit(1)
+      .get();
+
+    const firstDocument = snapshot.docs[0];
+
+    if (!firstDocument) {
+      return null;
+    }
+
+    return firstDocument.data() as ImportJobAudit;
+  }
+
+  async getLatestBySource(
+    source: ImportJobAudit["source"],
+  ): Promise<ImportJobAudit | null> {
+    const snapshot = await this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .where("source", "==", source)
+      .orderBy("startedAt", "desc")
+      .limit(1)
+      .get();
+
+    const firstDocument = snapshot.docs[0];
+
+    if (!firstDocument) {
+      return null;
+    }
+
+    return firstDocument.data() as ImportJobAudit;
+  }
 }
