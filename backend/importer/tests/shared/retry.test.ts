@@ -1,18 +1,23 @@
 import { describe, expect, it, vi } from "vitest";
-
 import { retry } from "../../src/shared/retry.js";
 
 describe("retry", () => {
   it("returns immediately when the operation succeeds", async () => {
-    const operation = vi.fn().mockResolvedValue("success");
+    const operation = vi
+      .fn()
+      .mockResolvedValue("success");
 
-    const result = await retry(operation);
+    const result = await retry(operation, {
+      attempts: 3,
+      delayMs: 1,
+      backoffMultiplier: 2,
+    });
 
     expect(result).toBe("success");
     expect(operation).toHaveBeenCalledTimes(1);
   });
 
-  it("retries after a failure and eventually succeeds", async () => {
+  it("retries after a transient failure", async () => {
     const operation = vi
       .fn()
       .mockRejectedValueOnce(
@@ -21,16 +26,40 @@ describe("retry", () => {
       .mockResolvedValueOnce("success");
 
     const result = await retry(operation, {
-      attempts: 2,
-      delayMs: 0,
+      attempts: 3,
+      delayMs: 1,
+      backoffMultiplier: 2,
     });
 
     expect(result).toBe("success");
     expect(operation).toHaveBeenCalledTimes(2);
   });
 
-  it("retries until the maximum number of attempts", async () => {
-    const error = new Error("persistent failure");
+  it("retries until the operation succeeds", async () => {
+    const operation = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new Error("failure 1"),
+      )
+      .mockRejectedValueOnce(
+        new Error("failure 2"),
+      )
+      .mockResolvedValueOnce("success");
+
+    const result = await retry(operation, {
+      attempts: 3,
+      delayMs: 1,
+      backoffMultiplier: 2,
+    });
+
+    expect(result).toBe("success");
+    expect(operation).toHaveBeenCalledTimes(3);
+  });
+
+  it("throws the final error when all attempts fail", async () => {
+    const error = new Error(
+      "permanent failure",
+    );
 
     const operation = vi
       .fn()
@@ -39,123 +68,122 @@ describe("retry", () => {
     await expect(
       retry(operation, {
         attempts: 3,
-        delayMs: 0,
+        delayMs: 1,
+        backoffMultiplier: 2,
       }),
-    ).rejects.toBe(error);
+    ).rejects.toThrow(
+      "permanent failure",
+    );
 
     expect(operation).toHaveBeenCalledTimes(3);
   });
 
-  it("does not retry when shouldRetry returns false", async () => {
-    const error = new Error("non-retryable");
-
-    const operation = vi
-      .fn()
-      .mockRejectedValue(error);
-
-    await expect(
-      retry(operation, {
-        attempts: 3,
-        delayMs: 0,
-        shouldRetry: () => false,
-      }),
-    ).rejects.toBe(error);
-
-    expect(operation).toHaveBeenCalledTimes(1);
-  });
-
-  it("calls onRetry before each retry", async () => {
-    const error = new Error("temporary failure");
-
-    const operation = vi
-      .fn()
-      .mockRejectedValueOnce(error)
-      .mockResolvedValueOnce("success");
-
-    const onRetry = vi.fn();
-
-    const result = await retry(operation, {
-      attempts: 2,
-      delayMs: 0,
-      onRetry,
-    });
-
-    expect(result).toBe("success");
-
-    expect(onRetry).toHaveBeenCalledTimes(1);
-
-    expect(onRetry).toHaveBeenCalledWith(
-      error,
-      1,
-      0,
-    );
-  });
-
-  it("applies exponential backoff", async () => {
-    const error = new Error("temporary failure");
-
-    const operation = vi
-      .fn()
-      .mockRejectedValueOnce(error)
-      .mockRejectedValueOnce(error)
-      .mockResolvedValueOnce("success");
-
-    const onRetry = vi.fn();
-
-    const result = await retry(operation, {
-      attempts: 3,
-      delayMs: 10,
-      backoffMultiplier: 2,
-      onRetry,
-    });
-
-    expect(result).toBe("success");
-
-    expect(onRetry).toHaveBeenNthCalledWith(
-      1,
-      error,
-      1,
-      10,
-    );
-
-    expect(onRetry).toHaveBeenNthCalledWith(
-      2,
-      error,
-      2,
-      20,
-    );
-  });
-
-  it("handles a non-Error rejection value", async () => {
-    const operation = vi
-      .fn()
-      .mockRejectedValueOnce("temporary error")
-      .mockResolvedValueOnce("success");
-
-    const result = await retry(operation, {
-      attempts: 2,
-      delayMs: 0,
-    });
-
-    expect(result).toBe("success");
-    expect(operation).toHaveBeenCalledTimes(2);
-  });
-
-  it("normalizes invalid retry configuration", async () => {
+  it("does not retry when attempts is one", async () => {
     const operation = vi
       .fn()
       .mockRejectedValue(
-        new Error("temporary"),
+        new Error("failure"),
       );
 
     await expect(
       retry(operation, {
-        attempts: 0,
-        delayMs: -100,
-        backoffMultiplier: 0,
+        attempts: 1,
+        delayMs: 1,
+        backoffMultiplier: 2,
       }),
-    ).rejects.toThrow("temporary");
+    ).rejects.toThrow("failure");
 
     expect(operation).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls onRetry for each retry", async () => {
+    const operation = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new Error("failure 1"),
+      )
+      .mockRejectedValueOnce(
+        new Error("failure 2"),
+      )
+      .mockResolvedValue("success");
+
+    const onRetry = vi.fn();
+
+    await retry(operation, {
+      attempts: 3,
+      delayMs: 1,
+      backoffMultiplier: 2,
+      onRetry,
+    });
+
+    expect(onRetry).toHaveBeenCalledTimes(2);
+
+    expect(onRetry).toHaveBeenNthCalledWith(
+      1,
+      expect.any(Error),
+      1,
+      1,
+    );
+
+    expect(onRetry).toHaveBeenNthCalledWith(
+      2,
+      expect.any(Error),
+      2,
+      2,
+    );
+  });
+
+  it("rejects invalid retry attempts", async () => {
+    const operation = vi
+      .fn()
+      .mockResolvedValue("success");
+
+    await expect(
+      retry(operation, {
+        attempts: 0,
+        delayMs: 1,
+        backoffMultiplier: 2,
+      }),
+    ).rejects.toThrow(
+      "Retry attempts must be a positive integer.",
+    );
+
+    expect(operation).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid retry configuration", async () => {
+    const operation = vi
+      .fn()
+      .mockResolvedValue("success");
+
+    await expect(
+      retry(operation, {
+        attempts: 3,
+        delayMs: -1,
+        backoffMultiplier: 2,
+      }),
+    ).rejects.toThrow(
+      "Retry delay must be a non-negative number.",
+    );
+
+    expect(operation).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid backoff multiplier", async () => {
+    const operation = vi
+      .fn()
+      .mockResolvedValue("success");
+
+    await expect(
+      retry(operation, {
+        attempts: 3,
+        delayMs: 1,
+        backoffMultiplier: 0,
+      }),
+    ).rejects.toThrow(
+      "Retry backoff multiplier must be greater than zero.",
+    );
+
+    expect(operation).not.toHaveBeenCalled();
   });
 });

@@ -1,28 +1,7 @@
 export interface RetryOptions {
-  /**
-   * Maximum number of attempts, including the first attempt.
-   */
-  attempts?: number;
-
-  /**
-   * Initial delay before the first retry.
-   */
-  delayMs?: number;
-
-  /**
-   * Multiplier applied to the delay after each failed attempt.
-   */
-  backoffMultiplier?: number;
-
-  /**
-   * Determines whether a particular error should be retried.
-   */
-  shouldRetry?: (error: unknown) => boolean;
-
-  /**
-   * Optional callback invoked after a failed attempt
-   * when another retry will occur.
-   */
+  attempts: number;
+  delayMs: number;
+  backoffMultiplier: number;
   onRetry?: (
     error: unknown,
     attempt: number,
@@ -30,77 +9,70 @@ export interface RetryOptions {
   ) => void;
 }
 
-const DEFAULT_ATTEMPTS = 3;
-const DEFAULT_DELAY_MS = 250;
-const DEFAULT_BACKOFF_MULTIPLIER = 2;
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 
 export async function retry<T>(
   operation: () => Promise<T>,
-  options: RetryOptions = {},
+  options: RetryOptions,
 ): Promise<T> {
-  const attempts = Math.max(
-    1,
-    options.attempts ?? DEFAULT_ATTEMPTS,
-  );
-
-  const delayMs = Math.max(
-    0,
-    options.delayMs ?? DEFAULT_DELAY_MS,
-  );
-
-  const backoffMultiplier = Math.max(
-    1,
-    options.backoffMultiplier ??
-      DEFAULT_BACKOFF_MULTIPLIER,
-  );
-
-  const shouldRetry =
-    options.shouldRetry ?? (() => true);
-
-  let lastError: unknown;
-
-  for (
-    let attempt = 1;
-    attempt <= attempts;
-    attempt++
+  if (
+    !Number.isInteger(options.attempts) ||
+    options.attempts <= 0
   ) {
+    throw new Error(
+      "Retry attempts must be a positive integer.",
+    );
+  }
+
+  if (
+    !Number.isFinite(options.delayMs) ||
+    options.delayMs < 0
+  ) {
+    throw new Error(
+      "Retry delay must be a non-negative number.",
+    );
+  }
+
+  if (
+    !Number.isFinite(
+      options.backoffMultiplier,
+    ) ||
+    options.backoffMultiplier <= 0
+  ) {
+    throw new Error(
+      "Retry backoff multiplier must be greater than zero.",
+    );
+  }
+
+  let attempt = 1;
+  let currentDelay = options.delayMs;
+
+  while (true) {
     try {
       return await operation();
     } catch (error: unknown) {
-      lastError = error;
-
-      const hasAttemptsRemaining =
-        attempt < attempts;
-
-      if (
-        !hasAttemptsRemaining ||
-        !shouldRetry(error)
-      ) {
+      if (attempt >= options.attempts) {
         throw error;
       }
 
-      const retryDelay =
-        delayMs *
-        Math.pow(
-          backoffMultiplier,
-          attempt - 1,
-        );
+      options.onRetry?.(
+        error,
+        attempt,
+        currentDelay,
+      );
 
-      if (options.onRetry) {
-        options.onRetry(
-          error,
-          attempt,
-          retryDelay,
-        );
+      if (currentDelay > 0) {
+        await sleep(currentDelay);
       }
 
-      await new Promise<void>((resolve) => {
-        setTimeout(resolve, retryDelay);
-      });
+      attempt++;
+
+      currentDelay *=
+        options.backoffMultiplier;
     }
   }
-
-  // This is unreachable in normal execution,
-  // but keeps the function type-safe.
-  throw lastError;
 }
