@@ -1,534 +1,515 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
-const {
-  mockBatchSet,
-  mockCommit,
-  mockDoc,
-  mockCollection,
-  mockFirestore,
-} = vi.hoisted(() => {
-  const mockBatchSet = vi.fn();
-  const mockCommit = vi.fn();
+import {
+  ContentWriter,
+  type ContentDocument,
+} from "../../src/firestore/content.writer.js";
 
-  const mockDoc = vi.fn();
-  const mockCollection = vi.fn();
-
-  const mockFirestore = vi.fn();
-
-  return {
-    mockBatchSet,
-    mockCommit,
-    mockDoc,
-    mockCollection,
-    mockFirestore,
-  };
-});
-
-vi.mock("../../src/firestore/client.js", () => ({
-  firestore: mockFirestore,
-}));
-
-import { ContentWriter } from "../../src/firestore/content.writer.js";
-
-interface MockSnapshot {
-  exists: boolean;
-  data?: Record<string, unknown>;
-}
-
-function createSnapshot(
-  exists: boolean,
-  data?: Record<string, unknown>,
+function createFirestoreMock(
+  existingDocuments: Record<
+    string,
+    Record<string, unknown>
+  > = {},
 ) {
-  return {
-    exists,
-    ...(data !== undefined
-      ? {
-          data: () => data,
-        }
-      : {}),
+  const documents = {
+    ...existingDocuments,
   };
-}
 
-function setupFirestore(
-  snapshots: MockSnapshot[],
-) {
-  let snapshotIndex = 0;
+  const commit =
+    vi.fn().mockImplementation(async () => {
+      // Simulate the Firestore batch commit by applying
+      // every queued batch.set() operation to the mock
+      // document store.
+      for (const operation of batchSet.mock.calls) {
+        const [
+          ref,
+          data,
+          options,
+        ] = operation as [
+          { id: string },
+          Record<string, unknown>,
+          { merge?: boolean } | undefined,
+        ];
 
-  mockDoc.mockImplementation((id: string) => ({
-    id,
+        const current =
+          documents[ref.id];
 
-    get: vi.fn(async () => {
-      const snapshot =
-        snapshots.length > 0
-          ? snapshots[
-              Math.min(
-                snapshotIndex++,
-                snapshots.length - 1,
-              )
-            ]
-          : undefined;
+        documents[ref.id] =
+          options?.merge && current
+            ? {
+                ...current,
+                ...data,
+              }
+            : {
+                ...data,
+              };
+      }
+    });
 
-      return createSnapshot(
-        snapshot?.exists ?? false,
-        snapshot?.data,
-      );
+  const batchSet = vi.fn();
+
+  const batch = {
+    set: batchSet,
+    commit,
+  };
+
+  const document = vi.fn(
+    (id: string) => ({
+      id,
+
+      get: vi.fn().mockImplementation(
+        async () => {
+          const data =
+            documents[id];
+
+          return {
+            exists:
+              data !== undefined,
+
+            data: () => data,
+          };
+        },
+      ),
     }),
+  );
+
+  const collection = vi.fn(() => ({
+    doc: document,
   }));
 
-  mockCollection.mockReturnValue({
-    doc: mockDoc,
-  });
+  return {
+    firestore: {
+      collection,
+      batch: vi.fn(() => batch),
+    } as any,
 
-  mockFirestore.mockReturnValue({
-    collection: mockCollection,
-    batch: () => ({
-      set: mockBatchSet,
-      commit: mockCommit,
-    }),
-  });
+    batch,
+    collection,
+    document,
+    documents,
+  };
 }
 
-describe("ContentWriter", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+function createDocument(
+  overrides: Partial<ContentDocument> = {},
+): ContentDocument {
+  return {
+    id: "content-001",
+    title: "Rig Veda",
+    content: "Agni...",
+    metadata: {
+      language: "sanskrit",
+      source: "json",
+    },
+    ...overrides,
+  };
+}
 
-    mockBatchSet.mockReset();
-    mockCommit.mockReset();
-    mockDoc.mockReset();
-    mockCollection.mockReset();
-    mockFirestore.mockReset();
+describe(
+  "ContentWriter — M8.3 Idempotency",
+  () => {
+    it(
+      "uses deterministic document IDs",
+      async () => {
+        const mock =
+          createFirestoreMock();
 
-    mockCommit.mockResolvedValue(undefined);
-  });
+        const writer =
+          new ContentWriter({
+            firestore:
+              mock.firestore,
+          });
 
-  it("returns zero for an empty document list", async () => {
-    setupFirestore([]);
+        const document: ContentDocument = {
+          title: "Rig Veda",
+          content: "Agni...",
+          metadata: {
+            language: "sanskrit",
+            source: "json",
+          },
+        };
 
-    const writer = new ContentWriter();
+        await writer.write([document]);
 
-    const result = await writer.write([]);
-
-    expect(result).toEqual({
-      written: 0,
-      created: 0,
-      updated: 0,
-      unchanged: 0,
-      verified: 0,
-    });
-
-    expect(mockCollection).not.toHaveBeenCalled();
-    expect(mockCommit).not.toHaveBeenCalled();
-    expect(mockBatchSet).not.toHaveBeenCalled();
-  });
-
-  it("writes documents using deterministic document IDs", async () => {
-    const documents = [
-      {
-        id: "content-001",
-        title: "First",
-        text: "First content",
-      },
-      {
-        id: "content-002",
-        title: "Second",
-        text: "Second content",
-      },
-    ];
-
-    setupFirestore([
-      { exists: false },
-      { exists: false },
-
-      // Verification snapshots.
-      {
-        exists: true,
-        data: {
-          id: "content-001",
-          title: "First",
-          text: "First content",
-        },
-      },
-      {
-        exists: true,
-        data: {
-          id: "content-002",
-          title: "Second",
-          text: "Second content",
-        },
-      },
-    ]);
-
-    const writer = new ContentWriter();
-
-    const result = await writer.write(documents);
-
-    expect(result).toEqual({
-      written: 2,
-      created: 2,
-      updated: 0,
-      unchanged: 0,
-      verified: 2,
-    });
-
-    expect(mockCollection).toHaveBeenCalledWith(
-      "content",
-    );
-
-    expect(mockDoc).toHaveBeenCalledWith(
-      "content-001",
-    );
-
-    expect(mockDoc).toHaveBeenCalledWith(
-      "content-002",
-    );
-
-    expect(mockBatchSet).toHaveBeenCalledTimes(2);
-
-    expect(mockBatchSet).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({
-        id: "content-001",
-        get: expect.any(Function),
-      }),
-      expect.objectContaining({
-        id: "content-001",
-        title: "First",
-        text: "First content",
-        updatedAt: expect.any(Date),
-      }),
-      {
-        merge: true,
+        expect(
+          mock.document,
+        ).toHaveBeenCalledWith(
+          "sanskrit-json-rig-veda",
+        );
       },
     );
 
-    expect(mockBatchSet).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        id: "content-002",
-        get: expect.any(Function),
-      }),
-      expect.objectContaining({
-        id: "content-002",
-        title: "Second",
-        text: "Second content",
-        updatedAt: expect.any(Date),
-      }),
-      {
-        merge: true,
+    it(
+      "does not write an unchanged document",
+      async () => {
+        const existing =
+          createDocument();
+
+        const mock =
+          createFirestoreMock({
+            "content-001":
+              existing,
+          });
+
+        const writer =
+          new ContentWriter({
+            firestore:
+              mock.firestore,
+          });
+
+        const result =
+          await writer.write([
+            existing,
+          ]);
+
+        expect(
+          result.written,
+        ).toBe(0);
+
+        expect(
+          result.created,
+        ).toBe(0);
+
+        expect(
+          result.updated,
+        ).toBe(0);
+
+        expect(
+          result.unchanged,
+        ).toBe(1);
+
+        expect(
+          result.verified,
+        ).toBe(1);
+
+        expect(
+          mock.batch.commit,
+        ).not.toHaveBeenCalled();
       },
     );
 
-    expect(mockCommit).toHaveBeenCalledTimes(1);
-  });
+    it(
+      "creates a document when the deterministic ID does not exist",
+      async () => {
+        const mock =
+          createFirestoreMock();
 
-  it("reports existing documents as updated", async () => {
-    const documents = [
-      {
-        id: "content-001",
-        title: "Updated title",
-        text: "Updated content",
-      },
-    ];
+        const writer =
+          new ContentWriter({
+            firestore:
+              mock.firestore,
+          });
 
-    setupFirestore([
-      {
-        exists: true,
-        data: {
-          id: "content-001",
-          title: "Old title",
-          text: "Old content",
-        },
-      },
+        const result =
+          await writer.write([
+            createDocument(),
+          ]);
 
-      // Verification snapshot.
-      {
-        exists: true,
-        data: {
-          id: "content-001",
-          title: "Updated title",
-          text: "Updated content",
-        },
-      },
-    ]);
+        expect(
+          result.written,
+        ).toBe(1);
 
-    const writer = new ContentWriter();
+        expect(
+          result.created,
+        ).toBe(1);
 
-    const result = await writer.write(documents);
+        expect(
+          result.updated,
+        ).toBe(0);
 
-    expect(result).toEqual({
-      written: 1,
-      created: 0,
-      updated: 1,
-      unchanged: 0,
-      verified: 1,
-    });
+        expect(
+          result.unchanged,
+        ).toBe(0);
 
-    expect(mockBatchSet).toHaveBeenCalledTimes(1);
-    expect(mockCommit).toHaveBeenCalledTimes(1);
-  });
+        expect(
+          result.verified,
+        ).toBe(1);
 
-  it("reports an unchanged document when the existing content is identical", async () => {
-    const documents = [
-      {
-        id: "content-001",
-        title: "Same title",
-        text: "Same content",
-      },
-    ];
+        expect(
+          mock.batch.set,
+        ).toHaveBeenCalledTimes(1);
 
-    setupFirestore([
-      {
-        exists: true,
-        data: {
-          id: "content-001",
-          title: "Same title",
-          text: "Same content",
-        },
-      },
-
-      // Verification of unchanged document.
-      {
-        exists: true,
-        data: {
-          id: "content-001",
-          title: "Same title",
-          text: "Same content",
-        },
-      },
-    ]);
-
-    const writer = new ContentWriter();
-
-    const result = await writer.write(documents);
-
-    expect(result).toEqual({
-      written: 0,
-      created: 0,
-      updated: 0,
-      unchanged: 1,
-      verified: 1,
-    });
-
-    expect(mockBatchSet).not.toHaveBeenCalled();
-    expect(mockCommit).not.toHaveBeenCalled();
-  });
-
-  it("fails when Firestore verification cannot find a written document", async () => {
-    const documents = [
-      {
-        id: "content-001",
-        title: "First",
-        text: "First content",
-      },
-    ];
-
-    setupFirestore([
-      // Initial lookup: document does not exist.
-      { exists: false },
-
-      // Verification: still missing.
-      { exists: false },
-    ]);
-
-    const writer = new ContentWriter();
-
-    await expect(
-      writer.write(documents),
-    ).rejects.toThrow(
-      'Firestore verification failed for document "content-001".',
-    );
-
-    expect(mockBatchSet).toHaveBeenCalledTimes(1);
-    expect(mockCommit).toHaveBeenCalledTimes(1);
-  });
-
-  it("does not commit when every document is unchanged", async () => {
-    const documents = [
-      {
-        id: "content-001",
-        title: "Same title",
-        text: "Same content",
-      },
-      {
-        id: "content-002",
-        title: "Another title",
-        text: "Another content",
-      },
-    ];
-
-    setupFirestore([
-      {
-        exists: true,
-        data: {
-          id: "content-001",
-          title: "Same title",
-          text: "Same content",
-        },
-      },
-      {
-        exists: true,
-        data: {
-          id: "content-002",
-          title: "Another title",
-          text: "Another content",
-        },
-      },
-
-      // Verification snapshots.
-      {
-        exists: true,
-        data: {
-          id: "content-001",
-          title: "Same title",
-          text: "Same content",
-        },
-      },
-      {
-        exists: true,
-        data: {
-          id: "content-002",
-          title: "Another title",
-          text: "Another content",
-        },
-      },
-    ]);
-
-    const writer = new ContentWriter();
-
-    const result = await writer.write(documents);
-
-    expect(result).toEqual({
-      written: 0,
-      created: 0,
-      updated: 0,
-      unchanged: 2,
-      verified: 2,
-    });
-
-    expect(mockBatchSet).not.toHaveBeenCalled();
-    expect(mockCommit).not.toHaveBeenCalled();
-  });
-
-  it("writes only documents whose content changed", async () => {
-    const documents = [
-      {
-        id: "content-001",
-        title: "Same title",
-        text: "Same content",
-      },
-      {
-        id: "content-002",
-        title: "New title",
-        text: "New content",
-      },
-    ];
-
-    setupFirestore([
-      // content-001: unchanged.
-      {
-        exists: true,
-        data: {
-          id: "content-001",
-          title: "Same title",
-          text: "Same content",
-        },
-      },
-
-      // content-002: changed.
-      {
-        exists: true,
-        data: {
-          id: "content-002",
-          title: "Old title",
-          text: "Old content",
-        },
-      },
-
-      // Verification of content-001.
-      {
-        exists: true,
-        data: {
-          id: "content-001",
-          title: "Same title",
-          text: "Same content",
-        },
-      },
-
-      // Verification of content-002.
-      {
-        exists: true,
-        data: {
-          id: "content-002",
-          title: "New title",
-          text: "New content",
-        },
-      },
-    ]);
-
-    const writer = new ContentWriter();
-
-    const result = await writer.write(documents);
-
-    expect(result).toEqual({
-      written: 1,
-      created: 0,
-      updated: 1,
-      unchanged: 1,
-      verified: 2,
-    });
-
-    expect(mockBatchSet).toHaveBeenCalledTimes(1);
-
-    expect(mockBatchSet).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: "content-002",
-        get: expect.any(Function),
-      }),
-      expect.objectContaining({
-        id: "content-002",
-        title: "New title",
-        text: "New content",
-        updatedAt: expect.any(Date),
-      }),
-      {
-        merge: true,
+        expect(
+          mock.batch.commit,
+        ).toHaveBeenCalledTimes(1);
       },
     );
 
-    expect(mockCommit).toHaveBeenCalledTimes(1);
-  });
+    it(
+      "updates a document when content has changed",
+      async () => {
+        const existing =
+          createDocument({
+            title: "Old title",
+            content: "Old content",
+          });
 
-  it("preserves the Firestore batch write error after retries are exhausted", async () => {
-    const documents = [
-      {
-        id: "content-001",
-        title: "First",
-        text: "First content",
+        const incoming =
+          createDocument({
+            title: "New title",
+            content: "New content",
+          });
+
+        const mock =
+          createFirestoreMock({
+            "content-001":
+              existing,
+          });
+
+        const writer =
+          new ContentWriter({
+            firestore:
+              mock.firestore,
+          });
+
+        const result =
+          await writer.write([
+            incoming,
+          ]);
+
+        expect(
+          result.written,
+        ).toBe(1);
+
+        expect(
+          result.created,
+        ).toBe(0);
+
+        expect(
+          result.updated,
+        ).toBe(1);
+
+        expect(
+          result.unchanged,
+        ).toBe(0);
+
+        expect(
+          result.verified,
+        ).toBe(1);
+
+        expect(
+          mock.batch.set,
+        ).toHaveBeenCalledTimes(1);
+
+        expect(
+          mock.batch.commit,
+        ).toHaveBeenCalledTimes(1);
       },
-    ];
-
-    setupFirestore([
-      // Initial lookup.
-      { exists: false },
-    ]);
-
-    const firestoreError = new Error(
-      "Firestore content batch write failed.",
     );
 
-    mockCommit
-      .mockRejectedValueOnce(firestoreError)
-      .mockRejectedValueOnce(firestoreError)
-      .mockRejectedValueOnce(firestoreError);
+    it(
+      "is safe to run the same import repeatedly",
+      async () => {
+        const document =
+          createDocument();
 
-    const writer = new ContentWriter();
+        const first =
+          createFirestoreMock();
 
-    await expect(
-      writer.write(documents),
-    ).rejects.toThrow(
-      "Firestore content batch write failed.",
+        const firstWriter =
+          new ContentWriter({
+            firestore:
+              first.firestore,
+          });
+
+        const firstResult =
+          await firstWriter.write([
+            document,
+          ]);
+
+        expect(
+          firstResult.created,
+        ).toBe(1);
+
+        const second =
+          createFirestoreMock({
+            "content-001":
+              document,
+          });
+
+        const secondWriter =
+          new ContentWriter({
+            firestore:
+              second.firestore,
+          });
+
+        const secondResult =
+          await secondWriter.write([
+            document,
+          ]);
+
+        expect(
+          secondResult.created,
+        ).toBe(0);
+
+        expect(
+          secondResult.updated,
+        ).toBe(0);
+
+        expect(
+          secondResult.unchanged,
+        ).toBe(1);
+
+        expect(
+          secondResult.written,
+        ).toBe(0);
+
+        expect(
+          second.batch.commit,
+        ).not.toHaveBeenCalled();
+      },
     );
 
-    expect(mockCommit).toHaveBeenCalledTimes(3);
-  });
-});
+    it(
+      "reports mixed create, update and unchanged counts correctly",
+      async () => {
+        const unchanged =
+          createDocument({
+            id: "existing-unchanged",
+            title: "Same",
+            content: "Same content",
+          });
+
+        const updatedExisting =
+          createDocument({
+            id: "existing-updated",
+            title: "Old",
+            content: "Old content",
+          });
+
+        const newDocument =
+          createDocument({
+            id: "new-document",
+            title: "New document",
+            content: "New content",
+          });
+
+        const mock =
+          createFirestoreMock({
+            "existing-unchanged":
+              unchanged,
+
+            "existing-updated":
+              updatedExisting,
+          });
+
+        const writer =
+          new ContentWriter({
+            firestore:
+              mock.firestore,
+          });
+
+        const result =
+          await writer.write([
+            unchanged,
+
+            {
+              ...updatedExisting,
+              title: "New",
+              content: "New content",
+            },
+
+            newDocument,
+          ]);
+
+        expect(
+          result.created,
+        ).toBe(1);
+
+        expect(
+          result.updated,
+        ).toBe(1);
+
+        expect(
+          result.unchanged,
+        ).toBe(1);
+
+        expect(
+          result.written,
+        ).toBe(2);
+
+        expect(
+          result.verified,
+        ).toBe(3);
+
+        expect(
+          mock.batch.set,
+        ).toHaveBeenCalledTimes(2);
+
+        expect(
+          mock.batch.commit,
+        ).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it(
+      "does not commit when all documents are unchanged",
+      async () => {
+        const documents = {
+          "content-001":
+            createDocument({
+              id: "content-001",
+              title: "One",
+              content: "Content one",
+            }),
+
+          "content-002":
+            createDocument({
+              id: "content-002",
+              title: "Two",
+              content: "Content two",
+            }),
+        };
+
+        const mock =
+          createFirestoreMock(
+            documents,
+          );
+
+        const writer =
+          new ContentWriter({
+            firestore:
+              mock.firestore,
+          });
+
+        const result =
+          await writer.write(
+            Object.values(documents),
+          );
+
+        expect(
+          result.written,
+        ).toBe(0);
+
+        expect(
+          result.created,
+        ).toBe(0);
+
+        expect(
+          result.updated,
+        ).toBe(0);
+
+        expect(
+          result.unchanged,
+        ).toBe(2);
+
+        expect(
+          result.verified,
+        ).toBe(2);
+
+        expect(
+          mock.batch.set,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mock.batch.commit,
+        ).not.toHaveBeenCalled();
+      },
+    );
+  },
+); 

@@ -1,43 +1,60 @@
-// backend/importer/src/index.ts
-
 import process from "node:process";
 
 import { ImporterPipeline } from "./pipeline/index.js";
+import {
+  registerShutdownHandlers,
+} from "./lifecycle/shutdown.js";
 
-async function bootstrap(): Promise<void> {
-  const args = process.argv.slice(2);
+export interface ImporterCliOptions {
+  resumeJobId?: string;
+}
 
+export function parseCliArguments(
+  args: string[],
+): ImporterCliOptions {
   const resumeIndex =
     args.indexOf("--resume");
 
-  if (resumeIndex !== -1) {
-    const jobId =
-      args[resumeIndex + 1];
+  if (resumeIndex === -1) {
+    return {};
+  }
 
-    if (!jobId) {
-      throw new Error(
-        "Missing job ID for --resume.",
-      );
-    }
+  const jobId =
+    args[resumeIndex + 1];
 
-    const pipeline =
-      new ImporterPipeline({
-        source: "json",
-      });
+  if (!jobId) {
+    throw new Error(
+      "Missing job ID for --resume.",
+    );
+  }
 
-    await pipeline.resume(jobId);
+  return {
+    resumeJobId: jobId,
+  };
+}
+
+export async function bootstrap(
+  options: ImporterCliOptions = parseCliArguments(
+    process.argv.slice(2),
+  ),
+): Promise<void> {
+  const pipeline =
+    new ImporterPipeline({
+      source: "json",
+    });
+
+  if (options.resumeJobId) {
+    await pipeline.resume(
+      options.resumeJobId,
+    );
 
     console.log("");
     console.log("================================");
     console.log(" Import Resume Completed");
     console.log("================================");
+
     return;
   }
-
-  const pipeline =
-    new ImporterPipeline({
-      source: "json",
-    });
 
   await pipeline.run();
 
@@ -47,26 +64,37 @@ async function bootstrap(): Promise<void> {
   console.log("================================");
 }
 
-bootstrap().catch(
-  (error: unknown) => {
-    console.error("");
-    console.error(
-      "================================",
-    );
-    console.error(
-      " Importer Failed",
-    );
-    console.error(
-      "================================",
-    );
-    console.error("");
+export function startImporter(): void {
+  const shutdownController =
+    registerShutdownHandlers();
 
-    if (error instanceof Error) {
-      console.error(error.message);
-    } else {
-      console.error(String(error));
-    }
+  void bootstrap().catch(
+    (error: unknown) => {
+      console.error("");
+      console.error(
+        "================================",
+      );
+      console.error(
+        " Importer Failed",
+      );
+      console.error(
+        "================================",
+      );
+      console.error("");
 
-    process.exitCode = 1;
-  },
-);
+      if (error instanceof Error) {
+        console.error(error.message);
+      } else {
+        console.error(String(error));
+      }
+
+      process.exitCode = 1;
+
+      shutdownController.unregister();
+    },
+  );
+}
+
+if (process.env.NODE_ENV !== "test") {
+  startImporter();
+}

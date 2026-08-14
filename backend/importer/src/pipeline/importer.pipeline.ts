@@ -9,6 +9,7 @@ import {
   ContentWriter,
   type ContentWriteResult,
 } from "../firestore/content.writer.js";
+import { FirestoreService } from "../firestore/service.js";
 import { ContentNormalizer } from "../normalizer/index.js";
 import {
   createImportExecutionSummary,
@@ -43,15 +44,41 @@ export interface ImporterPipelineResult {
 export class ImporterPipeline {
   private readonly source: "json" | "manual";
 
-  constructor(options: ImporterPipelineOptions) {
+  constructor(
+    options: ImporterPipelineOptions,
+  ) {
     this.source = options.source;
   }
 
   async run(): Promise<ImporterPipelineResult> {
-    const jobId = crypto.randomUUID();
-    const startedAt = new Date();
+    const jobId =
+      crypto.randomUUID();
 
-    const jobWriter = new ImportJobWriter();
+    const startedAt =
+      new Date();
+
+    const jobWriter =
+      new ImportJobWriter();
+
+    /*
+     * --------------------------------------------------------
+     * Firestore
+     * --------------------------------------------------------
+     *
+     * Create the Firestore service once for this pipeline run.
+     *
+     * ContentWriter needs the underlying Firestore instance
+     * because M8.3 performs deterministic-ID lookup,
+     * comparison, batch writes and verification.
+     */
+    const firestoreService =
+      new FirestoreService();
+
+    const contentWriter =
+      new ContentWriter({
+        firestore:
+          firestoreService.getFirestore(),
+      });
 
     let collected = 0;
     let normalized = 0;
@@ -64,16 +91,23 @@ export class ImporterPipeline {
 
     let retries = 0;
 
-    importerLogger.info("Import pipeline started.", {
-      jobId,
-      source: this.source,
-    });
+    importerLogger.info(
+      "Import pipeline started.",
+      {
+        jobId,
+        source: this.source,
+      },
+    );
 
     console.log("");
     console.log("## Import Pipeline");
     console.log("----------------------");
-    console.log(`Job ID : ${jobId}`);
-    console.log(`Source : ${this.source}`);
+    console.log(
+      `Job ID : ${jobId}`,
+    );
+    console.log(
+      `Source : ${this.source}`,
+    );
     console.log("");
 
     await jobWriter.start(
@@ -84,15 +118,21 @@ export class ImporterPipeline {
 
     try {
       /*
+       * ------------------------------------------------------
        * Collection
+       * ------------------------------------------------------
        */
-      const collector = CollectorFactory.create(
-        this.source,
-      );
 
-      const documents = await collector.collect();
+      const collector =
+        CollectorFactory.create(
+          this.source,
+        );
 
-      collected = documents.length;
+      const documents =
+        await collector.collect();
+
+      collected =
+        documents.length;
 
       importerLogger.info(
         "Import collection completed.",
@@ -103,17 +143,26 @@ export class ImporterPipeline {
         },
       );
 
-      console.log(`Collected : ${collected}`);
+      console.log(
+        `Collected : ${collected}`,
+      );
 
       /*
+       * ------------------------------------------------------
        * Normalization
+       * ------------------------------------------------------
        */
-      const normalizer = new ContentNormalizer();
+
+      const normalizer =
+        new ContentNormalizer();
 
       const normalizedDocuments =
-        normalizer.normalize(documents);
+        normalizer.normalize(
+          documents,
+        );
 
-      normalized = normalizedDocuments.length;
+      normalized =
+        normalizedDocuments.length;
 
       importerLogger.info(
         "Import normalization completed.",
@@ -125,41 +174,60 @@ export class ImporterPipeline {
         },
       );
 
-      console.log(`Normalized : ${normalized}`);
-
-      /*
-       * Validation
-       */
-      const validator = new ContentValidator();
-
-      const validation = validator.validate(
-        normalizedDocuments,
+      console.log(
+        `Normalized : ${normalized}`,
       );
 
-      console.log("");
-      console.log("## Content Validation");
-      console.log("----------------------");
+      /*
+       * ------------------------------------------------------
+       * Validation
+       * ------------------------------------------------------
+       */
 
-      if (validation.errors.length > 0) {
+      const validator =
+        new ContentValidator();
+
+      const validation =
+        validator.validate(
+          normalizedDocuments,
+        );
+
+      console.log("");
+      console.log(
+        "## Content Validation",
+      );
+      console.log(
+        "----------------------",
+      );
+
+      if (
+        validation.errors.length > 0
+      ) {
         console.error(
           `❌ Errors : ${validation.errors.length}`,
         );
 
         validation.errors.forEach(
           (error: string) => {
-            console.error(`• ${error}`);
+            console.error(
+              `• ${error}`,
+            );
           },
         );
       }
 
-      if (validation.warnings.length > 0) {
+      if (
+        validation.warnings.length > 0
+      ) {
         console.warn(
           `⚠ Warnings : ${validation.warnings.length}`,
         );
 
         validation.warnings.forEach(
           (warning: string) => {
-            console.warn(`• ${warning}`);
+            console.warn(
+              `• ${warning}`,
+            );
           },
         );
       }
@@ -175,7 +243,10 @@ export class ImporterPipeline {
           {
             jobId,
             source: this.source,
-            error: validation.errors.join("; "),
+            error:
+              validation.errors.join(
+                "; ",
+              ),
           },
         );
 
@@ -197,22 +268,40 @@ export class ImporterPipeline {
       );
 
       /*
+       * ------------------------------------------------------
        * Pipeline
+       * ------------------------------------------------------
        */
-      const pipeline = new Pipeline({
-        jobId,
-        source: this.source,
-        documents: normalizedDocuments,
-      });
+
+      const pipeline =
+        new Pipeline({
+          jobId,
+          source: this.source,
+          documents:
+            normalizedDocuments,
+        });
 
       console.log("");
       console.log("## Pipeline");
-      console.log("----------------------");
+      console.log(
+        "----------------------",
+      );
 
       pipeline.summary();
 
       /*
-       * Firestore content writer
+       * ------------------------------------------------------
+       * Firestore Content Writer
+       * ------------------------------------------------------
+       *
+       * M8.3:
+       *
+       * - deterministic document IDs
+       * - existing-document lookup
+       * - unchanged detection
+       * - skip unnecessary writes
+       * - create/update classification
+       * - verification
        */
       console.log("");
       console.log(
@@ -222,9 +311,8 @@ export class ImporterPipeline {
         "---------------------------",
       );
 
-      const contentWriter = new ContentWriter();
-
-      let writeResult: ContentWriteResult;
+      let writeResult:
+        ContentWriteResult;
 
       try {
         writeResult =
@@ -246,7 +334,9 @@ export class ImporterPipeline {
           },
         );
 
-        if (error instanceof Error) {
+        if (
+          error instanceof Error
+        ) {
           throw error;
         }
 
@@ -258,11 +348,70 @@ export class ImporterPipeline {
         );
       }
 
-      written = writeResult.written;
-      created = writeResult.created;
-      updated = writeResult.updated;
-      unchanged = writeResult.unchanged;
-      verified = writeResult.verified;
+      /*
+       * ------------------------------------------------------
+       * M8.3 Result Counts
+       * ------------------------------------------------------
+       */
+
+      written =
+        writeResult.written;
+
+      created =
+        writeResult.created;
+
+      updated =
+        writeResult.updated;
+
+      unchanged =
+        writeResult.unchanged;
+
+      verified =
+        writeResult.verified;
+
+      /*
+       * Verify the accounting invariant:
+       *
+       * Every normalized document must be classified
+       * as created, updated or unchanged.
+       */
+      const classified =
+        created +
+        updated +
+        unchanged;
+
+      if (
+        classified !== normalized
+      ) {
+        throw new Error(
+          `Content write classification mismatch: classified ${classified} document(s), expected ${normalized}.`,
+        );
+      }
+
+      /*
+       * Written should only include actual Firestore writes.
+       */
+      const expectedWritten =
+        created + updated;
+
+      if (
+        written !== expectedWritten
+      ) {
+        throw new Error(
+          `Content write count mismatch: written ${written}, expected ${expectedWritten}.`,
+        );
+      }
+
+      /*
+       * Every normalized document should be verified.
+       */
+      if (
+        verified !== normalized
+      ) {
+        throw new Error(
+          `Content verification mismatch: verified ${verified} document(s), expected ${normalized}.`,
+        );
+      }
 
       importerLogger.info(
         "Firestore content writing completed.",
@@ -277,16 +426,30 @@ export class ImporterPipeline {
         },
       );
 
-      console.log(`✅ Written  : ${written}`);
-      console.log(`   Created  : ${created}`);
-      console.log(`   Updated  : ${updated}`);
-      console.log(`   Unchanged: ${unchanged}`);
-      console.log(`   Verified : ${verified}`);
+      console.log(
+        `✅ Written  : ${written}`,
+      );
+      console.log(
+        `   Created  : ${created}`,
+      );
+      console.log(
+        `   Updated  : ${updated}`,
+      );
+      console.log(
+        `   Unchanged: ${unchanged}`,
+      );
+      console.log(
+        `   Verified : ${verified}`,
+      );
 
       /*
-       * Build normal pipeline result.
+       * ------------------------------------------------------
+       * Pipeline Result
+       * ------------------------------------------------------
        */
-      const result: ImporterPipelineResult = {
+
+      const result:
+        ImporterPipelineResult = {
         jobId,
         source: this.source,
 
@@ -301,8 +464,11 @@ export class ImporterPipeline {
       };
 
       /*
-       * Complete audit.
+       * ------------------------------------------------------
+       * Complete Audit
+       * ------------------------------------------------------
        */
+
       await jobWriter.complete(
         result,
         startedAt,
@@ -319,12 +485,18 @@ export class ImporterPipeline {
       );
 
       /*
-       * Verify audit record.
+       * ------------------------------------------------------
+       * Verify Audit Record
+       * ------------------------------------------------------
        */
-      const jobReader = new ImportJobReader();
+
+      const jobReader =
+        new ImportJobReader();
 
       const auditRecord =
-        await jobReader.get(result.jobId);
+        await jobReader.get(
+          result.jobId,
+        );
 
       if (!auditRecord) {
         throw new Error(
@@ -381,15 +553,21 @@ export class ImporterPipeline {
         {
           jobId,
           source: this.source,
-          status: auditRecord.status,
-          written: auditRecord.written,
-          verified: auditRecord.verified,
+          status:
+            auditRecord.status,
+          written:
+            auditRecord.written,
+          verified:
+            auditRecord.verified,
         },
       );
 
       /*
-       * Successful execution summary.
+       * ------------------------------------------------------
+       * Successful Execution Summary
+       * ------------------------------------------------------
        */
+
       const executionSummary =
         createImportExecutionSummary({
           jobId,
@@ -417,7 +595,8 @@ export class ImporterPipeline {
         {
           jobId,
           source: this.source,
-          status: executionSummary.status,
+          status:
+            executionSummary.status,
           durationMs:
             executionSummary.durationMs,
 
@@ -455,8 +634,11 @@ export class ImporterPipeline {
           : String(error);
 
       /*
-       * Failed execution summary.
+       * ------------------------------------------------------
+       * Failed Execution Summary
+       * ------------------------------------------------------
        */
+
       const executionSummary =
         createImportExecutionSummary({
           jobId,
@@ -477,21 +659,13 @@ export class ImporterPipeline {
           error: errorMessage,
         });
 
-      /*
-       * IMPORTANT:
-       * Do not pass `error: executionSummary.error`
-       * because exactOptionalPropertyTypes rejects
-       * string | undefined when the property is optional.
-       *
-       * We know errorMessage exists here, so pass that
-       * concrete string instead.
-       */
       importerLogger.error(
         "Import execution summary.",
         {
           jobId,
           source: this.source,
-          status: executionSummary.status,
+          status:
+            executionSummary.status,
           durationMs:
             executionSummary.durationMs,
 
@@ -528,7 +702,9 @@ export class ImporterPipeline {
         "❌ Import pipeline failed.",
       );
 
-      console.error(errorMessage);
+      console.error(
+        errorMessage,
+      );
 
       importerLogger.error(
         "Import pipeline failed.",
@@ -558,7 +734,9 @@ export class ImporterPipeline {
             source: this.source,
           },
         );
-      } catch (auditError: unknown) {
+      } catch (
+        auditError: unknown
+      ) {
         console.error(
           "⚠ Failed to write import audit record.",
         );
@@ -572,11 +750,6 @@ export class ImporterPipeline {
           auditErrorMessage,
         );
 
-        /*
-         * ImportLogContext intentionally supports
-         * only `error`, so combine both failures
-         * into that supported field.
-         */
         importerLogger.error(
           "Failed to write import failure audit record.",
           {
@@ -595,7 +768,8 @@ export class ImporterPipeline {
   async resume(
     jobId: string,
   ): Promise<ImporterPipelineResult> {
-    const jobReader = new ImportJobReader();
+    const jobReader =
+      new ImportJobReader();
 
     const auditRecord =
       await jobReader.get(jobId);
@@ -625,7 +799,8 @@ export class ImporterPipeline {
     }
 
     const source =
-      auditRecord.source === "manual"
+      auditRecord.source ===
+      "manual"
         ? "manual"
         : "json";
 
@@ -634,7 +809,8 @@ export class ImporterPipeline {
       {
         jobId,
         source,
-        status: auditRecord.status,
+        status:
+          auditRecord.status,
       },
     );
 
@@ -651,9 +827,24 @@ export class ImporterPipeline {
   private async runWithJobId(
     jobId: string,
   ): Promise<ImporterPipelineResult> {
-    const startedAt = new Date();
+    const startedAt =
+      new Date();
 
-    const jobWriter = new ImportJobWriter();
+    const jobWriter =
+      new ImportJobWriter();
+
+    /*
+     * Same Firestore initialization for
+     * resumed imports.
+     */
+    const firestoreService =
+      new FirestoreService();
+
+    const contentWriter =
+      new ContentWriter({
+        firestore:
+          firestoreService.getFirestore(),
+      });
 
     let collected = 0;
     let normalized = 0;
@@ -676,8 +867,11 @@ export class ImporterPipeline {
 
     try {
       /*
+       * ------------------------------------------------------
        * Collection
+       * ------------------------------------------------------
        */
+
       const collector =
         CollectorFactory.create(
           this.source,
@@ -686,11 +880,15 @@ export class ImporterPipeline {
       const documents =
         await collector.collect();
 
-      collected = documents.length;
+      collected =
+        documents.length;
 
       /*
+       * ------------------------------------------------------
        * Normalization
+       * ------------------------------------------------------
        */
+
       const normalizer =
         new ContentNormalizer();
 
@@ -703,8 +901,11 @@ export class ImporterPipeline {
         normalizedDocuments.length;
 
       /*
+       * ------------------------------------------------------
        * Validation
+       * ------------------------------------------------------
        */
+
       const validator =
         new ContentValidator();
 
@@ -720,7 +921,9 @@ export class ImporterPipeline {
             jobId,
             source: this.source,
             error:
-              validation.errors.join("; "),
+              validation.errors.join(
+                "; ",
+              ),
           },
         );
 
@@ -730,10 +933,10 @@ export class ImporterPipeline {
       }
 
       /*
-       * Firestore write
+       * ------------------------------------------------------
+       * Firestore Write
+       * ------------------------------------------------------
        */
-      const contentWriter =
-        new ContentWriter();
 
       const writeResult =
         await contentWriter.write(
@@ -755,6 +958,39 @@ export class ImporterPipeline {
       verified =
         writeResult.verified;
 
+      /*
+       * M8.3 accounting validation.
+       */
+      const classified =
+        created +
+        updated +
+        unchanged;
+
+      if (
+        classified !== normalized
+      ) {
+        throw new Error(
+          `Content write classification mismatch: classified ${classified} document(s), expected ${normalized}.`,
+        );
+      }
+
+      if (
+        written !==
+        created + updated
+      ) {
+        throw new Error(
+          `Content write count mismatch: written ${written}, expected ${created + updated}.`,
+        );
+      }
+
+      if (
+        verified !== normalized
+      ) {
+        throw new Error(
+          `Content verification mismatch: verified ${verified} document(s), expected ${normalized}.`,
+        );
+      }
+
       const result:
         ImporterPipelineResult = {
         jobId,
@@ -771,17 +1007,22 @@ export class ImporterPipeline {
       };
 
       /*
-       * Complete audit.
+       * ------------------------------------------------------
+       * Complete Audit
+       * ------------------------------------------------------
        */
+
       await jobWriter.complete(
         result,
         startedAt,
       );
 
       /*
-       * Execution summary for resumed
-       * successful execution.
+       * ------------------------------------------------------
+       * Execution Summary
+       * ------------------------------------------------------
        */
+
       const executionSummary =
         createImportExecutionSummary({
           jobId,
@@ -862,8 +1103,11 @@ export class ImporterPipeline {
           : String(error);
 
       /*
-       * Failed resumed execution summary.
+       * ------------------------------------------------------
+       * Failed Resumed Execution Summary
+       * ------------------------------------------------------
        */
+
       const executionSummary =
         createImportExecutionSummary({
           jobId,
@@ -939,13 +1183,9 @@ export class ImporterPipeline {
           startedAt,
           error,
         );
-      } catch (auditError: unknown) {
-        /*
-         * Preserve the original execution
-         * failure. Log the audit failure
-         * without introducing unsupported
-         * ImportLogContext properties.
-         */
+      } catch (
+        auditError: unknown
+      ) {
         const auditErrorMessage =
           auditError instanceof Error
             ? auditError.message

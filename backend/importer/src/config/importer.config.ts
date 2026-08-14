@@ -16,6 +16,10 @@ export interface ImporterConfig {
   };
 }
 
+const MAX_RETRY_ATTEMPTS = 10;
+const MAX_RETRY_DELAY_MS = 60_000;
+const MAX_BACKOFF_MULTIPLIER = 10;
+
 function parsePositiveInteger(
   value: string | undefined,
   fallback: number,
@@ -62,7 +66,9 @@ function parseBoolean(
     return fallback;
   }
 
-  const normalized = value.trim().toLowerCase();
+  const normalized = value
+    .trim()
+    .toLowerCase();
 
   if (normalized === "true") {
     return true;
@@ -97,15 +103,18 @@ export function loadImporterConfig(): ImporterConfig {
         250,
       ),
 
-      backoffMultiplier: parsePositiveNumber(
-        process.env.IMPORTER_RETRY_BACKOFF_MULTIPLIER,
-        2,
-      ),
+      backoffMultiplier:
+        parsePositiveNumber(
+          process.env
+            .IMPORTER_RETRY_BACKOFF_MULTIPLIER,
+          2,
+        ),
     },
 
     idempotency: {
       enabled: parseBoolean(
-        process.env.IMPORTER_IDEMPOTENCY_ENABLED,
+        process.env
+          .IMPORTER_IDEMPOTENCY_ENABLED,
         true,
       ),
     },
@@ -119,9 +128,14 @@ export function loadImporterConfig(): ImporterConfig {
 export function validateImporterConfig(
   config: ImporterConfig,
 ): void {
+  /*
+   * Retry attempts
+   */
   if (
     config.retry.attempts < 1 ||
-    !Number.isInteger(config.retry.attempts)
+    !Number.isInteger(
+      config.retry.attempts,
+    )
   ) {
     throw new Error(
       "Importer retry attempts must be a positive integer.",
@@ -129,14 +143,40 @@ export function validateImporterConfig(
   }
 
   if (
+    config.retry.attempts >
+    MAX_RETRY_ATTEMPTS
+  ) {
+    throw new Error(
+      `Importer retry attempts must not exceed ${MAX_RETRY_ATTEMPTS}.`,
+    );
+  }
+
+  /*
+   * Retry delay
+   */
+  if (
     config.retry.delayMs <= 0 ||
-    !Number.isFinite(config.retry.delayMs)
+    !Number.isFinite(
+      config.retry.delayMs,
+    )
   ) {
     throw new Error(
       "Importer retry delay must be greater than zero.",
     );
   }
 
+  if (
+    config.retry.delayMs >
+    MAX_RETRY_DELAY_MS
+  ) {
+    throw new Error(
+      `Importer retry delay must not exceed ${MAX_RETRY_DELAY_MS}ms.`,
+    );
+  }
+
+  /*
+   * Retry backoff multiplier
+   */
   if (
     config.retry.backoffMultiplier <= 0 ||
     !Number.isFinite(
@@ -145,6 +185,15 @@ export function validateImporterConfig(
   ) {
     throw new Error(
       "Importer retry backoff multiplier must be greater than zero.",
+    );
+  }
+
+  if (
+    config.retry.backoffMultiplier >
+    MAX_BACKOFF_MULTIPLIER
+  ) {
+    throw new Error(
+      `Importer retry backoff multiplier must not exceed ${MAX_BACKOFF_MULTIPLIER}.`,
     );
   }
 }

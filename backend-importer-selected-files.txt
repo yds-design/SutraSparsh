@@ -1,0 +1,534 @@
+============================================================
+FILE: backend/importer/src/firestore/client.ts
+============================================================
+
+import { Firestore, getFirestore } from "firebase-admin/firestore";
+import { initializeFirebase } from "../config/firebase.js";
+
+let db: Firestore;
+
+export function firestore(): Firestore {
+  if (db) {
+    return db;
+  }
+
+  initializeFirebase();
+
+  db = getFirestore();
+
+  return db;
+}
+
+
+============================================================
+FILE: backend/importer/src/firestore/index.ts
+============================================================
+
+export * from "./client.js";
+export * from "./service.js";
+export * from "./base.repository.js";
+
+export * from "./repositories/system.repository.js";
+export * from "./repositories/content.repository.js";
+export * from "./repositories/author.repository.js";
+export * from "./repositories/category.repository.js";
+export * from "./repositories/source.repository.js";
+export * from "./repositories/user.repository.js";
+export * from "./repositories/app-config.repository.js";
+export * from "./content.writer.js";
+
+export { ImportJobWriter } from "./import-job.writer.js";
+
+export type { ImportJobAudit, ImportJobStatus } from "./import-job.writer.js";
+
+export { ImportJobReader } from "./import-job.reader.js";
+
+
+============================================================
+FILE: backend/importer/src/firestore/import-job.writer.ts
+============================================================
+
+import type { ImporterPipelineResult } from "../pipeline/index.js";
+import { firestore } from "./client.js";
+
+export type ImportJobStatus =
+  | "running"
+  | "completed"
+  | "failed";
+
+export interface ImportJobAudit {
+  jobId: string;
+  source: string;
+  status: ImportJobStatus;
+
+  startedAt: Date;
+  completedAt?: Date | null;
+
+  collected: number;
+  normalized: number;
+  written: number;
+  created: number;
+  updated: number;
+  verified: number;
+
+  errors: string[];
+}
+
+export class ImportJobWriter {
+  private readonly db = firestore();
+
+  async start(
+    jobId: string,
+    source: string,
+    startedAt: Date,
+  ): Promise<void> {
+    const ref = this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .doc(jobId);
+
+    const job: ImportJobAudit = {
+      jobId,
+      source,
+      status: "running",
+      startedAt,
+      collected: 0,
+      normalized: 0,
+      written: 0,
+      created: 0,
+      updated: 0,
+      verified: 0,
+      errors: [],
+    };
+
+    await ref.set(job);
+  }
+
+  async complete(
+    result: ImporterPipelineResult,
+    startedAt: Date,
+  ): Promise<void> {
+    const ref = this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .doc(result.jobId);
+
+    const job: ImportJobAudit = {
+      jobId: result.jobId,
+      source: result.source,
+      status: "completed",
+      startedAt,
+      completedAt: new Date(),
+      collected: result.collected,
+      normalized: result.normalized,
+      written: result.written,
+      created: result.created,
+      updated: result.updated,
+      verified: result.verified,
+      errors: [],
+    };
+
+    await ref.set(job, { merge: true });
+  }
+
+  async fail(
+    jobId: string,
+    source: string,
+    startedAt: Date,
+    error: unknown,
+  ): Promise<void> {
+    const ref = this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .doc(jobId);
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : String(error);
+
+    await ref.set(
+      {
+        jobId,
+        source,
+        status: "failed",
+        startedAt,
+        completedAt: new Date(),
+        errors: [message],
+      },
+      { merge: true },
+    );
+  }
+
+  async resume(
+    jobId: string,
+    source: string,
+    startedAt: Date,
+  ): Promise<void> {
+    const ref = this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .doc(jobId);
+
+    await ref.set(
+      {
+        jobId,
+        source,
+        status: "running",
+        startedAt,
+        completedAt: null,
+        errors: [],
+      },
+      { merge: true },
+    );
+  }
+
+  async markFailed(
+    jobId: string,
+    error: unknown,
+  ): Promise<void> {
+    const ref = this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .doc(jobId);
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : String(error);
+
+    await ref.set(
+      {
+        status: "failed",
+        errors: [message],
+        completedAt: new Date(),
+      },
+      { merge: true },
+    );
+  }
+}
+
+
+============================================================
+FILE: backend/importer/src/firestore/import-job.reader.ts
+============================================================
+
+import type { ImportJobAudit } from "./import-job.writer.js";
+import { firestore } from "./client.js";
+
+export class ImportJobReader {
+  private readonly db = firestore();
+
+  /**
+   * Read a single import job by job ID.
+   */
+  async get(jobId: string): Promise<ImportJobAudit | null> {
+    const ref = this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .doc(jobId);
+
+    const snapshot = await ref.get();
+
+    if (!snapshot.exists) {
+      return null;
+    }
+
+    return snapshot.data() as ImportJobAudit;
+  }
+
+  /**
+   * Read recent import jobs.
+   *
+   * Newest jobs are returned first.
+   */
+  async list(limit = 10): Promise<ImportJobAudit[]> {
+    if (limit <= 0) {
+      return [];
+    }
+
+    const snapshot = await this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .orderBy("startedAt", "desc")
+      .limit(limit)
+      .get();
+
+    return snapshot.docs.map((doc) => doc.data() as ImportJobAudit);
+  }
+
+  async getSummary(): Promise<{
+    total: number;
+    completed: number;
+    failed: number;
+  }> {
+    const snapshot = await this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .get();
+
+    let completed = 0;
+    let failed = 0;
+
+    snapshot.docs.forEach((doc) => {
+      const data = doc.data() as ImportJobAudit;
+
+      if (data.status === "completed") {
+        completed++;
+      }
+
+      if (data.status === "failed") {
+        failed++;
+      }
+    });
+
+    return {
+      total: snapshot.size,
+      completed,
+      failed,
+    };
+  }
+
+  async listByStatus(
+    status: ImportJobAudit["status"],
+    limit = 10,
+  ): Promise<ImportJobAudit[]> {
+    if (limit <= 0) {
+      return [];
+    }
+
+    const snapshot = await this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .where("status", "==", status)
+      .orderBy("startedAt", "desc")
+      .limit(limit)
+      .get();
+
+    return snapshot.docs.map((doc) => doc.data() as ImportJobAudit);
+  }
+
+  async listBySource(
+    source: ImportJobAudit["source"],
+    limit = 10,
+  ): Promise<ImportJobAudit[]> {
+    if (limit <= 0) {
+      return [];
+    }
+
+    const snapshot = await this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .where("source", "==", source)
+      .orderBy("startedAt", "desc")
+      .limit(limit)
+      .get();
+
+    return snapshot.docs.map((doc) => doc.data() as ImportJobAudit);
+  }
+
+  async getLatest(): Promise<ImportJobAudit | null> {
+    const snapshot = await this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .orderBy("startedAt", "desc")
+      .limit(1)
+      .get();
+
+    const firstDocument = snapshot.docs[0];
+
+    if (!firstDocument) {
+      return null;
+    }
+
+    return firstDocument.data() as ImportJobAudit;
+  }
+
+  async getLatestBySource(
+    source: ImportJobAudit["source"],
+  ): Promise<ImportJobAudit | null> {
+    const snapshot = await this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .where("source", "==", source)
+      .orderBy("startedAt", "desc")
+      .limit(1)
+      .get();
+
+    const firstDocument = snapshot.docs[0];
+
+    if (!firstDocument) {
+      return null;
+    }
+
+    return firstDocument.data() as ImportJobAudit;
+  }
+}
+
+
+============================================================
+FILE: backend/importer/src/normalizer/index.ts
+============================================================
+
+export * from "./normalizer.js";
+export * from "./content.normalizer.js";
+
+
+============================================================
+FILE: backend/importer/src/normalizer/content.normalizer.ts
+============================================================
+
+import type { ContentDocument } from "../types/index.js";
+import type { Normalizer } from "./normalizer.js";
+
+export class ContentNormalizer implements Normalizer {
+  public normalize(documents: ContentDocument[]): ContentDocument[] {
+    return documents.map((document) => ({
+      ...document,
+
+      id: this.normalizeString(document.id),
+
+      title: this.normalizeString(document.title),
+
+      body: this.normalizeString(document.body),
+
+      metadata: {
+        ...document.metadata,
+
+        language: this.normalizeString(document.metadata.language),
+
+        source: this.normalizeString(document.metadata.source),
+
+       author: this.normalizeString(document.metadata.author ?? ""),
+category: this.normalizeString(document.metadata.category ?? ""),
+
+        tags: (document.metadata.tags ?? [])
+          .map((tag) => this.normalizeString(tag))
+          .filter(Boolean),
+      },
+    }));
+  }
+
+  private normalizeString(value: string): string {
+    return value.trim().replace(/\s+/g, " ");
+  }
+}
+
+
+============================================================
+FILE: backend/importer/src/validator/index.ts
+============================================================
+
+export * from "./validator.js";
+export * from "./content.validator.js";
+
+
+============================================================
+FILE: backend/importer/src/validator/content.validator.ts
+============================================================
+
+import type { ContentDocument } from "../types/index.js";
+import type {
+  ValidationResult,
+  Validator,
+} from "./validator.js";
+
+export class ContentValidator implements Validator {
+  public validate(documents: ContentDocument[]): ValidationResult {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    if (documents.length === 0) {
+      warnings.push("No content documents were provided.");
+    }
+
+    const ids = new Set<string>();
+
+    documents.forEach((document, index) => {
+      const prefix = `Document ${index + 1}`;
+
+      // ------------------------------------------------------
+      // Required fields
+      // ------------------------------------------------------
+
+      if (!document.id?.trim()) {
+        errors.push(`${prefix}: id is required.`);
+      }
+
+      if (!document.title?.trim()) {
+        errors.push(`${prefix}: title is required.`);
+      }
+
+      if (!document.body?.trim()) {
+        errors.push(`${prefix}: body is required.`);
+      }
+
+      // ------------------------------------------------------
+      // Duplicate IDs
+      // ------------------------------------------------------
+
+      if (document.id?.trim()) {
+        if (ids.has(document.id)) {
+          errors.push(
+            `${prefix}: duplicate document id "${document.id}".`,
+          );
+        }
+
+        ids.add(document.id);
+      }
+
+      // ------------------------------------------------------
+      // Metadata
+      // ------------------------------------------------------
+
+      if (!document.metadata) {
+        errors.push(`${prefix}: metadata is required.`);
+        return;
+      }
+
+      if (!document.metadata.language?.trim()) {
+        errors.push(`${prefix}: metadata.language is required.`);
+      }
+
+      if (!document.metadata.source?.trim()) {
+        errors.push(`${prefix}: metadata.source is required.`);
+      }
+
+      if (!document.metadata.author?.trim()) {
+        warnings.push(`${prefix}: metadata.author is empty.`);
+      }
+
+      if (!document.metadata.category?.trim()) {
+        warnings.push(`${prefix}: metadata.category is empty.`);
+      }
+
+      // ------------------------------------------------------
+      // Tags
+      // ------------------------------------------------------
+
+      if (!document.metadata.tags) {
+        warnings.push(`${prefix}: metadata.tags is missing.`);
+      }
+    });
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings,
+    };
+  }
+}
+
+

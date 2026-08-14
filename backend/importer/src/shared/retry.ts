@@ -55,6 +55,10 @@ export async function retry<T>(
     try {
       return await operation();
     } catch (error: unknown) {
+      /*
+       * Preserve the exact original error when
+       * retry attempts are exhausted.
+       */
       if (attempt >= options.attempts) {
         throw error;
       }
@@ -69,10 +73,24 @@ export async function retry<T>(
         await sleep(currentDelay);
       }
 
-      attempt++;
+      attempt += 1;
 
       currentDelay *=
         options.backoffMultiplier;
     }
   }
+}
+
+/*
+ * Backwards-compatible name used by existing
+ * Firestore writers/tests.
+ */
+export async function executeWithRetry<T>(
+  operation: () => Promise<T>,
+  options: RetryOptions,
+): Promise<T> {
+  return retry(
+    operation,
+    options,
+  );
 }

@@ -1,8 +1,14 @@
-import type { ContentDocument } from "../types/index.js";
+import type {
+  Firestore,
+  DocumentReference,
+} from "firebase-admin/firestore";
+
 import { importerConfig } from "../config/importer.config.js";
-import { retry } from "../shared/retry.js";
-import { firestore } from "./client.js";
-import { importerLogger } from "../observability/importer.logger.js";
+import { executeWithRetry } from "../shared/retry.js";
+import type { ContentDocument } from "../types/content.js";
+
+// Re-export the type so consumers can import it from this module if needed.
+export type { ContentDocument } from "../types/content.js";
 
 export interface ContentWriteResult {
   written: number;
@@ -12,39 +18,154 @@ export interface ContentWriteResult {
   verified: number;
 }
 
-function contentEquals(
-  existing: Record<string, unknown>,
+export interface ContentWriterOptions {
+  firestore: Firestore;
+}
+
+/**
+ * Converts arbitrary text into a Firestore-safe,
+ * deterministic document ID.
+ */
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * M8.3
+ *
+ * Deterministic ID:
+ *
+ *   language + source + title
+ *
+ * Example:
+ *
+ *   sanskrit-json-rig-veda
+ *
+ * If the source already supplies an ID,
+ * preserve it.
+ */
+export function createDeterministicDocumentId(
   document: ContentDocument,
+): string {
+  if (document.id?.trim()) {
+    return document.id.trim();
+  }
+
+  const language = document.metadata.language;
+  const source = document.metadata.source;
+  const title = document.title;
+
+  const parts = [language, source, title]
+    .map(slugify)
+    .filter(Boolean);
+
+  const id = parts.join("-");
+
+  if (!id) {
+    throw new Error(
+      "Unable to create deterministic document ID.",
+    );
+  }
+
+  return id;
+}
+
+/**
+ * Creates a canonical representation for comparison.
+ *
+ * Firestore may return object properties in an order
+ * different from the incoming object, so JSON.stringify()
+ * is not used directly.
+ */
+function normalizeForComparison(
+  value: Record<string, unknown>,
+): string {
+  const normalized: Record<string, unknown> = {};
+
+  for (const key of Object.keys(value).sort()) {
+    if (
+      key === "id" ||
+      key === "createdAt" ||
+      key === "updatedAt"
+    ) {
+      continue;
+    }
+
+    normalized[key] = normalizeValue(value[key]);
+  }
+
+  return JSON.stringify(normalized);
+}
+
+function normalizeValue(value: unknown): unknown {
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(normalizeValue);
+  }
+
+  if (typeof value === "object") {
+    const object = value as Record<string, unknown>;
+    const normalized: Record<string, unknown> = {};
+
+    for (const key of Object.keys(object).sort()) {
+      normalized[key] = normalizeValue(object[key]);
+    }
+
+    return normalized;
+  }
+
+  return value;
+}
+
+function documentsAreEqual(
+  existing: Record<string, unknown>,
+  incoming: ContentDocument,
 ): boolean {
-  const existingCopy = {
-    ...existing,
-  };
-
-  delete existingCopy.updatedAt;
-
-  const incomingCopy = {
-    ...document,
-  };
-
-  delete (
-    incomingCopy as Record<string, unknown>
-  ).updatedAt;
-
   return (
-    JSON.stringify(existingCopy) ===
-    JSON.stringify(incomingCopy)
+    normalizeForComparison(existing) ===
+    normalizeForComparison(
+      incoming as unknown as Record<string, unknown>,
+    )
   );
 }
 
+interface PendingWrite {
+  ref: DocumentReference;
+  data: ContentDocument;
+  type: "created" | "updated";
+}
+
 export class ContentWriter {
-  private readonly db = firestore();
+  private readonly firestore: Firestore;
+
+  constructor(options: ContentWriterOptions) {
+    this.firestore = options.firestore;
+  }
 
   async write(
     documents: ContentDocument[],
   ): Promise<ContentWriteResult> {
     if (documents.length === 0) {
-      importerLogger.info(
-        "Content write skipped: no documents.",
+      console.log(
+        JSON.stringify({
+          timestamp: new Date().toISOString(),
+          level: "info",
+          message:
+            "Content write skipped: no documents.",
+        }),
       );
 
       return {
@@ -56,277 +177,235 @@ export class ContentWriter {
       };
     }
 
-    importerLogger.info(
-      `Starting content write for ${documents.length} document(s).`,
+    console.log(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: "info",
+        message:
+          `Starting content write for ${documents.length} document(s).`,
+      }),
     );
 
-    const batch = this.db.batch();
+    const collection =
+      this.firestore.collection("content");
+
+    const writes: PendingWrite[] = [];
 
     let created = 0;
     let updated = 0;
     let unchanged = 0;
 
+    // ----------------------------------------------------------
+    // M8.3 — Build deterministic write plan
+    // ----------------------------------------------------------
+
     for (const document of documents) {
-      const ref = this.db
-        .collection("content")
-        .doc(document.id);
+      const documentId =
+        createDeterministicDocumentId(document);
 
-      let existing;
+      const ref = collection.doc(documentId);
 
-      try {
-        existing = await retry(
-          () => ref.get(),
-          {
-            attempts:
-              importerConfig.retry.attempts,
+      const snapshot = await ref.get();
 
-            delayMs:
-              importerConfig.retry.delayMs,
+      const data: ContentDocument = {
+        ...document,
+        id: documentId,
+      };
 
-            backoffMultiplier:
-              importerConfig.retry
-                .backoffMultiplier,
+      // CREATE
+      if (!snapshot.exists) {
+        writes.push({
+          ref,
+          data,
+          type: "created",
+        });
 
-            onRetry: (
-              _error,
-              attempt,
-              delayMs,
-            ) => {
-              importerLogger.warn(
-                `Content read retry ${attempt} for "${document.id}" in ${delayMs}ms.`,
-              );
-            },
-          },
-        );
-      } catch (error: unknown) {
-        importerLogger.error(
-          `Content read failed for "${document.id}".`,
-          {
-            error:
-              error instanceof Error
-                ? error.message
-                : String(error),
-          },
-        );
-
-        throw new Error(
-          `Firestore content read failed for document "${document.id}".`,
-          {
-            cause: error,
-          },
-        );
+        created += 1;
+        continue;
       }
 
-      if (!existing.exists) {
-        created++;
+      const existing = snapshot.data();
 
-        batch.set(
-          ref,
-          {
-            ...document,
-            updatedAt: new Date(),
-          },
-          {
-            merge: true,
-          },
+      // Existing document should always have data,
+      // but guard defensively.
+      if (
+        existing &&
+        documentsAreEqual(existing, data)
+      ) {
+        unchanged += 1;
+
+        console.log(
+          JSON.stringify({
+            timestamp: new Date().toISOString(),
+            level: "debug",
+            message:
+              `Content unchanged; skipping "${documentId}".`,
+          }),
         );
 
         continue;
       }
 
-      if (
-        importerConfig.idempotency.enabled
-      ) {
-        const existingData =
-          typeof existing.data === "function"
-            ? (
-                existing.data() as
-                  | Record<string, unknown>
-                  | undefined
-              )
-            : undefined;
-
-        if (
-          existingData &&
-          contentEquals(
-            existingData,
-            document,
-          )
-        ) {
-          unchanged++;
-
-          importerLogger.debug(
-            `Content unchanged; skipping "${document.id}".`,
-          );
-
-          continue;
-        }
-      }
-
-      updated++;
-
-      batch.set(
+      // UPDATE
+      writes.push({
         ref,
-        {
-          ...document,
-          updatedAt: new Date(),
-        },
+        data,
+        type: "updated",
+      });
+
+      updated += 1;
+    }
+
+    console.log(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: "info",
+        message:
+          `Content write plan: ${writes.length} write(s), ${created} created, ${updated} updated, ${unchanged} unchanged.`,
+      }),
+    );
+
+    // ----------------------------------------------------------
+    // M8.3 — No unnecessary Firestore commit
+    // ----------------------------------------------------------
+
+    if (writes.length === 0) {
+      console.log(
+        JSON.stringify({
+          timestamp: new Date().toISOString(),
+          level: "info",
+          message:
+            "Content batch commit skipped: all documents are unchanged.",
+        }),
+      );
+
+      return {
+        written: 0,
+        created,
+        updated,
+        unchanged,
+        verified: documents.length,
+      };
+    }
+
+    // ----------------------------------------------------------
+    // Firestore batch
+    // ----------------------------------------------------------
+
+    const batch = this.firestore.batch();
+
+    for (const write of writes) {
+      batch.set(
+        write.ref,
+        write.data,
         {
           merge: true,
         },
       );
     }
 
-    const written =
-      created + updated;
+    // ----------------------------------------------------------
+    // M8.2 — Retry batch commit
+    // ----------------------------------------------------------
 
-    importerLogger.info(
-      `Content write plan: ${written} write(s), ${created} created, ${updated} updated, ${unchanged} unchanged.`,
+    await executeWithRetry(
+      async () => {
+        await batch.commit();
+      },
+      {
+        attempts:
+          importerConfig.retry.attempts,
+
+        delayMs:
+          importerConfig.retry.delayMs,
+
+        backoffMultiplier:
+          importerConfig.retry.backoffMultiplier,
+
+        onRetry: (
+          error,
+          attempt,
+          delayMs,
+        ) => {
+          const message =
+            error instanceof Error
+              ? error.message
+              : String(error);
+
+          console.warn(
+            `⚠ Content write retry ${attempt} in ${delayMs}ms...`,
+          );
+
+          console.warn(
+            `   Reason: ${message}`,
+          );
+        },
+      },
     );
 
-    /*
-     * Nothing changed.
-     *
-     * Do not call Firestore commit when every document
-     * is already identical to the incoming content.
-     */
-    if (written > 0) {
-      try {
-        await retry(
-          () => batch.commit(),
-          {
-            attempts:
-              importerConfig.retry.attempts,
+    console.log(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: "info",
+        message:
+          `Content batch committed successfully: ${writes.length} document(s).`,
+      }),
+    );
 
-            delayMs:
-              importerConfig.retry.delayMs,
+    // ----------------------------------------------------------
+    // Verification
+    // ----------------------------------------------------------
 
-            backoffMultiplier:
-              importerConfig.retry
-                .backoffMultiplier,
+    let verified = unchanged;
 
-            onRetry: (
-              _error,
-              attempt,
-              delayMs,
-            ) => {
-              importerLogger.warn(
-                `Content write retry ${attempt} in ${delayMs}ms.`,
-              );
-            },
-          },
-        );
-
-        importerLogger.info(
-          `Content batch committed successfully: ${written} document(s).`,
-        );
-      } catch (error: unknown) {
-        importerLogger.error(
-          "Firestore content batch write failed after retries.",
-          {
-            error:
-              error instanceof Error
-                ? error.message
-                : String(error),
-          },
-        );
-
-        throw new Error(
-          "Firestore content batch write failed.",
-          {
-            cause: error,
-          },
-        );
-      }
-    } else {
-      importerLogger.info(
-        "Content batch commit skipped: all documents are unchanged.",
-      );
-    }
-
-    /*
-     * Verify every incoming document.
-     *
-     * Verification intentionally includes unchanged documents
-     * because the result represents the final Firestore state
-     * for the entire import set.
-     */
-    let verified = 0;
-
-    for (const document of documents) {
-      const ref = this.db
-        .collection("content")
-        .doc(document.id);
-
-      let snapshot;
-
-      try {
-        snapshot = await retry(
-          () => ref.get(),
-          {
-            attempts:
-              importerConfig.retry.attempts,
-
-            delayMs:
-              importerConfig.retry.delayMs,
-
-            backoffMultiplier:
-              importerConfig.retry
-                .backoffMultiplier,
-
-            onRetry: (
-              _error,
-              attempt,
-              delayMs,
-            ) => {
-              importerLogger.warn(
-                `Content verification retry ${attempt} for "${document.id}" in ${delayMs}ms.`,
-              );
-            },
-          },
-        );
-      } catch (error: unknown) {
-        importerLogger.error(
-          `Content verification read failed for "${document.id}".`,
-          {
-            error:
-              error instanceof Error
-                ? error.message
-                : String(error),
-          },
-        );
-
-        throw new Error(
-          `Firestore verification read failed for document "${document.id}".`,
-          {
-            cause: error,
-          },
-        );
-      }
+    for (const write of writes) {
+      const snapshot = await write.ref.get();
 
       if (!snapshot.exists) {
-        importerLogger.error(
-          `Content verification failed for "${document.id}": document not found.`,
-        );
-
         throw new Error(
-          `Firestore verification failed for document "${document.id}".`,
+          `Firestore verification failed for document "${write.ref.id}".`,
         );
       }
 
-      verified++;
+      const existing = snapshot.data();
+
+      if (
+        !existing ||
+        !documentsAreEqual(
+          existing,
+          write.data,
+        )
+      ) {
+        throw new Error(
+          `Firestore verification failed for document "${write.ref.id}".`,
+        );
+      }
+
+      verified += 1;
     }
 
-    importerLogger.info(
-      `Content verification completed: ${verified}/${documents.length} document(s).`,
-    );
-
-    return {
-      written,
+    const result: ContentWriteResult = {
+      written: writes.length,
       created,
       updated,
       unchanged,
       verified,
     };
+
+    console.log(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: "info",
+        message:
+          `Content verification completed: ${verified}/${documents.length} document(s).`,
+        written: result.written,
+        created: result.created,
+        updated: result.updated,
+        unchanged: result.unchanged,
+        verified: result.verified,
+      }),
+    );
+
+    return result;
   }
 }
