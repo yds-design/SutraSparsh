@@ -8,17 +8,30 @@ export interface ImportLogContext {
   jobId?: string;
   source?: string;
   phase?: string;
+  status?: string;
   attempt?: number;
+  attempts?: number;
   durationMs?: number;
+
   collected?: number;
   normalized?: number;
+
   written?: number;
   created?: number;
   updated?: number;
   unchanged?: number;
   verified?: number;
+
   retries?: number;
+
   error?: string;
+  errors?: string[];
+  warnings?: string[];
+
+  originalError?: string;
+  auditError?: string;
+
+  previousStatus?: string;
 }
 
 export interface ImportLogger {
@@ -72,18 +85,34 @@ function writeLog(
 
 export const importerLogger: ImportLogger = {
   debug(message, context) {
-    writeLog("debug", message, context);
+    writeLog(
+      "debug",
+      message,
+      context,
+    );
   },
 
   info(message, context) {
-    writeLog("info", message, context);
+    writeLog(
+      "info",
+      message,
+      context,
+    );
   },
 
   warn(message, context) {
-    writeLog("warn", message, context);
+    writeLog(
+      "warn",
+      message,
+      context,
+    );
   },
 
   error(message, context) {
-    writeLog("error", message, context);
+    writeLog(
+      "error",
+      message,
+      context,
+    );
   },
 };

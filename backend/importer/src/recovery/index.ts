@@ -1,5 +1,10 @@
-export { ImportRecovery } from "./import-recovery.js";
+export {
+  recoverImport,
+} from "./import-recovery.js";
+
 export type {
   ImportRecoveryResult,
-  RecoverableImportStatus,
+  ImportRecoveryOptions,
+  ImportRecoveryOperation,
+  ImportRecoveryStatus,
 } from "./import-recovery.js";

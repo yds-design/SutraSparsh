@@ -101,7 +101,12 @@ export class ContentWriter {
       } catch (error: unknown) {
         importerLogger.error(
           `Content read failed for "${document.id}".`,
-          error,
+          {
+            error:
+              error instanceof Error
+                ? error.message
+                : String(error),
+          },
         );
 
         throw new Error(
@@ -218,7 +223,12 @@ export class ContentWriter {
       } catch (error: unknown) {
         importerLogger.error(
           "Firestore content batch write failed after retries.",
-          error,
+          {
+            error:
+              error instanceof Error
+                ? error.message
+                : String(error),
+          },
         );
 
         throw new Error(
@@ -278,7 +288,12 @@ export class ContentWriter {
       } catch (error: unknown) {
         importerLogger.error(
           `Content verification read failed for "${document.id}".`,
-          error,
+          {
+            error:
+              error instanceof Error
+                ? error.message
+                : String(error),
+          },
         );
 
         throw new Error(
