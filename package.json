@@ -16,7 +16,6 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-
     "// -------------------------------------------------": "",
     "// Import Engine": "",
     "importer": "npm --prefix backend/importer run dev",
@@ -25,13 +24,13 @@
     "importer:test": "npm --prefix backend/importer run test",
     "importer:lint": "npm --prefix backend/importer run lint",
     "importer:format": "npm --prefix backend/importer run format",
-    "importer:clean": "npm --prefix backend/importer run clean",
     "importer:doctor": "npm --prefix backend/importer run doctor",
-
+    "importer:clean": "npm --prefix backend/importer run clean",
+    "importer:build:clean": "npm --prefix backend/importer run build:clean",
+    
     "// --------------------------------------------------": "",
     "// Firebase": "",
     "firebase:emulators": "firebase emulators:start",
-
     "// ---------------------------------------------------": "",
     "// Project": "",
     "clean": "powershell -Command \"if (Test-Path node_modules) { Remove-Item node_modules -Recurse -Force }; if (Test-Path package-lock.json) { Remove-Item package-lock.json -Force }\"",
