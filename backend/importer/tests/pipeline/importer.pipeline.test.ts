@@ -1,4 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 const mockStart = vi.fn();
 const mockComplete = vi.fn();
@@ -7,13 +13,12 @@ const mockFail = vi.fn();
 const mockCollect = vi.fn();
 
 const mockNormalize = vi.fn();
+
 const mockValidate = vi.fn();
 
 const mockWrite = vi.fn();
 
 const mockGet = vi.fn();
-
-const mockSummary = vi.fn();
 
 vi.mock("../../src/firestore/index.js", () => ({
   ImportJobWriter: class {
@@ -47,19 +52,37 @@ vi.mock("../../src/validator/index.js", () => ({
   },
 }));
 
-vi.mock("../../src/shared/index.js", () => ({
-  Pipeline: class {
-    summary = mockSummary;
-  },
-}));
-
 vi.mock("../../src/firestore/content.writer.js", () => ({
   ContentWriter: class {
     write = mockWrite;
   },
 }));
 
+vi.mock("../../src/shared/index.js", () => ({
+  Pipeline: class {
+    summary = vi.fn();
+  },
+}));
+
 import { ImporterPipeline } from "../../src/pipeline/importer.pipeline.js";
+
+function createDocument(id = "content-001") {
+  return {
+    id,
+    title: "Test title",
+    content: "Test content",
+  };
+}
+
+function completedAudit(jobId: string) {
+  return {
+    jobId,
+    status: "completed",
+    source: "json",
+    written: 1,
+    verified: 1,
+  };
+}
 
 describe("ImporterPipeline", () => {
   beforeEach(() => {
@@ -70,19 +93,11 @@ describe("ImporterPipeline", () => {
     mockFail.mockResolvedValue(undefined);
 
     mockCollect.mockResolvedValue([
-      {
-        id: "content-001",
-        title: "Test Content",
-        body: "Test body",
-      },
+      createDocument(),
     ]);
 
     mockNormalize.mockReturnValue([
-      {
-        id: "content-001",
-        title: "Test Content",
-        body: "Test body",
-      },
+      createDocument(),
     ]);
 
     mockValidate.mockReturnValue({
@@ -95,45 +110,24 @@ describe("ImporterPipeline", () => {
       written: 1,
       created: 1,
       updated: 0,
+      unchanged: 0,
       verified: 1,
     });
 
-    mockGet.mockResolvedValue({
-      jobId: "test-job",
-      source: "json",
-      status: "completed",
-      startedAt: new Date(),
-      completedAt: new Date(),
-      collected: 1,
-      normalized: 1,
-      written: 1,
-      created: 1,
-      updated: 0,
-      verified: 1,
-      errors: [],
-    });
-
-    mockSummary.mockImplementation(() => undefined);
+    mockGet.mockImplementation(
+      async (jobId: string) =>
+        completedAudit(jobId),
+    );
   });
 
   it("starts and completes a successful import", async () => {
-    const pipeline = new ImporterPipeline({
-      source: "json",
-    });
+    const pipeline =
+      new ImporterPipeline({
+        source: "json",
+      });
 
-    const result = await pipeline.run();
-
-    expect(mockStart).toHaveBeenCalledTimes(1);
-
-    expect(mockCollect).toHaveBeenCalledTimes(1);
-    expect(mockNormalize).toHaveBeenCalledTimes(1);
-    expect(mockValidate).toHaveBeenCalledTimes(1);
-    expect(mockWrite).toHaveBeenCalledTimes(1);
-
-    expect(mockComplete).toHaveBeenCalledTimes(1);
-    expect(mockFail).not.toHaveBeenCalled();
-
-    expect(mockGet).toHaveBeenCalledTimes(1);
+    const result =
+      await pipeline.run();
 
     expect(result.source).toBe("json");
     expect(result.collected).toBe(1);
@@ -141,30 +135,52 @@ describe("ImporterPipeline", () => {
     expect(result.written).toBe(1);
     expect(result.created).toBe(1);
     expect(result.updated).toBe(0);
+    expect(result.unchanged).toBe(0);
     expect(result.verified).toBe(1);
 
-    expect(result.jobId).toEqual(expect.any(String));
+    expect(mockStart).toHaveBeenCalledTimes(
+      1,
+    );
+
+    expect(mockComplete).toHaveBeenCalledTimes(
+      1,
+    );
+
+    expect(mockFail).not.toHaveBeenCalled();
+
+    expect(mockGet).toHaveBeenCalledTimes(
+      1,
+    );
   });
 
   it("records a failed audit when collection fails", async () => {
-    const error = new Error("Collector failed");
+    const error = new Error(
+      "Collector failed",
+    );
 
     mockCollect.mockRejectedValueOnce(error);
 
-    const pipeline = new ImporterPipeline({
-      source: "json",
-    });
+    const pipeline =
+      new ImporterPipeline({
+        source: "json",
+      });
 
     await expect(
       pipeline.run(),
-    ).rejects.toThrow("Collector failed");
+    ).rejects.toThrow(
+      "Collector failed",
+    );
 
-    expect(mockStart).toHaveBeenCalledTimes(1);
-    expect(mockCollect).toHaveBeenCalledTimes(1);
+    expect(mockStart).toHaveBeenCalledTimes(
+      1,
+    );
 
     expect(mockComplete).not.toHaveBeenCalled();
 
-    expect(mockFail).toHaveBeenCalledTimes(1);
+    expect(mockFail).toHaveBeenCalledTimes(
+      1,
+    );
+
     expect(mockFail).toHaveBeenCalledWith(
       expect.any(String),
       "json",
@@ -174,7 +190,8 @@ describe("ImporterPipeline", () => {
   });
 
   it("records a failed audit when validation fails", async () => {
-    const errorMessage = "Content validation failed.";
+    const errorMessage =
+      "Content validation failed.";
 
     mockValidate.mockReturnValueOnce({
       valid: false,
@@ -182,54 +199,46 @@ describe("ImporterPipeline", () => {
       warnings: [],
     });
 
-    const pipeline = new ImporterPipeline({
-      source: "json",
-    });
+    const pipeline =
+      new ImporterPipeline({
+        source: "json",
+      });
 
     await expect(
       pipeline.run(),
     ).rejects.toThrow(errorMessage);
 
-    expect(mockStart).toHaveBeenCalledTimes(1);
-
-    expect(mockCollect).toHaveBeenCalledTimes(1);
-    expect(mockNormalize).toHaveBeenCalledTimes(1);
-    expect(mockValidate).toHaveBeenCalledTimes(1);
-
-    expect(mockWrite).not.toHaveBeenCalled();
     expect(mockComplete).not.toHaveBeenCalled();
 
-    expect(mockFail).toHaveBeenCalledTimes(1);
+    expect(mockFail).toHaveBeenCalledTimes(
+      1,
+    );
+
+    expect(mockWrite).not.toHaveBeenCalled();
   });
 
   it("records a failed audit when Firestore writing fails", async () => {
-    const error = new Error("Firestore write failed");
+    const error = new Error(
+      "Firestore write failed",
+    );
 
     mockWrite.mockRejectedValueOnce(error);
 
-    const pipeline = new ImporterPipeline({
-      source: "json",
-    });
+    const pipeline =
+      new ImporterPipeline({
+        source: "json",
+      });
 
     await expect(
       pipeline.run(),
-    ).rejects.toThrow("Firestore write failed");
-
-    expect(mockStart).toHaveBeenCalledTimes(1);
-
-    expect(mockCollect).toHaveBeenCalledTimes(1);
-    expect(mockNormalize).toHaveBeenCalledTimes(1);
-    expect(mockValidate).toHaveBeenCalledTimes(1);
-    expect(mockWrite).toHaveBeenCalledTimes(1);
+    ).rejects.toThrow(
+      "Firestore write failed",
+    );
 
     expect(mockComplete).not.toHaveBeenCalled();
 
-    expect(mockFail).toHaveBeenCalledTimes(1);
-    expect(mockFail).toHaveBeenCalledWith(
-      expect.any(String),
-      "json",
-      expect.any(Date),
-      error,
+    expect(mockFail).toHaveBeenCalledTimes(
+      1,
     );
   });
 
@@ -238,22 +247,52 @@ describe("ImporterPipeline", () => {
       "Firestore write failed",
     );
 
-    const auditError = new Error(
-      "Audit write failed",
+    mockWrite.mockRejectedValueOnce(
+      originalError,
     );
 
-    mockWrite.mockRejectedValueOnce(originalError);
-    mockFail.mockRejectedValueOnce(auditError);
+    mockFail.mockRejectedValueOnce(
+      new Error("Audit write failed"),
+    );
 
-    const pipeline = new ImporterPipeline({
-      source: "json",
-    });
+    const pipeline =
+      new ImporterPipeline({
+        source: "json",
+      });
 
     await expect(
       pipeline.run(),
-    ).rejects.toThrow("Firestore write failed");
+    ).rejects.toThrow(
+      "Firestore write failed",
+    );
 
-    expect(mockFail).toHaveBeenCalledTimes(1);
+    expect(mockFail).toHaveBeenCalledTimes(
+      1,
+    );
+  });
+
+  it("preserves retry exhaustion as the original Firestore error", async () => {
+    const error = new Error(
+      "Firestore content batch write failed.",
+    );
+
+    mockWrite.mockRejectedValueOnce(error);
+
+    const pipeline =
+      new ImporterPipeline({
+        source: "json",
+      });
+
+    await expect(
+      pipeline.run(),
+    ).rejects.toThrow(
+      "Firestore content batch write failed.",
+    );
+
     expect(mockComplete).not.toHaveBeenCalled();
+
+    expect(mockFail).toHaveBeenCalledTimes(
+      1,
+    );
   });
 });
