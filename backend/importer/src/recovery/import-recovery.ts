@@ -1,4 +1,6 @@
-import { importerLogger } from "../observability/importer.logger.js";
+import {
+  importerLogger,
+} from "../observability/importer.logger.js";
 
 export type ImportRecoveryStatus =
   | "recovered"
@@ -24,8 +26,10 @@ export interface ImportRecoveryOperation {
 }
 
 /**
- * Executes a recovery operation with bounded retries and
- * emits structured observability events for every recovery attempt.
+ * Executes a recovery operation with bounded retries.
+ *
+ * This helper retries the recovery operation itself.
+ * It does not generate a new job ID.
  */
 export async function recoverImport(
   operation: ImportRecoveryOperation,
@@ -37,7 +41,8 @@ export async function recoverImport(
     retryDelayMs = 500,
   } = options;
 
-  const startedAt = Date.now();
+  const startedAt =
+    Date.now();
 
   if (maxAttempts <= 0) {
     importerLogger.warn(
@@ -59,8 +64,10 @@ export async function recoverImport(
   let attempts = 0;
   let lastError: unknown;
 
-  while (attempts < maxAttempts) {
-    attempts++;
+  while (
+    attempts < maxAttempts
+  ) {
+    attempts += 1;
 
     importerLogger.info(
       "Import recovery attempt started.",
@@ -74,20 +81,19 @@ export async function recoverImport(
     try {
       await operation();
 
-      const durationMs =
-        Date.now() - startedAt;
-
       importerLogger.info(
         "Import recovery completed successfully.",
         {
           jobId,
           phase: "recovery",
           attempt: attempts,
-          durationMs,
           retries: Math.max(
             attempts - 1,
             0,
           ),
+          durationMs:
+            Date.now() -
+            startedAt,
         },
       );
 
@@ -105,10 +111,9 @@ export async function recoverImport(
           ? error.message
           : String(error);
 
-      if (attempts >= maxAttempts) {
-        const durationMs =
-          Date.now() - startedAt;
-
+      if (
+        attempts >= maxAttempts
+      ) {
         importerLogger.error(
           "Import recovery exhausted all attempts.",
           {
@@ -119,7 +124,9 @@ export async function recoverImport(
               attempts - 1,
               0,
             ),
-            durationMs,
+            durationMs:
+              Date.now() -
+              startedAt,
             error: message,
           },
         );
@@ -144,7 +151,9 @@ export async function recoverImport(
         },
       );
 
-      await delay(retryDelayMs);
+      await delay(
+        retryDelayMs,
+      );
     }
   }
 
@@ -152,21 +161,6 @@ export async function recoverImport(
     lastError instanceof Error
       ? lastError.message
       : String(lastError);
-
-  importerLogger.error(
-    "Import recovery failed unexpectedly.",
-    {
-      jobId,
-      phase: "recovery",
-      attempts,
-      retries: Math.max(
-        attempts - 1,
-        0,
-      ),
-      durationMs: Date.now() - startedAt,
-      error: fallbackError,
-    },
-  );
 
   return {
     status: "failed",
@@ -184,7 +178,12 @@ function delay(
     return Promise.resolve();
   }
 
-  return new Promise((resolve) => {
-    setTimeout(resolve, delayMs);
-  });
+  return new Promise(
+    (resolve) => {
+      setTimeout(
+        resolve,
+        delayMs,
+      );
+    },
+  );
 }

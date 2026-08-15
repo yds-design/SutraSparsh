@@ -1,6 +1,7 @@
 import process from "node:process";
 
 import { ImporterPipeline } from "./pipeline/index.js";
+
 import {
   registerShutdownHandlers,
 } from "./lifecycle/shutdown.js";
@@ -34,24 +35,71 @@ export function parseCliArguments(
 }
 
 export async function bootstrap(
-  options: ImporterCliOptions = parseCliArguments(
-    process.argv.slice(2),
-  ),
+  options: ImporterCliOptions =
+    parseCliArguments(
+      process.argv.slice(2),
+    ),
 ): Promise<void> {
   const pipeline =
     new ImporterPipeline({
       source: "json",
     });
 
-  if (options.resumeJobId) {
-    await pipeline.resume(
-      options.resumeJobId,
-    );
+  if (
+    options.resumeJobId
+  ) {
+    const result =
+      await pipeline.resume(
+        options.resumeJobId,
+      );
 
     console.log("");
-    console.log("================================");
-    console.log(" Import Resume Completed");
-    console.log("================================");
+    console.log(
+      "================================",
+    );
+    console.log(
+      " Import Resume Completed",
+    );
+    console.log(
+      "================================",
+    );
+    console.log("");
+
+    console.log(
+      `Job ID     : ${result.jobId}`,
+    );
+
+    console.log(
+      `Source     : ${result.source}`,
+    );
+
+    console.log(
+      `Collected  : ${result.collected}`,
+    );
+
+    console.log(
+      `Normalized : ${result.normalized}`,
+    );
+
+    console.log(
+      `Written    : ${result.written}`,
+    );
+
+    console.log(
+      `Created    : ${result.created}`,
+    );
+
+    console.log(
+      `Updated    : ${result.updated}`,
+    );
+
+    console.log(
+      `Unchanged  : ${result.unchanged}`,
+    );
+
+    console.log(
+      `Verified   : ${result.verified}`,
+    );
 
     return;
   }
@@ -59,9 +107,15 @@ export async function bootstrap(
   await pipeline.run();
 
   console.log("");
-  console.log("================================");
-  console.log(" Importer Ready");
-  console.log("================================");
+  console.log(
+    "================================",
+  );
+  console.log(
+    " Importer Ready",
+  );
+  console.log(
+    "================================",
+  );
 }
 
 export function startImporter(): void {
@@ -82,10 +136,16 @@ export function startImporter(): void {
       );
       console.error("");
 
-      if (error instanceof Error) {
-        console.error(error.message);
+      if (
+        error instanceof Error
+      ) {
+        console.error(
+          error.message,
+        );
       } else {
-        console.error(String(error));
+        console.error(
+          String(error),
+        );
       }
 
       process.exitCode = 1;
@@ -95,6 +155,9 @@ export function startImporter(): void {
   );
 }
 
-if (process.env.NODE_ENV !== "test") {
+if (
+  process.env.NODE_ENV !==
+  "test"
+) {
   startImporter();
 }

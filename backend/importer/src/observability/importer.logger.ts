@@ -32,6 +32,7 @@ export interface ImportLogContext {
   auditError?: string;
 
   previousStatus?: string;
+  resumeAttempts?: number;
 }
 
 export interface ImportLogger {
