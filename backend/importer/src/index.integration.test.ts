@@ -1,1 +1,79 @@
-import { afterEach, describe, expect, it, vi, } from "vitest"; import { bootstrap, parseCliArguments, } from "./index.js"; const pipelineRun = vi.fn(); const pipelineResume = vi.fn(); vi.mock( "./pipeline/index.js", () => ({ ImporterPipeline: class { run = pipelineRun; resume = pipelineResume; constructor( public options: { source: "json" | "manual"; }, ) {} }, }), ); describe( "Importer entrypoint integration", () => { afterEach(() => { pipelineRun.mockReset(); pipelineResume.mockReset(); }); describe( "parseCliArguments", () => { it( "returns normal-run options when no arguments are supplied", () => { expect( parseCliArguments([]), ).toEqual({}); }, ); it( "parses --resume with a job ID", () => { expect( parseCliArguments([ "--resume", "job-123", ]), ).toEqual({ resumeJobId: "job-123", }); }, ); it( "throws when --resume has no job ID", () => { expect( () => parseCliArguments([ "--resume", ]), ).toThrow( "Missing job ID for --resume.", ); }, ); }, ); describe( "bootstrap", () => { it( "runs the normal importer pipeline", async () => { pipelineRun.mockResolvedValue({ jobId: "job-normal-001", source: "json", collected: 1, normalized: 1, written: 1, created: 1, updated: 0, unchanged: 0, verified: 1, }); await bootstrap({}); expect( pipelineRun, ).toHaveBeenCalledTimes(1); expect( pipelineResume, ).not.toHaveBeenCalled(); }, ); it( "runs the resume pipeline when a job ID is supplied", async () => { pipelineResume.mockResolvedValue({ jobId: "job-123", source: "json", collected: 1, normalized: 1, written: 1, created: 1, updated: 0, unchanged: 0, verified: 1, }); await bootstrap({ resumeJobId: "job-123", }); expect( pipelineResume, ).toHaveBeenCalledTimes(1); expect( pipelineResume, ).toHaveBeenCalledWith( "job-123", ); expect( pipelineRun, ).not.toHaveBeenCalled(); }, ); it( "propagates normal pipeline failures", async () => { const error = new Error( "Pipeline failed", ); pipelineRun.mockRejectedValue( error, ); await expect( bootstrap({}), ).rejects.toThrow( "Pipeline failed", ); }, ); it( "propagates resume failures", async () => { const error = new Error( "Resume failed", ); pipelineResume.mockRejectedValue( error, ); await expect( bootstrap({ resumeJobId: "job-123", }), ).rejects.toThrow( "Resume failed", ); }, ); }, ); }, );
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { bootstrap, parseCliArguments } from "./index.js";
+const pipelineRun = vi.fn();
+const pipelineResume = vi.fn();
+vi.mock("./pipeline/index.js", () => ({
+  ImporterPipeline: class {
+    run = pipelineRun;
+    resume = pipelineResume;
+    constructor(public options: { source: "json" | "manual" }) {}
+  },
+}));
+describe("Importer entrypoint integration", () => {
+  afterEach(() => {
+    pipelineRun.mockReset();
+    pipelineResume.mockReset();
+  });
+  describe("parseCliArguments", () => {
+    it("returns normal-run options when no arguments are supplied", () => {
+      expect(parseCliArguments([])).toEqual({});
+    });
+    it("parses --resume with a job ID", () => {
+      expect(parseCliArguments(["--resume", "job-123"])).toEqual({
+        resumeJobId: "job-123",
+      });
+    });
+    it("throws when --resume has no job ID", () => {
+      expect(() => parseCliArguments(["--resume"])).toThrow(
+        "Missing job ID for --resume.",
+      );
+    });
+  });
+  describe("bootstrap", () => {
+    it("runs the normal importer pipeline", async () => {
+      pipelineRun.mockResolvedValue({
+        jobId: "job-normal-001",
+        source: "json",
+        collected: 1,
+        normalized: 1,
+        written: 1,
+        created: 1,
+        updated: 0,
+        unchanged: 0,
+        verified: 1,
+      });
+      await bootstrap({});
+      expect(pipelineRun).toHaveBeenCalledTimes(1);
+      expect(pipelineResume).not.toHaveBeenCalled();
+    });
+    it("runs the resume pipeline when a job ID is supplied", async () => {
+      pipelineResume.mockResolvedValue({
+        jobId: "job-123",
+        source: "json",
+        collected: 1,
+        normalized: 1,
+        written: 1,
+        created: 1,
+        updated: 0,
+        unchanged: 0,
+        verified: 1,
+      });
+      await bootstrap({ resumeJobId: "job-123" });
+      expect(pipelineResume).toHaveBeenCalledTimes(1);
+      expect(pipelineResume).toHaveBeenCalledWith("job-123");
+      expect(pipelineRun).not.toHaveBeenCalled();
+    });
+    it("propagates normal pipeline failures", async () => {
+      const error = new Error("Pipeline failed");
+      pipelineRun.mockRejectedValue(error);
+      await expect(bootstrap({})).rejects.toThrow("Pipeline failed");
+    });
+    it("propagates resume failures", async () => {
+      const error = new Error("Resume failed");
+      pipelineResume.mockRejectedValue(error);
+      await expect(bootstrap({ resumeJobId: "job-123" })).rejects.toThrow(
+        "Resume failed",
+      );
+    });
+  });
+});

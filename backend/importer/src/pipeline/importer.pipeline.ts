@@ -40,6 +40,10 @@ export interface ImporterPipelineResult {
   collected: number;
   normalized: number;
 
+  /*
+   * These values must always come directly
+   * from ContentWriter.
+   */
   written: number;
   created: number;
   updated: number;
@@ -60,21 +64,144 @@ export class ImporterPipeline {
       options.source;
   }
 
+  /**
+   * ----------------------------------------------------------
+   * NORMAL IMPORT
+   * ----------------------------------------------------------
+   *
+   * Lifecycle:
+   *
+   * nonexistent -> running
+   *
+   * success:
+   *
+   * running -> completed
+   *
+   * failure:
+   *
+   * running -> failed
+   */
   async run(): Promise<ImporterPipelineResult> {
     const jobId =
       crypto.randomUUID();
 
+    return this.runWithJobId(
+      jobId,
+      false,
+    );
+  }
+
+  /**
+   * ----------------------------------------------------------
+   * RESUME
+   * ----------------------------------------------------------
+   *
+   * Reads the existing audit record first.
+   *
+   * Rules:
+   *
+   * 1. Job must exist.
+   * 2. Job must be failed.
+   * 3. Completed jobs cannot be resumed.
+   * 4. Same jobId is reused.
+   */
+  async resume(
+    jobId: string,
+  ): Promise<ImporterPipelineResult> {
+    const jobReader =
+      new ImportJobReader();
+
+    const auditRecord =
+      await jobReader.get(
+        jobId,
+      );
+
+    if (!auditRecord) {
+      throw new Error(
+        `Import audit record not found for job ${jobId}`,
+      );
+    }
+
+    if (
+      auditRecord.status ===
+      "completed"
+    ) {
+      throw new Error(
+        `Import job "${jobId}" is already completed.`,
+      );
+    }
+
+    if (
+      auditRecord.status !==
+      "failed"
+    ) {
+      throw new Error(
+        `Import job "${jobId}" cannot be resumed from status "${auditRecord.status}".`,
+      );
+    }
+
+    const source =
+      auditRecord.source ===
+      "manual"
+        ? "manual"
+        : "json";
+
+    importerLogger.info(
+      "Resuming failed import job.",
+      {
+        jobId,
+        source,
+        status:
+          auditRecord.status,
+
+        resumeAttempts:
+          auditRecord.resumeAttempts ??
+          0,
+      },
+    );
+
+    /*
+     * IMPORTANT:
+     *
+     * Do not create another UUID.
+     *
+     * The existing jobId is reused.
+     */
+    const resumedPipeline =
+      new ImporterPipeline({
+        source,
+      });
+
+    return resumedPipeline.runWithJobId(
+      jobId,
+      true,
+    );
+  }
+
+  /**
+   * ----------------------------------------------------------
+   * EXECUTE PIPELINE WITH A SPECIFIC JOB ID
+   * ----------------------------------------------------------
+   *
+   * For normal imports:
+   *
+   * jobId is newly generated and start()
+   * creates running audit.
+   *
+   * For recovery:
+   *
+   * jobId already exists and resume()
+   * changes failed -> running.
+   */
+  private async runWithJobId(
+    jobId: string,
+    isResume: boolean,
+  ): Promise<ImporterPipelineResult> {
     const startedAt =
       new Date();
 
     const jobWriter =
       new ImportJobWriter();
-
-    /*
-     * --------------------------------------------------------
-     * Firestore
-     * --------------------------------------------------------
-     */
 
     const firestoreService =
       new FirestoreService();
@@ -96,8 +223,38 @@ export class ImporterPipeline {
 
     let retries = 0;
 
+    /*
+     * --------------------------------------------------------
+     * Audit state transition
+     * --------------------------------------------------------
+     */
+
+    if (isResume) {
+      /*
+       * failed -> running
+       *
+       * This also increments resumeAttempts.
+       */
+      await jobWriter.resume(
+        jobId,
+        this.source,
+        startedAt,
+      );
+    } else {
+      /*
+       * nonexistent -> running
+       */
+      await jobWriter.start(
+        jobId,
+        this.source,
+        startedAt,
+      );
+    }
+
     importerLogger.info(
-      "Import pipeline started.",
+      isResume
+        ? "Resumed import pipeline started."
+        : "Import pipeline started.",
       {
         jobId,
         source: this.source,
@@ -118,12 +275,6 @@ export class ImporterPipeline {
       `Source : ${this.source}`,
     );
     console.log("");
-
-    await jobWriter.start(
-      jobId,
-      this.source,
-      startedAt,
-    );
 
     try {
       /*
@@ -238,7 +389,7 @@ export class ImporterPipeline {
 
       /*
        * ------------------------------------------------------
-       * Existing pipeline summary
+       * Pipeline summary
        * ------------------------------------------------------
        */
 
@@ -262,16 +413,28 @@ export class ImporterPipeline {
 
       /*
        * ------------------------------------------------------
-       * Content write
+       * Firestore content write
        * ------------------------------------------------------
+       *
+       * ContentWriter is the source of truth for:
+       *
+       * written
+       * created
+       * updated
+       * unchanged
+       * verified
        */
-
       const writeResult:
         ContentWriteResult =
         await contentWriter.write(
           normalizedDocuments,
         );
 
+      /*
+       * Copy the actual write result.
+       *
+       * Do not calculate these independently.
+       */
       written =
         writeResult.written;
 
@@ -315,489 +478,209 @@ export class ImporterPipeline {
         `   Verified : ${verified}`,
       );
 
-      const result:
-        ImporterPipelineResult = {
-        jobId,
-        source: this.source,
-
-        collected,
-        normalized,
-
-        written,
-        created,
-        updated,
-        unchanged,
-        verified,
-      };
-
       /*
        * ------------------------------------------------------
-       * Complete audit
+       * Build final result
        * ------------------------------------------------------
-       */
-
-      await jobWriter.complete(
-        result,
-        startedAt,
-      );
-
-      const executionSummary =
-        createImportExecutionSummary({
-          jobId,
-          source: this.source,
-          startedAt,
-          status: "completed",
-
-          collected,
-          normalized,
-
-          written,
-          created,
-          updated,
-          unchanged,
-          verified,
-
-          retries,
-        });
-
-      result.executionSummary =
-        executionSummary;
-
-      importerLogger.info(
-        "Import execution summary.",
-        {
-          jobId,
-          source: this.source,
-          status:
-            executionSummary.status,
-          durationMs:
-            executionSummary.durationMs,
-
-          collected,
-          normalized,
-          written,
-          created,
-          updated,
-          unchanged,
-          verified,
-          retries,
-        },
-      );
-
-      return result;
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : String(error);
-
-      importerLogger.error(
-        "Import pipeline failed.",
-        {
-          jobId,
-          source: this.source,
-          error: errorMessage,
-        },
-      );
-
-      try {
-        await jobWriter.fail(
-          jobId,
-          this.source,
-          startedAt,
-          error,
-        );
-      } catch (
-        auditError: unknown
-      ) {
-        const auditErrorMessage =
-          auditError instanceof Error
-            ? auditError.message
-            : String(auditError);
-
-        importerLogger.error(
-          "Failed to write import failure audit record.",
-          {
-            jobId,
-            source: this.source,
-            error:
-              `Original error: ${errorMessage}; Audit error: ${auditErrorMessage}`,
-          },
-        );
-      }
-
-      throw error;
-    }
-  }
-
-  /**
-   * Resume a previously failed import.
-   *
-   * Rules:
-   *
-   * 1. Job must exist.
-   * 2. Completed jobs cannot be resumed.
-   * 3. Only failed jobs may be resumed.
-   * 4. The original jobId is always reused.
-   */
-  async resume(
-    jobId: string,
-  ): Promise<ImporterPipelineResult> {
-    const jobReader =
-      new ImportJobReader();
-
-    const auditRecord =
-      await jobReader.get(
-        jobId,
-      );
-
-    if (!auditRecord) {
-      throw new Error(
-        `Import audit record not found for job ${jobId}`,
-      );
-    }
-
-    if (
-      auditRecord.status ===
-      "completed"
-    ) {
-      throw new Error(
-        `Import job "${jobId}" is already completed.`,
-      );
-    }
-
-    if (
-      auditRecord.status !==
-      "failed"
-    ) {
-      throw new Error(
-        `Import job "${jobId}" cannot be resumed from status "${auditRecord.status}".`,
-      );
-    }
-
-    const source =
-      auditRecord.source ===
-      "manual"
-        ? "manual"
-        : "json";
-
-    importerLogger.info(
-      "Resuming failed import job.",
-      {
-        jobId,
-        source,
-        status:
-          auditRecord.status,
-
-        resumeAttempts:
-          auditRecord.resumeAttempts ??
-          0,
-      },
-    );
-
-    const resumedPipeline =
-      new ImporterPipeline({
-        source,
-      });
-
-    /*
-     * Important:
-     *
-     * No crypto.randomUUID().
-     *
-     * The original jobId is passed through.
-     */
-    return resumedPipeline.runWithJobId(
-      jobId,
-    );
-  }
-
-  /**
-   * Execute a recovery using an existing job ID.
-   */
-  private async runWithJobId(
-    jobId: string,
-  ): Promise<ImporterPipelineResult> {
-    const startedAt =
-      new Date();
-
-    const jobWriter =
-      new ImportJobWriter();
-
-    const firestoreService =
-      new FirestoreService();
-
-    const contentWriter =
-      new ContentWriter({
-        firestore:
-          firestoreService.getFirestore(),
-      });
-
-    let collected = 0;
-    let normalized = 0;
-
-    let written = 0;
-    let created = 0;
-    let updated = 0;
-    let unchanged = 0;
-    let verified = 0;
-
-    let retries = 0;
-
-    /*
-     * Mark the existing job as running.
-     *
-     * This increments resumeAttempts while
-     * preserving original failure information.
-     */
-    await jobWriter.resume(
-      jobId,
-      this.source,
-      startedAt,
-    );
-
-    importerLogger.info(
-      "Resumed import pipeline started.",
-      {
-        jobId,
-        source: this.source,
-      },
-    );
-
-    try {
-      /*
-       * ------------------------------------------------------
-       * Collection
-       * ------------------------------------------------------
-       */
-
-      const collector =
-        CollectorFactory.create(
-          this.source,
-        );
-
-      const documents =
-        await collector.collect();
-
-      collected =
-        documents.length;
-
-      /*
-       * ------------------------------------------------------
-       * Normalization
-       * ------------------------------------------------------
-       */
-
-      const normalizer =
-        new ContentNormalizer();
-
-      const normalizedDocuments =
-        normalizer.normalize(
-          documents,
-        );
-
-      normalized =
-        normalizedDocuments.length;
-
-      /*
-       * ------------------------------------------------------
-       * Validation
-       * ------------------------------------------------------
-       */
-
-      const validator =
-        new ContentValidator();
-
-      const validation =
-        validator.validate(
-          normalizedDocuments,
-        );
-
-      if (
-        !validation.valid
-      ) {
-        throw new Error(
-          "Content validation failed.",
-        );
-      }
-
-      /*
-       * ------------------------------------------------------
-       * Content write
-       * ------------------------------------------------------
-       */
-
-      const writeResult:
-        ContentWriteResult =
-        await contentWriter.write(
-          normalizedDocuments,
-        );
-
-      written =
-        writeResult.written;
-
-      created =
-        writeResult.created;
-
-      updated =
-        writeResult.updated;
-
-      unchanged =
-        writeResult.unchanged;
-
-      verified =
-        writeResult.verified;
-
-      const result:
-        ImporterPipelineResult = {
-        jobId,
-        source: this.source,
-
-        collected,
-        normalized,
-
-        written,
-        created,
-        updated,
-        unchanged,
-        verified,
-      };
-
-      /*
-       * ------------------------------------------------------
-       * Complete existing job
-       * ------------------------------------------------------
-       */
-
-      await jobWriter.complete(
-        result,
-        startedAt,
-      );
-
-      const executionSummary =
-        createImportExecutionSummary({
-          jobId,
-          source: this.source,
-          startedAt,
-          status: "completed",
-
-          collected,
-          normalized,
-
-          written,
-          created,
-          updated,
-          unchanged,
-          verified,
-
-          retries,
-        });
-
-      result.executionSummary =
-        executionSummary;
-
-      importerLogger.info(
-        "Resumed import pipeline completed.",
-        {
-          jobId,
-          source: this.source,
-          status:
-            executionSummary.status,
-          durationMs:
-            executionSummary.durationMs,
-
-          collected,
-          normalized,
-          written,
-          created,
-          updated,
-          unchanged,
-          verified,
-          retries,
-        },
-      );
-
-      return result;
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : String(error);
-
-      const executionSummary =
-        createImportExecutionSummary({
-          jobId,
-          source: this.source,
-          startedAt,
-          status: "failed",
-
-          collected,
-          normalized,
-
-          written,
-          created,
-          updated,
-          unchanged,
-          verified,
-
-          retries,
-          error: errorMessage,
-        });
-
-      importerLogger.error(
-        "Resumed import pipeline failed.",
-        {
-          jobId,
-          source: this.source,
-          error: errorMessage,
-
-          collected,
-          normalized,
-          written,
-          created,
-          updated,
-          unchanged,
-          verified,
-          retries,
-
-          durationMs:
-            executionSummary.durationMs,
-        },
-      );
-
-      /*
-       * Important:
        *
-       * markFailed() preserves the original failure
-       * and appends the new recovery failure.
+       * This object contains exactly the values
+       * returned by ContentWriter.
+       */
+      const result:
+        ImporterPipelineResult = {
+        jobId,
+        source: this.source,
+
+        collected,
+        normalized,
+
+        written,
+        created,
+        updated,
+        unchanged,
+        verified,
+      };
+
+      /*
+       * ------------------------------------------------------
+       * Audit completion
+       * ------------------------------------------------------
+       *
+       * State:
+       *
+       * normal:
+       * running -> completed
+       *
+       * recovery:
+       * running -> completed
+       *
+       * In both cases the exact writeResult
+       * statistics are persisted.
+       */
+      await jobWriter.complete(
+        result,
+        startedAt,
+      );
+
+      /*
+       * ------------------------------------------------------
+       * Execution summary
+       * ------------------------------------------------------
+       */
+
+      const executionSummary =
+        createImportExecutionSummary({
+          jobId,
+          source: this.source,
+
+          startedAt,
+
+          status:
+            "completed",
+
+          collected,
+          normalized,
+
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+
+          retries,
+        });
+
+      result.executionSummary =
+        executionSummary;
+
+      importerLogger.info(
+        isResume
+          ? "Resumed import pipeline completed."
+          : "Import execution summary.",
+        {
+          jobId,
+          source: this.source,
+
+          status:
+            executionSummary.status,
+
+          durationMs:
+            executionSummary.durationMs,
+
+          collected,
+          normalized,
+
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+
+          retries,
+        },
+      );
+
+      return result;
+    } catch (
+      error: unknown
+    ) {
+      /*
+       * IMPORTANT:
+       *
+       * Preserve the actual pipeline error.
+       */
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : String(error);
+
+      importerLogger.error(
+        isResume
+          ? "Resumed import pipeline failed."
+          : "Import pipeline failed.",
+        {
+          jobId,
+          source: this.source,
+
+          error:
+            errorMessage,
+
+          collected,
+          normalized,
+
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+
+          retries,
+        },
+      );
+
+      /*
+       * ------------------------------------------------------
+       * Failure audit
+       * ------------------------------------------------------
+       *
+       * Normal:
+       *
+       * running -> failed
+       *
+       * Recovery:
+       *
+       * running -> failed
+       *
+       * In recovery, markFailed() preserves
+       * originalErrors.
        */
       try {
-        await jobWriter.markFailed(
-          jobId,
-          error,
-        );
+        if (isResume) {
+          await jobWriter.markFailed(
+            jobId,
+            error,
+          );
+        } else {
+          await jobWriter.fail(
+            jobId,
+            this.source,
+            startedAt,
+            error,
+          );
+        }
       } catch (
         auditError: unknown
       ) {
+        /*
+         * M8.5 REQUIREMENT:
+         *
+         * Audit-write failure must NEVER hide
+         * the original import failure.
+         */
         const auditErrorMessage =
           auditError instanceof Error
             ? auditError.message
             : String(auditError);
 
         importerLogger.error(
-          "Failed to record resumed import failure.",
+          isResume
+            ? "Failed to record resumed import failure."
+            : "Failed to write import failure audit record.",
           {
             jobId,
             source: this.source,
-            error:
-              `Original error: ${errorMessage}; Audit error: ${auditErrorMessage}`,
+
+            originalError:
+              errorMessage,
+
+            auditError:
+              auditErrorMessage,
           },
         );
       }
 
       /*
-       * Never replace the actual import error
-       * with an audit-write error.
+       * ALWAYS throw the original error.
        */
       throw error;
     }

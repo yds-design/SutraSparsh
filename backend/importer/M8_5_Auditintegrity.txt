@@ -1,0 +1,2833 @@
+
+============================================================
+FILE: .\src\pipeline\importer.pipeline.ts
+============================================================
+import crypto from "node:crypto";
+
+import { CollectorFactory } from "../collector/index.js";
+
+import {
+  ImportJobReader,
+  ImportJobWriter,
+} from "../firestore/index.js";
+
+import {
+  ContentWriter,
+  type ContentWriteResult,
+} from "../firestore/content.writer.js";
+
+import { FirestoreService } from "../firestore/service.js";
+
+import { ContentNormalizer } from "../normalizer/index.js";
+
+import {
+  createImportExecutionSummary,
+  type ImportExecutionSummary,
+} from "../observability/importer.execution-summary.js";
+
+import {
+  importerLogger,
+} from "../observability/importer.logger.js";
+
+import { Pipeline } from "../shared/index.js";
+
+import { ContentValidator } from "../validator/index.js";
+
+export interface ImporterPipelineOptions {
+  source: "json" | "manual";
+}
+
+export interface ImporterPipelineResult {
+  jobId: string;
+  source: string;
+
+  collected: number;
+  normalized: number;
+
+  written: number;
+  created: number;
+  updated: number;
+  unchanged: number;
+  verified: number;
+
+  executionSummary?: ImportExecutionSummary;
+}
+
+export class ImporterPipeline {
+  private readonly source:
+    "json" | "manual";
+
+  constructor(
+    options: ImporterPipelineOptions,
+  ) {
+    this.source =
+      options.source;
+  }
+
+  async run(): Promise<ImporterPipelineResult> {
+    const jobId =
+      crypto.randomUUID();
+
+    const startedAt =
+      new Date();
+
+    const jobWriter =
+      new ImportJobWriter();
+
+    /*
+     * --------------------------------------------------------
+     * Firestore
+     * --------------------------------------------------------
+     */
+
+    const firestoreService =
+      new FirestoreService();
+
+    const contentWriter =
+      new ContentWriter({
+        firestore:
+          firestoreService.getFirestore(),
+      });
+
+    let collected = 0;
+    let normalized = 0;
+
+    let written = 0;
+    let created = 0;
+    let updated = 0;
+    let unchanged = 0;
+    let verified = 0;
+
+    let retries = 0;
+
+    importerLogger.info(
+      "Import pipeline started.",
+      {
+        jobId,
+        source: this.source,
+      },
+    );
+
+    console.log("");
+    console.log(
+      "## Import Pipeline",
+    );
+    console.log(
+      "----------------------",
+    );
+    console.log(
+      `Job ID : ${jobId}`,
+    );
+    console.log(
+      `Source : ${this.source}`,
+    );
+    console.log("");
+
+    await jobWriter.start(
+      jobId,
+      this.source,
+      startedAt,
+    );
+
+    try {
+      /*
+       * ------------------------------------------------------
+       * Collection
+       * ------------------------------------------------------
+       */
+
+      const collector =
+        CollectorFactory.create(
+          this.source,
+        );
+
+      const documents =
+        await collector.collect();
+
+      collected =
+        documents.length;
+
+      console.log(
+        `Collected : ${collected}`,
+      );
+
+      /*
+       * ------------------------------------------------------
+       * Normalization
+       * ------------------------------------------------------
+       */
+
+      const normalizer =
+        new ContentNormalizer();
+
+      const normalizedDocuments =
+        normalizer.normalize(
+          documents,
+        );
+
+      normalized =
+        normalizedDocuments.length;
+
+      console.log(
+        `Normalized : ${normalized}`,
+      );
+
+      /*
+       * ------------------------------------------------------
+       * Validation
+       * ------------------------------------------------------
+       */
+
+      const validator =
+        new ContentValidator();
+
+      const validation =
+        validator.validate(
+          normalizedDocuments,
+        );
+
+      console.log("");
+      console.log(
+        "## Content Validation",
+      );
+      console.log(
+        "----------------------",
+      );
+
+      if (
+        validation.errors.length >
+        0
+      ) {
+        console.error(
+          `❌ Errors : ${validation.errors.length}`,
+        );
+
+        validation.errors.forEach(
+          (error: string) => {
+            console.error(
+              `• ${error}`,
+            );
+          },
+        );
+      }
+
+      if (
+        validation.warnings.length >
+        0
+      ) {
+        console.warn(
+          `⚠ Warnings : ${validation.warnings.length}`,
+        );
+
+        validation.warnings.forEach(
+          (warning: string) => {
+            console.warn(
+              `• ${warning}`,
+            );
+          },
+        );
+      }
+
+      if (
+        !validation.valid
+      ) {
+        throw new Error(
+          "Content validation failed.",
+        );
+      }
+
+      console.log(
+        "✅ Content validation passed.",
+      );
+
+      /*
+       * ------------------------------------------------------
+       * Existing pipeline summary
+       * ------------------------------------------------------
+       */
+
+      const pipeline =
+        new Pipeline({
+          jobId,
+          source: this.source,
+          documents:
+            normalizedDocuments,
+        });
+
+      console.log("");
+      console.log(
+        "## Pipeline",
+      );
+      console.log(
+        "----------------------",
+      );
+
+      pipeline.summary();
+
+      /*
+       * ------------------------------------------------------
+       * Content write
+       * ------------------------------------------------------
+       */
+
+      const writeResult:
+        ContentWriteResult =
+        await contentWriter.write(
+          normalizedDocuments,
+        );
+
+      written =
+        writeResult.written;
+
+      created =
+        writeResult.created;
+
+      updated =
+        writeResult.updated;
+
+      unchanged =
+        writeResult.unchanged;
+
+      verified =
+        writeResult.verified;
+
+      console.log("");
+      console.log(
+        "## Firestore Content Writer",
+      );
+      console.log(
+        "---------------------------",
+      );
+
+      console.log(
+        `✅ Written  : ${written}`,
+      );
+
+      console.log(
+        `   Created  : ${created}`,
+      );
+
+      console.log(
+        `   Updated  : ${updated}`,
+      );
+
+      console.log(
+        `   Unchanged: ${unchanged}`,
+      );
+
+      console.log(
+        `   Verified : ${verified}`,
+      );
+
+      const result:
+        ImporterPipelineResult = {
+        jobId,
+        source: this.source,
+
+        collected,
+        normalized,
+
+        written,
+        created,
+        updated,
+        unchanged,
+        verified,
+      };
+
+      /*
+       * ------------------------------------------------------
+       * Complete audit
+       * ------------------------------------------------------
+       */
+
+      await jobWriter.complete(
+        result,
+        startedAt,
+      );
+
+      const executionSummary =
+        createImportExecutionSummary({
+          jobId,
+          source: this.source,
+          startedAt,
+          status: "completed",
+
+          collected,
+          normalized,
+
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+
+          retries,
+        });
+
+      result.executionSummary =
+        executionSummary;
+
+      importerLogger.info(
+        "Import execution summary.",
+        {
+          jobId,
+          source: this.source,
+          status:
+            executionSummary.status,
+          durationMs:
+            executionSummary.durationMs,
+
+          collected,
+          normalized,
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+          retries,
+        },
+      );
+
+      return result;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : String(error);
+
+      importerLogger.error(
+        "Import pipeline failed.",
+        {
+          jobId,
+          source: this.source,
+          error: errorMessage,
+        },
+      );
+
+      try {
+        await jobWriter.fail(
+          jobId,
+          this.source,
+          startedAt,
+          error,
+        );
+      } catch (
+        auditError: unknown
+      ) {
+        const auditErrorMessage =
+          auditError instanceof Error
+            ? auditError.message
+            : String(auditError);
+
+        importerLogger.error(
+          "Failed to write import failure audit record.",
+          {
+            jobId,
+            source: this.source,
+            error:
+              `Original error: ${errorMessage}; Audit error: ${auditErrorMessage}`,
+          },
+        );
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * Resume a previously failed import.
+   *
+   * Rules:
+   *
+   * 1. Job must exist.
+   * 2. Completed jobs cannot be resumed.
+   * 3. Only failed jobs may be resumed.
+   * 4. The original jobId is always reused.
+   */
+  async resume(
+    jobId: string,
+  ): Promise<ImporterPipelineResult> {
+    const jobReader =
+      new ImportJobReader();
+
+    const auditRecord =
+      await jobReader.get(
+        jobId,
+      );
+
+    if (!auditRecord) {
+      throw new Error(
+        `Import audit record not found for job ${jobId}`,
+      );
+    }
+
+    if (
+      auditRecord.status ===
+      "completed"
+    ) {
+      throw new Error(
+        `Import job "${jobId}" is already completed.`,
+      );
+    }
+
+    if (
+      auditRecord.status !==
+      "failed"
+    ) {
+      throw new Error(
+        `Import job "${jobId}" cannot be resumed from status "${auditRecord.status}".`,
+      );
+    }
+
+    const source =
+      auditRecord.source ===
+      "manual"
+        ? "manual"
+        : "json";
+
+    importerLogger.info(
+      "Resuming failed import job.",
+      {
+        jobId,
+        source,
+        status:
+          auditRecord.status,
+
+        resumeAttempts:
+          auditRecord.resumeAttempts ??
+          0,
+      },
+    );
+
+    const resumedPipeline =
+      new ImporterPipeline({
+        source,
+      });
+
+    /*
+     * Important:
+     *
+     * No crypto.randomUUID().
+     *
+     * The original jobId is passed through.
+     */
+    return resumedPipeline.runWithJobId(
+      jobId,
+    );
+  }
+
+  /**
+   * Execute a recovery using an existing job ID.
+   */
+  private async runWithJobId(
+    jobId: string,
+  ): Promise<ImporterPipelineResult> {
+    const startedAt =
+      new Date();
+
+    const jobWriter =
+      new ImportJobWriter();
+
+    const firestoreService =
+      new FirestoreService();
+
+    const contentWriter =
+      new ContentWriter({
+        firestore:
+          firestoreService.getFirestore(),
+      });
+
+    let collected = 0;
+    let normalized = 0;
+
+    let written = 0;
+    let created = 0;
+    let updated = 0;
+    let unchanged = 0;
+    let verified = 0;
+
+    let retries = 0;
+
+    /*
+     * Mark the existing job as running.
+     *
+     * This increments resumeAttempts while
+     * preserving original failure information.
+     */
+    await jobWriter.resume(
+      jobId,
+      this.source,
+      startedAt,
+    );
+
+    importerLogger.info(
+      "Resumed import pipeline started.",
+      {
+        jobId,
+        source: this.source,
+      },
+    );
+
+    try {
+      /*
+       * ------------------------------------------------------
+       * Collection
+       * ------------------------------------------------------
+       */
+
+      const collector =
+        CollectorFactory.create(
+          this.source,
+        );
+
+      const documents =
+        await collector.collect();
+
+      collected =
+        documents.length;
+
+      /*
+       * ------------------------------------------------------
+       * Normalization
+       * ------------------------------------------------------
+       */
+
+      const normalizer =
+        new ContentNormalizer();
+
+      const normalizedDocuments =
+        normalizer.normalize(
+          documents,
+        );
+
+      normalized =
+        normalizedDocuments.length;
+
+      /*
+       * ------------------------------------------------------
+       * Validation
+       * ------------------------------------------------------
+       */
+
+      const validator =
+        new ContentValidator();
+
+      const validation =
+        validator.validate(
+          normalizedDocuments,
+        );
+
+      if (
+        !validation.valid
+      ) {
+        throw new Error(
+          "Content validation failed.",
+        );
+      }
+
+      /*
+       * ------------------------------------------------------
+       * Content write
+       * ------------------------------------------------------
+       */
+
+      const writeResult:
+        ContentWriteResult =
+        await contentWriter.write(
+          normalizedDocuments,
+        );
+
+      written =
+        writeResult.written;
+
+      created =
+        writeResult.created;
+
+      updated =
+        writeResult.updated;
+
+      unchanged =
+        writeResult.unchanged;
+
+      verified =
+        writeResult.verified;
+
+      const result:
+        ImporterPipelineResult = {
+        jobId,
+        source: this.source,
+
+        collected,
+        normalized,
+
+        written,
+        created,
+        updated,
+        unchanged,
+        verified,
+      };
+
+      /*
+       * ------------------------------------------------------
+       * Complete existing job
+       * ------------------------------------------------------
+       */
+
+      await jobWriter.complete(
+        result,
+        startedAt,
+      );
+
+      const executionSummary =
+        createImportExecutionSummary({
+          jobId,
+          source: this.source,
+          startedAt,
+          status: "completed",
+
+          collected,
+          normalized,
+
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+
+          retries,
+        });
+
+      result.executionSummary =
+        executionSummary;
+
+      importerLogger.info(
+        "Resumed import pipeline completed.",
+        {
+          jobId,
+          source: this.source,
+          status:
+            executionSummary.status,
+          durationMs:
+            executionSummary.durationMs,
+
+          collected,
+          normalized,
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+          retries,
+        },
+      );
+
+      return result;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : String(error);
+
+      const executionSummary =
+        createImportExecutionSummary({
+          jobId,
+          source: this.source,
+          startedAt,
+          status: "failed",
+
+          collected,
+          normalized,
+
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+
+          retries,
+          error: errorMessage,
+        });
+
+      importerLogger.error(
+        "Resumed import pipeline failed.",
+        {
+          jobId,
+          source: this.source,
+          error: errorMessage,
+
+          collected,
+          normalized,
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+          retries,
+
+          durationMs:
+            executionSummary.durationMs,
+        },
+      );
+
+      /*
+       * Important:
+       *
+       * markFailed() preserves the original failure
+       * and appends the new recovery failure.
+       */
+      try {
+        await jobWriter.markFailed(
+          jobId,
+          error,
+        );
+      } catch (
+        auditError: unknown
+      ) {
+        const auditErrorMessage =
+          auditError instanceof Error
+            ? auditError.message
+            : String(auditError);
+
+        importerLogger.error(
+          "Failed to record resumed import failure.",
+          {
+            jobId,
+            source: this.source,
+            error:
+              `Original error: ${errorMessage}; Audit error: ${auditErrorMessage}`,
+          },
+        );
+      }
+
+      /*
+       * Never replace the actual import error
+       * with an audit-write error.
+       */
+      throw error;
+    }
+  }
+}
+
+
+
+============================================================
+FILE: .\src\recovery\import-recovery.ts
+============================================================
+import {
+  importerLogger,
+} from "../observability/importer.logger.js";
+
+export type ImportRecoveryStatus =
+  | "recovered"
+  | "failed"
+  | "skipped";
+
+export interface ImportRecoveryResult {
+  status: ImportRecoveryStatus;
+  jobId: string;
+  attempts: number;
+  recovered: boolean;
+  error?: string;
+}
+
+export interface ImportRecoveryOptions {
+  jobId: string;
+  maxAttempts?: number;
+  retryDelayMs?: number;
+}
+
+export interface ImportRecoveryOperation {
+  (): Promise<void>;
+}
+
+/**
+ * Executes a recovery operation with bounded retries.
+ *
+ * This helper retries the recovery operation itself.
+ * It does not generate a new job ID.
+ */
+export async function recoverImport(
+  operation: ImportRecoveryOperation,
+  options: ImportRecoveryOptions,
+): Promise<ImportRecoveryResult> {
+  const {
+    jobId,
+    maxAttempts = 3,
+    retryDelayMs = 500,
+  } = options;
+
+  const startedAt =
+    Date.now();
+
+  if (maxAttempts <= 0) {
+    importerLogger.warn(
+      "Import recovery skipped because maxAttempts is not positive.",
+      {
+        jobId,
+        phase: "recovery",
+      },
+    );
+
+    return {
+      status: "skipped",
+      jobId,
+      attempts: 0,
+      recovered: false,
+    };
+  }
+
+  let attempts = 0;
+  let lastError: unknown;
+
+  while (
+    attempts < maxAttempts
+  ) {
+    attempts += 1;
+
+    importerLogger.info(
+      "Import recovery attempt started.",
+      {
+        jobId,
+        phase: "recovery",
+        attempt: attempts,
+      },
+    );
+
+    try {
+      await operation();
+
+      importerLogger.info(
+        "Import recovery completed successfully.",
+        {
+          jobId,
+          phase: "recovery",
+          attempt: attempts,
+          retries: Math.max(
+            attempts - 1,
+            0,
+          ),
+          durationMs:
+            Date.now() -
+            startedAt,
+        },
+      );
+
+      return {
+        status: "recovered",
+        jobId,
+        attempts,
+        recovered: true,
+      };
+    } catch (error: unknown) {
+      lastError = error;
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : String(error);
+
+      if (
+        attempts >= maxAttempts
+      ) {
+        importerLogger.error(
+          "Import recovery exhausted all attempts.",
+          {
+            jobId,
+            phase: "recovery",
+            attempt: attempts,
+            retries: Math.max(
+              attempts - 1,
+              0,
+            ),
+            durationMs:
+              Date.now() -
+              startedAt,
+            error: message,
+          },
+        );
+
+        return {
+          status: "failed",
+          jobId,
+          attempts,
+          recovered: false,
+          error: message,
+        };
+      }
+
+      importerLogger.warn(
+        "Import recovery attempt failed; retrying.",
+        {
+          jobId,
+          phase: "recovery",
+          attempt: attempts,
+          retries: attempts,
+          error: message,
+        },
+      );
+
+      await delay(
+        retryDelayMs,
+      );
+    }
+  }
+
+  const fallbackError =
+    lastError instanceof Error
+      ? lastError.message
+      : String(lastError);
+
+  return {
+    status: "failed",
+    jobId,
+    attempts,
+    recovered: false,
+    error: fallbackError,
+  };
+}
+
+function delay(
+  delayMs: number,
+): Promise<void> {
+  if (delayMs <= 0) {
+    return Promise.resolve();
+  }
+
+  return new Promise(
+    (resolve) => {
+      setTimeout(
+        resolve,
+        delayMs,
+      );
+    },
+  );
+}
+
+
+
+============================================================
+FILE: .\src\firestore\import-job.reader.ts
+============================================================
+import type {
+  ImportJobAudit,
+  ImportJobStatus,
+} from "./import-job.writer.js";
+
+import { firestore } from "./client.js";
+
+export class ImportJobReader {
+  private readonly db = firestore();
+
+  private getJobRef(jobId: string) {
+    return this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .doc(jobId);
+  }
+
+  /**
+   * Read a single import job by job ID.
+   */
+  async get(
+    jobId: string,
+  ): Promise<ImportJobAudit | null> {
+    const snapshot =
+      await this.getJobRef(jobId).get();
+
+    if (!snapshot.exists) {
+      return null;
+    }
+
+    return snapshot.data() as ImportJobAudit;
+  }
+
+  /**
+   * Read recent import jobs.
+   */
+  async list(
+    limit = 10,
+  ): Promise<ImportJobAudit[]> {
+    if (limit <= 0) {
+      return [];
+    }
+
+    const snapshot =
+      await this.db
+        .collection("system")
+        .doc("importJobs")
+        .collection("runs")
+        .orderBy(
+          "startedAt",
+          "desc",
+        )
+        .limit(limit)
+        .get();
+
+    return snapshot.docs.map(
+      (doc) =>
+        doc.data() as ImportJobAudit,
+    );
+  }
+
+  async getSummary(): Promise<{
+    total: number;
+    completed: number;
+    failed: number;
+  }> {
+    const snapshot =
+      await this.db
+        .collection("system")
+        .doc("importJobs")
+        .collection("runs")
+        .get();
+
+    let completed = 0;
+    let failed = 0;
+
+    snapshot.docs.forEach(
+      (doc) => {
+        const data =
+          doc.data() as ImportJobAudit;
+
+        if (
+          data.status ===
+          "completed"
+        ) {
+          completed++;
+        }
+
+        if (
+          data.status ===
+          "failed"
+        ) {
+          failed++;
+        }
+      },
+    );
+
+    return {
+      total: snapshot.size,
+      completed,
+      failed,
+    };
+  }
+
+  async listByStatus(
+    status: ImportJobStatus,
+    limit = 10,
+  ): Promise<ImportJobAudit[]> {
+    if (limit <= 0) {
+      return [];
+    }
+
+    const snapshot =
+      await this.db
+        .collection("system")
+        .doc("importJobs")
+        .collection("runs")
+        .where(
+          "status",
+          "==",
+          status,
+        )
+        .orderBy(
+          "startedAt",
+          "desc",
+        )
+        .limit(limit)
+        .get();
+
+    return snapshot.docs.map(
+      (doc) =>
+        doc.data() as ImportJobAudit,
+    );
+  }
+
+  async listBySource(
+    source: ImportJobAudit["source"],
+    limit = 10,
+  ): Promise<ImportJobAudit[]> {
+    if (limit <= 0) {
+      return [];
+    }
+
+    const snapshot =
+      await this.db
+        .collection("system")
+        .doc("importJobs")
+        .collection("runs")
+        .where(
+          "source",
+          "==",
+          source,
+        )
+        .orderBy(
+          "startedAt",
+          "desc",
+        )
+        .limit(limit)
+        .get();
+
+    return snapshot.docs.map(
+      (doc) =>
+        doc.data() as ImportJobAudit,
+    );
+  }
+
+  async getLatest(): Promise<ImportJobAudit | null> {
+    const snapshot =
+      await this.db
+        .collection("system")
+        .doc("importJobs")
+        .collection("runs")
+        .orderBy(
+          "startedAt",
+          "desc",
+        )
+        .limit(1)
+        .get();
+
+    const firstDocument =
+      snapshot.docs[0];
+
+    if (!firstDocument) {
+      return null;
+    }
+
+    return firstDocument.data() as ImportJobAudit;
+  }
+
+  async getLatestBySource(
+    source: ImportJobAudit["source"],
+  ): Promise<ImportJobAudit | null> {
+    const snapshot =
+      await this.db
+        .collection("system")
+        .doc("importJobs")
+        .collection("runs")
+        .where(
+          "source",
+          "==",
+          source,
+        )
+        .orderBy(
+          "startedAt",
+          "desc",
+        )
+        .limit(1)
+        .get();
+
+    const firstDocument =
+      snapshot.docs[0];
+
+    if (!firstDocument) {
+      return null;
+    }
+
+    return firstDocument.data() as ImportJobAudit;
+  }
+}
+
+
+
+============================================================
+FILE: .\src\firestore\import-job.writer.ts
+============================================================
+import type { ImporterPipelineResult } from "../pipeline/index.js";
+import { firestore } from "./client.js";
+
+export type ImportJobStatus =
+  | "running"
+  | "completed"
+  | "failed";
+
+export interface ImportJobAudit {
+  jobId: string;
+  source: string;
+  status: ImportJobStatus;
+
+  startedAt: Date;
+  completedAt?: Date | null;
+
+  collected: number;
+  normalized: number;
+  written: number;
+  created: number;
+  updated: number;
+  verified: number;
+
+  /**
+   * Latest/current failure information.
+   */
+  errors: string[];
+
+  /**
+   * Original failure(s) that caused the job
+   * to enter recovery.
+   *
+   * These are never cleared by a resume.
+   */
+  originalErrors?: string[];
+
+  /**
+   * Number of resume attempts made against
+   * this job ID.
+   */
+  resumeAttempts?: number;
+}
+
+function errorToMessage(error: unknown): string {
+  return error instanceof Error
+    ? error.message
+    : String(error);
+}
+
+export class ImportJobWriter {
+  private readonly db = firestore();
+
+  private getJobRef(jobId: string) {
+    return this.db
+      .collection("system")
+      .doc("importJobs")
+      .collection("runs")
+      .doc(jobId);
+  }
+
+  async start(
+    jobId: string,
+    source: string,
+    startedAt: Date,
+  ): Promise<void> {
+    const ref = this.getJobRef(jobId);
+
+    const job: ImportJobAudit = {
+      jobId,
+      source,
+      status: "running",
+      startedAt,
+      completedAt: null,
+
+      collected: 0,
+      normalized: 0,
+
+      written: 0,
+      created: 0,
+      updated: 0,
+      verified: 0,
+
+      errors: [],
+      originalErrors: [],
+
+      resumeAttempts: 0,
+    };
+
+    await ref.set(job);
+  }
+
+  async complete(
+    result: ImporterPipelineResult,
+    startedAt: Date,
+  ): Promise<void> {
+    const ref =
+      this.getJobRef(result.jobId);
+
+    const job: ImportJobAudit = {
+      jobId: result.jobId,
+      source: result.source,
+      status: "completed",
+
+      startedAt,
+      completedAt: new Date(),
+
+      collected: result.collected,
+      normalized: result.normalized,
+
+      written: result.written,
+      created: result.created,
+      updated: result.updated,
+      verified: result.verified,
+
+      errors: [],
+
+      /*
+       * Successful completion does not erase
+       * historical failure information.
+       *
+       * merge:true preserves:
+       * - originalErrors
+       * - resumeAttempts
+       */
+    };
+
+    await ref.set(job, {
+      merge: true,
+    });
+  }
+
+  /**
+   * Record the first/original failure.
+   *
+   * Existing failure history is preserved.
+   */
+  async fail(
+    jobId: string,
+    source: string,
+    startedAt: Date,
+    error: unknown,
+  ): Promise<void> {
+    const ref =
+      this.getJobRef(jobId);
+
+    const message =
+      errorToMessage(error);
+
+    const snapshot =
+      await ref.get();
+
+    const existing =
+      snapshot.exists
+        ? (
+            snapshot.data() as Partial<ImportJobAudit>
+          )
+        : undefined;
+
+    const existingErrors =
+      Array.isArray(existing?.errors)
+        ? existing.errors
+        : [];
+
+    const existingOriginalErrors =
+      Array.isArray(
+        existing?.originalErrors,
+      )
+        ? existing.originalErrors
+        : [];
+
+    const originalErrors =
+      existingOriginalErrors.length > 0
+        ? existingOriginalErrors
+        : existingErrors.length > 0
+          ? existingErrors
+          : [message];
+
+    const errors =
+      existingErrors.includes(message)
+        ? existingErrors
+        : [
+            ...existingErrors,
+            message,
+          ];
+
+    await ref.set(
+      {
+        jobId,
+        source,
+        status: "failed",
+
+        /*
+         * Preserve the original job start time
+         * whenever it already exists.
+         */
+        startedAt:
+          existing?.startedAt ??
+          startedAt,
+
+        completedAt: new Date(),
+
+        errors,
+        originalErrors,
+
+        resumeAttempts:
+          existing?.resumeAttempts ?? 0,
+      },
+      {
+        merge: true,
+      },
+    );
+  }
+
+  /**
+   * Mark a failed job as being resumed.
+   *
+   * The same jobId is reused.
+   *
+   * Original failure information is deliberately
+   * preserved.
+   */
+  async resume(
+    jobId: string,
+    source: string,
+    startedAt: Date,
+  ): Promise<void> {
+    const ref =
+      this.getJobRef(jobId);
+
+    const snapshot =
+      await ref.get();
+
+    if (!snapshot.exists) {
+      throw new Error(
+        `Import audit record not found for job ${jobId}`,
+      );
+    }
+
+    const existing =
+      snapshot.data() as Partial<ImportJobAudit>;
+
+    if (
+      existing.status ===
+      "completed"
+    ) {
+      throw new Error(
+        `Import job "${jobId}" is already completed.`,
+      );
+    }
+
+    if (
+      existing.status !==
+      "failed"
+    ) {
+      throw new Error(
+        `Import job "${jobId}" cannot be resumed from status "${existing.status}".`,
+      );
+    }
+
+    const resumeAttempts =
+      (existing.resumeAttempts ?? 0) + 1;
+
+    await ref.set(
+      {
+        jobId,
+        source,
+        status: "running",
+
+        /*
+         * The original job start time is preserved.
+         */
+        startedAt:
+          existing.startedAt ??
+          startedAt,
+
+        completedAt: null,
+
+        resumeAttempts,
+
+        /*
+         * Do NOT clear:
+         * - errors
+         * - originalErrors
+         */
+      },
+      {
+        merge: true,
+      },
+    );
+  }
+
+  /**
+   * Record a failure after a recovery attempt.
+   *
+   * The original failure remains untouched.
+   * The new failure is appended to the history.
+   */
+  async markFailed(
+    jobId: string,
+    error: unknown,
+  ): Promise<void> {
+    const ref =
+      this.getJobRef(jobId);
+
+    const message =
+      errorToMessage(error);
+
+    const snapshot =
+      await ref.get();
+
+    if (!snapshot.exists) {
+      throw new Error(
+        `Import audit record not found for job ${jobId}`,
+      );
+    }
+
+    const existing =
+      snapshot.data() as Partial<ImportJobAudit>;
+
+    const existingErrors =
+      Array.isArray(existing.errors)
+        ? existing.errors
+        : [];
+
+    const existingOriginalErrors =
+      Array.isArray(
+        existing.originalErrors,
+      )
+        ? existing.originalErrors
+        : [];
+
+    const errors =
+      existingErrors.includes(message)
+        ? existingErrors
+        : [
+            ...existingErrors,
+            message,
+          ];
+
+    const originalErrors =
+      existingOriginalErrors.length > 0
+        ? existingOriginalErrors
+        : existingErrors.length > 0
+          ? existingErrors
+          : [message];
+
+    await ref.set(
+      {
+        status: "failed",
+        completedAt: new Date(),
+
+        /*
+         * Preserve all failure history.
+         */
+        errors,
+        originalErrors,
+
+        resumeAttempts:
+          existing.resumeAttempts ?? 0,
+      },
+      {
+        merge: true,
+      },
+    );
+  }
+}
+
+
+
+============================================================
+FILE: .\src\observability\importer.execution-summary.ts
+============================================================
+export type ImportExecutionStatus =
+  | "completed"
+  | "failed";
+
+export interface ImportExecutionSummary {
+  jobId: string;
+  source: string;
+  status: ImportExecutionStatus;
+  durationMs: number;
+
+  collected: number;
+  normalized: number;
+  written: number;
+  created: number;
+  updated: number;
+  unchanged: number;
+  verified: number;
+
+  retries: number;
+  error?: string;
+}
+
+export interface CreateImportExecutionSummaryOptions {
+  jobId: string;
+  source: string;
+  startedAt: Date;
+
+  status: ImportExecutionStatus;
+
+  collected?: number;
+  normalized?: number;
+  written?: number;
+  created?: number;
+  updated?: number;
+  unchanged?: number;
+  verified?: number;
+
+  retries?: number;
+  error?: string;
+
+  now?: Date;
+}
+
+export function createImportExecutionSummary(
+  options: CreateImportExecutionSummaryOptions,
+): ImportExecutionSummary {
+  const now =
+    options.now ?? new Date();
+
+  const durationMs = Math.max(
+    0,
+    now.getTime() -
+      options.startedAt.getTime(),
+  );
+
+  const summary: ImportExecutionSummary = {
+    jobId: options.jobId,
+    source: options.source,
+    status: options.status,
+    durationMs,
+
+    collected:
+      options.collected ?? 0,
+
+    normalized:
+      options.normalized ?? 0,
+
+    written:
+      options.written ?? 0,
+
+    created:
+      options.created ?? 0,
+
+    updated:
+      options.updated ?? 0,
+
+    unchanged:
+      options.unchanged ?? 0,
+
+    verified:
+      options.verified ?? 0,
+
+    retries:
+      options.retries ?? 0,
+  };
+
+  if (options.error) {
+    summary.error =
+      options.error;
+  }
+
+  return summary;
+}
+
+
+
+============================================================
+FILE: .\src\index.ts
+============================================================
+import process from "node:process";
+
+import { ImporterPipeline } from "./pipeline/index.js";
+
+import {
+  registerShutdownHandlers,
+} from "./lifecycle/shutdown.js";
+
+export interface ImporterCliOptions {
+  resumeJobId?: string;
+}
+
+export function parseCliArguments(
+  args: string[],
+): ImporterCliOptions {
+  const resumeIndex =
+    args.indexOf("--resume");
+
+  if (resumeIndex === -1) {
+    return {};
+  }
+
+  const jobId =
+    args[resumeIndex + 1];
+
+  if (!jobId) {
+    throw new Error(
+      "Missing job ID for --resume.",
+    );
+  }
+
+  return {
+    resumeJobId: jobId,
+  };
+}
+
+export async function bootstrap(
+  options: ImporterCliOptions =
+    parseCliArguments(
+      process.argv.slice(2),
+    ),
+): Promise<void> {
+  const pipeline =
+    new ImporterPipeline({
+      source: "json",
+    });
+
+  if (
+    options.resumeJobId
+  ) {
+    const result =
+      await pipeline.resume(
+        options.resumeJobId,
+      );
+
+    console.log("");
+    console.log(
+      "================================",
+    );
+    console.log(
+      " Import Resume Completed",
+    );
+    console.log(
+      "================================",
+    );
+    console.log("");
+
+    console.log(
+      `Job ID     : ${result.jobId}`,
+    );
+
+    console.log(
+      `Source     : ${result.source}`,
+    );
+
+    console.log(
+      `Collected  : ${result.collected}`,
+    );
+
+    console.log(
+      `Normalized : ${result.normalized}`,
+    );
+
+    console.log(
+      `Written    : ${result.written}`,
+    );
+
+    console.log(
+      `Created    : ${result.created}`,
+    );
+
+    console.log(
+      `Updated    : ${result.updated}`,
+    );
+
+    console.log(
+      `Unchanged  : ${result.unchanged}`,
+    );
+
+    console.log(
+      `Verified   : ${result.verified}`,
+    );
+
+    return;
+  }
+
+  await pipeline.run();
+
+  console.log("");
+  console.log(
+    "================================",
+  );
+  console.log(
+    " Importer Ready",
+  );
+  console.log(
+    "================================",
+  );
+}
+
+export function startImporter(): void {
+  const shutdownController =
+    registerShutdownHandlers();
+
+  void bootstrap().catch(
+    (error: unknown) => {
+      console.error("");
+      console.error(
+        "================================",
+      );
+      console.error(
+        " Importer Failed",
+      );
+      console.error(
+        "================================",
+      );
+      console.error("");
+
+      if (
+        error instanceof Error
+      ) {
+        console.error(
+          error.message,
+        );
+      } else {
+        console.error(
+          String(error),
+        );
+      }
+
+      process.exitCode = 1;
+
+      shutdownController.unregister();
+    },
+  );
+}
+
+if (
+  process.env.NODE_ENV !==
+  "test"
+) {
+  startImporter();
+}
+
+
+
+============================================================
+FILE: .\tests\pipeline\importer.pipeline.test.ts
+============================================================
+import { beforeEach, describe, expect, it, vi } from "vitest";
+const mockStart = vi.fn();
+const mockComplete = vi.fn();
+const mockFail = vi.fn();
+const mockCollect = vi.fn();
+const mockNormalize = vi.fn();
+const mockValidate = vi.fn();
+const mockWrite = vi.fn();
+const mockGet = vi.fn();
+vi.mock("../../src/firestore/index.js", () => ({
+  ImportJobWriter: class {
+    start = mockStart;
+    complete = mockComplete;
+    fail = mockFail;
+  },
+  ImportJobReader: class {
+    get = mockGet;
+  },
+}));
+vi.mock("../../src/collector/index.js", () => ({
+  CollectorFactory: { create: vi.fn(() => ({ collect: mockCollect })) },
+}));
+vi.mock("../../src/normalizer/index.js", () => ({
+  ContentNormalizer: class {
+    normalize = mockNormalize;
+  },
+}));
+vi.mock("../../src/validator/index.js", () => ({
+  ContentValidator: class {
+    validate = mockValidate;
+  },
+}));
+vi.mock("../../src/firestore/content.writer.js", () => ({
+  ContentWriter: class {
+    write = mockWrite;
+  },
+}));
+vi.mock("../../src/shared/index.js", () => ({
+  Pipeline: class {
+    summary = vi.fn();
+  },
+}));
+import { ImporterPipeline } from "../../src/pipeline/importer.pipeline.js";
+function createDocument(id = "content-001") {
+  return { id, title: "Test title", content: "Test content" };
+}
+function completedAudit(jobId: string) {
+  return {
+    jobId,
+    status: "completed",
+    source: "json",
+    written: 1,
+    verified: 1,
+  };
+}
+describe("ImporterPipeline", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockStart.mockResolvedValue(undefined);
+    mockComplete.mockResolvedValue(undefined);
+    mockFail.mockResolvedValue(undefined);
+    mockCollect.mockResolvedValue([createDocument()]);
+    mockNormalize.mockReturnValue([createDocument()]);
+    mockValidate.mockReturnValue({ valid: true, errors: [], warnings: [] });
+    mockWrite.mockResolvedValue({
+      written: 1,
+      created: 1,
+      updated: 0,
+      unchanged: 0,
+      verified: 1,
+    });
+    mockGet.mockImplementation(async (jobId: string) => completedAudit(jobId));
+  });
+  it("starts and completes a successful import", async () => {
+    const pipeline = new ImporterPipeline({ source: "json" });
+    const result = await pipeline.run();
+    expect(result.source).toBe("json");
+    expect(result.collected).toBe(1);
+    expect(result.normalized).toBe(1);
+    expect(result.written).toBe(1);
+    expect(result.created).toBe(1);
+    expect(result.updated).toBe(0);
+    expect(result.unchanged).toBe(0);
+    expect(result.verified).toBe(1);
+    expect(mockStart).toHaveBeenCalledTimes(1);
+    expect(mockComplete).toHaveBeenCalledTimes(1);
+    expect(mockFail).not.toHaveBeenCalled();
+    /* * A normal import does not need to read an * existing audit record. Reading an existing * job is part of the M8.4 resume flow. */ expect(
+      mockGet,
+    ).not.toHaveBeenCalled();
+  });
+  it("records a failed audit when collection fails", async () => {
+    const error = new Error("Collector failed");
+    mockCollect.mockRejectedValueOnce(error);
+    const pipeline = new ImporterPipeline({ source: "json" });
+    await expect(pipeline.run()).rejects.toThrow("Collector failed");
+    expect(mockStart).toHaveBeenCalledTimes(1);
+    expect(mockComplete).not.toHaveBeenCalled();
+    expect(mockFail).toHaveBeenCalledTimes(1);
+    expect(mockFail).toHaveBeenCalledWith(
+      expect.any(String),
+      "json",
+      expect.any(Date),
+      error,
+    );
+  });
+  it("records a failed audit when validation fails", async () => {
+    const errorMessage = "Content validation failed.";
+    mockValidate.mockReturnValueOnce({
+      valid: false,
+      errors: ["Invalid content"],
+      warnings: [],
+    });
+    const pipeline = new ImporterPipeline({ source: "json" });
+    await expect(pipeline.run()).rejects.toThrow(errorMessage);
+    expect(mockComplete).not.toHaveBeenCalled();
+    expect(mockFail).toHaveBeenCalledTimes(1);
+    expect(mockWrite).not.toHaveBeenCalled();
+  });
+  it("records a failed audit when Firestore writing fails", async () => {
+    const error = new Error("Firestore write failed");
+    mockWrite.mockRejectedValueOnce(error);
+    const pipeline = new ImporterPipeline({ source: "json" });
+    await expect(pipeline.run()).rejects.toThrow("Firestore write failed");
+    expect(mockComplete).not.toHaveBeenCalled();
+    expect(mockFail).toHaveBeenCalledTimes(1);
+  });
+  it("does not hide an audit-write failure when recording the original failure", async () => {
+    const originalError = new Error("Firestore write failed");
+    mockWrite.mockRejectedValueOnce(originalError);
+    mockFail.mockRejectedValueOnce(new Error("Audit write failed"));
+    const pipeline = new ImporterPipeline({ source: "json" });
+    await expect(pipeline.run()).rejects.toThrow("Firestore write failed");
+    expect(mockFail).toHaveBeenCalledTimes(1);
+  });
+  it("preserves retry exhaustion as the original Firestore error", async () => {
+    const error = new Error("Firestore content batch write failed.");
+    mockWrite.mockRejectedValueOnce(error);
+    const pipeline = new ImporterPipeline({ source: "json" });
+    await expect(pipeline.run()).rejects.toThrow(
+      "Firestore content batch write failed.",
+    );
+    expect(mockComplete).not.toHaveBeenCalled();
+    expect(mockFail).toHaveBeenCalledTimes(1);
+  });
+});
+
+
+
+============================================================
+FILE: .\tests\recovery\import-recovery.test.ts
+============================================================
+import {
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+
+const mockGet = vi.fn();
+
+const mockStart = vi.fn();
+const mockComplete = vi.fn();
+const mockFail = vi.fn();
+const mockResume = vi.fn();
+const mockMarkFailed = vi.fn();
+
+const mockCollect = vi.fn();
+const mockNormalize = vi.fn();
+const mockValidate = vi.fn();
+const mockWrite = vi.fn();
+
+vi.mock(
+  "../../src/firestore/index.js",
+  () => ({
+    ImportJobReader: class {
+      get = mockGet;
+    },
+
+    ImportJobWriter: class {
+      start = mockStart;
+      complete = mockComplete;
+      fail = mockFail;
+      resume = mockResume;
+      markFailed = mockMarkFailed;
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/collector/index.js",
+  () => ({
+    CollectorFactory: {
+      create: vi.fn(() => ({
+        collect:
+          mockCollect,
+      })),
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/normalizer/index.js",
+  () => ({
+    ContentNormalizer: class {
+      normalize =
+        mockNormalize;
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/validator/index.js",
+  () => ({
+    ContentValidator: class {
+      validate =
+        mockValidate;
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/firestore/content.writer.js",
+  () => ({
+    ContentWriter: class {
+      write = mockWrite;
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/shared/index.js",
+  () => ({
+    Pipeline: class {
+      summary = vi.fn();
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/firestore/service.js",
+  () => ({
+    FirestoreService: class {
+      getFirestore = vi.fn(
+        () => ({}),
+      );
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/observability/importer.execution-summary.js",
+  () => ({
+    createImportExecutionSummary:
+      vi.fn(() => ({
+        status: "completed",
+        durationMs: 0,
+        collected: 1,
+        normalized: 1,
+        written: 1,
+        created: 1,
+        updated: 0,
+        unchanged: 0,
+        verified: 1,
+        retries: 0,
+      })),
+  }),
+);
+
+vi.mock(
+  "../../src/observability/importer.logger.js",
+  () => ({
+    importerLogger: {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    },
+  }),
+);
+
+import {
+  ImporterPipeline,
+} from "../../src/pipeline/importer.pipeline.js";
+
+const jobId =
+  "11111111-1111-4111-8111-111111111111";
+
+function createDocument() {
+  return {
+    id: "content-001",
+    title: "Test title",
+    content: "Test content",
+    metadata: {
+      language: "sanskrit",
+      source: "json",
+    },
+  };
+}
+
+function failedAudit(
+  overrides: Record<
+    string,
+    unknown
+  > = {},
+) {
+  return {
+    jobId,
+    status: "failed",
+    source: "json",
+
+    startedAt: new Date(
+      "2026-01-01T00:00:00.000Z",
+    ),
+
+    written: 0,
+    verified: 0,
+
+    errors: [
+      "Original failure",
+    ],
+
+    originalErrors: [
+      "Original failure",
+    ],
+
+    resumeAttempts: 0,
+
+    ...overrides,
+  };
+}
+
+function completedAudit() {
+  return {
+    jobId,
+    status: "completed",
+    source: "json",
+    written: 1,
+    verified: 1,
+    errors: [],
+    originalErrors: [],
+    resumeAttempts: 0,
+  };
+}
+
+describe(
+  "Importer Recovery",
+  () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+
+      mockStart.mockResolvedValue(
+        undefined,
+      );
+
+      mockComplete.mockResolvedValue(
+        undefined,
+      );
+
+      mockFail.mockResolvedValue(
+        undefined,
+      );
+
+      mockResume.mockResolvedValue(
+        undefined,
+      );
+
+      mockMarkFailed.mockResolvedValue(
+        undefined,
+      );
+
+      mockCollect.mockResolvedValue(
+        [createDocument()],
+      );
+
+      mockNormalize.mockReturnValue(
+        [createDocument()],
+      );
+
+      mockValidate.mockReturnValue({
+        valid: true,
+        errors: [],
+        warnings: [],
+      });
+
+      mockWrite.mockResolvedValue({
+        written: 1,
+        created: 1,
+        updated: 0,
+        unchanged: 0,
+        verified: 1,
+      });
+    });
+
+    it(
+      "resumes a failed import using the same job ID",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit(),
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        const result =
+          await pipeline.resume(
+            jobId,
+          );
+
+        expect(
+          result.jobId,
+        ).toBe(jobId);
+
+        expect(
+          mockResume,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          mockResume.mock.calls[0]?.[0],
+        ).toBe(jobId);
+
+        expect(
+          mockComplete,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          mockComplete.mock.calls[0]?.[0]
+            .jobId,
+        ).toBe(jobId);
+
+        expect(
+          mockStart,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "does not create a new job ID during resume",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit(),
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        const result =
+          await pipeline.resume(
+            jobId,
+          );
+
+        expect(
+          result.jobId,
+        ).toBe(jobId);
+
+        expect(
+          mockStart,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "rejects resume when the audit record does not exist",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          null,
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          `Import audit record not found for job ${jobId}`,
+        );
+
+        expect(
+          mockCollect,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockWrite,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockResume,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "rejects resume for a completed job",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          completedAudit(),
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          `Import job "${jobId}" is already completed.`,
+        );
+
+        expect(
+          mockCollect,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockWrite,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockResume,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "rejects resume for an unsupported audit status",
+      async () => {
+        mockGet.mockResolvedValueOnce({
+          jobId,
+          status: "running",
+          source: "json",
+          written: 0,
+          verified: 0,
+        });
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          `Import job "${jobId}" cannot be resumed from status "running".`,
+        );
+
+        expect(
+          mockCollect,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockWrite,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockResume,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "records a failure when resumed execution fails",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit(),
+        );
+
+        const error =
+          new Error(
+            "Firestore content batch write failed.",
+          );
+
+        mockWrite.mockRejectedValueOnce(
+          error,
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          "Firestore content batch write failed.",
+        );
+
+        expect(
+          mockComplete,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockMarkFailed,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          mockMarkFailed.mock.calls[0]?.[0],
+        ).toBe(jobId);
+
+        expect(
+          mockMarkFailed.mock.calls[0]?.[1],
+        ).toBe(error);
+      },
+    );
+
+    it(
+      "does not retry the entire import after ContentWriter rejects",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit(),
+        );
+
+        const error =
+          new Error(
+            "temporary Firestore failure",
+          );
+
+        mockWrite.mockRejectedValueOnce(
+          error,
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          "temporary Firestore failure",
+        );
+
+        expect(
+          mockWrite,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          mockComplete,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "preserves the original failure when recovery fails again",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit({
+            errors: [
+              "Original failure",
+            ],
+            originalErrors: [
+              "Original failure",
+            ],
+            resumeAttempts: 2,
+          }),
+        );
+
+        const recoveryError =
+          new Error(
+            "Recovery attempt failed",
+          );
+
+        mockWrite.mockRejectedValueOnce(
+          recoveryError,
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          "Recovery attempt failed",
+        );
+
+        expect(
+          mockMarkFailed,
+        ).toHaveBeenCalledWith(
+          jobId,
+          recoveryError,
+        );
+      },
+    );
+
+    it(
+      "increments recovery attempt state instead of creating a new job",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit({
+            resumeAttempts: 2,
+          }),
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await pipeline.resume(
+          jobId,
+        );
+
+        expect(
+          mockResume,
+        ).toHaveBeenCalledWith(
+          jobId,
+          "json",
+          expect.any(Date),
+        );
+
+        expect(
+          mockStart,
+        ).not.toHaveBeenCalled();
+      },
+    );
+  },
+);
+
+
+
+============================================================
+FILE: .\tests\firestore\import-job.reader.test.ts
+============================================================
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ImportJobReader } from "../../src/firestore/import-job.reader.js";
+describe("ImportJobReader", () => {
+  let reader: ImportJobReader;
+  let get: ReturnType<typeof vi.fn>;
+  const jobs = [
+    {
+      jobId: "job-3",
+      source: "json",
+      status: "completed",
+      written: 2,
+      verified: 2,
+      startedAt: "2026-08-10T12:00:00.000Z",
+    },
+    {
+      jobId: "job-2",
+      source: "json",
+      status: "completed",
+      written: 2,
+      verified: 2,
+      startedAt: "2026-08-10T11:00:00.000Z",
+    },
+    {
+      jobId: "job-1",
+      source: "manual",
+      status: "failed",
+      written: 0,
+      verified: 0,
+      startedAt: "2026-08-10T10:00:00.000Z",
+    },
+  ];
+  function createReader(
+    docs: Array<{ data: () => unknown }>,
+    empty = false,
+  ): ImportJobReader {
+    get = vi.fn().mockResolvedValue({ empty, size: docs.length, docs });
+    const orderBy = vi
+      .fn()
+      .mockReturnValue({
+        limit: vi.fn().mockReturnValue({ get }),
+        where: vi.fn(),
+      });
+    const where = vi
+      .fn()
+      .mockReturnValue({
+        orderBy: vi
+          .fn()
+          .mockReturnValue({ limit: vi.fn().mockReturnValue({ get }) }),
+        limit: vi.fn().mockReturnValue({ get }),
+      });
+    const collection = vi.fn();
+    const runsCollection = {
+      doc: vi.fn().mockReturnValue({ get }),
+      collection: vi.fn(),
+      orderBy,
+      where,
+      get,
+    };
+    collection.mockReturnValue({
+      doc: vi
+        .fn()
+        .mockReturnValue({
+          collection: vi.fn().mockReturnValue(runsCollection),
+        }),
+    });
+    reader = Object.create(ImportJobReader.prototype) as ImportJobReader;
+    Object.defineProperty(reader, "db", {
+      value: { collection },
+      writable: false,
+    });
+    return reader;
+  }
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+  it("returns an import job by job ID", async () => {
+    const job = jobs[0];
+    const mockGet = vi
+      .fn()
+      .mockResolvedValue({ exists: true, data: () => job });
+    reader = Object.create(ImportJobReader.prototype) as ImportJobReader;
+    Object.defineProperty(reader, "db", {
+      value: {
+        collection: vi
+          .fn()
+          .mockReturnValue({
+            doc: vi
+              .fn()
+              .mockReturnValue({
+                collection: vi
+                  .fn()
+                  .mockReturnValue({
+                    doc: vi
+                      .fn()
+                      .mockReturnValue({ doc: vi.fn(), get: mockGet }),
+                  }),
+              }),
+          }),
+      },
+    });
+    const result = await reader.get("job-3");
+    expect(result).toEqual(job);
+    expect(mockGet).toHaveBeenCalledOnce();
+  });
+  it("returns null when the job does not exist", async () => {
+    const mockGet = vi.fn().mockResolvedValue({ exists: false });
+    reader = Object.create(ImportJobReader.prototype) as ImportJobReader;
+    Object.defineProperty(reader, "db", {
+      value: {
+        collection: vi
+          .fn()
+          .mockReturnValue({
+            doc: vi
+              .fn()
+              .mockReturnValue({
+                collection: vi
+                  .fn()
+                  .mockReturnValue({
+                    doc: vi.fn().mockReturnValue({ get: mockGet }),
+                  }),
+              }),
+          }),
+      },
+    });
+    const result = await reader.get("missing-job");
+    expect(result).toBeNull();
+  });
+  it("lists recent import jobs", async () => {
+    const docs = jobs.map((job) => ({ data: () => job }));
+    createReader(docs);
+    const result = await reader.list(10);
+    expect(result).toEqual(jobs);
+    expect(result).toHaveLength(3);
+    expect(get).toHaveBeenCalledOnce();
+  });
+  it("returns an empty list when the limit is zero or negative", async () => {
+    createReader([]);
+    expect(await reader.list(0)).toEqual([]);
+    expect(await reader.list(-1)).toEqual([]);
+    expect(get).not.toHaveBeenCalled();
+  });
+  it("returns a summary of import jobs", async () => {
+    const docs = jobs.map((job) => ({ data: () => job }));
+    createReader(docs);
+    const result = await reader.getSummary();
+    expect(result).toEqual({ total: 3, completed: 2, failed: 1 });
+  });
+  it("lists completed jobs by status", async () => {
+    const completedJobs = jobs
+      .filter((job) => job.status === "completed")
+      .map((job) => ({ data: () => job }));
+    createReader(completedJobs);
+    const result = await reader.listByStatus("completed", 10);
+    expect(result).toHaveLength(2);
+    expect(result.every((job) => job.status === "completed")).toBe(true);
+    expect(get).toHaveBeenCalledOnce();
+  });
+  it("returns an empty list when listByStatus limit is zero", async () => {
+    createReader([]);
+    const result = await reader.listByStatus("completed", 0);
+    expect(result).toEqual([]);
+    expect(get).not.toHaveBeenCalled();
+  });
+  it("lists jobs by source", async () => {
+    const jsonJobs = jobs
+      .filter((job) => job.source === "json")
+      .map((job) => ({ data: () => job }));
+    createReader(jsonJobs);
+    const result = await reader.listBySource("json", 10);
+    expect(result).toHaveLength(2);
+    expect(result.every((job) => job.source === "json")).toBe(true);
+    expect(get).toHaveBeenCalledOnce();
+  });
+  it("returns an empty list when listBySource limit is zero", async () => {
+    createReader([]);
+    const result = await reader.listBySource("json", 0);
+    expect(result).toEqual([]);
+    expect(get).not.toHaveBeenCalled();
+  });
+  it("returns the latest import job", async () => {
+    const latestJob = jobs[0];
+    createReader([{ data: () => latestJob }]);
+    const result = await reader.getLatest();
+    expect(result).toEqual(latestJob);
+    expect(get).toHaveBeenCalledOnce();
+  });
+  it("returns null when there is no latest import job", async () => {
+    createReader([], true);
+    const result = await reader.getLatest();
+    expect(result).toBeNull();
+  });
+  it("returns the latest job for a source", async () => {
+    const latestJsonJob = jobs[0];
+    createReader([{ data: () => latestJsonJob }]);
+    const result = await reader.getLatestBySource("json");
+    expect(result).toEqual(latestJsonJob);
+    expect(result?.source).toBe("json");
+    expect(get).toHaveBeenCalledOnce();
+  });
+  it("returns null when there is no latest job for a source", async () => {
+    createReader([], true);
+    const result = await reader.getLatestBySource("json");
+    expect(result).toBeNull();
+  });
+});
+
+
