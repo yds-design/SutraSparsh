@@ -10,26 +10,65 @@ import {
   type ContentDocument,
 } from "../../src/firestore/content.writer.js";
 
-function createFirestoreMock(
-  existingDocuments: Record<
+import { importerConfig } from "../../src/config/importer.config.js";
+
+interface FirestoreMockOptions {
+  existingDocuments?: Record<
     string,
     Record<string, unknown>
-  > = {},
+  >;
+
+  commitErrors?: Error[];
+
+  verificationOverrides?: Record<
+    string,
+    Record<string, unknown> | undefined
+  >;
+}
+
+function createFirestoreMock(
+  options: FirestoreMockOptions = {},
 ) {
   const documents = {
-    ...existingDocuments,
+    ...(options.existingDocuments ?? {}),
   };
+
+  const commitErrors = [
+    ...(options.commitErrors ?? []),
+  ];
+
+  const batchSet = vi.fn();
 
   const commit =
     vi.fn().mockImplementation(async () => {
-      // Simulate the Firestore batch commit by applying
-      // every queued batch.set() operation to the mock
-      // document store.
+      /*
+       * ------------------------------------------------------
+       * M8.7 — Failure Injection
+       * ------------------------------------------------------
+       *
+       * If an injected error exists, simulate a failed
+       * Firestore batch commit before modifying the store.
+       */
+      const injectedError =
+        commitErrors.shift();
+
+      if (injectedError) {
+        throw injectedError;
+      }
+
+      /*
+       * ------------------------------------------------------
+       * Simulate successful Firestore commit
+       * ------------------------------------------------------
+       *
+       * Apply every queued batch.set() operation to the
+       * in-memory document store.
+       */
       for (const operation of batchSet.mock.calls) {
         const [
           ref,
           data,
-          options,
+          batchOptions,
         ] = operation as [
           { id: string },
           Record<string, unknown>,
@@ -40,7 +79,7 @@ function createFirestoreMock(
           documents[ref.id];
 
         documents[ref.id] =
-          options?.merge && current
+          batchOptions?.merge && current
             ? {
                 ...current,
                 ...data,
@@ -50,8 +89,6 @@ function createFirestoreMock(
               };
       }
     });
-
-  const batchSet = vi.fn();
 
   const batch = {
     set: batchSet,
@@ -64,13 +101,37 @@ function createFirestoreMock(
 
       get: vi.fn().mockImplementation(
         async () => {
+          /*
+           * --------------------------------------------------
+           * M8.7 — Verification Failure Injection
+           * --------------------------------------------------
+           *
+           * Explicit verification overrides take precedence
+           * over the normal in-memory Firestore store.
+           */
+          if (
+            options.verificationOverrides &&
+            Object.prototype.hasOwnProperty.call(
+              options.verificationOverrides,
+              id,
+            )
+          ) {
+            const override =
+              options.verificationOverrides[id];
+
+            return {
+              exists:
+                override !== undefined,
+              data: () => override,
+            };
+          }
+
           const data =
             documents[id];
 
           return {
             exists:
               data !== undefined,
-
             data: () => data,
           };
         },
@@ -134,7 +195,9 @@ describe(
           },
         };
 
-        await writer.write([document]);
+        await writer.write([
+          document,
+        ]);
 
         expect(
           mock.document,
@@ -152,8 +215,10 @@ describe(
 
         const mock =
           createFirestoreMock({
-            "content-001":
-              existing,
+            existingDocuments: {
+              "content-001":
+                existing,
+            },
           });
 
         const writer =
@@ -257,8 +322,10 @@ describe(
 
         const mock =
           createFirestoreMock({
-            "content-001":
-              existing,
+            existingDocuments: {
+              "content-001":
+                existing,
+            },
           });
 
         const writer =
@@ -328,8 +395,10 @@ describe(
 
         const second =
           createFirestoreMock({
-            "content-001":
-              document,
+            existingDocuments: {
+              "content-001":
+                document,
+            },
           });
 
         const secondWriter =
@@ -391,11 +460,13 @@ describe(
 
         const mock =
           createFirestoreMock({
-            "existing-unchanged":
-              unchanged,
+            existingDocuments: {
+              "existing-unchanged":
+                unchanged,
 
-            "existing-updated":
-              updatedExisting,
+              "existing-updated":
+                updatedExisting,
+            },
           });
 
         const writer =
@@ -467,9 +538,10 @@ describe(
         };
 
         const mock =
-          createFirestoreMock(
-            documents,
-          );
+          createFirestoreMock({
+            existingDocuments:
+              documents,
+          });
 
         const writer =
           new ContentWriter({
@@ -512,4 +584,188 @@ describe(
       },
     );
   },
-); 
+);
+
+describe(
+  "ContentWriter — M8.7 Verification & Failure Injection",
+  () => {
+    it(
+      "recovers from transient Firestore commit failures",
+      async () => {
+        const firstError =
+          new Error(
+            "Temporary Firestore failure",
+          );
+
+        const secondError =
+          new Error(
+            "Firestore still unavailable",
+          );
+
+        const mock =
+          createFirestoreMock({
+            commitErrors: [
+              firstError,
+              secondError,
+            ],
+          });
+
+        const writer =
+          new ContentWriter({
+            firestore:
+              mock.firestore,
+          });
+
+        const result =
+          await writer.write([
+            createDocument(),
+          ]);
+
+        expect(
+          result.written,
+        ).toBe(1);
+
+        expect(
+          result.created,
+        ).toBe(1);
+
+        expect(
+          result.updated,
+        ).toBe(0);
+
+        expect(
+          result.unchanged,
+        ).toBe(0);
+
+        expect(
+          result.verified,
+        ).toBe(1);
+
+        /*
+         * Two failed attempts followed by
+         * the successful third attempt.
+         */
+        expect(
+          mock.batch.commit,
+        ).toHaveBeenCalledTimes(3);
+      },
+    );
+
+    it(
+      "fails when Firestore commit remains unavailable after retry exhaustion",
+      async () => {
+        const error =
+          new Error(
+            "Firestore permanently unavailable",
+          );
+
+        const mock =
+          createFirestoreMock({
+            commitErrors:
+              Array.from(
+                {
+                  length:
+                    importerConfig
+                      .retry
+                      .attempts,
+                },
+                () => error,
+              ),
+          });
+
+        const writer =
+          new ContentWriter({
+            firestore:
+              mock.firestore,
+          });
+
+        await expect(
+          writer.write([
+            createDocument(),
+          ]),
+        ).rejects.toBe(
+          error,
+        );
+
+        expect(
+          mock.batch.commit,
+        ).toHaveBeenCalledTimes(
+          importerConfig
+            .retry
+            .attempts,
+        );
+      },
+    );
+
+    it(
+      "fails when a written document is missing during verification",
+      async () => {
+        const mock =
+          createFirestoreMock({
+            verificationOverrides: {
+              "content-001":
+                undefined,
+            },
+          });
+
+        const writer =
+          new ContentWriter({
+            firestore:
+              mock.firestore,
+          });
+
+        await expect(
+          writer.write([
+            createDocument(),
+          ]),
+        ).rejects.toThrow(
+          'Firestore verification failed for document "content-001".',
+        );
+
+        expect(
+          mock.batch.commit,
+        ).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it(
+      "fails when Firestore contains different content during verification",
+      async () => {
+        const mock =
+          createFirestoreMock({
+            verificationOverrides: {
+              "content-001": {
+                id: "content-001",
+                title: "Corrupted title",
+                content:
+                  "Corrupted content",
+                metadata: {
+                  language:
+                    "sanskrit",
+                  source: "json",
+                },
+              },
+            },
+          });
+
+        const writer =
+          new ContentWriter({
+            firestore:
+              mock.firestore,
+          });
+
+        await expect(
+          writer.write([
+            createDocument(),
+          ]),
+        ).rejects.toThrow(
+          'Firestore verification failed for document "content-001".',
+        );
+
+        expect(
+          mock.batch.commit,
+        ).toHaveBeenCalledTimes(1);
+      },
+    );
+  },
+);

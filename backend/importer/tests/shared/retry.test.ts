@@ -3,9 +3,7 @@ import { retry } from "../../src/shared/retry.js";
 
 describe("retry", () => {
   it("returns immediately when the operation succeeds", async () => {
-    const operation = vi
-      .fn()
-      .mockResolvedValue("success");
+    const operation = vi.fn().mockResolvedValue("success");
 
     const result = await retry(operation, {
       attempts: 3,
@@ -20,9 +18,7 @@ describe("retry", () => {
   it("retries after a transient failure", async () => {
     const operation = vi
       .fn()
-      .mockRejectedValueOnce(
-        new Error("temporary failure"),
-      )
+      .mockRejectedValueOnce(new Error("temporary failure"))
       .mockResolvedValueOnce("success");
 
     const result = await retry(operation, {
@@ -38,12 +34,8 @@ describe("retry", () => {
   it("retries until the operation succeeds", async () => {
     const operation = vi
       .fn()
-      .mockRejectedValueOnce(
-        new Error("failure 1"),
-      )
-      .mockRejectedValueOnce(
-        new Error("failure 2"),
-      )
+      .mockRejectedValueOnce(new Error("failure 1"))
+      .mockRejectedValueOnce(new Error("failure 2"))
       .mockResolvedValueOnce("success");
 
     const result = await retry(operation, {
@@ -57,13 +49,9 @@ describe("retry", () => {
   });
 
   it("throws the final error when all attempts fail", async () => {
-    const error = new Error(
-      "permanent failure",
-    );
+    const error = new Error("permanent failure");
 
-    const operation = vi
-      .fn()
-      .mockRejectedValue(error);
+    const operation = vi.fn().mockRejectedValue(error);
 
     await expect(
       retry(operation, {
@@ -71,19 +59,13 @@ describe("retry", () => {
         delayMs: 1,
         backoffMultiplier: 2,
       }),
-    ).rejects.toThrow(
-      "permanent failure",
-    );
+    ).rejects.toThrow("permanent failure");
 
     expect(operation).toHaveBeenCalledTimes(3);
   });
 
   it("does not retry when attempts is one", async () => {
-    const operation = vi
-      .fn()
-      .mockRejectedValue(
-        new Error("failure"),
-      );
+    const operation = vi.fn().mockRejectedValue(new Error("failure"));
 
     await expect(
       retry(operation, {
@@ -99,12 +81,8 @@ describe("retry", () => {
   it("calls onRetry for each retry", async () => {
     const operation = vi
       .fn()
-      .mockRejectedValueOnce(
-        new Error("failure 1"),
-      )
-      .mockRejectedValueOnce(
-        new Error("failure 2"),
-      )
+      .mockRejectedValueOnce(new Error("failure 1"))
+      .mockRejectedValueOnce(new Error("failure 2"))
       .mockResolvedValue("success");
 
     const onRetry = vi.fn();
@@ -118,25 +96,13 @@ describe("retry", () => {
 
     expect(onRetry).toHaveBeenCalledTimes(2);
 
-    expect(onRetry).toHaveBeenNthCalledWith(
-      1,
-      expect.any(Error),
-      1,
-      1,
-    );
+    expect(onRetry).toHaveBeenNthCalledWith(1, expect.any(Error), 1, 1);
 
-    expect(onRetry).toHaveBeenNthCalledWith(
-      2,
-      expect.any(Error),
-      2,
-      2,
-    );
+    expect(onRetry).toHaveBeenNthCalledWith(2, expect.any(Error), 2, 2);
   });
 
   it("rejects invalid retry attempts", async () => {
-    const operation = vi
-      .fn()
-      .mockResolvedValue("success");
+    const operation = vi.fn().mockResolvedValue("success");
 
     await expect(
       retry(operation, {
@@ -144,17 +110,13 @@ describe("retry", () => {
         delayMs: 1,
         backoffMultiplier: 2,
       }),
-    ).rejects.toThrow(
-      "Retry attempts must be a positive integer.",
-    );
+    ).rejects.toThrow("Retry attempts must be a positive integer.");
 
     expect(operation).not.toHaveBeenCalled();
   });
 
   it("rejects invalid retry configuration", async () => {
-    const operation = vi
-      .fn()
-      .mockResolvedValue("success");
+    const operation = vi.fn().mockResolvedValue("success");
 
     await expect(
       retry(operation, {
@@ -162,17 +124,13 @@ describe("retry", () => {
         delayMs: -1,
         backoffMultiplier: 2,
       }),
-    ).rejects.toThrow(
-      "Retry delay must be a non-negative number.",
-    );
+    ).rejects.toThrow("Retry delay must be a non-negative number.");
 
     expect(operation).not.toHaveBeenCalled();
   });
 
   it("rejects an invalid backoff multiplier", async () => {
-    const operation = vi
-      .fn()
-      .mockResolvedValue("success");
+    const operation = vi.fn().mockResolvedValue("success");
 
     await expect(
       retry(operation, {
@@ -180,10 +138,24 @@ describe("retry", () => {
         delayMs: 1,
         backoffMultiplier: 0,
       }),
-    ).rejects.toThrow(
-      "Retry backoff multiplier must be greater than zero.",
-    );
+    ).rejects.toThrow("Retry backoff multiplier must be greater than zero.");
 
     expect(operation).not.toHaveBeenCalled();
+  });
+
+  it("preserves the exact final error instance after exhaustion", async () => {
+    const finalError = new Error("Firestore permanently unavailable");
+
+    const operation = vi.fn().mockRejectedValue(finalError);
+
+    await expect(
+      retry(operation, {
+        attempts: 3,
+        delayMs: 0,
+        backoffMultiplier: 2,
+      }),
+    ).rejects.toBe(finalError);
+
+    expect(operation).toHaveBeenCalledTimes(3);
   });
 });

@@ -6,10 +6,12 @@ export interface ImportExecutionSummary {
   jobId: string;
   source: string;
   status: ImportExecutionStatus;
+
   durationMs: number;
 
   collected: number;
   normalized: number;
+
   written: number;
   created: number;
   updated: number;
@@ -17,18 +19,21 @@ export interface ImportExecutionSummary {
   verified: number;
 
   retries: number;
+
   error?: string;
 }
 
 export interface CreateImportExecutionSummaryOptions {
   jobId: string;
   source: string;
+
   startedAt: Date;
 
   status: ImportExecutionStatus;
 
   collected?: number;
   normalized?: number;
+
   written?: number;
   created?: number;
   updated?: number;
@@ -36,9 +41,26 @@ export interface CreateImportExecutionSummaryOptions {
   verified?: number;
 
   retries?: number;
+
   error?: string;
 
   now?: Date;
+}
+
+function nonNegative(
+  value: number | undefined,
+): number {
+  if (
+    value === undefined ||
+    !Number.isFinite(value)
+  ) {
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    value,
+  );
 }
 
 export function createImportExecutionSummary(
@@ -54,37 +76,62 @@ export function createImportExecutionSummary(
   );
 
   const summary: ImportExecutionSummary = {
-    jobId: options.jobId,
-    source: options.source,
-    status: options.status,
+    jobId:
+      options.jobId,
+
+    source:
+      options.source,
+
+    status:
+      options.status,
+
     durationMs,
 
     collected:
-      options.collected ?? 0,
+      nonNegative(
+        options.collected,
+      ),
 
     normalized:
-      options.normalized ?? 0,
+      nonNegative(
+        options.normalized,
+      ),
 
     written:
-      options.written ?? 0,
+      nonNegative(
+        options.written,
+      ),
 
     created:
-      options.created ?? 0,
+      nonNegative(
+        options.created,
+      ),
 
     updated:
-      options.updated ?? 0,
+      nonNegative(
+        options.updated,
+      ),
 
     unchanged:
-      options.unchanged ?? 0,
+      nonNegative(
+        options.unchanged,
+      ),
 
     verified:
-      options.verified ?? 0,
+      nonNegative(
+        options.verified,
+      ),
 
     retries:
-      options.retries ?? 0,
+      nonNegative(
+        options.retries,
+      ),
   };
 
-  if (options.error) {
+  if (
+    options.error !== undefined &&
+    options.error.length > 0
+  ) {
     summary.error =
       options.error;
   }

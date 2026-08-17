@@ -8,9 +8,10 @@ export interface ImportLogContext {
   jobId?: string;
   source?: string;
   phase?: string;
-  status?: string;
+
   attempt?: number;
-  attempts?: number;
+  retries?: number;
+
   durationMs?: number;
 
   collected?: number;
@@ -22,39 +23,38 @@ export interface ImportLogContext {
   unchanged?: number;
   verified?: number;
 
-  retries?: number;
+  status?: string;
 
   error?: string;
-  errors?: string[];
-  warnings?: string[];
+  errorType?: string;
 
-  originalError?: string;
-  auditError?: string;
-
-  previousStatus?: string;
-  resumeAttempts?: number;
+  [key: string]: unknown;
 }
 
-export interface ImportLogger {
-  debug(
-    message: string,
-    context?: ImportLogContext,
-  ): void;
+export interface ImportLogEntry {
+  timestamp: string;
+  level: ImportLogLevel;
+  message: string;
+  context?: ImportLogContext;
+}
 
-  info(
-    message: string,
-    context?: ImportLogContext,
-  ): void;
+function normalizeError(
+  error: unknown,
+): Pick<
+  ImportLogContext,
+  "error" | "errorType"
+> {
+  if (error instanceof Error) {
+    return {
+      error: error.message,
+      errorType: error.name,
+    };
+  }
 
-  warn(
-    message: string,
-    context?: ImportLogContext,
-  ): void;
-
-  error(
-    message: string,
-    context?: ImportLogContext,
-  ): void;
+  return {
+    error: String(error),
+    errorType: typeof error,
+  };
 }
 
 function writeLog(
@@ -62,30 +62,46 @@ function writeLog(
   message: string,
   context?: ImportLogContext,
 ): void {
-  const payload = {
+  const entry: ImportLogEntry = {
     timestamp: new Date().toISOString(),
     level,
     message,
-    ...(context ?? {}),
+    ...(context &&
+      Object.keys(context).length > 0
+      ? {
+          context,
+        }
+      : {}),
   };
 
-  const output = JSON.stringify(payload);
+  const serialized =
+    JSON.stringify(entry);
 
-  if (level === "error") {
-    console.error(output);
-    return;
+  switch (level) {
+    case "error":
+      console.error(serialized);
+      break;
+
+    case "warn":
+      console.warn(serialized);
+      break;
+
+    case "debug":
+      console.debug(serialized);
+      break;
+
+    case "info":
+    default:
+      console.log(serialized);
+      break;
   }
-
-  if (level === "warn") {
-    console.warn(output);
-    return;
-  }
-
-  console.log(output);
 }
 
-export const importerLogger: ImportLogger = {
-  debug(message, context) {
+export const importerLogger = {
+  debug(
+    message: string,
+    context?: ImportLogContext,
+  ): void {
     writeLog(
       "debug",
       message,
@@ -93,7 +109,10 @@ export const importerLogger: ImportLogger = {
     );
   },
 
-  info(message, context) {
+  info(
+    message: string,
+    context?: ImportLogContext,
+  ): void {
     writeLog(
       "info",
       message,
@@ -101,7 +120,10 @@ export const importerLogger: ImportLogger = {
     );
   },
 
-  warn(message, context) {
+  warn(
+    message: string,
+    context?: ImportLogContext,
+  ): void {
     writeLog(
       "warn",
       message,
@@ -109,11 +131,29 @@ export const importerLogger: ImportLogger = {
     );
   },
 
-  error(message, context) {
+  error(
+    message: string,
+    context?: ImportLogContext,
+  ): void {
     writeLog(
       "error",
       message,
       context,
+    );
+  },
+
+  errorWithException(
+    message: string,
+    error: unknown,
+    context?: ImportLogContext,
+  ): void {
+    writeLog(
+      "error",
+      message,
+      {
+        ...context,
+        ...normalizeError(error),
+      },
     );
   },
 };

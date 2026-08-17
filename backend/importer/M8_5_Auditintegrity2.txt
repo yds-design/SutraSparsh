@@ -1,0 +1,3592 @@
+
+============================================================
+FILE: .\src\shared\retry.ts
+============================================================
+export interface RetryOptions {
+  attempts: number;
+  delayMs: number;
+  backoffMultiplier: number;
+  onRetry?: (
+    error: unknown,
+    attempt: number,
+    delayMs: number,
+  ) => void;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+export async function retry<T>(
+  operation: () => Promise<T>,
+  options: RetryOptions,
+): Promise<T> {
+  if (
+    !Number.isInteger(options.attempts) ||
+    options.attempts <= 0
+  ) {
+    throw new Error(
+      "Retry attempts must be a positive integer.",
+    );
+  }
+
+  if (
+    !Number.isFinite(options.delayMs) ||
+    options.delayMs < 0
+  ) {
+    throw new Error(
+      "Retry delay must be a non-negative number.",
+    );
+  }
+
+  if (
+    !Number.isFinite(
+      options.backoffMultiplier,
+    ) ||
+    options.backoffMultiplier <= 0
+  ) {
+    throw new Error(
+      "Retry backoff multiplier must be greater than zero.",
+    );
+  }
+
+  let attempt = 1;
+  let currentDelay = options.delayMs;
+
+  while (true) {
+    try {
+      return await operation();
+    } catch (error: unknown) {
+      /*
+       * Preserve the exact original error when
+       * retry attempts are exhausted.
+       */
+      if (attempt >= options.attempts) {
+        throw error;
+      }
+
+      options.onRetry?.(
+        error,
+        attempt,
+        currentDelay,
+      );
+
+      if (currentDelay > 0) {
+        await sleep(currentDelay);
+      }
+
+      attempt += 1;
+
+      currentDelay *=
+        options.backoffMultiplier;
+    }
+  }
+}
+
+/*
+ * Backwards-compatible name used by existing
+ * Firestore writers/tests.
+ */
+export async function executeWithRetry<T>(
+  operation: () => Promise<T>,
+  options: RetryOptions,
+): Promise<T> {
+  return retry(
+    operation,
+    options,
+  );
+}
+
+
+
+============================================================
+FILE: .\src\pipeline\importer.pipeline.ts
+============================================================
+import crypto from "node:crypto";
+
+import { CollectorFactory } from "../collector/index.js";
+
+import {
+  ImportJobReader,
+  ImportJobWriter,
+} from "../firestore/index.js";
+
+import {
+  ContentWriter,
+  type ContentWriteResult,
+} from "../firestore/content.writer.js";
+
+import { FirestoreService } from "../firestore/service.js";
+
+import { ContentNormalizer } from "../normalizer/index.js";
+
+import {
+  createImportExecutionSummary,
+  type ImportExecutionSummary,
+} from "../observability/importer.execution-summary.js";
+
+import {
+  importerLogger,
+} from "../observability/importer.logger.js";
+
+import {
+  importerMetrics,
+} from "../observability/importer.metrics.js";
+
+import { Pipeline } from "../shared/index.js";
+
+import { ContentValidator } from "../validator/index.js";
+
+import type { PipelineContext } from "../types/index.js";
+
+export interface ImporterPipelineOptions {
+  source: "json" | "manual";
+}
+
+export interface ImporterPipelineResult {
+  jobId: string;
+  source: string;
+
+  collected: number;
+  normalized: number;
+
+  written: number;
+  created: number;
+  updated: number;
+  unchanged: number;
+  verified: number;
+
+  executionSummary?: ImportExecutionSummary;
+}
+
+export class ImporterPipeline {
+  private readonly source:
+    "json" | "manual";
+
+  constructor(
+    options: ImporterPipelineOptions,
+  ) {
+    this.source =
+      options.source;
+  }
+
+  async run(): Promise<ImporterPipelineResult> {
+    const jobId =
+      crypto.randomUUID();
+
+    const startedAt =
+      new Date();
+
+    const jobWriter =
+      new ImportJobWriter();
+
+    const firestoreService =
+      new FirestoreService();
+
+    const contentWriter =
+      new ContentWriter({
+        firestore:
+          firestoreService.getFirestore(),
+      });
+
+    let collected = 0;
+    let normalized = 0;
+
+    let written = 0;
+    let created = 0;
+    let updated = 0;
+    let unchanged = 0;
+    let verified = 0;
+
+    let retries = 0;
+
+    importerLogger.info(
+      "Import pipeline started.",
+      {
+        jobId,
+        source: this.source,
+        phase: "pipeline",
+      },
+    );
+
+    console.log("");
+    console.log(
+      "## Import Pipeline",
+    );
+    console.log(
+      "----------------------",
+    );
+    console.log(
+      `Job ID : ${jobId}`,
+    );
+    console.log(
+      `Source : ${this.source}`,
+    );
+    console.log("");
+
+    await jobWriter.start(
+      jobId,
+      this.source,
+      startedAt,
+    );
+
+    try {
+      /*
+       * ------------------------------------------------------
+       * Collection
+       * ------------------------------------------------------
+       */
+
+      const collector =
+        CollectorFactory.create(
+          this.source,
+        );
+
+      const documents =
+        await collector.collect();
+
+      collected =
+        documents.length;
+
+      importerMetrics.setCollected(
+        collected,
+      );
+
+      importerLogger.info(
+        "Import collection completed.",
+        {
+          jobId,
+          source: this.source,
+          phase: "collection",
+          collected,
+        },
+      );
+
+      console.log(
+        `Collected : ${collected}`,
+      );
+
+      /*
+       * ------------------------------------------------------
+       * Normalization
+       * ------------------------------------------------------
+       */
+
+      const normalizer =
+        new ContentNormalizer();
+
+      const normalizedDocuments =
+        normalizer.normalize(
+          documents,
+        );
+
+      normalized =
+        normalizedDocuments.length;
+
+      importerMetrics.setNormalized(
+        normalized,
+      );
+
+      importerLogger.info(
+        "Import normalization completed.",
+        {
+          jobId,
+          source: this.source,
+          phase: "normalization",
+          normalized,
+        },
+      );
+
+      console.log(
+        `Normalized : ${normalized}`,
+      );
+
+      /*
+       * ------------------------------------------------------
+       * Validation
+       * ------------------------------------------------------
+       */
+
+      console.log("");
+      console.log(
+        "## Content Validation",
+      );
+      console.log(
+        "----------------------",
+      );
+
+      const validator =
+        new ContentValidator();
+
+      const validation =
+        validator.validate(
+          normalizedDocuments,
+        );
+
+      if (!validation.valid) {
+        const validationError =
+          validation.errors.join(
+            "; ",
+          );
+
+        importerLogger.error(
+          "Import validation failed.",
+          {
+            jobId,
+            source: this.source,
+            phase: "validation",
+            error:
+              validationError,
+            errorCount:
+              validation.errors.length,
+          },
+        );
+
+        throw new Error(
+          validationError,
+        );
+      }
+
+      console.log(
+        "✅ Content validation passed.",
+      );
+
+      /*
+       * ------------------------------------------------------
+       * Pipeline
+       * ------------------------------------------------------
+       */
+
+      console.log("");
+      console.log(
+        "## Pipeline",
+      );
+      console.log(
+        "----------------------",
+      );
+
+      const pipelineContext:
+        PipelineContext = {
+        jobId,
+        source: this.source,
+        documents:
+          normalizedDocuments,
+      };
+
+      const pipeline =
+        new Pipeline(
+          pipelineContext,
+        );
+
+      pipeline.summary();
+
+      /*
+       * ------------------------------------------------------
+       * Content Write
+       * ------------------------------------------------------
+       */
+
+      const writeResult:
+        ContentWriteResult =
+        await contentWriter.write(
+          normalizedDocuments,
+        );
+
+      written =
+        writeResult.written;
+
+      created =
+        writeResult.created;
+
+      updated =
+        writeResult.updated;
+
+      unchanged =
+        writeResult.unchanged;
+
+      verified =
+        writeResult.verified;
+
+      importerMetrics.setWritten(
+        written,
+      );
+
+      importerMetrics.setCreated(
+        created,
+      );
+
+      importerMetrics.setUpdated(
+        updated,
+      );
+
+      importerMetrics.setUnchanged(
+        unchanged,
+      );
+
+      importerMetrics.setVerified(
+        verified,
+      );
+
+      importerMetrics.setRetries(
+        retries,
+      );
+
+      importerLogger.info(
+        "Import content write completed.",
+        {
+          jobId,
+          source: this.source,
+          phase: "write",
+
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+
+          retries,
+        },
+      );
+
+      console.log("");
+      console.log(
+        "## Firestore Content Writer",
+      );
+      console.log(
+        "---------------------------",
+      );
+      console.log(
+        `✅ Written  : ${written}`,
+      );
+      console.log(
+        `   Created  : ${created}`,
+      );
+      console.log(
+        `   Updated  : ${updated}`,
+      );
+      console.log(
+        `   Unchanged: ${unchanged}`,
+      );
+      console.log(
+        `   Verified : ${verified}`,
+      );
+
+      /*
+       * ------------------------------------------------------
+       * Result
+       * ------------------------------------------------------
+       */
+
+      const result:
+        ImporterPipelineResult = {
+        jobId,
+        source: this.source,
+
+        collected,
+        normalized,
+
+        written,
+        created,
+        updated,
+        unchanged,
+        verified,
+      };
+
+      /*
+       * ------------------------------------------------------
+       * Complete Audit
+       * ------------------------------------------------------
+       */
+
+      await jobWriter.complete(
+        result,
+        startedAt,
+      );
+
+      /*
+       * ------------------------------------------------------
+       * Execution Summary
+       * ------------------------------------------------------
+       */
+
+      const executionSummary =
+        createImportExecutionSummary({
+          jobId,
+          source: this.source,
+
+          startedAt,
+
+          status:
+            "completed",
+
+          collected,
+          normalized,
+
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+
+          retries,
+        });
+
+      result.executionSummary =
+        executionSummary;
+
+      importerMetrics.recordDuration(
+        startedAt,
+      );
+
+      importerLogger.info(
+        "Import execution summary.",
+        {
+          jobId,
+          source: this.source,
+          phase: "summary",
+
+          status:
+            executionSummary.status,
+
+          durationMs:
+            executionSummary.durationMs,
+
+          collected:
+            executionSummary.collected,
+
+          normalized:
+            executionSummary.normalized,
+
+          written:
+            executionSummary.written,
+
+          created:
+            executionSummary.created,
+
+          updated:
+            executionSummary.updated,
+
+          unchanged:
+            executionSummary.unchanged,
+
+          verified:
+            executionSummary.verified,
+
+          retries:
+            executionSummary.retries,
+        },
+      );
+
+      return result;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : String(error);
+
+      /*
+       * ------------------------------------------------------
+       * Failed Execution Summary
+       * ------------------------------------------------------
+       */
+
+      const executionSummary =
+        createImportExecutionSummary({
+          jobId,
+          source: this.source,
+
+          startedAt,
+
+          status:
+            "failed",
+
+          collected,
+          normalized,
+
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+
+          retries,
+
+          error:
+            errorMessage,
+        });
+
+      importerMetrics.recordDuration(
+        startedAt,
+      );
+
+      importerMetrics.setRetries(
+        retries,
+      );
+
+      importerLogger.error(
+        "Import execution summary.",
+        {
+          jobId,
+          source: this.source,
+          phase: "summary",
+
+          status:
+            executionSummary.status,
+
+          durationMs:
+            executionSummary.durationMs,
+
+          collected:
+            executionSummary.collected,
+
+          normalized:
+            executionSummary.normalized,
+
+          written:
+            executionSummary.written,
+
+          created:
+            executionSummary.created,
+
+          updated:
+            executionSummary.updated,
+
+          unchanged:
+            executionSummary.unchanged,
+
+          verified:
+            executionSummary.verified,
+
+          retries,
+
+          error:
+            errorMessage,
+        },
+      );
+
+      importerLogger.error(
+        "Import pipeline failed.",
+        {
+          jobId,
+          source: this.source,
+          phase: "pipeline",
+          error:
+            errorMessage,
+
+          collected,
+          normalized,
+
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+
+          retries,
+
+          durationMs:
+            executionSummary.durationMs,
+        },
+      );
+
+      /*
+       * ------------------------------------------------------
+       * Failure Audit
+       * ------------------------------------------------------
+       */
+
+      try {
+        await jobWriter.fail(
+          jobId,
+          this.source,
+          startedAt,
+          error,
+        );
+      } catch (
+        auditError: unknown
+      ) {
+        const auditErrorMessage =
+          auditError instanceof Error
+            ? auditError.message
+            : String(auditError);
+
+        importerLogger.error(
+          "Failed to write import failure audit record.",
+          {
+            jobId,
+            source: this.source,
+            phase: "audit",
+            error:
+              `Original error: ${errorMessage}; Audit error: ${auditErrorMessage}`,
+          },
+        );
+      }
+
+      throw error;
+    }
+  }
+
+  async resume(
+    jobId: string,
+  ): Promise<ImporterPipelineResult> {
+    const reader =
+      new ImportJobReader();
+
+    const existing =
+      await reader.get(
+        jobId,
+      );
+
+    if (!existing) {
+      throw new Error(
+        `Import audit record not found for job ${jobId}`,
+      );
+    }
+
+    if (
+      existing.status ===
+      "completed"
+    ) {
+      throw new Error(
+        `Import job "${jobId}" is already completed.`,
+      );
+    }
+
+    if (
+      existing.status !==
+      "failed"
+    ) {
+      throw new Error(
+        `Import job "${jobId}" cannot be resumed from status "${existing.status}".`,
+      );
+    }
+
+    const startedAt =
+      existing.startedAt;
+
+    const jobWriter =
+      new ImportJobWriter();
+
+    const firestoreService =
+      new FirestoreService();
+
+    const contentWriter =
+      new ContentWriter({
+        firestore:
+          firestoreService.getFirestore(),
+      });
+
+    let collected = 0;
+    let normalized = 0;
+
+    let written = 0;
+    let created = 0;
+    let updated = 0;
+    let unchanged = 0;
+    let verified = 0;
+
+    const retries = 0;
+
+    importerLogger.info(
+      "Resumed import pipeline started.",
+      {
+        jobId,
+        source: this.source,
+        phase: "recovery",
+      },
+    );
+
+    console.log("");
+    console.log(
+      "## Import Pipeline",
+    );
+    console.log(
+      "----------------------",
+    );
+    console.log(
+      `Job ID : ${jobId}`,
+    );
+    console.log(
+      `Source : ${this.source}`,
+    );
+    console.log("");
+
+    await jobWriter.resume(
+      jobId,
+      this.source,
+      startedAt,
+    );
+
+    try {
+      /*
+       * ------------------------------------------------------
+       * Collection
+       * ------------------------------------------------------
+       */
+
+      const collector =
+        CollectorFactory.create(
+          this.source,
+        );
+
+      const documents =
+        await collector.collect();
+
+      collected =
+        documents.length;
+
+      console.log(
+        `Collected : ${collected}`,
+      );
+
+      /*
+       * ------------------------------------------------------
+       * Normalization
+       * ------------------------------------------------------
+       */
+
+      const normalizer =
+        new ContentNormalizer();
+
+      const normalizedDocuments =
+        normalizer.normalize(
+          documents,
+        );
+
+      normalized =
+        normalizedDocuments.length;
+
+      console.log(
+        `Normalized : ${normalized}`,
+      );
+
+      /*
+       * ------------------------------------------------------
+       * Validation
+       * ------------------------------------------------------
+       */
+
+      console.log("");
+      console.log(
+        "## Content Validation",
+      );
+      console.log(
+        "----------------------",
+      );
+
+      const validator =
+        new ContentValidator();
+
+      const validation =
+        validator.validate(
+          normalizedDocuments,
+        );
+
+      if (!validation.valid) {
+        throw new Error(
+          validation.errors.join(
+            "; ",
+          ),
+        );
+      }
+
+      console.log(
+        "✅ Content validation passed.",
+      );
+
+      /*
+       * ------------------------------------------------------
+       * Pipeline
+       * ------------------------------------------------------
+       */
+
+      console.log("");
+      console.log(
+        "## Pipeline",
+      );
+      console.log(
+        "----------------------",
+      );
+
+      const pipelineContext:
+        PipelineContext = {
+        jobId,
+        source: this.source,
+        documents:
+          normalizedDocuments,
+      };
+
+      const pipeline =
+        new Pipeline(
+          pipelineContext,
+        );
+
+      pipeline.summary();
+
+      /*
+       * ------------------------------------------------------
+       * Write
+       * ------------------------------------------------------
+       */
+
+      const writeResult:
+        ContentWriteResult =
+        await contentWriter.write(
+          normalizedDocuments,
+        );
+
+      written =
+        writeResult.written;
+
+      created =
+        writeResult.created;
+
+      updated =
+        writeResult.updated;
+
+      unchanged =
+        writeResult.unchanged;
+
+      verified =
+        writeResult.verified;
+
+      /*
+       * ------------------------------------------------------
+       * Result
+       * ------------------------------------------------------
+       */
+
+      const result:
+        ImporterPipelineResult = {
+        jobId,
+        source: this.source,
+
+        collected,
+        normalized,
+
+        written,
+        created,
+        updated,
+        unchanged,
+        verified,
+      };
+
+      /*
+       * ------------------------------------------------------
+       * Complete Existing Job
+       * ------------------------------------------------------
+       */
+
+      await jobWriter.complete(
+        result,
+        startedAt,
+      );
+
+      /*
+       * ------------------------------------------------------
+       * Execution Summary
+       * ------------------------------------------------------
+       */
+
+      const executionSummary =
+        createImportExecutionSummary({
+          jobId,
+          source: this.source,
+
+          startedAt,
+
+          status:
+            "completed",
+
+          collected,
+          normalized,
+
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+
+          retries,
+        });
+
+      result.executionSummary =
+        executionSummary;
+
+      importerMetrics.recordDuration(
+        startedAt,
+      );
+
+      importerLogger.info(
+        "Resumed import pipeline completed.",
+        {
+          jobId,
+          source: this.source,
+          phase: "recovery",
+
+          status:
+            executionSummary.status,
+
+          durationMs:
+            executionSummary.durationMs,
+
+          collected,
+          normalized,
+
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+
+          retries,
+        },
+      );
+
+      return result;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : String(error);
+
+      const executionSummary =
+        createImportExecutionSummary({
+          jobId,
+          source: this.source,
+
+          startedAt,
+
+          status:
+            "failed",
+
+          collected,
+          normalized,
+
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+
+          retries,
+
+          error:
+            errorMessage,
+        });
+
+      importerMetrics.recordDuration(
+        startedAt,
+      );
+
+      importerLogger.error(
+        "Resumed import pipeline failed.",
+        {
+          jobId,
+          source: this.source,
+          phase: "recovery",
+
+          durationMs:
+            executionSummary.durationMs,
+
+          collected,
+          normalized,
+
+          written,
+          created,
+          updated,
+          unchanged,
+          verified,
+
+          retries,
+
+          error:
+            errorMessage,
+        },
+      );
+
+      try {
+        await jobWriter.markFailed(
+          jobId,
+          error,
+        );
+      } catch (
+        auditError: unknown
+      ) {
+        const auditErrorMessage =
+          auditError instanceof Error
+            ? auditError.message
+            : String(auditError);
+
+        importerLogger.error(
+          "Failed to record resumed import failure.",
+          {
+            jobId,
+            source: this.source,
+            phase: "audit",
+
+            error:
+              `Original error: ${errorMessage}; Audit error: ${auditErrorMessage}`,
+          },
+        );
+      }
+
+      /*
+       * ------------------------------------------------------
+       * Never replace the actual
+       * import error with an
+       * audit-write error.
+       * ------------------------------------------------------
+       */
+
+      throw error;
+    }
+  }
+}
+
+
+
+============================================================
+FILE: .\src\firestore\content.writer.ts
+============================================================
+import type {
+  Firestore,
+  DocumentReference,
+} from "firebase-admin/firestore";
+
+import { importerConfig } from "../config/importer.config.js";
+import { executeWithRetry } from "../shared/retry.js";
+import type { ContentDocument } from "../types/content.js";
+
+// Re-export the type so consumers can import it from this module if needed.
+export type { ContentDocument } from "../types/content.js";
+
+export interface ContentWriteResult {
+  written: number;
+  created: number;
+  updated: number;
+  unchanged: number;
+  verified: number;
+}
+
+export interface ContentWriterOptions {
+  firestore: Firestore;
+}
+
+/**
+ * Converts arbitrary text into a Firestore-safe,
+ * deterministic document ID.
+ */
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * M8.3
+ *
+ * Deterministic ID:
+ *
+ *   language + source + title
+ *
+ * Example:
+ *
+ *   sanskrit-json-rig-veda
+ *
+ * If the source already supplies an ID,
+ * preserve it.
+ */
+export function createDeterministicDocumentId(
+  document: ContentDocument,
+): string {
+  if (document.id?.trim()) {
+    return document.id.trim();
+  }
+
+  const language = document.metadata.language;
+  const source = document.metadata.source;
+  const title = document.title;
+
+  const parts = [language, source, title]
+    .map(slugify)
+    .filter(Boolean);
+
+  const id = parts.join("-");
+
+  if (!id) {
+    throw new Error(
+      "Unable to create deterministic document ID.",
+    );
+  }
+
+  return id;
+}
+
+/**
+ * Creates a canonical representation for comparison.
+ *
+ * Firestore may return object properties in an order
+ * different from the incoming object, so JSON.stringify()
+ * is not used directly.
+ */
+function normalizeForComparison(
+  value: Record<string, unknown>,
+): string {
+  const normalized: Record<string, unknown> = {};
+
+  for (const key of Object.keys(value).sort()) {
+    if (
+      key === "id" ||
+      key === "createdAt" ||
+      key === "updatedAt"
+    ) {
+      continue;
+    }
+
+    normalized[key] = normalizeValue(value[key]);
+  }
+
+  return JSON.stringify(normalized);
+}
+
+function normalizeValue(value: unknown): unknown {
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(normalizeValue);
+  }
+
+  if (typeof value === "object") {
+    const object = value as Record<string, unknown>;
+    const normalized: Record<string, unknown> = {};
+
+    for (const key of Object.keys(object).sort()) {
+      normalized[key] = normalizeValue(object[key]);
+    }
+
+    return normalized;
+  }
+
+  return value;
+}
+
+function documentsAreEqual(
+  existing: Record<string, unknown>,
+  incoming: ContentDocument,
+): boolean {
+  return (
+    normalizeForComparison(existing) ===
+    normalizeForComparison(
+      incoming as unknown as Record<string, unknown>,
+    )
+  );
+}
+
+interface PendingWrite {
+  ref: DocumentReference;
+  data: ContentDocument;
+  type: "created" | "updated";
+}
+
+export class ContentWriter {
+  private readonly firestore: Firestore;
+
+  constructor(options: ContentWriterOptions) {
+    this.firestore = options.firestore;
+  }
+
+  async write(
+    documents: ContentDocument[],
+  ): Promise<ContentWriteResult> {
+    if (documents.length === 0) {
+      console.log(
+        JSON.stringify({
+          timestamp: new Date().toISOString(),
+          level: "info",
+          message:
+            "Content write skipped: no documents.",
+        }),
+      );
+
+      return {
+        written: 0,
+        created: 0,
+        updated: 0,
+        unchanged: 0,
+        verified: 0,
+      };
+    }
+
+    console.log(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: "info",
+        message:
+          `Starting content write for ${documents.length} document(s).`,
+      }),
+    );
+
+    const collection =
+      this.firestore.collection("content");
+
+    const writes: PendingWrite[] = [];
+
+    let created = 0;
+    let updated = 0;
+    let unchanged = 0;
+
+    // ----------------------------------------------------------
+    // M8.3 — Build deterministic write plan
+    // ----------------------------------------------------------
+
+    for (const document of documents) {
+      const documentId =
+        createDeterministicDocumentId(document);
+
+      const ref = collection.doc(documentId);
+
+      const snapshot = await ref.get();
+
+      const data: ContentDocument = {
+        ...document,
+        id: documentId,
+      };
+
+      // CREATE
+      if (!snapshot.exists) {
+        writes.push({
+          ref,
+          data,
+          type: "created",
+        });
+
+        created += 1;
+        continue;
+      }
+
+      const existing = snapshot.data();
+
+      // Existing document should always have data,
+      // but guard defensively.
+      if (
+        existing &&
+        documentsAreEqual(existing, data)
+      ) {
+        unchanged += 1;
+
+        console.log(
+          JSON.stringify({
+            timestamp: new Date().toISOString(),
+            level: "debug",
+            message:
+              `Content unchanged; skipping "${documentId}".`,
+          }),
+        );
+
+        continue;
+      }
+
+      // UPDATE
+      writes.push({
+        ref,
+        data,
+        type: "updated",
+      });
+
+      updated += 1;
+    }
+
+    console.log(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: "info",
+        message:
+          `Content write plan: ${writes.length} write(s), ${created} created, ${updated} updated, ${unchanged} unchanged.`,
+      }),
+    );
+
+    // ----------------------------------------------------------
+    // M8.3 — No unnecessary Firestore commit
+    // ----------------------------------------------------------
+
+    if (writes.length === 0) {
+      console.log(
+        JSON.stringify({
+          timestamp: new Date().toISOString(),
+          level: "info",
+          message:
+            "Content batch commit skipped: all documents are unchanged.",
+        }),
+      );
+
+      return {
+        written: 0,
+        created,
+        updated,
+        unchanged,
+        verified: documents.length,
+      };
+    }
+
+    // ----------------------------------------------------------
+    // Firestore batch
+    // ----------------------------------------------------------
+
+    const batch = this.firestore.batch();
+
+    for (const write of writes) {
+      batch.set(
+        write.ref,
+        write.data,
+        {
+          merge: true,
+        },
+      );
+    }
+
+    // ----------------------------------------------------------
+    // M8.2 — Retry batch commit
+    // ----------------------------------------------------------
+
+    await executeWithRetry(
+      async () => {
+        await batch.commit();
+      },
+      {
+        attempts:
+          importerConfig.retry.attempts,
+
+        delayMs:
+          importerConfig.retry.delayMs,
+
+        backoffMultiplier:
+          importerConfig.retry.backoffMultiplier,
+
+        onRetry: (
+          error,
+          attempt,
+          delayMs,
+        ) => {
+          const message =
+            error instanceof Error
+              ? error.message
+              : String(error);
+
+          console.warn(
+            `⚠ Content write retry ${attempt} in ${delayMs}ms...`,
+          );
+
+          console.warn(
+            `   Reason: ${message}`,
+          );
+        },
+      },
+    );
+
+    console.log(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: "info",
+        message:
+          `Content batch committed successfully: ${writes.length} document(s).`,
+      }),
+    );
+
+    // ----------------------------------------------------------
+    // Verification
+    // ----------------------------------------------------------
+
+    let verified = unchanged;
+
+    for (const write of writes) {
+      const snapshot = await write.ref.get();
+
+      if (!snapshot.exists) {
+        throw new Error(
+          `Firestore verification failed for document "${write.ref.id}".`,
+        );
+      }
+
+      const existing = snapshot.data();
+
+      if (
+        !existing ||
+        !documentsAreEqual(
+          existing,
+          write.data,
+        )
+      ) {
+        throw new Error(
+          `Firestore verification failed for document "${write.ref.id}".`,
+        );
+      }
+
+      verified += 1;
+    }
+
+    const result: ContentWriteResult = {
+      written: writes.length,
+      created,
+      updated,
+      unchanged,
+      verified,
+    };
+
+    console.log(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: "info",
+        message:
+          `Content verification completed: ${verified}/${documents.length} document(s).`,
+        written: result.written,
+        created: result.created,
+        updated: result.updated,
+        unchanged: result.unchanged,
+        verified: result.verified,
+      }),
+    );
+
+    return result;
+  }
+}
+
+
+
+============================================================
+FILE: .\tests\shared\retry.test.ts
+============================================================
+import { describe, expect, it, vi } from "vitest";
+import { retry } from "../../src/shared/retry.js";
+
+describe("retry", () => {
+  it("returns immediately when the operation succeeds", async () => {
+    const operation = vi
+      .fn()
+      .mockResolvedValue("success");
+
+    const result = await retry(operation, {
+      attempts: 3,
+      delayMs: 1,
+      backoffMultiplier: 2,
+    });
+
+    expect(result).toBe("success");
+    expect(operation).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries after a transient failure", async () => {
+    const operation = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new Error("temporary failure"),
+      )
+      .mockResolvedValueOnce("success");
+
+    const result = await retry(operation, {
+      attempts: 3,
+      delayMs: 1,
+      backoffMultiplier: 2,
+    });
+
+    expect(result).toBe("success");
+    expect(operation).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries until the operation succeeds", async () => {
+    const operation = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new Error("failure 1"),
+      )
+      .mockRejectedValueOnce(
+        new Error("failure 2"),
+      )
+      .mockResolvedValueOnce("success");
+
+    const result = await retry(operation, {
+      attempts: 3,
+      delayMs: 1,
+      backoffMultiplier: 2,
+    });
+
+    expect(result).toBe("success");
+    expect(operation).toHaveBeenCalledTimes(3);
+  });
+
+  it("throws the final error when all attempts fail", async () => {
+    const error = new Error(
+      "permanent failure",
+    );
+
+    const operation = vi
+      .fn()
+      .mockRejectedValue(error);
+
+    await expect(
+      retry(operation, {
+        attempts: 3,
+        delayMs: 1,
+        backoffMultiplier: 2,
+      }),
+    ).rejects.toThrow(
+      "permanent failure",
+    );
+
+    expect(operation).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not retry when attempts is one", async () => {
+    const operation = vi
+      .fn()
+      .mockRejectedValue(
+        new Error("failure"),
+      );
+
+    await expect(
+      retry(operation, {
+        attempts: 1,
+        delayMs: 1,
+        backoffMultiplier: 2,
+      }),
+    ).rejects.toThrow("failure");
+
+    expect(operation).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls onRetry for each retry", async () => {
+    const operation = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new Error("failure 1"),
+      )
+      .mockRejectedValueOnce(
+        new Error("failure 2"),
+      )
+      .mockResolvedValue("success");
+
+    const onRetry = vi.fn();
+
+    await retry(operation, {
+      attempts: 3,
+      delayMs: 1,
+      backoffMultiplier: 2,
+      onRetry,
+    });
+
+    expect(onRetry).toHaveBeenCalledTimes(2);
+
+    expect(onRetry).toHaveBeenNthCalledWith(
+      1,
+      expect.any(Error),
+      1,
+      1,
+    );
+
+    expect(onRetry).toHaveBeenNthCalledWith(
+      2,
+      expect.any(Error),
+      2,
+      2,
+    );
+  });
+
+  it("rejects invalid retry attempts", async () => {
+    const operation = vi
+      .fn()
+      .mockResolvedValue("success");
+
+    await expect(
+      retry(operation, {
+        attempts: 0,
+        delayMs: 1,
+        backoffMultiplier: 2,
+      }),
+    ).rejects.toThrow(
+      "Retry attempts must be a positive integer.",
+    );
+
+    expect(operation).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid retry configuration", async () => {
+    const operation = vi
+      .fn()
+      .mockResolvedValue("success");
+
+    await expect(
+      retry(operation, {
+        attempts: 3,
+        delayMs: -1,
+        backoffMultiplier: 2,
+      }),
+    ).rejects.toThrow(
+      "Retry delay must be a non-negative number.",
+    );
+
+    expect(operation).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid backoff multiplier", async () => {
+    const operation = vi
+      .fn()
+      .mockResolvedValue("success");
+
+    await expect(
+      retry(operation, {
+        attempts: 3,
+        delayMs: 1,
+        backoffMultiplier: 0,
+      }),
+    ).rejects.toThrow(
+      "Retry backoff multiplier must be greater than zero.",
+    );
+
+    expect(operation).not.toHaveBeenCalled();
+  });
+});
+
+
+
+============================================================
+FILE: .\tests\pipeline\importer.pipeline.test.ts
+============================================================
+import {
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+
+const mockGet = vi.fn();
+
+const mockStart = vi.fn();
+const mockComplete = vi.fn();
+const mockFail = vi.fn();
+const mockResume = vi.fn();
+const mockMarkFailed = vi.fn();
+
+const mockCollect = vi.fn();
+const mockNormalize = vi.fn();
+const mockValidate = vi.fn();
+const mockWrite = vi.fn();
+
+vi.mock(
+  "../../src/firestore/index.js",
+  () => ({
+    ImportJobReader: class {
+      get = mockGet;
+    },
+
+    ImportJobWriter: class {
+      start = mockStart;
+      complete = mockComplete;
+      fail = mockFail;
+      resume = mockResume;
+      markFailed = mockMarkFailed;
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/collector/index.js",
+  () => ({
+    CollectorFactory: {
+      create: vi.fn(() => ({
+        collect: mockCollect,
+      })),
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/normalizer/index.js",
+  () => ({
+    ContentNormalizer: class {
+      normalize = mockNormalize;
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/validator/index.js",
+  () => ({
+    ContentValidator: class {
+      validate = mockValidate;
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/firestore/content.writer.js",
+  () => ({
+    ContentWriter: class {
+      write = mockWrite;
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/shared/index.js",
+  () => ({
+    Pipeline: class {
+      summary = vi.fn();
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/firestore/service.js",
+  () => ({
+    FirestoreService: class {
+      getFirestore = vi.fn(
+        () => ({}),
+      );
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/observability/importer.execution-summary.js",
+  () => ({
+    createImportExecutionSummary:
+      vi.fn(() => ({
+        status: "completed",
+        durationMs: 0,
+        collected: 1,
+        normalized: 1,
+        written: 1,
+        created: 1,
+        updated: 0,
+        unchanged: 0,
+        verified: 1,
+        retries: 0,
+      })),
+  }),
+);
+
+vi.mock(
+  "../../src/observability/importer.logger.js",
+  () => ({
+    importerLogger: {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    },
+  }),
+);
+
+import {
+  ImporterPipeline,
+} from "../../src/pipeline/importer.pipeline.js";
+
+const jobId =
+  "11111111-1111-4111-8111-111111111111";
+
+function createDocument() {
+  return {
+    id: "content-001",
+    title: "Test title",
+    content: "Test content",
+    metadata: {
+      language: "sanskrit",
+      source: "json",
+    },
+  };
+}
+
+function failedAudit(
+  overrides: Record<
+    string,
+    unknown
+  > = {},
+) {
+  return {
+    jobId,
+    status: "failed",
+    source: "json",
+
+    startedAt: new Date(
+      "2026-01-01T00:00:00.000Z",
+    ),
+
+    written: 0,
+    verified: 0,
+
+    errors: [
+      "Original failure",
+    ],
+
+    originalErrors: [
+      "Original failure",
+    ],
+
+    resumeAttempts: 0,
+
+    ...overrides,
+  };
+}
+
+function completedAudit() {
+  return {
+    jobId,
+    status: "completed",
+    source: "json",
+    written: 1,
+    verified: 1,
+    errors: [],
+    originalErrors: [],
+    resumeAttempts: 0,
+  };
+}
+
+describe(
+  "Importer Recovery",
+  () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+
+      mockStart.mockResolvedValue(
+        undefined,
+      );
+
+      mockComplete.mockResolvedValue(
+        undefined,
+      );
+
+      mockFail.mockResolvedValue(
+        undefined,
+      );
+
+      mockResume.mockResolvedValue(
+        undefined,
+      );
+
+      mockMarkFailed.mockResolvedValue(
+        undefined,
+      );
+
+      mockCollect.mockResolvedValue(
+        [createDocument()],
+      );
+
+      mockNormalize.mockReturnValue(
+        [createDocument()],
+      );
+
+      mockValidate.mockReturnValue({
+        valid: true,
+        errors: [],
+        warnings: [],
+      });
+
+      mockWrite.mockResolvedValue({
+        written: 1,
+        created: 1,
+        updated: 0,
+        unchanged: 0,
+        verified: 1,
+      });
+    });
+
+    it(
+      "resumes a failed import using the same job ID",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit(),
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        const result =
+          await pipeline.resume(
+            jobId,
+          );
+
+        expect(
+          result.jobId,
+        ).toBe(jobId);
+
+        expect(
+          mockResume,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          mockResume.mock.calls[0]?.[0],
+        ).toBe(jobId);
+
+        expect(
+          mockComplete,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          mockComplete.mock.calls[0]?.[0]
+            .jobId,
+        ).toBe(jobId);
+
+        expect(
+          mockStart,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "does not create a new job ID during resume",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit(),
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        const result =
+          await pipeline.resume(
+            jobId,
+          );
+
+        expect(
+          result.jobId,
+        ).toBe(jobId);
+
+        expect(
+          mockStart,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "rejects resume when the audit record does not exist",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          null,
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          `Import audit record not found for job ${jobId}`,
+        );
+
+        expect(
+          mockCollect,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockWrite,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockResume,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "rejects resume for a completed job",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          completedAudit(),
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          `Import job "${jobId}" is already completed.`,
+        );
+
+        expect(
+          mockCollect,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockWrite,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockResume,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "rejects resume for an unsupported audit status",
+      async () => {
+        mockGet.mockResolvedValueOnce({
+          jobId,
+          status: "running",
+          source: "json",
+          written: 0,
+          verified: 0,
+        });
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          `Import job "${jobId}" cannot be resumed from status "running".`,
+        );
+
+        expect(
+          mockCollect,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockWrite,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockResume,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "records a failure when resumed execution fails",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit(),
+        );
+
+        const error =
+          new Error(
+            "Firestore content batch write failed.",
+          );
+
+        mockWrite.mockRejectedValueOnce(
+          error,
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          "Firestore content batch write failed.",
+        );
+
+        expect(
+          mockComplete,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockMarkFailed,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          mockMarkFailed.mock.calls[0]?.[0],
+        ).toBe(jobId);
+
+        expect(
+          mockMarkFailed.mock.calls[0]?.[1],
+        ).toBe(error);
+      },
+    );
+
+    it(
+      "does not retry the entire import after ContentWriter rejects",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit(),
+        );
+
+        const error =
+          new Error(
+            "temporary Firestore failure",
+          );
+
+        mockWrite.mockRejectedValueOnce(
+          error,
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          "temporary Firestore failure",
+        );
+
+        expect(
+          mockWrite,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          mockComplete,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "preserves the original failure when recovery fails again",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit({
+            errors: [
+              "Original failure",
+            ],
+            originalErrors: [
+              "Original failure",
+            ],
+            resumeAttempts: 2,
+          }),
+        );
+
+        const recoveryError =
+          new Error(
+            "Recovery attempt failed",
+          );
+
+        mockWrite.mockRejectedValueOnce(
+          recoveryError,
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          "Recovery attempt failed",
+        );
+
+        expect(
+          mockMarkFailed,
+        ).toHaveBeenCalledWith(
+          jobId,
+          recoveryError,
+        );
+      },
+    );
+
+    it(
+      "increments recovery attempt state instead of creating a new job",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit({
+            resumeAttempts: 2,
+          }),
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await pipeline.resume(
+          jobId,
+        );
+
+        expect(
+          mockResume,
+        ).toHaveBeenCalledWith(
+          jobId,
+          "json",
+          expect.any(Date),
+        );
+
+        expect(
+          mockStart,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "writes audit statistics exactly from actual content write results",
+      async () => {
+        /*
+         * Simulate the actual result returned by
+         * ContentWriter for a mixed import:
+         *
+         * written   = 2
+         * created   = 1
+         * updated   = 1
+         * unchanged = 1
+         * verified  = 3
+         */
+        const actualWriteResult = {
+          written: 2,
+          created: 1,
+          updated: 1,
+          unchanged: 1,
+          verified: 3,
+        };
+
+        mockWrite.mockResolvedValueOnce(
+          actualWriteResult,
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        const result =
+          await pipeline.run();
+
+        /*
+         * First verify that the pipeline itself
+         * exposes the actual ContentWriter
+         * statistics.
+         */
+        expect(
+          result.written,
+        ).toBe(
+          actualWriteResult.written,
+        );
+
+        expect(
+          result.created,
+        ).toBe(
+          actualWriteResult.created,
+        );
+
+        expect(
+          result.updated,
+        ).toBe(
+          actualWriteResult.updated,
+        );
+
+        expect(
+          result.unchanged,
+        ).toBe(
+          actualWriteResult.unchanged,
+        );
+
+        expect(
+          result.verified,
+        ).toBe(
+          actualWriteResult.verified,
+        );
+
+        /*
+         * The audit completion must receive
+         * exactly the same values.
+         */
+        expect(
+          mockComplete,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        const auditedResult =
+          mockComplete.mock.calls[0]?.[0];
+
+        expect(
+          auditedResult,
+        ).toBeDefined();
+
+        expect(
+          auditedResult.written,
+        ).toBe(
+          actualWriteResult.written,
+        );
+
+        expect(
+          auditedResult.created,
+        ).toBe(
+          actualWriteResult.created,
+        );
+
+        expect(
+          auditedResult.updated,
+        ).toBe(
+          actualWriteResult.updated,
+        );
+
+        expect(
+          auditedResult.unchanged,
+        ).toBe(
+          actualWriteResult.unchanged,
+        );
+
+        expect(
+          auditedResult.verified,
+        ).toBe(
+          actualWriteResult.verified,
+        );
+      },
+    );
+  },
+);
+
+
+
+============================================================
+FILE: .\tests\recovery\import-recovery.test.ts
+============================================================
+import {
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+
+const mockGet = vi.fn();
+
+const mockStart = vi.fn();
+const mockComplete = vi.fn();
+const mockFail = vi.fn();
+const mockResume = vi.fn();
+const mockMarkFailed = vi.fn();
+
+const mockCollect = vi.fn();
+const mockNormalize = vi.fn();
+const mockValidate = vi.fn();
+const mockWrite = vi.fn();
+
+vi.mock(
+  "../../src/firestore/index.js",
+  () => ({
+    ImportJobReader: class {
+      get = mockGet;
+    },
+
+    ImportJobWriter: class {
+      start = mockStart;
+      complete = mockComplete;
+      fail = mockFail;
+      resume = mockResume;
+      markFailed = mockMarkFailed;
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/collector/index.js",
+  () => ({
+    CollectorFactory: {
+      create: vi.fn(() => ({
+        collect:
+          mockCollect,
+      })),
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/normalizer/index.js",
+  () => ({
+    ContentNormalizer: class {
+      normalize =
+        mockNormalize;
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/validator/index.js",
+  () => ({
+    ContentValidator: class {
+      validate =
+        mockValidate;
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/firestore/content.writer.js",
+  () => ({
+    ContentWriter: class {
+      write = mockWrite;
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/shared/index.js",
+  () => ({
+    Pipeline: class {
+      summary = vi.fn();
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/firestore/service.js",
+  () => ({
+    FirestoreService: class {
+      getFirestore = vi.fn(
+        () => ({}),
+      );
+    },
+  }),
+);
+
+vi.mock(
+  "../../src/observability/importer.execution-summary.js",
+  () => ({
+    createImportExecutionSummary:
+      vi.fn(() => ({
+        status: "completed",
+        durationMs: 0,
+        collected: 1,
+        normalized: 1,
+        written: 1,
+        created: 1,
+        updated: 0,
+        unchanged: 0,
+        verified: 1,
+        retries: 0,
+      })),
+  }),
+);
+
+vi.mock(
+  "../../src/observability/importer.logger.js",
+  () => ({
+    importerLogger: {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    },
+  }),
+);
+
+import {
+  ImporterPipeline,
+} from "../../src/pipeline/importer.pipeline.js";
+
+const jobId =
+  "11111111-1111-4111-8111-111111111111";
+
+function createDocument() {
+  return {
+    id: "content-001",
+    title: "Test title",
+    content: "Test content",
+    metadata: {
+      language: "sanskrit",
+      source: "json",
+    },
+  };
+}
+
+function failedAudit(
+  overrides: Record<
+    string,
+    unknown
+  > = {},
+) {
+  return {
+    jobId,
+    status: "failed",
+    source: "json",
+
+    startedAt: new Date(
+      "2026-01-01T00:00:00.000Z",
+    ),
+
+    written: 0,
+    verified: 0,
+
+    errors: [
+      "Original failure",
+    ],
+
+    originalErrors: [
+      "Original failure",
+    ],
+
+    resumeAttempts: 0,
+
+    ...overrides,
+  };
+}
+
+function completedAudit() {
+  return {
+    jobId,
+    status: "completed",
+    source: "json",
+    written: 1,
+    verified: 1,
+    errors: [],
+    originalErrors: [],
+    resumeAttempts: 0,
+  };
+}
+
+describe(
+  "Importer Recovery",
+  () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+
+      mockStart.mockResolvedValue(
+        undefined,
+      );
+
+      mockComplete.mockResolvedValue(
+        undefined,
+      );
+
+      mockFail.mockResolvedValue(
+        undefined,
+      );
+
+      mockResume.mockResolvedValue(
+        undefined,
+      );
+
+      mockMarkFailed.mockResolvedValue(
+        undefined,
+      );
+
+      mockCollect.mockResolvedValue(
+        [createDocument()],
+      );
+
+      mockNormalize.mockReturnValue(
+        [createDocument()],
+      );
+
+      mockValidate.mockReturnValue({
+        valid: true,
+        errors: [],
+        warnings: [],
+      });
+
+      mockWrite.mockResolvedValue({
+        written: 1,
+        created: 1,
+        updated: 0,
+        unchanged: 0,
+        verified: 1,
+      });
+    });
+
+    it(
+      "resumes a failed import using the same job ID",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit(),
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        const result =
+          await pipeline.resume(
+            jobId,
+          );
+
+        expect(
+          result.jobId,
+        ).toBe(jobId);
+
+        expect(
+          mockResume,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          mockResume.mock.calls[0]?.[0],
+        ).toBe(jobId);
+
+        expect(
+          mockComplete,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          mockComplete.mock.calls[0]?.[0]
+            .jobId,
+        ).toBe(jobId);
+
+        expect(
+          mockStart,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "does not create a new job ID during resume",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit(),
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        const result =
+          await pipeline.resume(
+            jobId,
+          );
+
+        expect(
+          result.jobId,
+        ).toBe(jobId);
+
+        expect(
+          mockStart,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "rejects resume when the audit record does not exist",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          null,
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          `Import audit record not found for job ${jobId}`,
+        );
+
+        expect(
+          mockCollect,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockWrite,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockResume,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "rejects resume for a completed job",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          completedAudit(),
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          `Import job "${jobId}" is already completed.`,
+        );
+
+        expect(
+          mockCollect,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockWrite,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockResume,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "rejects resume for an unsupported audit status",
+      async () => {
+        mockGet.mockResolvedValueOnce({
+          jobId,
+          status: "running",
+          source: "json",
+          written: 0,
+          verified: 0,
+        });
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          `Import job "${jobId}" cannot be resumed from status "running".`,
+        );
+
+        expect(
+          mockCollect,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockWrite,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockResume,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "records a failure when resumed execution fails",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit(),
+        );
+
+        const error =
+          new Error(
+            "Firestore content batch write failed.",
+          );
+
+        mockWrite.mockRejectedValueOnce(
+          error,
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          "Firestore content batch write failed.",
+        );
+
+        expect(
+          mockComplete,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mockMarkFailed,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          mockMarkFailed.mock.calls[0]?.[0],
+        ).toBe(jobId);
+
+        expect(
+          mockMarkFailed.mock.calls[0]?.[1],
+        ).toBe(error);
+      },
+    );
+
+    it(
+      "does not retry the entire import after ContentWriter rejects",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit(),
+        );
+
+        const error =
+          new Error(
+            "temporary Firestore failure",
+          );
+
+        mockWrite.mockRejectedValueOnce(
+          error,
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          "temporary Firestore failure",
+        );
+
+        expect(
+          mockWrite,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          mockComplete,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "preserves the original failure when recovery fails again",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit({
+            errors: [
+              "Original failure",
+            ],
+            originalErrors: [
+              "Original failure",
+            ],
+            resumeAttempts: 2,
+          }),
+        );
+
+        const recoveryError =
+          new Error(
+            "Recovery attempt failed",
+          );
+
+        mockWrite.mockRejectedValueOnce(
+          recoveryError,
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await expect(
+          pipeline.resume(
+            jobId,
+          ),
+        ).rejects.toThrow(
+          "Recovery attempt failed",
+        );
+
+        expect(
+          mockMarkFailed,
+        ).toHaveBeenCalledWith(
+          jobId,
+          recoveryError,
+        );
+      },
+    );
+
+    it(
+      "increments recovery attempt state instead of creating a new job",
+      async () => {
+        mockGet.mockResolvedValueOnce(
+          failedAudit({
+            resumeAttempts: 2,
+          }),
+        );
+
+        const pipeline =
+          new ImporterPipeline({
+            source: "json",
+          });
+
+        await pipeline.resume(
+          jobId,
+        );
+
+        expect(
+          mockResume,
+        ).toHaveBeenCalledWith(
+          jobId,
+          "json",
+          expect.any(Date),
+        );
+
+        expect(
+          mockStart,
+        ).not.toHaveBeenCalled();
+      },
+    );
+  },
+);
+
+
+
+============================================================
+FILE: .\tests\firestore\content.writer.test.ts
+============================================================
+import {
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+
+import {
+  ContentWriter,
+  type ContentDocument,
+} from "../../src/firestore/content.writer.js";
+
+function createFirestoreMock(
+  existingDocuments: Record<
+    string,
+    Record<string, unknown>
+  > = {},
+) {
+  const documents = {
+    ...existingDocuments,
+  };
+
+  const commit =
+    vi.fn().mockImplementation(async () => {
+      // Simulate the Firestore batch commit by applying
+      // every queued batch.set() operation to the mock
+      // document store.
+      for (const operation of batchSet.mock.calls) {
+        const [
+          ref,
+          data,
+          options,
+        ] = operation as [
+          { id: string },
+          Record<string, unknown>,
+          { merge?: boolean } | undefined,
+        ];
+
+        const current =
+          documents[ref.id];
+
+        documents[ref.id] =
+          options?.merge && current
+            ? {
+                ...current,
+                ...data,
+              }
+            : {
+                ...data,
+              };
+      }
+    });
+
+  const batchSet = vi.fn();
+
+  const batch = {
+    set: batchSet,
+    commit,
+  };
+
+  const document = vi.fn(
+    (id: string) => ({
+      id,
+
+      get: vi.fn().mockImplementation(
+        async () => {
+          const data =
+            documents[id];
+
+          return {
+            exists:
+              data !== undefined,
+
+            data: () => data,
+          };
+        },
+      ),
+    }),
+  );
+
+  const collection = vi.fn(() => ({
+    doc: document,
+  }));
+
+  return {
+    firestore: {
+      collection,
+      batch: vi.fn(() => batch),
+    } as any,
+
+    batch,
+    collection,
+    document,
+    documents,
+  };
+}
+
+function createDocument(
+  overrides: Partial<ContentDocument> = {},
+): ContentDocument {
+  return {
+    id: "content-001",
+    title: "Rig Veda",
+    content: "Agni...",
+    metadata: {
+      language: "sanskrit",
+      source: "json",
+    },
+    ...overrides,
+  };
+}
+
+describe(
+  "ContentWriter — M8.3 Idempotency",
+  () => {
+    it(
+      "uses deterministic document IDs",
+      async () => {
+        const mock =
+          createFirestoreMock();
+
+        const writer =
+          new ContentWriter({
+            firestore:
+              mock.firestore,
+          });
+
+        const document: ContentDocument = {
+          title: "Rig Veda",
+          content: "Agni...",
+          metadata: {
+            language: "sanskrit",
+            source: "json",
+          },
+        };
+
+        await writer.write([document]);
+
+        expect(
+          mock.document,
+        ).toHaveBeenCalledWith(
+          "sanskrit-json-rig-veda",
+        );
+      },
+    );
+
+    it(
+      "does not write an unchanged document",
+      async () => {
+        const existing =
+          createDocument();
+
+        const mock =
+          createFirestoreMock({
+            "content-001":
+              existing,
+          });
+
+        const writer =
+          new ContentWriter({
+            firestore:
+              mock.firestore,
+          });
+
+        const result =
+          await writer.write([
+            existing,
+          ]);
+
+        expect(
+          result.written,
+        ).toBe(0);
+
+        expect(
+          result.created,
+        ).toBe(0);
+
+        expect(
+          result.updated,
+        ).toBe(0);
+
+        expect(
+          result.unchanged,
+        ).toBe(1);
+
+        expect(
+          result.verified,
+        ).toBe(1);
+
+        expect(
+          mock.batch.commit,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "creates a document when the deterministic ID does not exist",
+      async () => {
+        const mock =
+          createFirestoreMock();
+
+        const writer =
+          new ContentWriter({
+            firestore:
+              mock.firestore,
+          });
+
+        const result =
+          await writer.write([
+            createDocument(),
+          ]);
+
+        expect(
+          result.written,
+        ).toBe(1);
+
+        expect(
+          result.created,
+        ).toBe(1);
+
+        expect(
+          result.updated,
+        ).toBe(0);
+
+        expect(
+          result.unchanged,
+        ).toBe(0);
+
+        expect(
+          result.verified,
+        ).toBe(1);
+
+        expect(
+          mock.batch.set,
+        ).toHaveBeenCalledTimes(1);
+
+        expect(
+          mock.batch.commit,
+        ).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it(
+      "updates a document when content has changed",
+      async () => {
+        const existing =
+          createDocument({
+            title: "Old title",
+            content: "Old content",
+          });
+
+        const incoming =
+          createDocument({
+            title: "New title",
+            content: "New content",
+          });
+
+        const mock =
+          createFirestoreMock({
+            "content-001":
+              existing,
+          });
+
+        const writer =
+          new ContentWriter({
+            firestore:
+              mock.firestore,
+          });
+
+        const result =
+          await writer.write([
+            incoming,
+          ]);
+
+        expect(
+          result.written,
+        ).toBe(1);
+
+        expect(
+          result.created,
+        ).toBe(0);
+
+        expect(
+          result.updated,
+        ).toBe(1);
+
+        expect(
+          result.unchanged,
+        ).toBe(0);
+
+        expect(
+          result.verified,
+        ).toBe(1);
+
+        expect(
+          mock.batch.set,
+        ).toHaveBeenCalledTimes(1);
+
+        expect(
+          mock.batch.commit,
+        ).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it(
+      "is safe to run the same import repeatedly",
+      async () => {
+        const document =
+          createDocument();
+
+        const first =
+          createFirestoreMock();
+
+        const firstWriter =
+          new ContentWriter({
+            firestore:
+              first.firestore,
+          });
+
+        const firstResult =
+          await firstWriter.write([
+            document,
+          ]);
+
+        expect(
+          firstResult.created,
+        ).toBe(1);
+
+        const second =
+          createFirestoreMock({
+            "content-001":
+              document,
+          });
+
+        const secondWriter =
+          new ContentWriter({
+            firestore:
+              second.firestore,
+          });
+
+        const secondResult =
+          await secondWriter.write([
+            document,
+          ]);
+
+        expect(
+          secondResult.created,
+        ).toBe(0);
+
+        expect(
+          secondResult.updated,
+        ).toBe(0);
+
+        expect(
+          secondResult.unchanged,
+        ).toBe(1);
+
+        expect(
+          secondResult.written,
+        ).toBe(0);
+
+        expect(
+          second.batch.commit,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "reports mixed create, update and unchanged counts correctly",
+      async () => {
+        const unchanged =
+          createDocument({
+            id: "existing-unchanged",
+            title: "Same",
+            content: "Same content",
+          });
+
+        const updatedExisting =
+          createDocument({
+            id: "existing-updated",
+            title: "Old",
+            content: "Old content",
+          });
+
+        const newDocument =
+          createDocument({
+            id: "new-document",
+            title: "New document",
+            content: "New content",
+          });
+
+        const mock =
+          createFirestoreMock({
+            "existing-unchanged":
+              unchanged,
+
+            "existing-updated":
+              updatedExisting,
+          });
+
+        const writer =
+          new ContentWriter({
+            firestore:
+              mock.firestore,
+          });
+
+        const result =
+          await writer.write([
+            unchanged,
+
+            {
+              ...updatedExisting,
+              title: "New",
+              content: "New content",
+            },
+
+            newDocument,
+          ]);
+
+        expect(
+          result.created,
+        ).toBe(1);
+
+        expect(
+          result.updated,
+        ).toBe(1);
+
+        expect(
+          result.unchanged,
+        ).toBe(1);
+
+        expect(
+          result.written,
+        ).toBe(2);
+
+        expect(
+          result.verified,
+        ).toBe(3);
+
+        expect(
+          mock.batch.set,
+        ).toHaveBeenCalledTimes(2);
+
+        expect(
+          mock.batch.commit,
+        ).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it(
+      "does not commit when all documents are unchanged",
+      async () => {
+        const documents = {
+          "content-001":
+            createDocument({
+              id: "content-001",
+              title: "One",
+              content: "Content one",
+            }),
+
+          "content-002":
+            createDocument({
+              id: "content-002",
+              title: "Two",
+              content: "Content two",
+            }),
+        };
+
+        const mock =
+          createFirestoreMock(
+            documents,
+          );
+
+        const writer =
+          new ContentWriter({
+            firestore:
+              mock.firestore,
+          });
+
+        const result =
+          await writer.write(
+            Object.values(documents),
+          );
+
+        expect(
+          result.written,
+        ).toBe(0);
+
+        expect(
+          result.created,
+        ).toBe(0);
+
+        expect(
+          result.updated,
+        ).toBe(0);
+
+        expect(
+          result.unchanged,
+        ).toBe(2);
+
+        expect(
+          result.verified,
+        ).toBe(2);
+
+        expect(
+          mock.batch.set,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          mock.batch.commit,
+        ).not.toHaveBeenCalled();
+      },
+    );
+  },
+); 
+
+

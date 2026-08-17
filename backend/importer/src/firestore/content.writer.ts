@@ -353,7 +353,7 @@ export class ContentWriter {
     );
 
     // ----------------------------------------------------------
-    // Verification
+    // M8.6 — Firestore verification
     // ----------------------------------------------------------
 
     let verified = unchanged;
@@ -361,6 +361,7 @@ export class ContentWriter {
     for (const write of writes) {
       const snapshot = await write.ref.get();
 
+      // Document missing after successful commit.
       if (!snapshot.exists) {
         throw new Error(
           `Firestore verification failed for document "${write.ref.id}".`,
@@ -369,6 +370,7 @@ export class ContentWriter {
 
       const existing = snapshot.data();
 
+      // Document exists, but contents do not match.
       if (
         !existing ||
         !documentsAreEqual(
