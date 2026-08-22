@@ -4,8 +4,7 @@ import {
   it,
 } from "vitest";
 
-import { createApiApp } from "../../src/api/app.js";
-
+import { createApiApp } from "../../../../src/api/app.js";
 describe(
   "M9.1 Backend API Foundation",
   () => {

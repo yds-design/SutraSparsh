@@ -6,8 +6,8 @@ import {
 
 import express from "express";
 
-import { ApiError } from "../../src/api/errors/api.error.js";
-import { errorMiddleware } from "../../src/api/middleware/error.middleware.js";
+import { ApiError } from "../../../../src/api/errors/api.error.js";
+import { errorMiddleware } from "../../../../src/api/middleware/error.middleware.js";
 
 describe(
   "M9.1 API Error Handling",
