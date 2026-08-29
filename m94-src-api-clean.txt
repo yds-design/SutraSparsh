@@ -1,0 +1,1154 @@
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\app.ts =====
+import express, {
+  type Express,
+  type Request,
+  type Response,
+} from "express";
+
+import healthRoutes from "./routes/health.routes.js";
+import contentRoutes from "./routes/content.routes.js";
+import importRoutes from "./routes/import.routes.js";
+
+import { errorMiddleware } from "./middleware/error.middleware.js";
+import { notFoundMiddleware } from "./middleware/not-found.middleware.js";
+
+export function createApiApp(): Express {
+  const app = express();
+
+  // ----------------------------------------------------------
+  // Core middleware
+  // ----------------------------------------------------------
+
+  app.disable("x-powered-by");
+
+  app.use(express.json());
+
+  // ----------------------------------------------------------
+  // API routes
+  // ----------------------------------------------------------
+
+  app.use("/api", importRoutes);
+  app.use("/api", healthRoutes);
+  app.use("/api", contentRoutes);
+
+  // ----------------------------------------------------------
+  // Root endpoint
+  // ----------------------------------------------------------
+
+  app.get(
+    "/",
+    (_req: Request, res: Response): void => {
+      res.status(200).json({
+        success: true,
+        service: "sutrasparsh-backend",
+        status: "ok",
+      });
+    },
+  );
+
+  // ----------------------------------------------------------
+  // 404 handling
+  // ----------------------------------------------------------
+
+  app.use(notFoundMiddleware);
+
+  // ----------------------------------------------------------
+  // Error handling
+  // ----------------------------------------------------------
+
+  app.use(errorMiddleware);
+
+  return app;
+}
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\errors\api.error.ts =====
+export class ApiError extends Error {
+  public readonly statusCode: number;
+  public readonly code: string;
+  public readonly details?: unknown;
+
+  constructor(
+    statusCode: number,
+    code: string,
+    message: string,
+    details?: unknown,
+  ) {
+    super(message);
+
+    this.name = "ApiError";
+    this.statusCode = statusCode;
+    this.code = code;
+    this.details = details;
+
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+
+  static badRequest(
+    message = "Bad request.",
+    details?: unknown,
+  ): ApiError {
+    return new ApiError(
+      400,
+      "BAD_REQUEST",
+      message,
+      details,
+    );
+  }
+
+  static unauthorized(
+    message = "Unauthorized.",
+    details?: unknown,
+  ): ApiError {
+    return new ApiError(
+      401,
+      "UNAUTHORIZED",
+      message,
+      details,
+    );
+  }
+
+  static forbidden(
+    message = "Forbidden.",
+    details?: unknown,
+  ): ApiError {
+    return new ApiError(
+      403,
+      "FORBIDDEN",
+      message,
+      details,
+    );
+  }
+
+  static notFound(
+    message = "Resource not found.",
+    details?: unknown,
+  ): ApiError {
+    return new ApiError(
+      404,
+      "NOT_FOUND",
+      message,
+      details,
+    );
+  }
+
+  static conflict(
+    message = "Conflict.",
+    details?: unknown,
+  ): ApiError {
+    return new ApiError(
+      409,
+      "CONFLICT",
+      message,
+      details,
+    );
+  }
+
+  static internal(
+    message = "Internal server error.",
+    details?: unknown,
+  ): ApiError {
+    return new ApiError(
+      500,
+      "INTERNAL_SERVER_ERROR",
+      message,
+      details,
+    );
+  }
+}
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\middleware\auth.middleware.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\middleware\authenticate.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\middleware\authorization.middleware.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\middleware\authorize.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\middleware\error.middleware.ts =====
+import type {
+  ErrorRequestHandler,
+  NextFunction,
+  Request,
+  Response,
+} from "express";
+
+import { ApiError } from "../errors/api.error.js";
+
+export const errorMiddleware: ErrorRequestHandler = (
+  err: unknown,
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
+  // ----------------------------------------------------------
+  // Response already started
+  // ----------------------------------------------------------
+
+  if (res.headersSent) {
+    next(err);
+    return;
+  }
+
+  // ----------------------------------------------------------
+  // Known API error
+  // ----------------------------------------------------------
+
+  if (err instanceof ApiError) {
+    console.error(err);
+
+    res.status(err.statusCode).json({
+      success: false,
+      error: {
+        code: err.code,
+        message: err.message,
+      },
+    });
+
+    return;
+  }
+
+  // ----------------------------------------------------------
+  // Unknown / unexpected error
+  // ----------------------------------------------------------
+
+  console.error(err);
+
+  res.status(500).json({
+    success: false,
+    error: {
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Internal server error.",
+    },
+  });
+};
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\middleware\not-found.middleware.ts =====
+import type {
+  NextFunction,
+  Request,
+  Response,
+} from "express";
+
+import { ApiError } from "../errors/api.error.js";
+
+export function notFoundMiddleware(
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+): void {
+  next(
+    ApiError.notFound(
+      `Route not found: ${req.method} ${req.originalUrl}`,
+    ),
+  );
+}
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\middleware\rate-limit.middleware.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\middleware\request-validation.middleware.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\middleware\validateRequest.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\repositories\content.repository.ts =====
+import {
+  getFirestore,
+  type DocumentData,
+  type Firestore,
+} from "firebase-admin/firestore";
+
+import { initializeFirebase } from "../../config/firebase.js";
+
+export interface ContentListOptions {
+  language?: string;
+  source?: string;
+  category?: string;
+  tag?: string;
+  search?: string;
+}
+
+export interface ContentRepositoryResult {
+  items: DocumentData[];
+  total: number;
+}
+
+export class ContentRepository {
+  private readonly db: Firestore;
+
+  private readonly collectionName =
+    "content";
+
+  constructor() {
+    initializeFirebase();
+
+    this.db = getFirestore();
+  }
+
+  /**
+   * Retrieve a single content document by ID.
+   */
+  public async getById(
+    id: string,
+  ): Promise<DocumentData | null> {
+    const document =
+      await this.db
+        .collection(
+          this.collectionName,
+        )
+        .doc(id)
+        .get();
+
+    if (!document.exists) {
+      return null;
+    }
+
+    return {
+      id: document.id,
+      ...document.data(),
+    };
+  }
+
+  /**
+   * List content with optional filters
+   * and text search.
+   */
+  public async list(
+    options: ContentListOptions = {},
+  ): Promise<ContentRepositoryResult> {
+    let query:
+      FirebaseFirestore.Query =
+      this.db.collection(
+        this.collectionName,
+      );
+
+    if (options.language) {
+      query = query.where(
+        "metadata.language",
+        "==",
+        options.language,
+      );
+    }
+
+    if (options.source) {
+      query = query.where(
+        "metadata.source",
+        "==",
+        options.source,
+      );
+    }
+
+    if (options.category) {
+      query = query.where(
+        "metadata.category",
+        "==",
+        options.category,
+      );
+    }
+
+    if (options.tag) {
+      query = query.where(
+        "metadata.tags",
+        "array-contains",
+        options.tag,
+      );
+    }
+
+    const snapshot =
+      await query.get();
+
+    let items: DocumentData[] =
+      snapshot.docs.map(
+        (document) => ({
+          id: document.id,
+          ...document.data(),
+        }),
+      );
+
+    if (options.search) {
+      const search =
+        options.search
+          .trim()
+          .toLowerCase();
+
+      if (search.length > 0) {
+        items = items.filter(
+          (item) =>
+            this.matchesSearch(
+              item,
+              search,
+            ),
+        );
+      }
+    }
+
+    return {
+      items,
+      total: items.length,
+    };
+  }
+
+  private matchesSearch(
+    item: DocumentData,
+    search: string,
+  ): boolean {
+    const title =
+      typeof item.title ===
+      "string"
+        ? item.title.toLowerCase()
+        : "";
+
+    const body =
+      typeof item.body ===
+      "string"
+        ? item.body.toLowerCase()
+        : "";
+
+    return (
+      title.includes(search) ||
+      body.includes(search)
+    );
+  }
+}
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\repositories\import.repository.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\routes\content.routes.ts =====
+import {
+  Router,
+  type Request,
+  type Response,
+} from "express";
+
+import { ApiError } from "../errors/api.error.js";
+
+import {
+  ContentRepository,
+} from "../repositories/content.repository.js";
+
+const router = Router();
+
+const contentRepository =
+  new ContentRepository();
+
+/**
+ * GET /api/content
+ *
+ * Supported query parameters:
+ *
+ * page
+ * limit
+ * language
+ * source
+ * category
+ * tag
+ * q
+ */
+router.get(
+  "/content",
+  async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    const page =
+      parsePositiveInteger(
+        req.query.page,
+        1,
+      );
+
+    const limit =
+      parsePositiveInteger(
+        req.query.limit,
+        20,
+      );
+
+    if (limit > 100) {
+      throw ApiError.badRequest(
+        "The maximum page size is 100.",
+      );
+    }
+
+    const language =
+      getQueryString(
+        req.query.language,
+      );
+
+    const source =
+      getQueryString(
+        req.query.source,
+      );
+
+    const category =
+      getQueryString(
+        req.query.category,
+      );
+
+    const tag =
+      getQueryString(
+        req.query.tag,
+      );
+
+    const search =
+      getQueryString(
+        req.query.q,
+      );
+
+    const result =
+      await contentRepository.list({
+        language,
+        source,
+        category,
+        tag,
+        search,
+      });
+
+    const total =
+      result.total;
+
+    const totalPages =
+      total === 0
+        ? 0
+        : Math.ceil(
+            total / limit,
+          );
+
+    if (
+      totalPages > 0 &&
+      page > totalPages
+    ) {
+      throw ApiError.badRequest(
+        `Page ${page} exceeds the available page range.`,
+      );
+    }
+
+    const offset =
+      (page - 1) * limit;
+
+    const items =
+      result.items.slice(
+        offset,
+        offset + limit,
+      );
+
+    res.status(200).json({
+      success: true,
+      data: items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage:
+          page < totalPages,
+        hasPreviousPage:
+          page > 1,
+      },
+    });
+  },
+);
+
+/**
+ * GET /api/content/:id
+ */
+router.get(
+  "/content/:id",
+  async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    const id =
+      typeof req.params.id === "string"
+        ? req.params.id.trim()
+        : "";
+
+    if (!id) {
+      throw ApiError.badRequest(
+        "Content ID is required.",
+      );
+    }
+
+    const content =
+      await contentRepository.getById(
+        id,
+      );
+
+    if (!content) {
+      throw ApiError.notFound(
+        `Content not found: ${id}`,
+      );
+    }
+
+    res.status(200).json({
+      success: true,
+      data: content,
+    });
+  },
+);
+
+function getQueryString(
+  value: unknown,
+): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalized =
+    value.trim();
+
+  return normalized.length > 0
+    ? normalized
+    : undefined;
+}
+
+function parsePositiveInteger(
+  value: unknown,
+  fallback: number,
+): number {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  if (typeof value !== "string") {
+    throw ApiError.badRequest(
+      "Pagination parameters must be integers.",
+    );
+  }
+
+  if (!/^\d+$/.test(value)) {
+    throw ApiError.badRequest(
+      "Pagination parameters must be positive integers.",
+    );
+  }
+
+  const parsed =
+    Number(value);
+
+  if (
+    !Number.isSafeInteger(parsed) ||
+    parsed < 1
+  ) {
+    throw ApiError.badRequest(
+      "Pagination parameters must be positive integers.",
+    );
+  }
+
+  return parsed;
+}
+
+export default router;
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\routes\health.routes.ts =====
+import {
+  Router,
+  type Request,
+  type Response,
+} from "express";
+
+const router = Router();
+
+router.get(
+  "/health",
+  (_req: Request, res: Response): void => {
+    res.status(200).json({
+      success: true,
+      data: {
+        status: "ok",
+        service: "sutrasparsh-backend",
+        timestamp: new Date().toISOString(),
+      },
+    });
+  },
+);
+
+export default router;
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\routes\import.routes.ts =====
+import {
+  Router,
+  type Request,
+  type Response,
+} from "express";
+
+import { ApiError } from "../errors/api.error.js";
+
+import {
+  ImportJobReader,
+  type ImportJobStatus,
+} from "../../../backend/importer/src/firestore/index.js";
+
+import {
+  ImporterPipeline,
+} from "../../../backend/importer/src/pipeline/index.js";
+
+const router = Router();
+
+/**
+ * Create the reader lazily.
+ *
+ * IMPORTANT:
+ * Do not instantiate ImportJobReader at module scope.
+ *
+ * ImportJobReader initializes Firestore in its instance
+ * initializer. Creating it while this module is imported
+ * causes Firebase credentials to be required even when
+ * the API is only being constructed for tests.
+ */
+function getImportJobReader(): ImportJobReader {
+  return new ImportJobReader();
+}
+
+/**
+ * ----------------------------------------------------------
+ * GET /api/import/status
+ * ----------------------------------------------------------
+ *
+ * Returns the latest import job.
+ */
+router.get(
+  "/import/status",
+  async (
+    _req: Request,
+    res: Response,
+  ): Promise<void> => {
+    const reader =
+      getImportJobReader();
+
+    const latest =
+      await reader.getLatest();
+
+    res.status(200).json({
+      success: true,
+      data: latest,
+    });
+  },
+);
+
+/**
+ * ----------------------------------------------------------
+ * GET /api/import/status/:jobId
+ * ----------------------------------------------------------
+ *
+ * Returns a specific import job.
+ */
+router.get(
+  "/import/status/:jobId",
+  async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    const jobId =
+      getRequiredString(
+        req.params.jobId,
+        "Import job ID is required.",
+      );
+
+    const reader =
+      getImportJobReader();
+
+    const job =
+      await reader.get(
+        jobId,
+      );
+
+    if (!job) {
+      throw ApiError.notFound(
+        `Import job not found: ${jobId}`,
+      );
+    }
+
+    res.status(200).json({
+      success: true,
+      data: job,
+    });
+  },
+);
+
+/**
+ * ----------------------------------------------------------
+ * GET /api/import/history
+ * ----------------------------------------------------------
+ *
+ * Returns recent import jobs.
+ *
+ * Query parameters:
+ *
+ *   limit
+ *   status
+ *   source
+ *
+ * Examples:
+ *
+ *   /api/import/history
+ *   /api/import/history?limit=20
+ *   /api/import/history?status=failed
+ *   /api/import/history?source=json
+ */
+router.get(
+  "/import/history",
+  async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    const limit =
+      parsePositiveInteger(
+        req.query.limit,
+        10,
+      );
+
+    if (limit > 100) {
+      throw ApiError.badRequest(
+        "The maximum history limit is 100.",
+      );
+    }
+
+    const status =
+      getQueryString(
+        req.query.status,
+      );
+
+    const source =
+      getQueryString(
+        req.query.source,
+      );
+
+    const reader =
+      getImportJobReader();
+
+    let items;
+
+    if (status) {
+      if (!isImportJobStatus(status)) {
+        throw ApiError.badRequest(
+          `Invalid import status: ${status}`,
+        );
+      }
+
+      items =
+        await reader.listByStatus(
+          status,
+          limit,
+        );
+    } else if (source) {
+      items =
+        await reader.listBySource(
+          source,
+          limit,
+        );
+    } else {
+      items =
+        await reader.list(
+          limit,
+        );
+    }
+
+    res.status(200).json({
+      success: true,
+      data: items,
+      count: items.length,
+    });
+  },
+);
+
+/**
+ * ----------------------------------------------------------
+ * GET /api/import/failed
+ * ----------------------------------------------------------
+ *
+ * Returns recent failed imports.
+ */
+router.get(
+  "/import/failed",
+  async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    const limit =
+      parsePositiveInteger(
+        req.query.limit,
+        10,
+      );
+
+    if (limit > 100) {
+      throw ApiError.badRequest(
+        "The maximum failed-import limit is 100.",
+      );
+    }
+
+    const reader =
+      getImportJobReader();
+
+    const items =
+      await reader.listByStatus(
+        "failed",
+        limit,
+      );
+
+    res.status(200).json({
+      success: true,
+      data: items,
+      count: items.length,
+    });
+  },
+);
+
+/**
+ * ----------------------------------------------------------
+ * GET /api/import/statistics
+ * ----------------------------------------------------------
+ *
+ * Returns aggregate import statistics.
+ */
+router.get(
+  "/import/statistics",
+  async (
+    _req: Request,
+    res: Response,
+  ): Promise<void> => {
+    const reader =
+      getImportJobReader();
+
+    const statistics =
+      await reader.getSummary();
+
+    res.status(200).json({
+      success: true,
+      data: statistics,
+    });
+  },
+);
+
+/**
+ * ----------------------------------------------------------
+ * POST /api/import/:jobId/recover
+ * ----------------------------------------------------------
+ *
+ * Resumes a failed import using the original job ID
+ * and original source.
+ *
+ * Valid transition:
+ *
+ *   failed -> running -> completed
+ *
+ * A completed job cannot be recovered.
+ * A running job cannot be recovered.
+ */
+router.post(
+  "/import/:jobId/recover",
+  async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    const jobId =
+      getRequiredString(
+        req.params.jobId,
+        "Import job ID is required.",
+      );
+
+    const reader =
+      getImportJobReader();
+
+    const existing =
+      await reader.get(
+        jobId,
+      );
+
+    if (!existing) {
+      throw ApiError.notFound(
+        `Import job not found: ${jobId}`,
+      );
+    }
+
+    if (
+      existing.status ===
+      "completed"
+    ) {
+      throw ApiError.badRequest(
+        `Import job "${jobId}" is already completed.`,
+      );
+    }
+
+    if (
+      existing.status !==
+      "failed"
+    ) {
+      throw ApiError.badRequest(
+        `Import job "${jobId}" cannot be recovered from status "${existing.status}".`,
+      );
+    }
+
+    /**
+     * ImporterPipeline currently supports
+     * only these two sources.
+     */
+    if (
+      existing.source !== "json" &&
+      existing.source !== "manual"
+    ) {
+      throw ApiError.badRequest(
+        `Unsupported import source: ${existing.source}`,
+      );
+    }
+
+    const pipeline =
+      new ImporterPipeline({
+        source:
+          existing.source,
+      });
+
+    const result =
+      await pipeline.resume(
+        jobId,
+      );
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  },
+);
+
+/**
+ * ----------------------------------------------------------
+ * Helpers
+ * ----------------------------------------------------------
+ */
+
+/**
+ * Return a trimmed query-string value.
+ */
+function getQueryString(
+  value: unknown,
+): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalized =
+    value.trim();
+
+  return normalized.length > 0
+    ? normalized
+    : undefined;
+}
+
+/**
+ * Parse a positive integer query parameter.
+ */
+function parsePositiveInteger(
+  value: unknown,
+  fallback: number,
+): number {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  if (typeof value !== "string") {
+    throw ApiError.badRequest(
+      "Limit must be a positive integer.",
+    );
+  }
+
+  if (!/^\d+$/.test(value)) {
+    throw ApiError.badRequest(
+      "Limit must be a positive integer.",
+    );
+  }
+
+  const parsed =
+    Number(value);
+
+  if (
+    !Number.isSafeInteger(parsed) ||
+    parsed < 1
+  ) {
+    throw ApiError.badRequest(
+      "Limit must be a positive integer.",
+    );
+  }
+
+  return parsed;
+}
+
+/**
+ * Validate supported Firestore import-job statuses.
+ */
+function isImportJobStatus(
+  value: string,
+): value is ImportJobStatus {
+  return (
+    value === "running" ||
+    value === "completed" ||
+    value === "failed"
+  );
+}
+
+/**
+ * Require a non-empty route parameter.
+ */
+function getRequiredString(
+  value: unknown,
+  message: string,
+): string {
+  if (typeof value !== "string") {
+    throw ApiError.badRequest(
+      message,
+    );
+  }
+
+  const normalized =
+    value.trim();
+
+  if (!normalized) {
+    throw ApiError.badRequest(
+      message,
+    );
+  }
+
+  return normalized;
+}
+
+export default router;
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\security\auth.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\security\auth.types.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\security\permissions.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\security\rate-limit.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\server.ts =====
+import { createApiApp } from "./app.js";
+import type { Server } from "node:http";
+
+const PORT = Number(process.env.PORT ?? 3000);
+const HOST = process.env.HOST ?? "0.0.0.0";
+
+const app = createApiApp();
+
+const server: Server = app.listen(
+  PORT,
+  HOST,
+  () => {
+    console.log("");
+    console.log("================================");
+    console.log(" SutraSparsh API");
+    console.log("================================");
+    console.log("");
+    console.log(`Server listening on http://${HOST}:${PORT}`);
+    console.log("");
+  },
+);
+
+server.on("error", (error: Error) => {
+  console.error("SutraSparsh API server error.");
+  console.error(error);
+  process.exit(1);
+});
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\types\express.d.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\validation\common.validation.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\validation\content.validation.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\api\validation\import.validation.ts =====

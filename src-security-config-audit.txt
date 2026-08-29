@@ -1,0 +1,260 @@
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\config\middleware\errorHandler.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\config\middleware\rateLimiter.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\production\production-content.schema.ts =====
+export interface ProductionContentMetadata {
+  language: string;
+  source: string;
+}
+
+export interface ProductionContentInput {
+  id: string;
+  title: string;
+  content: string;
+  metadata: ProductionContentMetadata;
+}
+
+export interface ProductionContentValidationResult {
+  valid: boolean;
+  errors: string[];
+}
+
+const SUPPORTED_LANGUAGES = new Set([
+  "sanskrit",
+]);
+
+const REQUIRED_SOURCE = "production";
+
+export function validateProductionContent(
+  input: ProductionContentInput,
+): ProductionContentValidationResult {
+  const errors: string[] = [];
+
+  // ----------------------------------------------------------
+  // ID
+  // ----------------------------------------------------------
+
+  if (
+    typeof input?.id !== "string" ||
+    input.id.trim().length === 0
+  ) {
+    errors.push("Production content ID is required.");
+  }
+
+  // ----------------------------------------------------------
+  // Title
+  // ----------------------------------------------------------
+
+  if (
+    typeof input?.title !== "string" ||
+    input.title.trim().length === 0
+  ) {
+    errors.push("Production content title is required.");
+  }
+
+  // ----------------------------------------------------------
+  // Content
+  // ----------------------------------------------------------
+
+  if (
+    typeof input?.content !== "string" ||
+    input.content.trim().length === 0
+  ) {
+    errors.push("Production content body is required.");
+  }
+
+  // ----------------------------------------------------------
+  // Metadata
+  // ----------------------------------------------------------
+
+  if (
+    !input?.metadata ||
+    typeof input.metadata !== "object"
+  ) {
+    errors.push(
+      "Production content metadata is required.",
+    );
+  } else {
+    // --------------------------------------------------------
+    // Language
+    // --------------------------------------------------------
+
+    if (
+      typeof input.metadata.language !== "string" ||
+      !SUPPORTED_LANGUAGES.has(
+        input.metadata.language.trim().toLowerCase(),
+      )
+    ) {
+      errors.push(
+        "Production content language is not supported.",
+      );
+    }
+
+    // --------------------------------------------------------
+    // Source
+    // --------------------------------------------------------
+
+    if (
+      typeof input.metadata.source !== "string" ||
+      input.metadata.source.trim().toLowerCase() !==
+        REQUIRED_SOURCE
+    ) {
+      errors.push(
+        "Production content source must be production.",
+      );
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\production\production-content.validation.ts =====
+import type { ProductionContentRecord } from "./production-content.schema.js";
+
+export interface ProductionContentValidationIssue {
+  index: number;
+  field: string;
+  message: string;
+}
+
+export interface ProductionContentValidationResult {
+  valid: boolean;
+  issues: ProductionContentValidationIssue[];
+  validRecords: ProductionContentRecord[];
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function validateRecord(
+  record: unknown,
+  index: number,
+): ProductionContentValidationIssue[] {
+  const issues: ProductionContentValidationIssue[] = [];
+
+  if (typeof record !== "object" || record === null || Array.isArray(record)) {
+    issues.push({
+      index,
+      field: "$",
+      message: "Production content record must be an object.",
+    });
+
+    return issues;
+  }
+
+  const value = record as Record<string, unknown>;
+
+  if (!isNonEmptyString(value.id)) {
+    issues.push({
+      index,
+      field: "id",
+      message:
+        "Production content ID is required and must be a non-empty string.",
+    });
+  }
+
+  if (!isNonEmptyString(value.title)) {
+    issues.push({
+      index,
+      field: "title",
+      message:
+        "Production content title is required and must be a non-empty string.",
+    });
+  }
+
+  if (!isNonEmptyString(value.content)) {
+    issues.push({
+      index,
+      field: "content",
+      message:
+        "Production content body is required and must be a non-empty string.",
+    });
+  }
+
+  if (
+    typeof value.metadata !== "object" ||
+    value.metadata === null ||
+    Array.isArray(value.metadata)
+  ) {
+    issues.push({
+      index,
+      field: "metadata",
+      message: "Production content metadata is required and must be an object.",
+    });
+
+    return issues;
+  }
+
+  const metadata = value.metadata as Record<string, unknown>;
+
+  if (!isNonEmptyString(metadata.language)) {
+    issues.push({
+      index,
+      field: "metadata.language",
+      message: "Production content language is required.",
+    });
+  }
+
+  if (!isNonEmptyString(metadata.source)) {
+    issues.push({
+      index,
+      field: "metadata.source",
+      message: "Production content source is required.",
+    });
+  }
+
+  return issues;
+}
+
+export function validateProductionContent(
+  records: unknown[],
+): ProductionContentValidationResult {
+  const issues: ProductionContentValidationIssue[] = [];
+  const validRecords: ProductionContentRecord[] = [];
+
+  records.forEach((record, index) => {
+    const recordIssues = validateRecord(record, index);
+
+    issues.push(...recordIssues);
+
+    if (recordIssues.length === 0) {
+      validRecords.push(record as ProductionContentRecord);
+    }
+  });
+
+  return {
+    valid: issues.length === 0,
+    issues,
+    validRecords,
+  };
+}
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\schemas\apiSchemas.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\validation\common.validation.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\validation\content.validation.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\validation\import.validation.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\types\Audio.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\types\Category.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\types\Content.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\types\DailyPool.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\types\express.d.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\types\Settings.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\types\Translation.ts =====
+
+===== C:\Users\gupta\Documents\VGupta\online Tools\SutraSparsh\src\types\User.ts =====
