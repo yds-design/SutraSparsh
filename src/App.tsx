@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Search, Filter, Sparkles, BookOpen, Sun, Activity, Bookmark, Flame, RefreshCw, Smartphone, Crown, Heart, Zap } from "lucide-react";
+import { Search, Filter, Sparkles, BookOpen, Sun, Activity, Bookmark, Flame, RefreshCw, Smartphone, Crown, Heart, Zap, ShieldCheck } from "lucide-react";
 import type { ContentItem, ContentResponse, JournalEntry } from "./types";
 import { Header, type NavTab } from "./components/Header";
 import { VerseCard } from "./components/VerseCard";
 import { VerseModal } from "./components/VerseModal";
 import { DailySutra } from "./components/DailySutra";
 import { WisdomJournal } from "./components/WisdomJournal";
-import { AdminOperationsConsole } from "./components/AdminOperationsConsole";
+import { SutraSparshAdminApp } from "./admin/SutraSparshAdminApp";
 import { DailyShlokaMobile } from "./components/DailyShlokaMobile";
 import { PricingModal } from "./components/PricingModal";
 import { PaywallModal } from "./components/PaywallModal";
@@ -18,6 +18,8 @@ const TRADITIONS = ["All", "Bhagavad Gita", "Patanjali", "Upanishads", "Vedas"];
 const CATEGORIES = ["All", "Karma Yoga", "Raja Yoga", "Mind & Meditation", "Jnana / Vedanta", "Vedic Chants"];
 
 export default function App() {
+  // App Mode Separation (Phase 22, M38-M46): 'user' (sutrasparsh.com) vs 'admin' (admin.sutrasparsh.com)
+  const [appMode, setAppMode] = useState<"user" | "admin">("user");
   const [activeTab, setActiveTab] = useState<NavTab>("daily-app");
   const [verses, setVerses] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,6 +149,10 @@ export default function App() {
 
   const dailyVerse = verses.length > 0 ? verses[0] : null;
 
+  if (appMode === "admin") {
+    return <SutraSparshAdminApp onSwitchToUserApp={() => setAppMode("user")} />;
+  }
+
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col selection:bg-amber-500/30 selection:text-amber-200">
       {/* Top Navigation */}
@@ -157,12 +163,13 @@ export default function App() {
         backendOnline={backendOnline}
         onOpenPricing={() => setIsPricingOpen(true)}
         onOpenDonation={() => setIsDonationOpen(true)}
+        onOpenAdminConsole={() => setAppMode("admin")}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === "daily-app" && (
-          <DailyShlokaMobile onOpenAdmin={() => setActiveTab("admin")} />
+          <DailyShlokaMobile onOpenAdmin={() => setAppMode("admin")} />
         )}
 
         {activeTab === "explorer" && (
@@ -342,10 +349,6 @@ export default function App() {
 
         {activeTab === "membership" && (
           <SubscriptionManagementPanel onOpenPricing={() => setIsPricingOpen(true)} />
-        )}
-
-        {activeTab === "admin" && (
-          <AdminOperationsConsole onContentChanged={fetchContent} />
         )}
       </main>
 

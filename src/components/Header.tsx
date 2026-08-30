@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { soundEngine } from "../utils/audio";
 
-export type NavTab = "daily-app" | "explorer" | "daily" | "journal" | "membership" | "admin";
+export type NavTab = "daily-app" | "explorer" | "daily" | "journal" | "membership";
 
 interface HeaderProps {
   activeTab: NavTab;
@@ -22,6 +22,7 @@ interface HeaderProps {
   backendOnline: boolean;
   onOpenPricing?: () => void;
   onOpenDonation?: () => void;
+  onOpenAdminConsole?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -31,6 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
   backendOnline,
   onOpenPricing,
   onOpenDonation,
+  onOpenAdminConsole,
 }) => {
   const [isDroneActive, setIsDroneActive] = React.useState(false);
 
@@ -139,24 +141,21 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="hidden sm:inline">My Subscription</span>
               <span className="sm:hidden">Plan</span>
             </button>
-
-            <button
-              id="tab-admin"
-              onClick={() => setActiveTab("admin")}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
-                activeTab === "admin"
-                  ? "bg-amber-500/20 text-amber-200 border border-amber-500/30 shadow-sm"
-                  : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4 text-amber-400" />
-              <span className="hidden md:inline">Admin & Operations</span>
-              <span className="md:hidden">Admin</span>
-            </button>
           </nav>
 
-          {/* Action buttons (Monetization Quick CTAs + Audio Drone + Backend indicator) */}
+          {/* Action buttons (Monetization Quick CTAs + Audio Drone + Admin Gateway) */}
           <div className="flex items-center space-x-2 sm:space-x-2.5">
+            {onOpenAdminConsole && (
+              <button
+                id="btn-open-admin-console"
+                onClick={onOpenAdminConsole}
+                className="hidden sm:flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-stone-900 border border-stone-800 hover:border-amber-500/40 text-stone-400 hover:text-amber-300 text-xs transition-colors"
+                title="Open SutraSparsh Admin Console (admin.sutrasparsh.com)"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-[11px] font-mono">Admin</span>
+              </button>
+            )}
             {onOpenDonation && (
               <button
                 onClick={onOpenDonation}
