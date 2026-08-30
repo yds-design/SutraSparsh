@@ -1,0 +1,6 @@
+{
+  "name": "SutraSparsh",
+  "description": "Spiritual Wisdom Platform - Explore sacred verses, commentaries, audios, categories, and spiritual insights",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

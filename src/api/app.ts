@@ -26,30 +26,28 @@ export function createApiApp(): Express {
   // API routes
   // ----------------------------------------------------------
 
+  app.get("/api/status", (_req: Request, res: Response): void => {
+    res.status(200).json({
+      success: true,
+      service: "sutrasparsh-backend",
+      status: "ok",
+    });
+  });
+
   app.use("/api", importRoutes);
   app.use("/api", healthRoutes);
   app.use("/api", contentRoutes);
 
   // ----------------------------------------------------------
-  // Root endpoint
+  // 404 handling for /api routes
   // ----------------------------------------------------------
 
-  app.get(
-    "/",
-    (_req: Request, res: Response): void => {
-      res.status(200).json({
-        success: true,
-        service: "sutrasparsh-backend",
-        status: "ok",
-      });
-    },
-  );
-
-  // ----------------------------------------------------------
-  // 404 handling
-  // ----------------------------------------------------------
-
-  app.use(notFoundMiddleware);
+  app.use((req, res, next) => {
+    if (req.path.startsWith("/api")) {
+      return notFoundMiddleware(req, res, next);
+    }
+    next();
+  });
 
   // ----------------------------------------------------------
   // Error handling

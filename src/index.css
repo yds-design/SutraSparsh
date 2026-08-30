@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+
+  .font-serif-sacred {
+    font-family: 'Cinzel', serif;
+  }
+
+  .font-sanskrit {
+    font-family: 'Yatra One', 'Noto Sans Devanagari', sans-serif;
+  }
+}
