@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, Filter, Sparkles, BookOpen, Sun, Activity, Bookmark, Flame, RefreshCw, Smartphone, Crown, Heart, Zap, ShieldCheck } from "lucide-react";
+import { Search, Filter, Sparkles, BookOpen, Sun, Activity, Bookmark, Flame, RefreshCw, Smartphone, Crown, Heart, Zap, ShieldCheck, Compass } from "lucide-react";
 import type { ContentItem, ContentResponse, JournalEntry } from "./types";
 import { Header, type NavTab } from "./components/Header";
 import { VerseCard } from "./components/VerseCard";
@@ -8,6 +8,8 @@ import { DailySutra } from "./components/DailySutra";
 import { WisdomJournal } from "./components/WisdomJournal";
 import { SutraSparshAdminApp } from "./admin/SutraSparshAdminApp";
 import { DailyShlokaMobile } from "./components/DailyShlokaMobile";
+import { MyJourneyView } from "./components/MyJourneyView";
+import { SearchView } from "./components/SearchView";
 import { PricingModal } from "./components/PricingModal";
 import { PaywallModal } from "./components/PaywallModal";
 import { DonationModal } from "./components/DonationModal";
@@ -20,7 +22,7 @@ const CATEGORIES = ["All", "Karma Yoga", "Raja Yoga", "Mind & Meditation", "Jnan
 export default function App() {
   // App Mode Separation (Phase 22, M38-M46): 'user' (sutrasparsh.com) vs 'admin' (admin.sutrasparsh.com)
   const [appMode, setAppMode] = useState<"user" | "admin">("user");
-  const [activeTab, setActiveTab] = useState<NavTab>("daily-app");
+  const [activeTab, setActiveTab] = useState<NavTab>("today");
   const [verses, setVerses] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -168,11 +170,15 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === "daily-app" && (
-          <DailyShlokaMobile onOpenAdmin={() => setAppMode("admin")} />
+        {/* 1. TODAY: Daily Habit & First Value Aha Moment */}
+        {(activeTab === "today" || activeTab === "daily-app" || activeTab === "daily") && (
+          <div className="space-y-8 animate-fadeIn">
+            <DailyShlokaMobile onOpenAdmin={() => setAppMode("admin")} />
+          </div>
         )}
 
-        {activeTab === "explorer" && (
+        {/* 2. EXPLORE: Tradition & Category Discovery */}
+        {(activeTab === "explore" || activeTab === "explorer") && (
           <div className="space-y-8 animate-fadeIn">
             {/* Hero / Sacred Welcome Banner */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-stone-900 via-stone-900/90 to-amber-950/30 border border-stone-800 p-8 sm:p-12 shadow-2xl">
@@ -191,39 +197,27 @@ export default function App() {
                 </p>
                 <div className="pt-2 flex flex-wrap items-center gap-3">
                   <button
-                    onClick={() => setIsPricingOpen(true)}
+                    onClick={() => setActiveTab("search")}
                     className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-bold rounded-xl text-xs shadow hover:scale-105 transition-all flex items-center space-x-1.5"
                   >
-                    <Crown className="w-3.5 h-3.5" />
-                    <span>Explore Sādhaka & Rishi Memberships</span>
+                    <Search className="w-3.5 h-3.5" />
+                    <span>Search Sacred Corpus</span>
                   </button>
                   <button
-                    onClick={() => setIsDonationOpen(true)}
-                    className="px-4 py-2 bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-300 font-semibold rounded-xl text-xs transition-all flex items-center space-x-1.5"
+                    onClick={() => setActiveTab("my-journey")}
+                    className="px-4 py-2 bg-stone-900 hover:bg-stone-800 border border-stone-800 text-amber-300 font-semibold rounded-xl text-xs transition-all flex items-center space-x-1.5"
                   >
-                    <Heart className="w-3.5 h-3.5 text-rose-400" />
-                    <span>Gurudakshina & Seva (80G Tax Exemption)</span>
+                    <Compass className="w-3.5 h-3.5" />
+                    <span>My Sacred Sanctuary</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Search & Filter Bar */}
+            {/* Filter Bar */}
             <div className="space-y-4 bg-stone-900/60 border border-stone-800 rounded-3xl p-6 shadow-lg">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-500" />
-                <input
-                  id="search-sacred-verses"
-                  type="text"
-                  placeholder="Search by Sanskrit verse, English meaning, topic (e.g., 'karma', 'mind', 'yoga')..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-stone-950/90 border border-stone-800 rounded-2xl pl-12 pr-4 py-3.5 text-stone-200 placeholder:text-stone-600 focus:outline-none focus:border-amber-500/60 text-sm shadow-inner transition-colors"
-                />
-              </div>
-
               {/* Traditions / Authors Filter Chips */}
-              <div className="flex flex-wrap items-center gap-2 pt-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold text-stone-400 mr-2 flex items-center gap-1">
                   <Filter className="w-3.5 h-3.5 text-amber-400" />
                   <span>Tradition:</span>
@@ -326,29 +320,36 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === "daily" && (
-          <DailySutra
-            verse={dailyVerse}
-            isBookmarked={dailyVerse ? bookmarks.includes(dailyVerse.id) : false}
+        {/* 3. SEARCH: Intent-Driven Discovery */}
+        {activeTab === "search" && (
+          <SearchView
+            verses={verses}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            selectedTradition={selectedTradition}
+            setSelectedTradition={setSelectedTradition}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+            bookmarks={bookmarks}
+            onToggleBookmark={toggleBookmark}
+            onOpenVerseModal={handleOpenVerse}
+          />
+        )}
+
+        {/* 4. MY JOURNEY: Personal Sanctuary, Habits, Saved, Journal & Membership */}
+        {(activeTab === "my-journey" || activeTab === "journal" || activeTab === "membership") && (
+          <MyJourneyView
+            verses={verses}
+            bookmarks={bookmarks}
+            journalEntries={journalEntries}
             onToggleBookmark={toggleBookmark}
             onSaveJournalNote={handleSaveJournalNote}
-            onOpenDetails={handleOpenVerse}
+            onDeleteJournalEntry={handleDeleteJournalEntry}
+            onOpenVerseModal={handleOpenVerse}
+            onOpenPricing={() => setIsPricingOpen(true)}
+            onOpenDonation={() => setIsDonationOpen(true)}
+            onNavigateTab={(tab) => setActiveTab(tab)}
           />
-        )}
-
-        {activeTab === "journal" && (
-          <WisdomJournal
-            entries={journalEntries}
-            bookmarks={bookmarks}
-            allVerses={verses}
-            onDeleteEntry={handleDeleteJournalEntry}
-            onOpenVerse={handleOpenVerse}
-            onToggleBookmark={toggleBookmark}
-          />
-        )}
-
-        {activeTab === "membership" && (
-          <SubscriptionManagementPanel onOpenPricing={() => setIsPricingOpen(true)} />
         )}
       </main>
 
@@ -367,7 +368,7 @@ export default function App() {
         isOpen={isPricingOpen}
         onClose={() => setIsPricingOpen(false)}
         onSuccessSubscription={() => {
-          setActiveTab("membership");
+          setActiveTab("my-journey");
         }}
       />
 

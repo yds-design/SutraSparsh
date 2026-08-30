@@ -4,6 +4,7 @@ import {
   BookOpen,
   Database,
   Users,
+  Compass,
   CreditCard,
   Sliders,
   Settings,
@@ -56,6 +57,13 @@ const DOMAIN_NAV_ITEMS: DomainNavItem[] = [
     sanskritBadge: "साधक",
     icon: Users,
     description: "User Directory, Tiers & Support",
+  },
+  {
+    id: "journey",
+    label: "Journey & Intelligence",
+    sanskritBadge: "यात्रा",
+    icon: Compass,
+    description: "70:30 Funnel, Content Matrix & Rules",
   },
   {
     id: "monetization",

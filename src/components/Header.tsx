@@ -1,8 +1,9 @@
 import React from "react";
 import {
-  Sparkles,
-  BookOpen,
   Sun,
+  BookOpen,
+  Search,
+  Compass,
   Bookmark,
   ShieldCheck,
   Volume2,
@@ -13,7 +14,7 @@ import {
 } from "lucide-react";
 import { soundEngine } from "../utils/audio";
 
-export type NavTab = "daily-app" | "explorer" | "daily" | "journal" | "membership";
+export type NavTab = "today" | "explore" | "search" | "my-journey" | "daily-app" | "explorer" | "daily" | "journal" | "membership";
 
 interface HeaderProps {
   activeTab: NavTab;
@@ -41,12 +42,17 @@ export const Header: React.FC<HeaderProps> = ({
     setIsDroneActive(active);
   };
 
+  const isTodayActive = activeTab === "today" || activeTab === "daily-app" || activeTab === "daily";
+  const isExploreActive = activeTab === "explore" || activeTab === "explorer";
+  const isSearchActive = activeTab === "search";
+  const isJourneyActive = activeTab === "my-journey" || activeTab === "journal" || activeTab === "membership";
+
   return (
     <header className="sticky top-0 z-40 bg-stone-950/80 backdrop-blur-md border-b border-stone-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo & Brand */}
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab("explorer")}>
+          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab("today")}>
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-600/30 border border-amber-500/40 flex items-center justify-center text-amber-300 shadow-inner">
               <span className="font-sanskrit text-xl font-bold">ॐ</span>
             </div>
@@ -60,86 +66,76 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
               <p className="text-[11px] text-stone-400 font-light hidden sm:block">
-                Spiritual Wisdom & Sacred Scriptures Engine
+                A daily space to discover, understand and reflect on timeless wisdom
               </p>
             </div>
           </div>
 
-          {/* Navigation tabs */}
+          {/* Canonical 4-Tab User Navigation: TODAY | EXPLORE | SEARCH | MY JOURNEY */}
           <nav className="flex items-center space-x-1 sm:space-x-2">
+            {/* 1. TODAY */}
             <button
-              id="tab-daily-app"
-              onClick={() => setActiveTab("daily-app")}
-              className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
-                activeTab === "daily-app"
-                  ? "bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-200 border border-amber-400/50 shadow-md ring-1 ring-amber-400/30"
-                  : "text-amber-300/80 hover:text-amber-200 hover:bg-stone-900 bg-amber-500/5 border border-amber-500/20"
-              }`}
-            >
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span>Daily Shloka App</span>
-              <span className="text-[10px] bg-amber-500/30 text-amber-300 px-1.5 py-0.5 rounded-full font-bold uppercase hidden md:inline">
-                Preview
-              </span>
-            </button>
-
-            <button
-              id="tab-explorer"
-              onClick={() => setActiveTab("explorer")}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
-                activeTab === "explorer"
-                  ? "bg-amber-500/20 text-amber-200 border border-amber-500/30 shadow-sm"
-                  : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
-              }`}
-            >
-              <BookOpen className="w-4 h-4 text-amber-400" />
-              <span>Explorer</span>
-            </button>
-
-            <button
-              id="tab-daily"
-              onClick={() => setActiveTab("daily")}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
-                activeTab === "daily"
-                  ? "bg-amber-500/20 text-amber-200 border border-amber-500/30 shadow-sm"
+              id="tab-today"
+              onClick={() => setActiveTab("today")}
+              className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                isTodayActive
+                  ? "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
                   : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
               }`}
             >
               <Sun className="w-4 h-4 text-amber-400" />
-              <span className="hidden sm:inline">Daily Sutra</span>
-              <span className="sm:hidden">Daily</span>
+              <span>Today</span>
+              <span className="text-[10px] text-amber-400/80 font-sanskrit hidden md:inline">आज</span>
             </button>
 
+            {/* 2. EXPLORE */}
             <button
-              id="tab-journal"
-              onClick={() => setActiveTab("journal")}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors relative ${
-                activeTab === "journal"
-                  ? "bg-amber-500/20 text-amber-200 border border-amber-500/30 shadow-sm"
+              id="tab-explore"
+              onClick={() => setActiveTab("explore")}
+              className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                isExploreActive
+                  ? "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
                   : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
               }`}
             >
-              <Bookmark className="w-4 h-4 text-amber-400" />
-              <span>Journal</span>
+              <BookOpen className="w-4 h-4 text-amber-400" />
+              <span>Explore</span>
+              <span className="text-[10px] text-amber-400/80 font-sanskrit hidden md:inline">दर्शन</span>
+            </button>
+
+            {/* 3. SEARCH */}
+            <button
+              id="tab-search"
+              onClick={() => setActiveTab("search")}
+              className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                isSearchActive
+                  ? "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
+              }`}
+            >
+              <Search className="w-4 h-4 text-amber-400" />
+              <span>Search</span>
+              <span className="text-[10px] text-amber-400/80 font-sanskrit hidden md:inline">खोज</span>
+            </button>
+
+            {/* 4. MY JOURNEY */}
+            <button
+              id="tab-my-journey"
+              onClick={() => setActiveTab("my-journey")}
+              className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all relative ${
+                isJourneyActive
+                  ? "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
+              }`}
+            >
+              <Compass className="w-4 h-4 text-amber-400" />
+              <span>My Journey</span>
+              <span className="text-[10px] text-amber-400/80 font-sanskrit hidden md:inline">साधना</span>
               {savedCount > 0 && (
                 <span className="bg-amber-500/30 text-amber-300 text-[10px] px-1.5 py-0.2 rounded-full font-bold">
                   {savedCount}
                 </span>
               )}
-            </button>
-
-            <button
-              id="tab-membership"
-              onClick={() => setActiveTab("membership")}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
-                activeTab === "membership"
-                  ? "bg-amber-500/20 text-amber-200 border border-amber-500/30 shadow-sm"
-                  : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
-              }`}
-            >
-              <Crown className="w-4 h-4 text-amber-400" />
-              <span className="hidden sm:inline">My Subscription</span>
-              <span className="sm:hidden">Plan</span>
             </button>
           </nav>
 
@@ -163,7 +159,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Sacred Gurudakshina & Seva (80G Tax Exemption)"
               >
                 <Heart className="w-3.5 h-3.5 text-rose-400 fill-rose-400/30" />
-                <span>Seva / 80G</span>
+                <span>Seva</span>
               </button>
             )}
 

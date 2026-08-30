@@ -4,6 +4,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminDomain, AdminAction
   SUPER_ADMIN: {
     dashboard: ["view", "export"],
     content: ["view", "create", "edit", "delete", "publish", "export"],
+    journey: ["view", "create", "edit", "delete", "publish", "export"],
     imports: ["view", "create", "execute", "export"],
     users: ["view", "create", "edit", "delete", "export"],
     monetization: ["view", "create", "edit", "execute", "export"],
@@ -13,6 +14,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminDomain, AdminAction
   CONTENT_ADMIN: {
     dashboard: ["view"],
     content: ["view", "create", "edit", "delete", "publish", "export"],
+    journey: ["view", "create", "edit", "export"],
     imports: ["view"],
     users: ["view"],
     monetization: [],
@@ -22,6 +24,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminDomain, AdminAction
   IMPORT_ADMIN: {
     dashboard: ["view"],
     content: ["view"],
+    journey: ["view"],
     imports: ["view", "create", "execute", "export"],
     users: [],
     monetization: [],
@@ -31,6 +34,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminDomain, AdminAction
   OPERATIONS_ADMIN: {
     dashboard: ["view", "export"],
     content: ["view"],
+    journey: ["view", "export"],
     imports: ["view", "execute"],
     users: ["view"],
     monetization: ["view"],
@@ -40,6 +44,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminDomain, AdminAction
   MONETIZATION_ADMIN: {
     dashboard: ["view", "export"],
     content: ["view"],
+    journey: ["view"],
     imports: [],
     users: ["view", "edit"],
     monetization: ["view", "create", "edit", "execute", "export"],
@@ -49,6 +54,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Record<AdminDomain, AdminAction
   SUPPORT_ADMIN: {
     dashboard: ["view"],
     content: ["view"],
+    journey: ["view"],
     imports: [],
     users: ["view", "edit"],
     monetization: ["view"],

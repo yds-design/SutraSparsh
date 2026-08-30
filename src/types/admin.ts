@@ -16,6 +16,7 @@ export type AdminDomain =
   | "content"
   | "imports"
   | "users"
+  | "journey"
   | "monetization"
   | "operations"
   | "settings";
