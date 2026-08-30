@@ -79,6 +79,42 @@ export class ApiError extends Error {
     );
   }
 
+  static payloadTooLarge(
+    message = "Payload too large. Maximum allowed size is 10MB.",
+    details?: unknown,
+  ): ApiError {
+    return new ApiError(
+      413,
+      "PAYLOAD_TOO_LARGE",
+      message,
+      details,
+    );
+  }
+
+  static tooManyRequests(
+    message = "Too many requests. Please slow down.",
+    retryAfterSeconds = 60,
+  ): ApiError {
+    return new ApiError(
+      429,
+      "TOO_MANY_REQUESTS",
+      message,
+      { retryAfterSeconds },
+    );
+  }
+
+  static gatewayTimeout(
+    message = "Request timed out.",
+    details?: unknown,
+  ): ApiError {
+    return new ApiError(
+      504,
+      "GATEWAY_TIMEOUT",
+      message,
+      details,
+    );
+  }
+
   static internal(
     message = "Internal server error.",
     details?: unknown,

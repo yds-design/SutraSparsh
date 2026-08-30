@@ -1,0 +1,232 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // PILLAR 1: GLOBAL SAFETY NET (Default Deny)
+    // -------------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // PILLAR 2: REUSABLE GLOBAL HELPERS & IDENTITY PRIMITIVES
+    // -------------------------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Admin authorization via trusted admin registry or bootstrapped verified owner email
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (request.auth.token.email == 'vishal.kr.gupta@gmail.com' && request.auth.token.email_verified == true)
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // PILLAR 3: VALIDATION BLUEPRINTS FOR ENTITIES
+    // -------------------------------------------------------------------------
+
+    // 1. Content Validation Helper
+    function isValidContent(data) {
+      return data.keys().hasAll(['id', 'title', 'language', 'body', 'source', 'category', 'status']) &&
+        data.id is string && isValidId(data.id) &&
+        data.title is string && data.title.size() > 0 && data.title.size() <= 300 &&
+        data.language is string && data.language.size() <= 50 &&
+        data.body is string && data.body.size() > 0 && data.body.size() <= 10000 &&
+        data.source is string && data.source.size() <= 200 &&
+        data.category is string && data.category.size() <= 100 &&
+        data.status in ['draft', 'active', 'archived'] &&
+        (!('tags' in data) || (data.tags is list && data.tags.size() <= 20)) &&
+        (!('metadata' in data) || data.metadata is map);
+    }
+
+    // 2. User Profile Validation Helper
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'email']) &&
+        data.uid is string && data.uid == userId && data.uid == request.auth.uid &&
+        data.email is string && data.email.size() <= 255 &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100)) &&
+        (!('preferredLanguage' in data) || (data.preferredLanguage is string && data.preferredLanguage.size() <= 50)) &&
+        (!('traditionFocus' in data) || (data.traditionFocus is string && data.traditionFocus.size() <= 100));
+    }
+
+    // 3. Bookmark Validation Helper
+    function isValidBookmark(data, userId) {
+      return data.keys().hasAll(['id', 'userId', 'verseId']) &&
+        data.id is string && isValidId(data.id) &&
+        data.userId is string && data.userId == userId && data.userId == request.auth.uid &&
+        data.verseId is string && isValidId(data.verseId) &&
+        (!('verseTitle' in data) || (data.verseTitle is string && data.verseTitle.size() <= 300)) &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 4000));
+    }
+
+    // 4. History Entry Validation Helper
+    function isValidHistoryEntry(data, userId) {
+      return data.keys().hasAll(['id', 'userId', 'verseId', 'timestamp']) &&
+        data.id is string && isValidId(data.id) &&
+        data.userId is string && data.userId == userId && data.userId == request.auth.uid &&
+        data.verseId is string && isValidId(data.verseId) &&
+        data.timestamp is string &&
+        (!('viewDurationSeconds' in data) || data.viewDurationSeconds is number);
+    }
+
+    // 5. User Preferences Validation Helper
+    function isValidUserPreferences(data, userId) {
+      return data.keys().hasAll(['userId']) &&
+        data.userId is string && data.userId == userId && data.userId == request.auth.uid &&
+        (!('tanpuraDroneEnabled' in data) || data.tanpuraDroneEnabled is bool) &&
+        (!('dronePitch' in data) || (data.dronePitch is string && data.dronePitch.size() <= 10)) &&
+        (!('devanagariFontScale' in data) || (data.devanagariFontScale is string && data.devanagariFontScale.size() <= 20)) &&
+        (!('theme' in data) || data.theme in ['dark-sacred', 'light-parchment']);
+    }
+
+    // 6. Audit Log Validation Helper (Immutable)
+    function isValidAuditLog(data) {
+      return data.keys().hasAll(['id', 'action', 'actor', 'timestamp']) &&
+        data.id is string && isValidId(data.id) &&
+        data.action is string && data.action.size() <= 100 &&
+        data.actor is string && data.actor.size() <= 100 &&
+        data.timestamp is string;
+    }
+
+    // 7. Import Job Validation Helper
+    function isValidJob(data) {
+      return data.keys().hasAll(['id', 'source', 'status', 'createdAt']) &&
+        data.id is string && isValidId(data.id) &&
+        data.source is string && data.source.size() <= 200 &&
+        data.status in ['pending', 'processing', 'completed', 'failed', 'partially_failed'] &&
+        data.createdAt is string;
+    }
+
+    // -------------------------------------------------------------------------
+    // PILLAR 4: COLLECTION MATCH RULES (Security Matrix)
+    // -------------------------------------------------------------------------
+
+    // 1. Master Canonical Scripture Corpus (/content/{contentId})
+    // Matrix: Public Read (Active/Approved), Auth Read All, User Write -, Admin Write ✓
+    match /content/{contentId} {
+      allow get: if isValidId(contentId) && (
+        resource.data.status == 'active' ||
+        (isSignedIn() && (resource.data.status in ['active', 'draft'] || isAdmin()))
+      );
+
+      allow list: if (
+        resource.data.status == 'active' ||
+        (isSignedIn() && isAdmin())
+      );
+
+      allow create: if isAdmin() && isValidId(contentId) && isValidContent(incoming());
+
+      allow update: if isAdmin() && isValidId(contentId) && isValidContent(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'language', 'body', 'source', 'category', 'tags', 'status', 'metadata', 'updatedAt'
+        ]);
+
+      allow delete: if isAdmin() && isValidId(contentId);
+    }
+
+    // 2. User Subcollections: Split Collection & Ownership Enforcement
+    match /users/{userId} {
+      // User Profile
+      match /profile/{profileId} {
+        allow get: if isValidId(userId) && isValidId(profileId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(profileId) && isValidUserProfile(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(profileId) && isValidUserProfile(incoming(), userId) &&
+          incoming().uid == existing().uid &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'displayName', 'preferredLanguage', 'traditionFocus', 'updatedAt'
+          ]);
+        allow delete: if isOwner(userId) && isValidId(profileId);
+      }
+
+      // User Bookmarks
+      match /bookmarks/{bookmarkId} {
+        allow get: if isValidId(userId) && isValidId(bookmarkId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(bookmarkId) && isValidBookmark(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(bookmarkId) && isValidBookmark(incoming(), userId) &&
+          incoming().id == existing().id &&
+          incoming().userId == existing().userId &&
+          incoming().verseId == existing().verseId &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['notes', 'verseTitle', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(bookmarkId);
+      }
+
+      // User Reading History
+      match /history/{historyId} {
+        allow get: if isValidId(userId) && isValidId(historyId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(historyId) && isValidHistoryEntry(incoming(), userId);
+        allow update: if false; // History is append-only / immutable
+        allow delete: if isOwner(userId) && isValidId(historyId);
+      }
+
+      // User Preferences
+      match /preferences/{prefId} {
+        allow get: if isValidId(userId) && isValidId(prefId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(prefId) && isValidUserPreferences(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(prefId) && isValidUserPreferences(incoming(), userId) &&
+          incoming().userId == existing().userId &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'tanpuraDroneEnabled', 'dronePitch', 'devanagariFontScale', 'theme', 'updatedAt'
+          ]);
+        allow delete: if isOwner(userId) && isValidId(prefId);
+      }
+    }
+
+    // 3. Security Audit Logs (/audit_logs/{logId})
+    // Matrix: Public Read -, Auth Read -, User Write -, Admin Write Controlled (System/Admin, Immutable)
+    match /audit_logs/{logId} {
+      allow get, list: if isAdmin() && isValidId(logId);
+      allow create: if isAdmin() && isValidId(logId) && isValidAuditLog(incoming());
+      allow update, delete: if false; // Audit logs are strictly immutable
+    }
+
+    // 4. Importer Pipeline Jobs & Records
+    match /jobs/{jobId} {
+      allow read: if isAdmin() && isValidId(jobId);
+      allow create: if isAdmin() && isValidId(jobId) && isValidJob(incoming());
+      allow update: if isAdmin() && isValidId(jobId) && isValidJob(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'status', 'processedCount', 'failedCount', 'completedAt', 'errorDetails'
+        ]);
+      allow delete: if isAdmin() && isValidId(jobId);
+    }
+
+    match /import_records/{recordId} {
+      allow read, write: if isAdmin() && isValidId(recordId);
+    }
+
+    // 5. Admin Directory (/admins/{adminUid})
+    match /admins/{adminUid} {
+      allow read: if isAdmin();
+      allow write: if false; // Root managed
+    }
+  }
+}

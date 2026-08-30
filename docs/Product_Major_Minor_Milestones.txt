@@ -1,0 +1,252 @@
+SutraSparsh — Major & Minor Milestone Roadmap
+
+Phase 1 — Foundation & Project Setup
+M0 — Project foundation [COMPLETED ✅]
+* M0.1 Repository structure ✅
+* M0.2 TypeScript configuration ✅
+* M0.3 Package/workspace configuration ✅
+* M0.4 Environment/configuration handling ✅
+* M0.5 Firebase/Firestore foundation ✅
+* M0.6 Development scripts ✅
+* M0.7 Basic application bootstrap ✅
+Gate: project builds and starts successfully. [PASSED ✅]
+________________
+
+Phase 2 — Importer Core
+M1 — Source collection [COMPLETED ✅]
+* M1.1 Collector interface ✅
+* M1.2 JSON collector ✅
+* M1.3 Source configuration ✅
+* M1.4 File loading ✅
+* M1.5 Collection result model ✅
+* M1.6 Collector error handling ✅
+* M1.7 Collector tests ✅
+Gate: source documents can be reliably collected. [PASSED ✅]
+________________
+
+M2 — Content normalization [COMPLETED ✅]
+* M2.1 Content model ✅
+* M2.2 Field normalization ✅
+* M2.3 Metadata normalization ✅
+* M2.4 ID/source normalization ✅
+* M2.5 Normalization validation ✅
+* M2.6 Normalizer tests ✅
+Gate: collected data becomes canonical ContentDocument objects. [PASSED ✅]
+________________
+
+M3 — Content validation [COMPLETED ✅]
+* M3.1 Required-field validation ✅
+* M3.2 Metadata validation ✅
+* M3.3 Invalid-content detection ✅
+* M3.4 Validation error model ✅
+* M3.5 Validation integration with pipeline ✅
+* M3.6 Validation tests ✅
+Gate: invalid content cannot reach Firestore. [PASSED ✅]
+________________
+
+Phase 3 — Firestore Persistence
+M4 — Firestore foundation [COMPLETED ✅]
+* M4.1 Firestore connection ✅
+* M4.2 Collection configuration ✅
+* M4.3 Firestore document model ✅
+* M4.4 Basic reads ✅
+* M4.5 Basic writes ✅
+* M4.6 Firestore error handling ✅
+* M4.7 Firestore tests ✅
+________________
+
+M5 — Import job/audit persistence [COMPLETED ✅]
+* M5.1 Import job model ✅
+* M5.2 Job creation ✅
+* M5.3 Job status ✅
+* M5.4 Job statistics ✅
+* M5.5 Failure recording ✅
+* M5.6 Job reader ✅
+* M5.7 Audit integrity ✅
+Gate: every import has traceable state and audit information. [PASSED ✅]
+________________
+
+Phase 4 — Reliability
+M6 — Retry infrastructure [COMPLETED ✅]
+* M6.1 Retry abstraction ✅
+* M6.2 Configurable attempts ✅
+* M6.3 Delay/backoff ✅
+* M6.4 Retry callback ✅
+* M6.5 Retry exhaustion ✅
+* M6.6 Retry tests ✅
+Gate: transient failures can be retried predictably. [PASSED ✅]
+________________
+
+M7 — Recovery [COMPLETED ✅]
+* M7.1 Failed-job detection ✅
+* M7.2 Resume using existing job ID ✅
+* M7.3 Recovery attempt tracking ✅
+* M7.4 Recovery failure handling ✅
+* M7.5 Original failure preservation ✅
+* M7.6 No duplicate full-import retry ✅
+* M7.7 Recovery tests ✅
+Gate: failed imports can safely resume. [PASSED ✅]
+________________
+
+Phase 5 — Production Importer
+M8 — Production hardening [COMPLETED ✅]
+* M8.1 Import pipeline ✅
+* M8.2 Retry integration ✅
+* M8.3 Idempotency ✅
+* M8.4 Audit integrity ✅
+* M8.5 Recovery integration ✅
+* M8.6 Observability & lifecycle ✅
+* M8.7 Verification & integration tests ✅ (14 test files / 104+ test specs)
+* M8.8 Release gate ✅
+Gate: M8 importer is release-ready. [PASSED ✅]
+________________
+
+Phase 6 — Application Integration [COMPLETED / GATE CLOSING ✅]
+M9 — Backend/API integration
+* M9.1 Backend service foundation ✅
+* M9.2 Content API ✅
+* M9.3 Import administration ✅
+* M9.4 API security ✅ (Security headers, Rate limiting, Input sanitization & validation, Role-based auth, Masked error handling)
+* M9.5 API integration tests ✅ (41 API integration tests passed)
+Gate: frontend can reliably consume production backend APIs. [PASSED ✅]
+________________
+
+Phase 7 — Frontend/Product Experience [CURRENT WIP ⏳]
+M10 — Frontend foundation [WIP ⏳]
+* M10.1 Application shell, layout & theme ✅
+* M10.2 Typed API client & state management [WIP ⏳]
+* M10.3 Content model integration & caching [WIP ⏳]
+________________
+
+M11 — Core user experience [WIP ⏳]
+* M11.1 Content browsing (traditions, categories, paths, tags) ✅
+* M11.2 Content reader (Devanagari, IAST transliteration, commentary breakdown) ✅
+* M11.3 User interaction (Bookmarks, Web Audio temple chimes & Om drone, Wisdom Journal) ✅
+* M11.4 Responsive/mobile experience [WIP ⏳]
+Gate: primary user journey works end-to-end.
+________________
+
+Phase 8 — Search & Discovery [PLANNED]
+M12 — Search
+* M12.1 Search indexing strategy
+* M12.2 Full-text search
+* M12.3 Filtering
+* M12.4 Ranking/relevance
+* M12.5 Search UI
+* M12.6 Search performance tests
+________________
+
+Phase 9 — User & Personalization [PLANNED]
+M13 — Authentication
+* M13.1 Sign-up/sign-in
+* M13.2 Session management
+* M13.3 User profile
+* M13.4 Authorization
+* M13.5 Account security
+* M13.6 Auth tests
+M14 — Personalization
+* M14.1 Bookmarks
+* M14.2 Reading history
+* M14.3 Preferences
+* M14.4 User settings
+* M14.5 Synchronization
+* M14.6 Personalization tests
+________________
+
+Phase 10 — Administration & Operations [PLANNED]
+M15 — Admin system
+* M15.1 Admin authentication
+* M15.2 Content management
+* M15.3 Import management
+* M15.4 Job monitoring
+* M15.5 Failure/recovery dashboard
+* M15.6 Audit logs
+M16 — Operational observability
+* M16.1 Application logs
+* M16.2 Metrics
+* M16.3 Error monitoring
+* M16.4 Performance monitoring
+* M16.5 Alerts
+* M16.6 Operational dashboards
+________________
+
+Phase 11 — Production Hardening [PLANNED]
+M17 — Security hardening
+* M17.1 Firestore security rules
+* M17.2 API security
+* M17.3 Secrets management
+* M17.4 Input sanitization
+* M17.5 Dependency audit
+* M17.6 Authentication/authorization review
+* M17.7 Security testing
+M18 — Performance
+* M18.1 Backend performance
+* M18.2 Firestore query optimization
+* M18.3 Frontend performance
+* M18.4 Search performance
+* M18.5 Import performance
+* M18.6 Load testing
+* M18.7 Performance regression tests
+________________
+
+Phase 12 — Quality Assurance [PLANNED]
+M19 — End-to-end testing
+* M19.1 User registration → login
+* M19.2 Browse → search → content
+* M19.3 Bookmark/history
+* M19.4 Import → Firestore → API → UI
+* M19.5 Import failure → recovery → verification
+* M19.6 Admin workflows
+* M19.7 Cross-browser testing
+* M19.8 Mobile testing
+Gate: complete product workflow passes from ingestion to user experience.
+________________
+
+Phase 13 — Deployment [PLANNED]
+M20 — Production deployment
+* M20.1 Infrastructure
+* M20.2 CI/CD
+* M20.3 Database/data readiness
+* M20.4 Production smoke tests
+________________
+
+Phase 14 — Final Release [PLANNED]
+M21 — Release candidate
+* M21.1 Feature freeze
+* M21.2 Final regression
+* M21.3 Security review
+* M21.4 Performance review
+* M21.5 Data integrity review
+* M21.6 Backup/restore verification
+* M21.7 Production smoke test
+* M21.8 Release notes
+M22 — Production launch
+* M22.1 Production deployment
+* M22.2 Initial monitoring
+* M22.3 Error monitoring
+* M22.4 Import monitoring
+* M22.5 User-flow verification
+* M22.6 Rollback readiness
+Gate: production system successfully launched.
+________________
+
+Phase 15 — Post-Launch [PLANNED]
+M23 — Stabilization
+* M23.1 Production bug fixes
+* M23.2 Performance tuning
+* M23.3 Import/data corrections
+* M23.4 User feedback
+* M23.5 Monitoring refinement
+M24 — Product v1 completion
+* M24.1 Final documentation
+* M24.2 Architecture documentation
+* M24.3 Operational runbook
+* M24.4 Disaster recovery documentation
+* M24.5 Developer onboarding
+* M24.6 Final acceptance testing
+* M24.7 Product v1 sign-off
+________________
+
+CURRENT ACTIVE POSITION:
+Phase 6 (M9.1 - M9.5) Completed & Verified ✅
+Phase 7 (M10 - M11: Frontend & Core Product Experience) is currently [WIP ⏳]

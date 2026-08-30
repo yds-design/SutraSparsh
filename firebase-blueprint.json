@@ -1,0 +1,141 @@
+{
+  "entities": {
+    "Content": {
+      "title": "Content",
+      "description": "Canonical sacred scripture verse, transliteration, commentary, and metadata.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "maxLength": 300 },
+        "language": { "type": "string", "maxLength": 50 },
+        "body": { "type": "string", "maxLength": 10000 },
+        "source": { "type": "string", "maxLength": 200 },
+        "category": { "type": "string", "maxLength": 100 },
+        "tags": { "type": "array", "maxLength": 20 },
+        "status": { "type": "string", "enum": ["draft", "active", "archived"] },
+        "metadata": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "language", "body", "source", "category", "status"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile settings, spiritual goals, and preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "maxLength": 255 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "preferredLanguage": { "type": "string", "maxLength": 50 },
+        "traditionFocus": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Bookmark": {
+      "title": "Bookmark",
+      "description": "User saved verse with tags and personal annotations.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "verseId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "verseTitle": { "type": "string", "maxLength": 300 },
+        "notes": { "type": "string", "maxLength": 4000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "verseId"]
+    },
+    "HistoryEntry": {
+      "title": "HistoryEntry",
+      "description": "Reading progress and study session activity log.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "verseId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "verseTitle": { "type": "string", "maxLength": 300 },
+        "viewDurationSeconds": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "verseId", "timestamp"]
+    },
+    "UserPreferences": {
+      "title": "UserPreferences",
+      "description": "User UI preferences, soundscape settings, font scale.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "tanpuraDroneEnabled": { "type": "boolean" },
+        "dronePitch": { "type": "string", "maxLength": 10 },
+        "devanagariFontScale": { "type": "string", "maxLength": 20 },
+        "theme": { "type": "string", "enum": ["dark-sacred", "light-parchment"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable security and administrative action audit record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "action": { "type": "string", "maxLength": 100 },
+        "actor": { "type": "string", "maxLength": 100 },
+        "resource": { "type": "string", "maxLength": 200 },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "details": { "type": "object" },
+        "ip": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["id", "action", "actor", "timestamp"]
+    },
+    "ImportJob": {
+      "title": "ImportJob",
+      "description": "Ingestion job status, metrics, and error logs.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "source": { "type": "string", "maxLength": 200 },
+        "status": { "type": "string", "enum": ["pending", "processing", "completed", "failed", "partially_failed"] },
+        "totalRecords": { "type": "number" },
+        "processedCount": { "type": "number" },
+        "failedCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "source", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/content/{contentId}": {
+      "schema": { "$ref": "#/entities/Content" },
+      "description": "Master canonical scriptures and verses accessible to all seekers."
+    },
+    "/users/{userId}/profile/{profileId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user profile and spiritual seeker settings."
+    },
+    "/users/{userId}/bookmarks/{bookmarkId}": {
+      "schema": { "$ref": "#/entities/Bookmark" },
+      "description": "Private collection of bookmarked sacred sutras."
+    },
+    "/users/{userId}/history/{historyId}": {
+      "schema": { "$ref": "#/entities/HistoryEntry" },
+      "description": "Private user study session and reading history."
+    },
+    "/users/{userId}/preferences/{prefId}": {
+      "schema": { "$ref": "#/entities/UserPreferences" },
+      "description": "User UI and drone soundscape preferences."
+    },
+    "/audit_logs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Immutable security and administrative audit log stream."
+    },
+    "/jobs/{jobId}": {
+      "schema": { "$ref": "#/entities/ImportJob" },
+      "description": "Batch ingestion jobs and operational processing records."
+    }
+  }
+}

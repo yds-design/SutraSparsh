@@ -5,6 +5,9 @@ import {
 } from "firebase-admin/firestore";
 
 import { initializeFirebase } from "../../config/firebase.js";
+import { searchEngine } from "../../services/search-engine.service.js";
+import { globalCache } from "../../services/cache.service.js";
+import type { ContentItem } from "../../types.js";
 
 export interface ContentListOptions {
   language?: string;
@@ -12,6 +15,8 @@ export interface ContentListOptions {
   category?: string;
   tag?: string;
   search?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface ContentRepositoryResult {
@@ -100,8 +105,9 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     subtitle: "The Auspicious Commencement",
     body: "अथ योगानुशासनम्॥",
     transliteration: "atha yogānuśāsanam ||",
-    meaning: "Now, the sacred exposition and ongoing discipline of Yoga begins.",
-    commentary: "Sage Patanjali begins with 'Atha' (Now) — signifying the readiness of the sincere seeker who has explored worldly pursuits and is now ripe for supreme self-realization.",
+    meaning: "Now, the sacred exposition and discipline of Yoga commences.",
+    commentary: "Patanjali begins the monumental Yoga Sutras with the word 'Atha' (Now), signaling readiness for supreme inner transformation.",
+    audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
       source: "json",
@@ -109,92 +115,79 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
       category: "Raja Yoga",
       chapter: 1,
       verse: 1,
-      tags: ["yoga", "sutra", "patanjali", "discipline", "beginning"]
+      tags: ["patanjali", "yoga", "sutra", "discipline", "mind"]
     }
   },
   {
     id: "yoga-sutra-1-2",
     title: "Yoga Sutra 1.2",
-    subtitle: "The Core Definition of Yoga",
+    subtitle: "The Definition of Yoga",
     body: "योगश्चित्तवृत्तिनिरोधः॥",
     transliteration: "yogaś citta-vṛtti-nirodhaḥ ||",
-    meaning: "Yoga is the intentional stilling of the fluctuating modifications of the mind-stuff (consciousness).",
-    commentary: "When the turbulent waves of thoughts, memories, cravings, and projections subside, consciousness returns to its pristine, mirror-like clarity.",
+    meaning: "Yoga is the intentional stilling and mastery of the whirlpools of the mind (fluctuations of consciousness).",
+    commentary: "The ultimate purpose of Yoga is not mere physical exercise, but cultivating the profound stillness wherein the true Self (Purusha) shines undisturbed.",
+    audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
       source: "json",
       author: "Patanjali",
-      category: "Raja Yoga",
+      category: "Mind & Meditation",
       chapter: 1,
       verse: 2,
-      tags: ["yoga", "sutra", "mind", "consciousness", "meditation"]
+      tags: ["yoga", "citta", "mind", "meditation", "patanjali"]
     }
   },
   {
-    id: "yoga-sutra-1-3",
-    title: "Yoga Sutra 1.3",
-    subtitle: "Abiding in One's True Nature",
-    body: "तदा द्रष्टुः स्वरूपेऽवस्थानम्॥",
-    transliteration: "tadā draṣṭuḥ svarūpe 'vasthānam ||",
-    meaning: "Then the Seer (pure awareness) abides in its own true, radiant nature.",
-    commentary: "Once the restless mind is stilled, you realize you are not the transient emotions or thoughts, but the eternal, luminous Witness (Drashta).",
+    id: "upanishad-isa-1",
+    title: "Isha Upanishad 1",
+    subtitle: "All this is Enveloped by the Divine",
+    body: "ईशा वास्यमिदँ सर्वं यत्किञ्च जगत्यां जगत्।\nतेन त्यक्तेन भुञ्जीथा मा गृधः कस्यस्विद्धनम्॥",
+    transliteration: "īśā vāsyam idaṁ sarvaṁ yat kiñca jagatyāṁ jagat |\ntena tyaktena bhuñjīthā mā gṛdhaḥ kasya svid dhanam ||",
+    meaning: "All this — whatsoever exists in this transient universe — is enveloped by the Divine. Enjoy life through renunciation and detachment; do not covet anyone's wealth.",
+    commentary: "The foundational verse of the Isha Upanishad teaches that everything belongs to Brahman; live in gratitude without greed or possessiveness.",
+    audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
       source: "json",
-      author: "Patanjali",
-      category: "Raja Yoga",
+      author: "Upanishads",
+      category: "Jnana / Vedanta",
       chapter: 1,
-      verse: 3,
-      tags: ["self-realization", "awareness", "patanjali", "yoga"]
+      verse: 1,
+      tags: ["upanishad", "vedanta", "detachment", "brahman", "ishavasya"]
     }
   },
   {
-    id: "isha-upanishad-1",
-    title: "Isha Upanishad 1",
-    subtitle: "Divine All-Pervasiveness",
-    body: "ईशा वास्यमिदं सर्वं यत्किञ्च जगत्यां जगत्।\nतेन त्यक्तेन भुञ्जीथा मा गृधः कस्यस्विद्धनम्॥",
-    transliteration: "īśā vāsyam idaṁ sarvaṁ yat kiñca jagatyāṁ jagat |\ntena tyaktena bhuñjīthā mā gṛdhaḥ kasya svid dhanam ||",
-    meaning: "All this — whatever exists in this changing universe — is enveloped by the Divine. Therefore, enjoy with renunciation; covet not anyone's wealth.",
-    commentary: "Recognizing the sacred essence permeating all creation allows one to engage with the world gracefully, enjoying its gifts without greed or possessiveness.",
+    id: "upanishad-mandukya-om",
+    title: "Mandukya Upanishad 1.1",
+    subtitle: "The Sacred Syllable OM",
+    body: "ओमित्येतदक्षरमिदँ सर्वं तस्योपव्याख्यानं भूतं भवद् भविष्यदिति सर्वमोङ्कार एव।\nयच्चान्यत् त्रिकालातीतं तदप्योङ्कार एव॥",
+    transliteration: "om ity etad akṣaram idaṁ sarvaṁ tasyopavyākhyānaṁ bhūtaṁ bhavad bhaviṣyad iti sarvam oṅkāra eva |\nyac cānyat trikālātītaṁ tad apy oṅkāra eva ||",
+    meaning: "OM, this eternal syllable, is all that exists. All that was, all that is, and all that shall be is indeed OM. Whatever transcends the three divisions of time is also OM.",
+    commentary: "The Mandukya Upanishad explores the four states of consciousness (Waking, Dreaming, Deep Sleep, and Turiya - Pure Awareness) through the vibration of Pranava OM.",
+    audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
-      source: "production",
+      source: "json",
       author: "Upanishads",
       category: "Jnana / Vedanta",
-      tags: ["upanishad", "vedanta", "divine", "wisdom", "renunciation"]
-    }
-  },
-  {
-    id: "katha-upanishad-1-3-14",
-    title: "Katha Upanishad 1.3.14",
-    subtitle: "The Call to Spiritual Awakening",
-    body: "उत्तिष्ठत जाग्रत प्राप्य वरान्निबोधत।\nक्षुरस्य धारा निशिता दुरत्यया दुर्गं पथस्तत्कवयो वदन्ति॥",
-    transliteration: "uttiṣṭhata jāgrata prāpya varān nibodhata |\nkṣurasya dhārā niśitā duratyayā durgaṁ pathas tat kavayo vadanti ||",
-    meaning: "Arise! Awake! Approach the enlightened masters and realize the Truth! The wise say this path is as difficult to tread as the sharp edge of a razor.",
-    commentary: "The famous rallying cry immortalized by Swami Vivekananda — urging all seekers to awaken from the slumber of ignorance and pursue the highest wisdom with courageous discipline.",
-    metadata: {
-      language: "sa",
-      source: "production",
-      author: "Upanishads",
-      category: "Jnana / Vedanta",
-      tags: ["upanishad", "awakening", "courage", "wisdom"]
+      tags: ["om", "mandukya", "consciousness", "vedanta", "meditation"]
     }
   },
   {
     id: "gayatri-mantra",
-    title: "Rigveda Gayatri Mantra",
-    subtitle: "The Universal Prayer for Illumination",
-    body: "ॐ भूर्भुवः स्वः तत्सवितुर्वरेण्यं भर्गो देवस्य धीमहि धियो यो नः प्रचोदयात्॥",
-    transliteration: "oṁ bhūr bhuvaḥ svaḥ tat savitur vareṇyaṁ bhargo devasya dhīmahi dhiyo yo naḥ pracodayāt ||",
-    meaning: "We meditate upon the supreme effulgence of that Divine Sun, the source of all existence. May That Divine Light enlighten and guide our intellects.",
-    commentary: "The venerable mother of all Vedic mantras, invoking illumination of intellect, clarity of perception, and universal harmony.",
+    title: "Gayatri Mantra (Rigveda 3.62.10)",
+    subtitle: "The Solar Invocation of Divine Illumination",
+    body: "ॐ भूर्भुवः स्वः तत्सवितुर्वरेण्यं\nभर्गो देवस्य धीमहि धियो यो नः प्रचोदयात्॥",
+    transliteration: "oṁ bhūr bhuvaḥ svaḥ tat savitur vareṇyaṁ\nbhargo devasya dhīmahi dhiyo yo naḥ pracodayāt ||",
+    meaning: "We meditate upon the supreme, radiant splendor of the Divine Solar Illuminator (Savitur). May that Divine Light awaken and inspire our intellect and inner vision.",
+    commentary: "The supreme Vedic mantra invoking illumination, wisdom, and spiritual awakening across the three planes of existence.",
     audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
       source: "json",
       author: "Vedas",
       category: "Vedic Chants",
-      tags: ["mantra", "vedas", "gayatri", "chant", "light"]
+      tags: ["mantra", "vedas", "rigveda", "gayatri", "light", "wisdom"]
     }
   },
   {
@@ -230,43 +223,81 @@ export class ContentRepository {
     } catch (e) {
       console.warn("Firestore not available in ContentRepository; using in-memory spiritual catalog.");
     }
+
+    // Initialize search engine index
+    searchEngine.indexAll(this.inMemoryStore as unknown as ContentItem[]);
   }
 
   /**
-   * Retrieve a single content document by ID.
+   * Retrieve all content items.
+   */
+  public async findAll(): Promise<ContentItem[]> {
+    const result = await this.list({ limit: 1000 });
+    return result.items as unknown as ContentItem[];
+  }
+
+  /**
+   * Retrieve a single content document by ID with caching.
    */
   public async getById(
     id: string,
   ): Promise<DocumentData | null> {
-    if (this.db) {
-      try {
-        const document = await this.db
-          .collection(this.collectionName)
-          .doc(id)
-          .get();
+    const cacheKey = `content:${id}`;
+    return globalCache.getOrCompute(cacheKey, async () => {
+      if (this.db) {
+        try {
+          const document = await this.db
+            .collection(this.collectionName)
+            .doc(id)
+            .get();
 
-        if (document.exists) {
-          return {
-            id: document.id,
-            ...document.data(),
-          };
+          if (document.exists) {
+            return {
+              id: document.id,
+              ...document.data(),
+            };
+          }
+        } catch (err) {
+          console.warn("Firestore getById query failed, checking in-memory store:", err);
         }
-      } catch (err) {
-        console.warn("Firestore getById query failed, checking in-memory store:", err);
       }
-    }
 
-    const item = this.inMemoryStore.find((doc) => doc.id === id);
-    return item ? { ...item } : null;
+      const item = this.inMemoryStore.find((doc) => doc.id === id);
+      return item ? { ...item } : null;
+    }, 60 * 1000);
   }
 
   /**
-   * List content with optional filters
-   * and text search.
+   * List content with optional filters, high-performance search engine, and pagination.
    */
   public async list(
     options: ContentListOptions = {},
   ): Promise<ContentRepositoryResult> {
+    // If search term is present and no complex database filters, use high-speed inverted index
+    if (options.search && options.search.trim().length > 0 && !this.db) {
+      const searchRes = searchEngine.search(options.search, 100);
+      let items = searchRes.items as unknown as DocumentData[];
+
+      if (options.category) {
+        const cat = options.category.toLowerCase();
+        items = items.filter((item) =>
+          item.metadata?.category?.toLowerCase() === cat
+        );
+      }
+
+      if (options.language) {
+        const lang = options.language.toLowerCase();
+        items = items.filter((item) =>
+          item.metadata?.language?.toLowerCase() === lang
+        );
+      }
+
+      return {
+        items,
+        total: items.length,
+      };
+    }
+
     if (this.db) {
       try {
         let query: FirebaseFirestore.Query = this.db.collection(this.collectionName);
@@ -355,6 +386,125 @@ export class ContentRepository {
       items,
       total: items.length,
     };
+  }
+
+  /**
+   * Create a new spiritual scripture / verse.
+   */
+  public async create(data: DocumentData): Promise<DocumentData> {
+    const id = data.id || `custom-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const newItem: DocumentData = {
+      ...data,
+      id,
+      metadata: {
+        language: "sa",
+        source: "admin-publisher",
+        category: "General",
+        tags: [],
+        ...(data.metadata || {}),
+        createdAt: new Date().toISOString(),
+      },
+    };
+
+    if (this.db) {
+      try {
+        await this.db.collection(this.collectionName).doc(id).set(newItem);
+      } catch (err) {
+        console.warn("Firestore create failed, saving to in-memory store:", err);
+      }
+    }
+
+    // Insert at beginning of in-memory store
+    this.inMemoryStore.unshift(newItem);
+    searchEngine.indexItem(newItem as unknown as ContentItem);
+    globalCache.invalidate("content");
+
+    return newItem;
+  }
+
+  /**
+   * Update an existing scripture / verse by ID.
+   */
+  public async update(
+    id: string,
+    updates: Partial<DocumentData>
+  ): Promise<DocumentData | null> {
+    let existing = await this.getById(id);
+    if (!existing) {
+      return null;
+    }
+
+    const updatedItem: DocumentData = {
+      ...existing,
+      ...updates,
+      id,
+      metadata: {
+        ...(existing.metadata || {}),
+        ...(updates.metadata || {}),
+        updatedAt: new Date().toISOString(),
+      },
+    };
+
+    if (this.db) {
+      try {
+        await this.db.collection(this.collectionName).doc(id).set(updatedItem, { merge: true });
+      } catch (err) {
+        console.warn("Firestore update failed, updating in-memory store:", err);
+      }
+    }
+
+    const idx = this.inMemoryStore.findIndex((i) => i.id === id);
+    if (idx !== -1) {
+      this.inMemoryStore[idx] = updatedItem;
+    } else {
+      this.inMemoryStore.unshift(updatedItem);
+    }
+
+    searchEngine.indexAll(this.inMemoryStore as unknown as ContentItem[]);
+    globalCache.invalidate("content");
+
+    return updatedItem;
+  }
+
+  /**
+   * Delete a scripture / verse by ID.
+   */
+  public async delete(id: string): Promise<boolean> {
+    const existing = await this.getById(id);
+    if (!existing) {
+      return false;
+    }
+
+    if (this.db) {
+      try {
+        await this.db.collection(this.collectionName).doc(id).delete();
+      } catch (err) {
+        console.warn("Firestore delete failed:", err);
+      }
+    }
+
+    this.inMemoryStore = this.inMemoryStore.filter((i) => i.id !== id);
+    searchEngine.indexAll(this.inMemoryStore as unknown as ContentItem[]);
+    globalCache.invalidate("content");
+    return true;
+  }
+
+  /**
+   * Get complete corpus for export.
+   */
+  public async getAll(): Promise<DocumentData[]> {
+    if (this.db) {
+      try {
+        const snapshot = await this.db.collection(this.collectionName).get();
+        if (!snapshot.empty) {
+          return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        }
+      } catch (err) {
+        console.warn("Firestore getAll failed, returning in-memory store:", err);
+      }
+    }
+
+    return [...this.inMemoryStore];
   }
 
   private matchesSearch(

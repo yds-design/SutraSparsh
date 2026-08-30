@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { Search, Filter, Sparkles, BookOpen, Sun, Activity, Bookmark, Flame, RefreshCw } from "lucide-react";
+import { Search, Filter, Sparkles, BookOpen, Sun, Activity, Bookmark, Flame, RefreshCw, Smartphone, Crown, Heart, Zap } from "lucide-react";
 import type { ContentItem, ContentResponse, JournalEntry } from "./types";
-import { Header } from "./components/Header";
+import { Header, type NavTab } from "./components/Header";
 import { VerseCard } from "./components/VerseCard";
 import { VerseModal } from "./components/VerseModal";
 import { DailySutra } from "./components/DailySutra";
 import { WisdomJournal } from "./components/WisdomJournal";
-import { ImporterDashboard } from "./components/ImporterDashboard";
+import { AdminOperationsConsole } from "./components/AdminOperationsConsole";
+import { DailyShlokaMobile } from "./components/DailyShlokaMobile";
+import { PricingModal } from "./components/PricingModal";
+import { PaywallModal } from "./components/PaywallModal";
+import { DonationModal } from "./components/DonationModal";
+import { SubscriptionManagementPanel } from "./components/SubscriptionManagementPanel";
+import type { SubscriptionPlanId } from "./types/monetization";
 
 const TRADITIONS = ["All", "Bhagavad Gita", "Patanjali", "Upanishads", "Vedas"];
 const CATEGORIES = ["All", "Karma Yoga", "Raja Yoga", "Mind & Meditation", "Jnana / Vedanta", "Vedic Chants"];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"explorer" | "daily" | "journal" | "importer">("explorer");
+  const [activeTab, setActiveTab] = useState<NavTab>("daily-app");
   const [verses, setVerses] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,6 +27,12 @@ export default function App() {
   const [selectedVerse, setSelectedVerse] = useState<ContentItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [backendOnline, setBackendOnline] = useState(true);
+
+  // Monetization Modals & State (Phases 16–21)
+  const [isPricingOpen, setIsPricingOpen] = useState(false);
+  const [isDonationOpen, setIsDonationOpen] = useState(false);
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  const [paywallFeature, setPaywallFeature] = useState({ title: "", description: "" });
 
   // Local storage for Bookmarks and Journal
   const [bookmarks, setBookmarks] = useState<string[]>(() => {
@@ -119,6 +131,11 @@ export default function App() {
     setIsModalOpen(true);
   };
 
+  const triggerPaywall = (title: string, description: string) => {
+    setPaywallFeature({ title, description });
+    setIsPaywallOpen(true);
+  };
+
   // Filter by tradition client side
   const filteredVerses = verses.filter((v) => {
     if (selectedTradition === "All") return true;
@@ -138,10 +155,16 @@ export default function App() {
         setActiveTab={setActiveTab}
         savedCount={bookmarks.length}
         backendOnline={backendOnline}
+        onOpenPricing={() => setIsPricingOpen(true)}
+        onOpenDonation={() => setIsDonationOpen(true)}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {activeTab === "daily-app" && (
+          <DailyShlokaMobile onOpenAdmin={() => setActiveTab("admin")} />
+        )}
+
         {activeTab === "explorer" && (
           <div className="space-y-8 animate-fadeIn">
             {/* Hero / Sacred Welcome Banner */}
@@ -159,6 +182,22 @@ export default function App() {
                 <p className="text-stone-300 text-sm sm:text-base leading-relaxed font-light">
                   Explore authentic verses from the Bhagavad Gita, Patanjali Yoga Sutras, and the Upanishads. Study transliterations, commentaries, and chant sacred mantras.
                 </p>
+                <div className="pt-2 flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={() => setIsPricingOpen(true)}
+                    className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-bold rounded-xl text-xs shadow hover:scale-105 transition-all flex items-center space-x-1.5"
+                  >
+                    <Crown className="w-3.5 h-3.5" />
+                    <span>Explore Sādhaka & Rishi Memberships</span>
+                  </button>
+                  <button
+                    onClick={() => setIsDonationOpen(true)}
+                    className="px-4 py-2 bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-300 font-semibold rounded-xl text-xs transition-all flex items-center space-x-1.5"
+                  >
+                    <Heart className="w-3.5 h-3.5 text-rose-400" />
+                    <span>Gurudakshina & Seva (80G Tax Exemption)</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -301,7 +340,13 @@ export default function App() {
           />
         )}
 
-        {activeTab === "importer" && <ImporterDashboard />}
+        {activeTab === "membership" && (
+          <SubscriptionManagementPanel onOpenPricing={() => setIsPricingOpen(true)} />
+        )}
+
+        {activeTab === "admin" && (
+          <AdminOperationsConsole onContentChanged={fetchContent} />
+        )}
       </main>
 
       {/* Verse Detail Reader Modal */}
@@ -312,6 +357,28 @@ export default function App() {
         onClose={() => setIsModalOpen(false)}
         onToggleBookmark={toggleBookmark}
         onSaveJournalNote={handleSaveJournalNote}
+      />
+
+      {/* Global Monetization & Billing Modals (Phases 16–21) */}
+      <PricingModal
+        isOpen={isPricingOpen}
+        onClose={() => setIsPricingOpen(false)}
+        onSuccessSubscription={() => {
+          setActiveTab("membership");
+        }}
+      />
+
+      <DonationModal
+        isOpen={isDonationOpen}
+        onClose={() => setIsDonationOpen(false)}
+      />
+
+      <PaywallModal
+        isOpen={isPaywallOpen}
+        onClose={() => setIsPaywallOpen(false)}
+        onOpenPricing={() => setIsPricingOpen(true)}
+        featureTitle={paywallFeature.title}
+        featureDescription={paywallFeature.description}
       />
 
       {/* Footer */}

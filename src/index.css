@@ -2,14 +2,34 @@
 
 @layer base {
   body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-family: 'Manrope', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   }
 
   .font-serif-sacred {
-    font-family: 'Cinzel', serif;
+    font-family: 'Fraunces', 'Cinzel', serif;
   }
 
   .font-sanskrit {
-    font-family: 'Yatra One', 'Noto Sans Devanagari', sans-serif;
+    font-family: 'Tiro Devanagari Sanskrit', 'Noto Serif Devanagari', 'Yatra One', serif;
   }
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.22s ease-out forwards;
+}
+
+@keyframes speakPulse {
+  0% { box-shadow: 0 0 0 0px rgba(231,167,62,0.65); transform: scale(1); }
+  50% { box-shadow: 0 0 0 8px rgba(231,167,62,0); transform: scale(1.06); }
+  100% { box-shadow: 0 0 0 0px rgba(231,167,62,0); transform: scale(1); }
+}
+
+.animate-speakPulse {
+  animation: speakPulse 1s ease-in-out infinite;
+}
+

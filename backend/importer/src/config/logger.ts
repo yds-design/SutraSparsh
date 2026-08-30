@@ -1,27 +1,23 @@
-import winston from "winston";
+export interface Logger {
+  debug: (message: string, meta?: unknown) => void;
+  info: (message: string, meta?: unknown) => void;
+  warn: (message: string, meta?: unknown) => void;
+  error: (message: string, meta?: unknown) => void;
+}
 
-export const logger = winston.createLogger({
-  level: "debug",
-
-  format: winston.format.combine(
-    winston.format.timestamp({
-      format: "YYYY-MM-DD HH:mm:ss",
-    }),
-    winston.format.printf(({ level, message, timestamp }) => {
-      return `[${timestamp}] ${level.toUpperCase()} : ${message}`;
-    })
-  ),
-
-  transports: [
-    new winston.transports.Console(),
-
-    new winston.transports.File({
-      filename: "logs/importer.log",
-    }),
-
-    new winston.transports.File({
-      filename: "logs/error.log",
-      level: "error",
-    }),
-  ],
-});
+export const logger: Logger = {
+  debug: (msg: string, meta?: unknown) => {
+    if (process.env.LOG_LEVEL === "debug") {
+      console.debug(`[${new Date().toISOString()}] DEBUG : ${msg}`, meta || "");
+    }
+  },
+  info: (msg: string, meta?: unknown) => {
+    console.log(`[${new Date().toISOString()}] INFO : ${msg}`, meta || "");
+  },
+  warn: (msg: string, meta?: unknown) => {
+    console.warn(`[${new Date().toISOString()}] WARN : ${msg}`, meta || "");
+  },
+  error: (msg: string, meta?: unknown) => {
+    console.error(`[${new Date().toISOString()}] ERROR : ${msg}`, meta || "");
+  },
+};

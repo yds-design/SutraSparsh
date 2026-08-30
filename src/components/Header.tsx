@@ -1,12 +1,27 @@
 import React from "react";
-import { Sparkles, BookOpen, Sun, Activity, Volume2, VolumeX, Bookmark } from "lucide-react";
+import {
+  Sparkles,
+  BookOpen,
+  Sun,
+  Bookmark,
+  ShieldCheck,
+  Volume2,
+  VolumeX,
+  Zap,
+  Heart,
+  Crown,
+} from "lucide-react";
 import { soundEngine } from "../utils/audio";
 
+export type NavTab = "daily-app" | "explorer" | "daily" | "journal" | "membership" | "admin";
+
 interface HeaderProps {
-  activeTab: "explorer" | "daily" | "journal" | "importer";
-  setActiveTab: (tab: "explorer" | "daily" | "journal" | "importer") => void;
+  activeTab: NavTab;
+  setActiveTab: (tab: NavTab) => void;
   savedCount: number;
   backendOnline: boolean;
+  onOpenPricing?: () => void;
+  onOpenDonation?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -14,6 +29,8 @@ export const Header: React.FC<HeaderProps> = ({
   setActiveTab,
   savedCount,
   backendOnline,
+  onOpenPricing,
+  onOpenDonation,
 }) => {
   const [isDroneActive, setIsDroneActive] = React.useState(false);
 
@@ -48,6 +65,22 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Navigation tabs */}
           <nav className="flex items-center space-x-1 sm:space-x-2">
+            <button
+              id="tab-daily-app"
+              onClick={() => setActiveTab("daily-app")}
+              className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                activeTab === "daily-app"
+                  ? "bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-200 border border-amber-400/50 shadow-md ring-1 ring-amber-400/30"
+                  : "text-amber-300/80 hover:text-amber-200 hover:bg-stone-900 bg-amber-500/5 border border-amber-500/20"
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>Daily Shloka App</span>
+              <span className="text-[10px] bg-amber-500/30 text-amber-300 px-1.5 py-0.5 rounded-full font-bold uppercase hidden md:inline">
+                Preview
+              </span>
+            </button>
+
             <button
               id="tab-explorer"
               onClick={() => setActiveTab("explorer")}
@@ -94,34 +127,69 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             <button
-              id="tab-importer"
-              onClick={() => setActiveTab("importer")}
+              id="tab-membership"
+              onClick={() => setActiveTab("membership")}
               className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
-                activeTab === "importer"
+                activeTab === "membership"
                   ? "bg-amber-500/20 text-amber-200 border border-amber-500/30 shadow-sm"
                   : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
               }`}
             >
-              <Activity className="w-4 h-4 text-amber-400" />
-              <span className="hidden md:inline">Pipeline Status</span>
-              <span className="md:hidden">Pipeline</span>
+              <Crown className="w-4 h-4 text-amber-400" />
+              <span className="hidden sm:inline">My Subscription</span>
+              <span className="sm:hidden">Plan</span>
+            </button>
+
+            <button
+              id="tab-admin"
+              onClick={() => setActiveTab("admin")}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
+                activeTab === "admin"
+                  ? "bg-amber-500/20 text-amber-200 border border-amber-500/30 shadow-sm"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4 text-amber-400" />
+              <span className="hidden md:inline">Admin & Operations</span>
+              <span className="md:hidden">Admin</span>
             </button>
           </nav>
 
-          {/* Action buttons (Audio Drone + Backend indicator) */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* Action buttons (Monetization Quick CTAs + Audio Drone + Backend indicator) */}
+          <div className="flex items-center space-x-2 sm:space-x-2.5">
+            {onOpenDonation && (
+              <button
+                onClick={onOpenDonation}
+                className="hidden lg:flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-300 hover:text-rose-200 bg-rose-950/30 border border-rose-800/40 hover:border-rose-700 transition-all"
+                title="Sacred Gurudakshina & Seva (80G Tax Exemption)"
+              >
+                <Heart className="w-3.5 h-3.5 text-rose-400 fill-rose-400/30" />
+                <span>Seva / 80G</span>
+              </button>
+            )}
+
+            {onOpenPricing && (
+              <button
+                onClick={onOpenPricing}
+                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-stone-950 shadow hover:scale-105 active:scale-95 transition-all"
+                title="Upgrade to Sādhaka Sacred Membership"
+              >
+                <Zap className="w-3.5 h-3.5 fill-current" />
+                <span>Sādhaka</span>
+              </button>
+            )}
+
             <button
               id="btn-drone-soundscape"
               onClick={toggleSoundscape}
               title={isDroneActive ? "Mute Tanpura Drone (136.1Hz)" : "Play Meditative Tanpura Ambience"}
-              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all border ${
+              className={`flex items-center space-x-1.5 px-2 py-1.5 rounded-lg text-xs transition-all border ${
                 isDroneActive
                   ? "bg-amber-500/20 border-amber-500/50 text-amber-200 animate-pulse"
                   : "bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200 hover:border-stone-700"
               }`}
             >
               {isDroneActive ? <Volume2 className="w-4 h-4 text-amber-400" /> : <VolumeX className="w-4 h-4" />}
-              <span className="hidden lg:inline">{isDroneActive ? "Om Drone On" : "Om Drone"}</span>
             </button>
 
             <div

@@ -10,6 +10,8 @@ export interface ProductionContentInput {
   metadata: ProductionContentMetadata;
 }
 
+export type ProductionContentRecord = ProductionContentInput;
+
 export interface ProductionContentValidationResult {
   valid: boolean;
   errors: string[];
