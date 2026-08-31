@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { speechSafetyEngine } from "../utils/speech";
+import { recitationEngine } from "../utils/recitationEngine";
 import { PricingModal } from "./PricingModal";
 import { DonationModal } from "./DonationModal";
 import { SutraSparshTempleApp } from "./SutraSparshTempleApp";
@@ -108,10 +109,11 @@ export const DailyShlokaMobile: React.FC<DailyShlokaMobileProps> = ({ onOpenAdmi
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   const [isDonationModalOpen, setIsDonationModalOpen] = useState(false);
 
-  // Unmount cleanup for audio synthesis
+  // Unmount cleanup for audio synthesis and stream recitation
   useEffect(() => {
     return () => {
       speechSafetyEngine.cancel();
+      recitationEngine.stop();
     };
   }, []);
 

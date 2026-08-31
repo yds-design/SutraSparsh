@@ -5,35 +5,7 @@
  */
 
 import type { ContentItem } from "../types.js";
-
-// IAST diacritics mapping for normalization
-const IAST_MAP: Record<string, string> = {
-  ā: "a",
-  á: "a",
-  ī: "i",
-  í: "i",
-  ū: "u",
-  ú: "u",
-  ṛ: "r",
-  ṝ: "r",
-  ḷ: "l",
-  ḹ: "l",
-  ē: "e",
-  ō: "o",
-  ṃ: "m",
-  ṁ: "m",
-  ḥ: "h",
-  ś: "s",
-  ṣ: "s",
-  ñ: "n",
-  ṅ: "n",
-  ṇ: "n",
-  ṭ: "t",
-  ḍ: "d",
-  dh: "dh",
-  bh: "bh",
-  th: "th",
-};
+import { normalizeSanskrit } from "../utils/sanskritSearch.js";
 
 export class SearchEngineService {
   private documents: Map<string, ContentItem> = new Map();
@@ -46,13 +18,7 @@ export class SearchEngineService {
    * Normalizes strings by removing diacritics, lowercasing, and splitting tokens.
    */
   public normalize(text: string): string {
-    if (!text) return "";
-    let str = text.toLowerCase();
-    for (const [diacritic, base] of Object.entries(IAST_MAP)) {
-      str = str.replaceAll(diacritic, base);
-    }
-    // Remove punctuation
-    return str.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'ॐ।॥]/g, " ").trim();
+    return normalizeSanskrit(text);
   }
 
   public tokenize(text: string): string[] {

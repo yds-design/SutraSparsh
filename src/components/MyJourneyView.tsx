@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Sparkles,
   Flame,
@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import type { ContentItem, JournalEntry } from "../types";
 import { soundEngine } from "../utils/audio";
+import { progressService, type StreakData } from "../services/progress.service";
 
 interface MyJourneyViewProps {
   verses: ContentItem[];
@@ -59,6 +60,15 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
   );
   const [notification, setNotification] = useState<string | null>(null);
   const [copiedCardId, setCopiedCardId] = useState<string | null>(null);
+
+  const [streakData, setStreakData] = useState<StreakData>(() => progressService.getStreakData());
+
+  useEffect(() => {
+    const unsub = progressService.subscribeStreak((streak) => {
+      setStreakData(streak);
+    });
+    return unsub;
+  }, []);
 
   // Filter bookmarked verses
   const savedVersesList = verses.filter((v) => bookmarks.includes(v.id));
@@ -110,17 +120,19 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             </p>
           </div>
 
-          {/* Sādhana Habit Signals (7-Day Streak) */}
+          {/* Sādhana Habit Signals (Dynamic Streak) */}
           <div className="flex items-center gap-3 bg-stone-950/80 border border-amber-500/30 rounded-2xl p-4 sm:p-5 shadow-inner">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-600/30 border border-orange-500/40 flex items-center justify-center text-orange-400">
               <Flame className="w-6 h-6 fill-current animate-pulse" />
             </div>
             <div>
               <div className="flex items-center space-x-1.5">
-                <span className="font-mono text-2xl font-bold text-amber-200">7</span>
+                <span className="font-mono text-2xl font-bold text-amber-200">{streakData.currentStreak}</span>
                 <span className="text-xs font-bold text-amber-400">Days</span>
               </div>
-              <p className="text-[11px] text-stone-400 font-medium">Consecutive Sādhana Streak</p>
+              <p className="text-[11px] text-stone-400 font-medium">
+                {streakData.checkedInToday ? "Consecutive Sādhana Active" : "Daily Sādhana Check-in Ready"}
+              </p>
             </div>
           </div>
         </div>
@@ -289,8 +301,20 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                 <span>Habit Tier</span>
                 <Flame className="w-4 h-4 text-orange-400" />
               </div>
-              <div className="font-mono text-lg font-bold text-orange-300">Sādhana Seeker</div>
-              <p className="text-[11px] text-stone-500">Consistent 7+ days practice</p>
+              <div className="font-mono text-lg font-bold text-orange-300">
+                {streakData.currentStreak >= 21
+                  ? "Siddha Sādhaka"
+                  : streakData.currentStreak >= 7
+                  ? "Sādhana Seeker"
+                  : streakData.currentStreak >= 3
+                  ? "Daily Abhyāsi"
+                  : "Prārambhik"}
+              </div>
+              <p className="text-[11px] text-stone-500">
+                {streakData.currentStreak >= 7
+                  ? `Consistent ${streakData.currentStreak}+ days practice`
+                  : `${streakData.currentStreak} day streak active`}
+              </p>
             </div>
           </div>
 

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { ContentItem } from "../types";
 import { soundEngine } from "../utils/audio";
+import { matchesSanskritQuery } from "../utils/sanskritSearch";
 
 interface SearchViewProps {
   verses: ContentItem[];
@@ -70,11 +71,11 @@ export const SearchView: React.FC<SearchViewProps> = ({
 
     const matchesSearch =
       !searchTerm.trim() ||
-      v.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      v.body.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (v.transliteration && v.transliteration.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (v.meaning && v.meaning.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (v.metadata.tags && v.metadata.tags.some((t) => t.toLowerCase().includes(searchTerm.toLowerCase())));
+      matchesSanskritQuery(v.title, searchTerm) ||
+      matchesSanskritQuery(v.body, searchTerm) ||
+      (v.transliteration && matchesSanskritQuery(v.transliteration, searchTerm)) ||
+      (v.meaning && matchesSanskritQuery(v.meaning, searchTerm)) ||
+      (v.metadata.tags && v.metadata.tags.some((t) => matchesSanskritQuery(t, searchTerm)));
 
     return matchesTradition && matchesCategory && matchesSearch;
   });

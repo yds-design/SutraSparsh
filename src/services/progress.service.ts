@@ -14,17 +14,38 @@ import type {
 const LOCAL_STORAGE_KEY = "sutrasparsh_reading_progress_v1";
 const LOCAL_ANONYMOUS_DEVICE_KEY = "sutrasparsh_device_id_v1";
 const PROGRESS_EVENTS_KEY = "sutrasparsh_progress_events_v1";
+const DAILY_CHECKINS_KEY = "sutrasparsh_daily_checkins_v1";
+const STREAK_STATE_KEY = "sutrasparsh_streak_state_v2";
+
+export interface StreakData {
+  currentStreak: number;
+  longestStreak: number;
+  lastCheckinDate: string; // YYYY-MM-DD
+  lastCheckinTimestamp?: number;
+  totalActiveDays: number;
+  checkedInToday: boolean;
+}
+
+interface StoredStreakState {
+  currentStreak: number;
+  longestStreak: number;
+  lastCheckinTimestamp: number;
+  lastCheckinDate: string;
+  totalActiveDays: number;
+}
 
 export class ProgressService {
   private static instance: ProgressService;
   private memoryStore: Map<string, ReadingProgress> = new Map();
   private debounceTimers: Map<string, NodeJS.Timeout> = new Map();
   private listeners: Set<(current: ReadingProgress | null) => void> = new Set();
+  private streakListeners: Set<(streak: StreakData) => void> = new Set();
   private deviceId: string;
 
   private constructor() {
     this.deviceId = this.getOrCreateDeviceId();
     this.loadFromLocalStorage();
+    this.recordDailyCheckin();
   }
 
   public static getInstance(): ProgressService {
@@ -32,6 +53,204 @@ export class ProgressService {
       ProgressService.instance = new ProgressService();
     }
     return ProgressService.instance;
+  }
+
+  /**
+   * Calculates true daily streak based on active check-in timestamps and dates in localStorage.
+   * - Maintains streak if checked in today.
+   * - Ready to increment if last check-in was yesterday within 48h.
+   * - Resets to 0/1 if more than 48 hours have elapsed since the last session.
+   */
+  public getStreakData(): StreakData {
+    try {
+      const now = Date.now();
+      const todayStr = new Date(now).toISOString().slice(0, 10);
+      const rawStored = localStorage.getItem(STREAK_STATE_KEY);
+
+      if (rawStored) {
+        const stored: StoredStreakState = JSON.parse(rawStored);
+        const elapsedHours = (now - (stored.lastCheckinTimestamp || now)) / (1000 * 60 * 60);
+        const checkedInToday = stored.lastCheckinDate === todayStr;
+
+        if (!checkedInToday && elapsedHours > 48) {
+          // More than 48 hours have elapsed without checking in today
+          return {
+            currentStreak: 0,
+            longestStreak: Math.max(1, stored.longestStreak || 1),
+            lastCheckinDate: stored.lastCheckinDate || todayStr,
+            lastCheckinTimestamp: stored.lastCheckinTimestamp,
+            totalActiveDays: stored.totalActiveDays || 1,
+            checkedInToday: false,
+          };
+        }
+
+        return {
+          currentStreak: Math.max(1, stored.currentStreak || 1),
+          longestStreak: Math.max(stored.longestStreak || 1, stored.currentStreak || 1),
+          lastCheckinDate: stored.lastCheckinDate || todayStr,
+          lastCheckinTimestamp: stored.lastCheckinTimestamp,
+          totalActiveDays: Math.max(1, stored.totalActiveDays || 1),
+          checkedInToday,
+        };
+      }
+
+      // Fallback: check historical checkins dates
+      const rawDates = localStorage.getItem(DAILY_CHECKINS_KEY);
+      const dates: string[] = rawDates ? JSON.parse(rawDates) : [];
+      if (dates.length === 0) {
+        return {
+          currentStreak: 1,
+          longestStreak: 1,
+          lastCheckinDate: todayStr,
+          lastCheckinTimestamp: now,
+          totalActiveDays: 1,
+          checkedInToday: true,
+        };
+      }
+
+      const uniqueSorted = Array.from(new Set(dates)).sort().reverse();
+      const checkedInToday = uniqueSorted[0] === todayStr;
+      let currentStreak = 0;
+      let expectedDate = new Date(todayStr);
+
+      if (!checkedInToday) {
+        expectedDate.setDate(expectedDate.getDate() - 1);
+        const yesterdayStr = expectedDate.toISOString().slice(0, 10);
+        if (uniqueSorted[0] !== yesterdayStr) {
+          return {
+            currentStreak: 0,
+            longestStreak: Math.max(1, uniqueSorted.length),
+            lastCheckinDate: uniqueSorted[0],
+            lastCheckinTimestamp: now - 86400000 * 2,
+            totalActiveDays: uniqueSorted.length,
+            checkedInToday: false,
+          };
+        }
+      }
+
+      for (const dateStr of uniqueSorted) {
+        const expectedStr = expectedDate.toISOString().slice(0, 10);
+        if (dateStr === expectedStr) {
+          currentStreak++;
+          expectedDate.setDate(expectedDate.getDate() - 1);
+        } else if (dateStr < expectedStr) {
+          break;
+        }
+      }
+
+      return {
+        currentStreak: Math.max(1, currentStreak),
+        longestStreak: Math.max(currentStreak, uniqueSorted.length),
+        lastCheckinDate: uniqueSorted[0],
+        lastCheckinTimestamp: now,
+        totalActiveDays: uniqueSorted.length,
+        checkedInToday,
+      };
+    } catch {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      return {
+        currentStreak: 1,
+        longestStreak: 1,
+        lastCheckinDate: todayStr,
+        lastCheckinTimestamp: Date.now(),
+        totalActiveDays: 1,
+        checkedInToday: true,
+      };
+    }
+  }
+
+  /**
+   * Records daily check-in:
+   * - Increment streak if the last check-in was yesterday.
+   * - Maintain streak if checked in today.
+   * - Reset to 1 if more than 48 hours have elapsed since the last meditation/reading session.
+   */
+  public recordDailyCheckin(): void {
+    try {
+      const now = Date.now();
+      const todayStr = new Date(now).toISOString().slice(0, 10);
+
+      // 1. Update dates list
+      const rawDates = localStorage.getItem(DAILY_CHECKINS_KEY);
+      const dates: string[] = rawDates ? JSON.parse(rawDates) : [];
+      if (!dates.includes(todayStr)) {
+        dates.push(todayStr);
+        if (dates.length > 365) dates.shift();
+        localStorage.setItem(DAILY_CHECKINS_KEY, JSON.stringify(dates));
+      }
+
+      // 2. Compute updated state with exact 48-hour and calendar day logic
+      const rawStored = localStorage.getItem(STREAK_STATE_KEY);
+      let state: StoredStreakState;
+
+      if (!rawStored) {
+        // Initial setup
+        state = {
+          currentStreak: 1,
+          longestStreak: 1,
+          lastCheckinTimestamp: now,
+          lastCheckinDate: todayStr,
+          totalActiveDays: dates.length || 1,
+        };
+      } else {
+        const prev: StoredStreakState = JSON.parse(rawStored);
+        const elapsedHours = (now - (prev.lastCheckinTimestamp || now)) / (1000 * 60 * 60);
+
+        if (prev.lastCheckinDate === todayStr) {
+          // Already checked in today: maintain current streak, refresh timestamp
+          state = {
+            ...prev,
+            lastCheckinTimestamp: now,
+            totalActiveDays: Math.max(prev.totalActiveDays || 1, dates.length),
+          };
+        } else if (elapsedHours > 48) {
+          // More than 48 hours have elapsed since last session: reset streak to 1
+          state = {
+            currentStreak: 1,
+            longestStreak: Math.max(prev.longestStreak || 1, 1),
+            lastCheckinTimestamp: now,
+            lastCheckinDate: todayStr,
+            totalActiveDays: (prev.totalActiveDays || 1) + 1,
+          };
+        } else {
+          // Last check-in was yesterday / within consecutive 48h window: increment streak
+          const nextStreak = (prev.currentStreak || 0) + 1;
+          state = {
+            currentStreak: nextStreak,
+            longestStreak: Math.max(prev.longestStreak || 1, nextStreak),
+            lastCheckinTimestamp: now,
+            lastCheckinDate: todayStr,
+            totalActiveDays: (prev.totalActiveDays || 1) + 1,
+          };
+        }
+      }
+
+      localStorage.setItem(STREAK_STATE_KEY, JSON.stringify(state));
+
+      // Notify streak listeners
+      const streakResult: StreakData = {
+        currentStreak: state.currentStreak,
+        longestStreak: state.longestStreak,
+        lastCheckinDate: state.lastCheckinDate,
+        lastCheckinTimestamp: state.lastCheckinTimestamp,
+        totalActiveDays: state.totalActiveDays,
+        checkedInToday: true,
+      };
+      this.streakListeners.forEach((l) => l(streakResult));
+    } catch (e) {
+      console.warn("Failed to record daily checkin", e);
+    }
+  }
+
+  /**
+   * Subscribe to streak updates
+   */
+  public subscribeStreak(listener: (streak: StreakData) => void): () => void {
+    this.streakListeners.add(listener);
+    listener(this.getStreakData());
+    return () => {
+      this.streakListeners.delete(listener);
+    };
   }
 
   private getOrCreateDeviceId(): string {
@@ -170,6 +389,7 @@ export class ProgressService {
 
       this.memoryStore.set(contentId, progressItem);
       this.saveToLocalStorage();
+      this.recordDailyCheckin();
       this.logTelemetryEvent("progress_saved", contentId);
       this.notifyListeners(progressItem);
     };
@@ -252,6 +472,62 @@ export class ProgressService {
       localStorage.setItem(PROGRESS_EVENTS_KEY, JSON.stringify(events));
     } catch {
       // ignore
+    }
+  }
+
+  /**
+   * Export all user data as JSON (Progress, Saved Verses, Reflections, Preferences)
+   */
+  public exportBackupData(): string {
+    const backup = {
+      version: "2.0",
+      exportDate: new Date().toISOString(),
+      progress: Array.from(this.memoryStore.values()),
+      checkins: JSON.parse(localStorage.getItem(DAILY_CHECKINS_KEY) || "[]"),
+      savedVerses: JSON.parse(localStorage.getItem("sutrasparsh_saved_verses") || "[]"),
+      reflections: JSON.parse(localStorage.getItem("sutrasparsh_reflections_list") || "[]"),
+      theme: localStorage.getItem("sutrasparsh_theme") || "sandstone",
+      prefScript: localStorage.getItem("sutrasparsh_pref_script") || "both",
+      prefLang: localStorage.getItem("sutrasparsh_pref_lang") || "dual",
+      prefSpeed: localStorage.getItem("sutrasparsh_pref_speed") || "1.0",
+      prefReminder: localStorage.getItem("sutrasparsh_pref_reminder") || "06:30",
+    };
+    return JSON.stringify(backup, null, 2);
+  }
+
+  /**
+   * Restore user data from JSON backup
+   */
+  public importBackupData(jsonStr: string): boolean {
+    try {
+      const data = JSON.parse(jsonStr);
+      if (Array.isArray(data.progress)) {
+        data.progress.forEach((p: ReadingProgress) => {
+          this.memoryStore.set(p.contentId, p);
+        });
+        this.saveToLocalStorage();
+      }
+      if (Array.isArray(data.checkins)) {
+        localStorage.setItem(DAILY_CHECKINS_KEY, JSON.stringify(data.checkins));
+      }
+      if (Array.isArray(data.savedVerses)) {
+        localStorage.setItem("sutrasparsh_saved_verses", JSON.stringify(data.savedVerses));
+      }
+      if (Array.isArray(data.reflections)) {
+        localStorage.setItem("sutrasparsh_reflections_list", JSON.stringify(data.reflections));
+      }
+      if (data.theme) localStorage.setItem("sutrasparsh_theme", data.theme);
+      if (data.prefScript) localStorage.setItem("sutrasparsh_pref_script", data.prefScript);
+      if (data.prefLang) localStorage.setItem("sutrasparsh_pref_lang", data.prefLang);
+      if (data.prefSpeed) localStorage.setItem("sutrasparsh_pref_speed", data.prefSpeed);
+      if (data.prefReminder) localStorage.setItem("sutrasparsh_pref_reminder", data.prefReminder);
+      
+      const current = this.getCurrentResumePoint();
+      this.notifyListeners(current || Array.from(this.memoryStore.values())[0]);
+      return true;
+    } catch (e) {
+      console.error("Failed to import backup", e);
+      return false;
     }
   }
 

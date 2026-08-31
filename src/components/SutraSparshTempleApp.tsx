@@ -35,12 +35,32 @@ import {
   Music,
   Sliders,
   Sparkle,
+  Radio,
+  Edit3,
+  Download,
+  Upload,
+  Copy,
+  Calendar,
+  CheckCheck,
 } from "lucide-react";
 import { ShareModal } from "./ShareModal";
-import { progressService } from "../services/progress.service";
+import { progressService, type StreakData } from "../services/progress.service";
 import { sharingService } from "../services/sharing.service";
 import type { ReadingProgress } from "../types/progress";
 import type { ShareableContent } from "../types/sharing";
+import { soundEngine } from "../utils/audio";
+import { speechSafetyEngine } from "../utils/speech";
+import { recitationEngine, type RecitationState } from "../utils/recitationEngine";
+import { matchesSanskritQuery } from "../utils/sanskritSearch";
+import {
+  SCRIPTURES_CORPUS,
+  VERSES_DATABASE,
+  getDailyShlokaForDate,
+  getAdjacentVerses,
+  getVersesByScriptureAndChapter,
+  type ScriptureData,
+  type DetailedVerse,
+} from "../data/scriptureCorpus";
 
 export type AppTheme = "sandstone" | "amethyst";
 
@@ -77,7 +97,9 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
 
   // Screen / Navigation state
   const [activeTab, setActiveTab] = useState<"home" | "explore" | "search" | "journey" | "more">("home");
-  const [subScreen, setSubScreen] = useState<"none" | "scripture" | "verse" | "glossary" | "paths" | "about" | "pref">("none");
+  const [subScreen, setSubScreen] = useState<
+    "none" | "scripture" | "verse" | "glossary" | "paths" | "about" | "pref"
+  >("none");
 
   // Scripture & Reading Preferences state (persisted to localStorage)
   const [prefScript, setPrefScript] = useState<"both" | "devanagari" | "transliteration">(() => {
@@ -111,48 +133,59 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   const [themeToast, setThemeToast] = useState<string | null>(null);
 
   // Selected Scripture / Verse state
-  const [selectedScriptureId, setSelectedScriptureId] = useState("bhagavad_gita");
-  const [selectedVerseData, setSelectedVerseData] = useState<{
-    id: string;
-    title: string;
-    chapterName: string;
-    chapterNum: number;
-    verseNum: number;
-    sanskrit: string;
-    transliteration: string;
-    meaning: string;
-    commentary: string;
-    source: string;
-  }>({
-    id: "bg_2_47",
-    title: "Bhagavad Gita 2.47",
-    chapterName: "Sankhya Yoga",
-    chapterNum: 2,
-    verseNum: 47,
-    sanskrit: `कर्मण्येवाधिकारस्ते\nमा फलेषु कदाचन।\nमा कर्मफलहेतुर्भूर्मा ते\nसंगोऽस्त्वकर्मणि॥`,
-    transliteration: `karmaṇy-evādhikāras te mā phaleṣu kadācana |\nmā karma-phala-hetur bhūr mā te saṅgo 'stv akarmaṇi ||`,
-    meaning: `You have a right only to action, never to its fruits. Let not the fruits of action be your motive, nor let your attachment be to inaction.`,
-    commentary: `Shankara interprets this as the foundational teaching of Karma Yoga — that one should perform all actions as an offering to the Divine, without personal attachment to results. The verse does not advocate passivity; rather, it directs the energy of action inward, transforming work into a form of meditation.`,
-    source: "Bhagavad Gita",
-  });
+  const [selectedScriptureId, setSelectedScriptureId] = useState<string>("bhagavad_gita");
+  const [selectedVerseData, setSelectedVerseData] = useState<DetailedVerse>(VERSES_DATABASE["bg_2_47"]);
 
-  // Progress & Resume Subsystem (Phase 26)
+  // Daily Shloka Date Navigation (Rotation Engine)
+  const [selectedDateOffset, setSelectedDateOffset] = useState<number>(0);
+  const currentDailyVerse = React.useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + selectedDateOffset);
+    return getDailyShlokaForDate(d);
+  }, [selectedDateOffset]);
+
+  // Ambient Tanpura Drone state
+  const [isDroneActive, setIsDroneActive] = useState<boolean>(false);
+
+  // Progress & Resume Subsystem
   const [resumePoint, setResumePoint] = useState<ReadingProgress | null>(null);
 
   // Saved / Bookmark state
-  const [savedVerses, setSavedVerses] = useState<Array<{ id: string; title: string; ref: string; snippet: string }>>(() => {
+  const [savedVerses, setSavedVerses] = useState<
+    Array<{ id: string; title: string; ref: string; snippet: string }>
+  >(() => {
     try {
       const saved = localStorage.getItem("sutrasparsh_saved_verses");
       return saved
         ? JSON.parse(saved)
         : [
-            { id: "bg_2_47", title: "कर्मण्येवाधिकारस्ते…", ref: "Bhagavad Gita 2.47", snippet: "You have a right only to action..." },
-            { id: "bg_2_22", title: "वासांसि जीर्णानि यथा…", ref: "Bhagavad Gita 2.22", snippet: "Just as a person sheds old garments..." },
-            { id: "bg_2_50", title: "योगः कर्मसु कौशलम्…", ref: "Bhagavad Gita 2.50", snippet: "Yoga is skill in action..." },
+            {
+              id: "bg_2_47",
+              title: "कर्मण्येवाधिकारस्ते…",
+              ref: "Bhagavad Gita 2.47",
+              snippet: "You have a right only to action...",
+            },
+            {
+              id: "bg_2_50",
+              title: "योगः कर्मसु कौशलम्…",
+              ref: "Bhagavad Gita 2.50",
+              snippet: "Yoga is skill in action...",
+            },
+            {
+              id: "ys_1_2",
+              title: "योगश्चित्तवृत्तिनिरोधः…",
+              ref: "Patanjali Yoga Sutra 1.2",
+              snippet: "Yoga is the stilling of mental fluctuations...",
+            },
           ];
     } catch {
       return [
-        { id: "bg_2_47", title: "कर्मण्येवाधिकारस्ते…", ref: "Bhagavad Gita 2.47", snippet: "You have a right only to action..." },
+        {
+          id: "bg_2_47",
+          title: "कर्मण्येवाधिकारस्ते…",
+          ref: "Bhagavad Gita 2.47",
+          snippet: "You have a right only to action...",
+        },
       ];
     }
   });
@@ -160,7 +193,9 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   const [isCurrentVerseSaved, setIsCurrentVerseSaved] = useState(true);
 
   // Reflections state
-  const [reflections, setReflections] = useState<Array<{ id: string; verseRef: string; text: string; date: string }>>(() => {
+  const [reflections, setReflections] = useState<
+    Array<{ id: string; verseRef: string; text: string; date: string }>
+  >(() => {
     try {
       const saved = localStorage.getItem("sutrasparsh_reflections_list");
       return saved
@@ -169,7 +204,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
             {
               id: "ref-1",
               verseRef: "Gita 2.47",
-              text: "This verse reminds me that my role at work is to do my best—not to worry about whether I get the recognition or promotion right away.",
+              text: "This verse reminds me that my role is to perform my duty with wholehearted dedication, releasing anxious attachment to immediate recognition.",
               date: "Today",
             },
           ];
@@ -179,6 +214,8 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   });
   const [currentReflectionText, setCurrentReflectionText] = useState("");
   const [reflectionSavedMessage, setReflectionSavedMessage] = useState(false);
+  const [editingRefId, setEditingRefId] = useState<string | null>(null);
+  const [editingRefText, setEditingRefText] = useState("");
 
   // Full Commentary expansion
   const [commentaryExpanded, setCommentaryExpanded] = useState(false);
@@ -190,24 +227,55 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   // Explore Filter Pill state
   const [explorePill, setExplorePill] = useState("All");
 
-  // Mini Player Audio state
+  // Mini Player Audio state (Driven by ShlokaRecitationEngine)
   const [playerVisible, setPlayerVisible] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audioProgress, setAudioProgress] = useState(18); // seconds
-  const audioDuration = 42; // seconds
-  const audioTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [recitationState, setRecitationState] = useState<RecitationState>(() => recitationEngine.getState());
+  const isPlaying = recitationState.isPlaying;
+  const isSpeakingChant = recitationState.isPlaying && recitationState.verseId === selectedVerseData.id;
+  const audioProgress = recitationState.currentTime;
+  const audioDuration = recitationState.duration;
 
-  // Share Modal state (Phase 25)
+  // Streak State from Progress Service
+  const [streakData, setStreakData] = useState<StreakData>(() => progressService.getStreakData());
+
+  // Share Modal state
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareableContent, setShareableContent] = useState<ShareableContent | null>(null);
 
-  // Sync Progress Service on mount
+  // Sync Progress Service, Streak Engine, and Recitation Engine on mount
   useEffect(() => {
-    const unsub = progressService.subscribe((current) => {
+    const unsubProgress = progressService.subscribe((current) => {
       setResumePoint(current);
     });
-    return unsub;
-  }, []);
+
+    const unsubStreak = progressService.subscribeStreak((streak) => {
+      setStreakData(streak);
+    });
+
+    const unsubRecitation = recitationEngine.subscribe((state) => {
+      setRecitationState(state);
+      if (state.verseId && state.isPlaying) {
+        progressService.recordAudioProgress(
+          state.verseId,
+          {
+            contentId: state.verseId,
+            timestampSeconds: state.currentTime,
+            durationSeconds: state.duration,
+          },
+          {
+            scriptureTitle: selectedVerseData.source,
+            verseTitle: selectedVerseData.title,
+          }
+        );
+      }
+    });
+
+    return () => {
+      unsubProgress();
+      unsubStreak();
+      unsubRecitation();
+    };
+  }, [selectedVerseData]);
 
   // Save theme
   useEffect(() => {
@@ -231,8 +299,9 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
     try {
       localStorage.setItem("sutrasparsh_theme", newTheme);
     } catch {}
+    soundEngine.playTempleBell(newTheme === "sandstone" ? 220 : 330);
     const themeName = newTheme === "sandstone" ? "Sandstone Temple" : "Amethyst Twilight";
-    setThemeToast(`Atmosphere switched to ${themeName} and saved`);
+    setThemeToast(`Atmosphere switched to ${themeName}`);
     setTimeout(() => {
       setThemeToast(null);
     }, 2800);
@@ -251,6 +320,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
       localStorage.setItem("sutrasparsh_pref_speed", "1.0");
       localStorage.setItem("sutrasparsh_pref_reminder", "06:30");
     } catch {}
+    soundEngine.playTempleBell(220);
     setThemeToast("Preferences reset to default Sandstone Temple atmosphere");
     setTimeout(() => {
       setThemeToast(null);
@@ -276,46 +346,24 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
     setIsCurrentVerseSaved(savedVerses.some((v) => v.id === selectedVerseData.id));
   }, [selectedVerseData.id, savedVerses]);
 
-  // Audio Playback simulation with real state tracking
-  useEffect(() => {
-    if (isPlaying) {
-      audioTimerRef.current = setInterval(() => {
-        setAudioProgress((prev) => {
-          if (prev >= audioDuration) {
-            setIsPlaying(false);
-            return 0;
-          }
-          const next = prev + 1;
-          // Record progress to progressService
-          progressService.recordAudioProgress(
-            selectedVerseData.id,
-            {
-              contentId: selectedVerseData.id,
-              timestampSeconds: next,
-              durationSeconds: audioDuration,
-            },
-            {
-              scriptureTitle: selectedVerseData.source,
-              verseTitle: selectedVerseData.title,
-            }
-          );
-          return next;
-        });
-      }, 1000);
+  // Toggle ambient Tanpura drone
+  const handleToggleTanpura = () => {
+    const active = soundEngine.toggleTanpuraDrone();
+    setIsDroneActive(active);
+    if (active) {
+      setThemeToast("🕉️ Meditative Tanpura Drone activated (432Hz)");
     } else {
-      if (audioTimerRef.current) clearInterval(audioTimerRef.current);
+      setThemeToast("Tanpura Drone paused");
     }
-    return () => {
-      if (audioTimerRef.current) clearInterval(audioTimerRef.current);
-    };
-  }, [isPlaying, selectedVerseData]);
+    setTimeout(() => setThemeToast(null), 2500);
+  };
 
   // Greeting by time of day
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "GOOD MORNING";
-    if (hour < 17) return "GOOD AFTERNOON";
-    return "GOOD EVENING";
+    if (hour < 12) return "GOOD MORNING • प्रातः काल";
+    if (hour < 17) return "GOOD AFTERNOON • मध्याह्न";
+    return "GOOD EVENING • सांध्य वेला";
   };
 
   const handleStartApp = () => {
@@ -323,6 +371,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
     try {
       localStorage.setItem("sutrasparsh_onboarding_done", "true");
     } catch {}
+    soundEngine.playTempleBell(220);
     setActiveTab("home");
   };
 
@@ -332,82 +381,41 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
     );
   };
 
-  const openVerseScreen = (verseId = "bg_2_47") => {
-    if (verseId === "bg_2_47") {
-      setSelectedVerseData({
-        id: "bg_2_47",
-        title: "Bhagavad Gita 2.47",
-        chapterName: "Sankhya Yoga",
-        chapterNum: 2,
-        verseNum: 47,
-        sanskrit: `कर्मण्येवाधिकारस्ते\nमा फलेषु कदाचन।\nमा कर्मफलहेतुर्भूर्मा ते\nसंगोऽस्त्वकर्मणि॥`,
-        transliteration: `karmaṇy-evādhikāras te mā phaleṣu kadācana |\nmā karma-phala-hetur bhūr mā te saṅgo 'stv akarmaṇi ||`,
-        meaning: `You have a right only to action, never to its fruits. Let not the fruits of action be your motive, nor let your attachment be to inaction.`,
-        commentary: `Shankara interprets this as the foundational teaching of Karma Yoga — that one should perform all actions as an offering to the Divine, without personal attachment to results. The verse does not advocate passivity; rather, it directs the energy of action inward, transforming work into a form of meditation.`,
-        source: "Bhagavad Gita",
-      });
-    } else if (verseId === "bg_2_50") {
-      setSelectedVerseData({
-        id: "bg_2_50",
-        title: "Bhagavad Gita 2.50",
-        chapterName: "Sankhya Yoga",
-        chapterNum: 2,
-        verseNum: 50,
-        sanskrit: `बुद्धियुक्तो जहातीह\nउभे सुकृतदुष्कृते।\nतस्माद्योगाय युज्यस्व\nयोगः कर्मसु कौशलम्॥`,
-        transliteration: `buddhi-yukto jahātīha ubhe sukṛta-duṣkṛte |\ntasmād yogāya yujyasva yogaḥ karmasu kauśalam ||`,
-        meaning: `One who is disciplined by wisdom casts away in this world both good and evil deeds. Therefore, strive for Yoga; Yoga is skill in action.`,
-        commentary: `Wisdom (Buddhi) brings emotional equanimity, freeing one from the binding reactions of karmic outcomes. Skill in action is maintaining tranquility amidst dynamic work.`,
-        source: "Bhagavad Gita",
-      });
-    } else if (verseId === "bg_3_19") {
-      setSelectedVerseData({
-        id: "bg_3_19",
-        title: "Bhagavad Gita 3.19",
-        chapterName: "Karma Yoga",
-        chapterNum: 3,
-        verseNum: 19,
-        sanskrit: `तस्मादसक्तः सततं\nकार्यं कर्म समाचर।\nअसक्तो ह्याचरन्कर्म\nपरमाप्नोति पूरुषः॥`,
-        transliteration: `tasmād asaktaḥ satataṁ kāryaṁ karma samācara |\nasakto hy ācharan karma param āpnoti pūruṣaḥ ||`,
-        meaning: `Therefore, without being attached, always perform the work that ought to be done; for by doing work without attachment, a person attains the Supreme.`,
-        commentary: `Unselfish duty performed with love dissolves the ego boundary, bringing the seeker to supreme spiritual realization.`,
-        source: "Bhagavad Gita",
-      });
-    } else if (verseId === "bg_4_18") {
-      setSelectedVerseData({
-        id: "bg_4_18",
-        title: "Bhagavad Gita 4.18",
-        chapterName: "Jnana Karma Sanyasa Yoga",
-        chapterNum: 4,
-        verseNum: 18,
-        sanskrit: `कर्मण्यकर्म यः पश्येत्\nअकर्मणि च कर्म यः।\nस बुद्धिमान्मनुष्येषु\nस युक्तः कृत्स्नकर्मकृत्॥`,
-        transliteration: `karmaṇy akarma yaḥ paśyed akarmaṇi cha karma yaḥ |\nsa buddhimān manuṣyeṣu sa yuktaḥ kṛtsna-karma-kṛt ||`,
-        meaning: `One who sees inaction in action, and action in inaction, is wise among humans; that person is a yogi and the doer of all actions.`,
-        commentary: `Recognizing the silent Witness consciousness while bodily actions happen is the pinnacle of Advaita wisdom.`,
-        source: "Bhagavad Gita",
-      });
-    }
+  // Dynamic Open Scripture Screen
+  const openScriptureScreen = (scriptureKey = "bhagavad_gita") => {
+    setSelectedScriptureId(scriptureKey);
+    setSubScreen("scripture");
+    soundEngine.playTempleBell(330);
+  };
 
-    // Record progress reading position (Phase 26)
+  // Dynamic Open Verse Screen
+  const openVerseScreen = (verseId = "bg_2_47") => {
+    const verse = VERSES_DATABASE[verseId] || VERSES_DATABASE["bg_2_47"];
+    setSelectedVerseData(verse);
+    setSubScreen("verse");
+    soundEngine.playTempleBell(440);
+
+    // Record progress reading position
     progressService.recordProgress(
-      verseId,
+      verse.id,
       {
         contentType: "verse",
-        scriptureId: "bhagavad_gita",
-        scriptureTitle: "Bhagavad Gita",
-        chapterId: "ch_2",
-        chapterTitle: "Chapter 2 · Sankhya Yoga",
-        verseId,
-        verseTitle: `Bhagavad Gita ${verseId.replace("bg_", "").replace("_", ".")}`,
+        scriptureId: verse.scriptureId,
+        scriptureTitle: verse.source,
+        chapterId: `ch_${verse.chapterNum}`,
+        chapterTitle: `Chapter ${verse.chapterNum} · ${verse.chapterName}`,
+        verseId: verse.id,
+        verseTitle: verse.title,
         progressPercent: 62,
         status: "IN_PROGRESS",
       },
       true
     );
-
-    setSubScreen("verse");
   };
 
   const handleToggleSave = () => {
+    soundEngine.playTempleBell(330);
+    progressService.recordDailyCheckin();
     if (isCurrentVerseSaved) {
       setSavedVerses((prev) => prev.filter((v) => v.id !== selectedVerseData.id));
     } else {
@@ -425,16 +433,120 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
 
   const handleSaveReflection = () => {
     if (!currentReflectionText.trim()) return;
+    progressService.recordDailyCheckin();
     const newRef = {
       id: "ref-" + Date.now(),
-      verseRef: selectedVerseData.title.replace("Bhagavad Gita ", "Gita "),
+      verseRef: selectedVerseData.title,
       text: currentReflectionText.trim(),
       date: "Today",
     };
     setReflections((prev) => [newRef, ...prev]);
     setCurrentReflectionText("");
     setReflectionSavedMessage(true);
+    soundEngine.playTempleBell(220);
     setTimeout(() => setReflectionSavedMessage(false), 2500);
+  };
+
+  const handleSaveEditReflection = (id: string) => {
+    if (!editingRefText.trim()) return;
+    setReflections((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, text: editingRefText.trim() } : r))
+    );
+    setEditingRefId(null);
+    soundEngine.playTempleBell(330);
+    setThemeToast("Reflection updated.");
+    setTimeout(() => setThemeToast(null), 2000);
+  };
+
+  const handleDeleteReflection = (id: string) => {
+    setReflections((prev) => prev.filter((r) => r.id !== id));
+    soundEngine.playTempleBell(220);
+  };
+
+  const handleExportReflections = () => {
+    soundEngine.playTempleBell(220);
+    const content = `# SutraSparsh · Sādhana Reflections
+Export Date: ${new Date().toLocaleDateString(undefined, {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })}
+
+Total Contemplations: ${reflections.length}
+Saved Verses: ${savedVerses.length}
+
+---
+
+${reflections
+  .map(
+    (r, idx) => `### ${idx + 1}. ${r.verseRef} (${r.date})
+> ${r.text.replace(/\n/g, "\n> ")}
+`
+  )
+  .join("\n---\n\n")}
+`;
+
+    const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `SutraSparsh-Reflections-${new Date().toISOString().slice(0, 10)}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setThemeToast("Journal exported to Markdown file.");
+    setTimeout(() => setThemeToast(null), 2500);
+  };
+
+  const handleExportBackupJson = () => {
+    soundEngine.playTempleBell(220);
+    const jsonStr = progressService.exportBackupData();
+    const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `SutraSparsh-SadhanaBackup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setThemeToast("✓ Full Sādhana Backup (.json) downloaded.");
+    setTimeout(() => setThemeToast(null), 2500);
+  };
+
+  const handleImportBackupJson = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (content) {
+        const success = progressService.importBackupData(content);
+        if (success) {
+          try {
+            const saved = localStorage.getItem("sutrasparsh_saved_verses");
+            if (saved) setSavedVerses(JSON.parse(saved));
+            const refl = localStorage.getItem("sutrasparsh_reflections_list");
+            if (refl) setReflections(JSON.parse(refl));
+            const th = localStorage.getItem("sutrasparsh_theme") as AppTheme;
+            if (th) setTheme(th);
+            setStreakData(progressService.getStreakData());
+          } catch {}
+          soundEngine.playTempleBell(440);
+          setThemeToast("✓ Sādhana backup successfully restored!");
+        } else {
+          setThemeToast("⚠️ Invalid backup file format.");
+        }
+        setTimeout(() => setThemeToast(null), 3000);
+      }
+    };
+    reader.readAsText(file);
+    // Reset file input
+    e.target.value = "";
   };
 
   const handleOpenShare = () => {
@@ -453,108 +565,141 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
 
   const handleStartListen = () => {
     setPlayerVisible(true);
-    setIsPlaying(true);
+    soundEngine.playTempleBell(440);
+    recitationEngine.play(
+      selectedVerseData.id,
+      selectedVerseData.sanskrit,
+      prefChantSpeed
+    );
+  };
+
+  const handleWordTap = (wordKey: string) => {
+    soundEngine.playTempleBell(520);
+  };
+
+  // Test / Request Notification Permissions
+  const handleRequestNotifications = async () => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        new Notification("SutraSparsh · Daily Shloka", {
+          body: `Brahma Muhurta notifications configured for ${prefReminder} IST.`,
+          icon: "/favicon.ico",
+        });
+        setThemeToast(`✓ Notifications enabled for ${prefReminder}`);
+      } else {
+        setThemeToast("Notifications disabled by browser setting.");
+      }
+    } else {
+      setThemeToast(`✓ Reminder scheduled for ${prefReminder} IST.`);
+    }
+    setTimeout(() => setThemeToast(null), 3000);
   };
 
   // Theme-driven CSS class tokens
   const isSandstone = theme === "sandstone";
-
-  // Dynamic Theme Color Mapping
-  const themeBg = isSandstone ? "bg-[#120A04]" : "bg-[#0F0A1A]";
-  const themeCardBg = isSandstone ? "bg-[#F7EDDB]" : "bg-[#F8F2E8]";
   const themeCardDark = isSandstone
-    ? "bg-gradient-to-br from-[#2e1608] to-[#1c0c04] border border-[#E8921A]/20"
-    : "bg-gradient-to-br from-[#241540] to-[#160e28] border border-[#E8A93E]/20";
-  const themeGold = isSandstone ? "#E8921A" : "#E8A93E";
-  const themeGoldLight = isSandstone ? "#F4B84A" : "#F4CB7A";
-  const themeIvory = isSandstone ? "#F7EDDB" : "#F8F2E8";
-  const themeMist = isSandstone ? "#C4A882" : "#C5B5D4";
+    ? "bg-gradient-to-b from-[#2B1706] to-[#1D0F04] border border-[#78300C]/40 text-[#F5E4C8]"
+    : "bg-gradient-to-b from-[#251640] to-[#150B28] border border-[#52297A]/40 text-[#EDE0F8]";
+
+  const themeGold = isSandstone ? "#E8921A" : "#C4A8E6";
+  const themeGoldLight = isSandstone ? "#F4B24B" : "#D4BEF2";
+  const themeMist = isSandstone ? "#D4BC96" : "#B8A4CC";
+  const themeCardBg = isSandstone
+    ? "linear-gradient(145deg, #fdf0d0, #f5e0a0)"
+    : "linear-gradient(145deg, #ede2f8, #d8c2f0)";
+
+  // Filtered Corpus for Search Tab with Diacritic-Agnostic & Phonetic Sanskrit Search
+  const searchResults = React.useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    return Object.values(VERSES_DATABASE).filter(
+      (v) =>
+        matchesSanskritQuery(v.title, searchQuery) ||
+        matchesSanskritQuery(v.sanskrit, searchQuery) ||
+        matchesSanskritQuery(v.transliteration, searchQuery) ||
+        matchesSanskritQuery(v.meaning, searchQuery) ||
+        (v.hindiMeaning && matchesSanskritQuery(v.hindiMeaning, searchQuery)) ||
+        matchesSanskritQuery(v.commentary, searchQuery) ||
+        matchesSanskritQuery(v.source, searchQuery) ||
+        (v.tags && v.tags.some((t) => matchesSanskritQuery(t, searchQuery)))
+    );
+  }, [searchQuery]);
+
+  const activeScriptureData: ScriptureData =
+    SCRIPTURES_CORPUS[selectedScriptureId] || SCRIPTURES_CORPUS["bhagavad_gita"];
 
   return (
     <div
-      className={`min-h-screen ${themeBg} text-[${themeIvory}] font-sans relative flex justify-center selection:bg-amber-500/30 selection:text-amber-200 transition-colors duration-300`}
-      style={{
-        color: themeIvory,
-      }}
+      className="min-h-screen flex justify-center selection:bg-amber-500/30 selection:text-amber-200"
+      style={{ backgroundColor: isSandstone ? "#0A0502" : "#080410" }}
     >
-      {/* Background Radial Aura */}
+      {/* Mobile Shell Container */}
       <div
-        className="fixed inset-0 pointer-events-none z-0 max-w-[430px] mx-auto"
-        style={{
-          background: isSandstone
-            ? `radial-gradient(ellipse at 18% 0%, rgba(120,48,12,0.75) 0%, transparent 55%),
-               radial-gradient(ellipse at 88% 90%, rgba(100,30,10,0.6) 0%, transparent 50%),
-               radial-gradient(ellipse at 50% 45%, rgba(60,20,5,0.3) 0%, transparent 70%)`
-            : `radial-gradient(ellipse at 18% 0%, rgba(74,34,100,0.7) 0%, transparent 55%),
-               radial-gradient(ellipse at 88% 90%, rgba(90,24,46,0.5) 0%, transparent 50%)`,
-        }}
-      />
-
-      {/* Main Container constrained to Mobile viewport specification (max-width: 430px) */}
-      <div className="w-full max-w-[430px] min-h-screen relative z-10 flex flex-col pb-24 shadow-2xl">
-        {/* ════════════ ONBOARDING SCREEN ════════════ */}
+        className="w-full max-w-[430px] min-h-screen flex flex-col relative overflow-hidden shadow-2xl transition-colors duration-300 pb-28 font-sans"
+        style={{ backgroundColor: isSandstone ? "#120A04" : "#0F0A1A" }}
+      >
+        {/* ════════════ ONBOARDING MODAL ════════════ */}
         {!onboardingDone && (
-          <div className="fixed inset-0 max-w-[430px] mx-auto z-50 bg-[#120A04] flex flex-col justify-between p-6 pt-12 overflow-y-auto">
-            <div className="space-y-6 text-center">
-              {/* Sacred Om */}
-              <span
-                className="font-sanskrit text-6xl text-amber-400 block transition-transform hover:scale-105"
-                style={{
-                  color: themeGoldLight,
-                  textShadow: `0 4px 28px ${themeGold}80, 0 0 60px ${themeGold}40`,
-                }}
-              >
-                ॐ
-              </span>
-              <div>
-                <h1 className="font-serif-sacred text-3xl font-bold text-stone-100 tracking-tight">
-                  SutraSparsh
+          <div
+            className="fixed inset-0 max-w-[430px] mx-auto z-50 flex flex-col justify-between p-6 overflow-y-auto animate-fadeIn backdrop-blur-xl"
+            style={{
+              backgroundColor: isSandstone ? "rgba(18,10,4,0.98)" : "rgba(15,10,26,0.98)",
+            }}
+          >
+            <div className="space-y-6 pt-6">
+              <div className="text-center space-y-3">
+                <span
+                  className="font-sanskrit text-5xl block"
+                  style={{ color: themeGoldLight }}
+                >
+                  ॐ
+                </span>
+                <h1 className="font-serif-sacred text-2xl font-bold text-stone-100">
+                  Welcome to SutraSparsh
                 </h1>
-                <p className="text-sm mt-1" style={{ color: themeMist }}>
-                  Ancient wisdom, made personal.
+                <p className="text-xs leading-relaxed max-w-xs mx-auto" style={{ color: themeMist }}>
+                  A daily contemplative sanctuary for authentic Sanskrit scriptures, transliterations, and lineage commentaries.
                 </p>
               </div>
 
-              <div className="pt-4 text-left">
-                <p className="font-serif-sacred text-lg font-semibold text-stone-200 mb-4 text-center">
-                  What brings you here?
-                </p>
-                <div className="space-y-2.5">
-                  {[
-                    { icon: "🌅", text: "Daily wisdom & reflection" },
-                    { icon: "📖", text: "Learn the scriptures deeply" },
-                    { icon: "🔍", text: "Find answers to a question" },
-                    { icon: "🧘", text: "Build a reading practice" },
-                    { icon: "🕉️", text: "Explore Sanskrit & meaning" },
-                  ].map((opt, idx) => {
-                    const isSel = selectedOnboardingOptions.includes(idx);
-                    return (
+              {/* Questionnaire Options */}
+              <div className="space-y-2.5 pt-2">
+                <div
+                  className="text-[10.5px] font-extrabold tracking-widest uppercase px-1"
+                  style={{ color: themeGoldLight }}
+                >
+                  WHAT CALLS YOU TO CONTEMPLATION?
+                </div>
+
+                {[
+                  { text: "Finding inner calm amidst daily noise", icon: "🕊️" },
+                  { text: "Studying the Bhagavad Gita & Upanishads", icon: "📗" },
+                  { text: "Learning Sanskrit shlokas & pronunciation", icon: "🕉️" },
+                  { text: "Cultivating a daily 5-minute reflection habit", icon: "🌱" },
+                ].map((opt, idx) => {
+                  const isSelected = selectedOnboardingOptions.includes(idx);
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => toggleOnboardingOpt(idx)}
+                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center space-x-3 ${
+                        isSelected
+                          ? "bg-amber-500/20 border-amber-400 text-stone-100 font-semibold"
+                          : "bg-white/5 border-white/5 text-stone-400 hover:bg-white/10"
+                      }`}
+                    >
+                      <span className="text-xl">{opt.icon}</span>
+                      <span className="text-xs flex-1">{opt.text}</span>
                       <div
-                        key={idx}
-                        onClick={() => toggleOnboardingOpt(idx)}
-                        className={`flex items-center space-x-3.5 p-3.5 rounded-2xl cursor-pointer transition-all border ${
-                          isSel
-                            ? "bg-amber-500/10 border-amber-500/40 text-stone-100"
-                            : "bg-stone-900/40 border-stone-800/80 text-stone-300 hover:bg-stone-800/40"
+                        className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                          isSelected ? "bg-amber-500 border-amber-400 text-stone-950" : "border-stone-600"
                         }`}
                       >
-                        <span className="text-xl w-7 text-center">{opt.icon}</span>
-                        <span className="text-sm font-semibold flex-1">
-                          {opt.text}
-                        </span>
-                        <div
-                          className={`w-5 h-5 rounded-full border flex items-center justify-center text-xs transition-colors ${
-                            isSel
-                              ? "bg-amber-500 border-amber-500 text-stone-950 font-bold"
-                              : "border-stone-700 bg-transparent"
-                          }`}
-                        >
-                          {isSel ? "✓" : ""}
-                        </div>
+                        {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -563,15 +708,8 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                 onClick={handleStartApp}
                 className="w-full py-3.5 rounded-full font-bold text-sm bg-gradient-to-r from-amber-400 to-orange-500 text-stone-950 shadow-lg hover:scale-[1.02] transition-transform flex items-center justify-center space-x-2"
               >
-                <span>Continue</span>
+                <span>Enter Sacred Sanctuary</span>
                 <span>→</span>
-              </button>
-              <button
-                onClick={handleStartApp}
-                className="w-full text-center text-xs font-semibold py-2 transition-colors"
-                style={{ color: themeMist }}
-              >
-                Skip and explore
               </button>
             </div>
           </div>
@@ -593,9 +731,26 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
             >
               Sutra<em className="font-normal opacity-80 not-italic text-stone-200">Sparsh</em>
             </span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono">
+              2.0
+            </span>
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* Meditative Tanpura Drone Continuous Audio Button */}
+            <button
+              onClick={handleToggleTanpura}
+              className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all flex items-center space-x-1 border ${
+                isDroneActive
+                  ? "bg-amber-500 text-stone-950 border-amber-400 shadow-[0_0_12px_rgba(232,146,26,0.5)] animate-pulse"
+                  : "bg-white/5 border-white/10 text-stone-300 hover:bg-white/10"
+              }`}
+              title="Toggle Meditative Tanpura Drone (432Hz)"
+            >
+              <Radio className="w-3 h-3" />
+              <span className="text-[10px]">Tanpura</span>
+            </button>
+
             {/* Theme Switcher Quick Toggle */}
             <button
               onClick={() => handleSelectTheme(isSandstone ? "amethyst" : "sandstone")}
@@ -614,14 +769,6 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
               className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-stone-200 transition-colors"
             >
               <Search className="w-4 h-4" />
-            </button>
-
-            {/* Notifications / Bells */}
-            <button
-              onClick={() => alert(`🔔 Daily Shloka reminders are set for ${prefReminder} IST.`)}
-              className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-stone-200 transition-colors"
-            >
-              <Bell className="w-4 h-4" />
             </button>
           </div>
         </header>
@@ -652,28 +799,56 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
               <h2 className="font-serif-sacred text-2xl font-bold text-stone-100 leading-tight">
                 Take a moment<br />with today's wisdom.
               </h2>
-              <p className="text-xs mt-1" style={{ color: themeMist }}>
-                Day 12 of your spiritual journey
-              </p>
+              <div className="flex items-center justify-between mt-1 text-xs" style={{ color: themeMist }}>
+                <span>Daily Contemplation Habit</span>
+                {/* Date Navigation Buttons */}
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => setSelectedDateOffset((prev) => prev - 1)}
+                    className="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-stone-300 text-[10px]"
+                    title="Yesterday's Shloka"
+                  >
+                    ← Prev
+                  </button>
+                  <span className="font-mono text-[10.5px] px-1 text-amber-300 font-bold">
+                    {selectedDateOffset === 0
+                      ? "Today"
+                      : selectedDateOffset === -1
+                      ? "Yesterday"
+                      : selectedDateOffset === 1
+                      ? "Tomorrow"
+                      : `Day ${selectedDateOffset > 0 ? "+" : ""}${selectedDateOffset}`}
+                  </span>
+                  <button
+                    onClick={() => setSelectedDateOffset((prev) => prev + 1)}
+                    className="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-stone-300 text-[10px]"
+                    title="Tomorrow's Shloka"
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
             </div>
 
-            {/* Today's Wisdom Card */}
+            {/* Today's Wisdom Card (Dynamic Daily Rotation) */}
             <div className={`mx-4 p-6 rounded-3xl ${themeCardDark} space-y-4 shadow-xl`}>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center justify-between">
                 <span
                   className="text-[10.5px] font-extrabold tracking-widest uppercase"
                   style={{ color: themeGoldLight }}
                 >
-                  TODAY'S WISDOM
+                  DAILY SHLOKA ROTATION
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono">
+                  {currentDailyVerse.source}
                 </span>
               </div>
 
               {/* Sacred Sanskrit Verse */}
               <div className="font-sanskrit text-xl leading-[2.1] text-stone-100 text-center py-1">
-                कर्मण्येवाधिकारस्ते<br />
-                मा फलेषु कदाचन।<br />
-                मा कर्मफलहेतुर्भूर्मा ते<br />
-                संगोऽस्त्वकर्मणि॥
+                {currentDailyVerse.sanskrit.split("\n").map((line, idx) => (
+                  <div key={idx}>{line}</div>
+                ))}
               </div>
 
               {/* Sacred Lotus Rule Divider */}
@@ -686,43 +861,49 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                 <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
               </div>
 
-              {/* English Meaning */}
+              {/* Meaning */}
               <p
                 className="text-xs italic leading-relaxed text-center"
                 style={{ color: themeMist }}
               >
-                "You have a right only to action, never to its fruits. Let not the fruits of action be your motive, nor let your attachment be to inaction."
+                "{currentDailyVerse.meaning}"
               </p>
 
               {/* Reference */}
               <div
-                className="text-[11.5px] font-bold flex items-center space-x-2 pt-1"
+                className="text-[11.5px] font-bold flex items-center justify-center space-x-2 pt-1"
                 style={{ color: themeGoldLight }}
               >
-                <div
-                  className="w-4 h-[1px]"
-                  style={{ backgroundColor: themeGold }}
-                />
-                <span>Bhagavad Gita · Chapter 2, Verse 47</span>
+                <div className="w-4 h-[1px]" style={{ backgroundColor: themeGold }} />
+                <span>
+                  {currentDailyVerse.source} · {currentDailyVerse.title}
+                </span>
+                <div className="w-4 h-[1px]" style={{ backgroundColor: themeGold }} />
               </div>
 
               {/* Buttons */}
               <div className="flex space-x-2.5 pt-2">
                 <button
-                  onClick={() => openVerseScreen("bg_2_47")}
+                  onClick={() => openVerseScreen(currentDailyVerse.id)}
                   className="flex-1 py-2.5 rounded-full font-bold text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-stone-950 shadow hover:scale-[1.02] transition-transform text-center"
                 >
-                  Read Shloka
+                  Read & Study
                 </button>
                 <button
-                  onClick={handleStartListen}
+                  onClick={() => {
+                    openVerseScreen(currentDailyVerse.id);
+                    handleStartListen();
+                  }}
                   className="flex-1 py-2.5 rounded-full font-bold text-xs bg-white/10 hover:bg-white/15 text-stone-200 border border-white/10 transition-colors flex items-center justify-center space-x-1.5"
                 >
                   <Volume2 className="w-3.5 h-3.5" />
                   <span>Listen</span>
                 </button>
                 <button
-                  onClick={handleOpenShare}
+                  onClick={() => {
+                    setSelectedVerseData(currentDailyVerse);
+                    handleOpenShare();
+                  }}
                   className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 flex items-center justify-center transition-colors"
                   title="Share Shloka"
                 >
@@ -731,18 +912,18 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
               </div>
             </div>
 
-            {/* Streak Bar */}
+            {/* Streak Bar (Dynamic from Progress Engine) */}
             <div className="px-5 flex items-center space-x-2.5">
               <div className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-bold text-amber-300">
                 <span>🔥</span>
-                <span>12-day streak</span>
+                <span>{streakData.currentStreak}-day streak</span>
               </div>
               <span className="text-xs" style={{ color: themeMist }}>
-                Keep it going!
+                {streakData.checkedInToday ? "Brahma Muhurta habit active today" : "Daily check-in ready"}
               </span>
             </div>
 
-            {/* CONTINUE YOUR JOURNEY (Phase 26 M53-M74) */}
+            {/* CONTINUE YOUR SCRIPTURE JOURNEY */}
             <div className="px-4 space-y-2.5 pt-1">
               <div className="flex items-center justify-between px-1">
                 <span
@@ -760,7 +941,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
               </div>
 
               <div
-                onClick={() => setSubScreen("scripture")}
+                onClick={() => openScriptureScreen("bhagavad_gita")}
                 className="p-4 rounded-2xl bg-stone-900/60 border border-amber-500/20 hover:border-amber-500/40 cursor-pointer transition-all flex items-center space-x-3.5 group shadow"
               >
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-stone-950 flex items-center justify-center text-xl flex-shrink-0 group-hover:scale-105 transition-transform">
@@ -787,23 +968,24 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
               </div>
             </div>
 
-            {/* EXPLORE WISDOM FROM */}
+            {/* EXPLORE WISDOM CORPUS */}
             <div className="px-4 space-y-2.5 pt-2">
               <div className="px-1">
                 <span
                   className="text-[10.5px] font-extrabold tracking-widest uppercase"
                   style={{ color: themeGoldLight }}
                 >
-                  EXPLORE WISDOM FROM
+                  EXPLORE SACRED SCRIPTURES
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {[
-                  { label: "📗 Bhagavad Gita", action: () => setSubScreen("scripture") },
-                  { label: "📜 Upanishads", action: () => setActiveTab("explore") },
-                  { label: "🏹 Ramayana", action: () => setActiveTab("explore") },
-                  { label: "⚔️ Mahabharata", action: () => setActiveTab("explore") },
-                  { label: "🧘 Yoga Sutras", action: () => setActiveTab("explore") },
+                  { label: "📗 Bhagavad Gita", action: () => openScriptureScreen("bhagavad_gita") },
+                  { label: "🧘 Yoga Sutras", action: () => openScriptureScreen("yoga_sutras") },
+                  { label: "📜 Isha Upanishad", action: () => openScriptureScreen("isha_upanishad") },
+                  { label: "🕉️ Mandukya Upanishad", action: () => openScriptureScreen("mandukya_upanishad") },
+                  { label: "💎 Vivekachudamani", action: () => openScriptureScreen("vivekachudamani") },
+                  { label: "⚔️ Ashtavakra Gita", action: () => openScriptureScreen("ashtavakra_gita") },
                 ].map((chip, idx) => (
                   <button
                     key={idx}
@@ -880,7 +1062,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
           <div className="space-y-5 animate-fadeIn">
             <div className="px-5 pt-2 flex items-center justify-between">
               <h2 className="font-serif-sacred text-2xl font-bold text-stone-100">
-                Explore
+                Explore Scriptures & Traditions
               </h2>
               <button
                 onClick={() => setActiveTab("search")}
@@ -890,13 +1072,13 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
               </button>
             </div>
 
-            {/* Search Bar Input */}
+            {/* Search Bar Input Trigger */}
             <div className="px-4">
               <div
                 onClick={() => setActiveTab("search")}
-                className="flex items-center space-x-2.5 p-3 rounded-2xl bg-white/5 border border-white/10 cursor-pointer"
+                className="flex items-center space-x-2.5 p-3 rounded-2xl bg-white/5 border border-white/10 cursor-pointer hover:border-amber-500/40 transition-colors"
               >
-                <Search className="w-4 h-4 text-stone-400" />
+                <Search className="w-4 h-4 text-amber-400" />
                 <span className="text-xs text-stone-400">Search all wisdom, mantras, traditions...</span>
               </div>
             </div>
@@ -913,7 +1095,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
               </div>
               <div className="grid grid-cols-2 gap-2.5">
                 <div
-                  onClick={() => setSubScreen("scripture")}
+                  onClick={() => openScriptureScreen("bhagavad_gita")}
                   className="p-4 rounded-2xl cursor-pointer hover:scale-[1.02] transition-transform"
                   style={{ background: "linear-gradient(145deg, #fdf0d0, #f5e0a0)" }}
                 >
@@ -923,7 +1105,10 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                 </div>
 
                 <div
-                  onClick={() => setActiveTab("search")}
+                  onClick={() => {
+                    setSearchQuery("Karma");
+                    setActiveTab("search");
+                  }}
                   className="p-4 rounded-2xl cursor-pointer hover:scale-[1.02] transition-transform"
                   style={{ background: "linear-gradient(145deg, #fad8ce, #f4b09a)" }}
                 >
@@ -933,17 +1118,20 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                 </div>
 
                 <div
-                  onClick={() => setSubScreen("scripture")}
+                  onClick={() => openScriptureScreen("yoga_sutras")}
                   className="p-4 rounded-2xl cursor-pointer hover:scale-[1.02] transition-transform"
                   style={{ background: "linear-gradient(145deg, #c6ede0, #96d8c2)" }}
                 >
                   <span className="text-2xl block mb-1.5">🗂️</span>
-                  <div className="text-xs font-bold text-stone-950">Collections</div>
-                  <div className="text-[10.5px] text-stone-700">Curated readings</div>
+                  <div className="text-xs font-bold text-stone-950">Yoga & Mind</div>
+                  <div className="text-[10.5px] text-stone-700">Patanjali's Sutras</div>
                 </div>
 
                 <div
-                  onClick={() => setActiveTab("search")}
+                  onClick={() => {
+                    setSearchQuery("Advaita");
+                    setActiveTab("search");
+                  }}
                   className="p-4 rounded-2xl cursor-pointer hover:scale-[1.02] transition-transform"
                   style={{ background: "linear-gradient(145deg, #f5e4c8, #e8c88a)" }}
                 >
@@ -951,123 +1139,67 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                   <div className="text-xs font-bold text-stone-950">Traditions</div>
                   <div className="text-[10.5px] text-stone-700">Vedanta, Yoga, Tantra…</div>
                 </div>
-
-                <div
-                  onClick={() => setActiveTab("search")}
-                  className="p-4 rounded-2xl cursor-pointer hover:scale-[1.02] transition-transform"
-                  style={{ background: "linear-gradient(145deg, #d8eee8, #b0d8ca)" }}
-                >
-                  <span className="text-2xl block mb-1.5">✍️</span>
-                  <div className="text-xs font-bold text-stone-950">Authors</div>
-                  <div className="text-[10.5px] text-stone-700">Shankara, Ramanuja…</div>
-                </div>
-
-                <div
-                  onClick={() => setSubScreen("paths")}
-                  className="p-4 rounded-2xl cursor-pointer hover:scale-[1.02] transition-transform"
-                  style={{ background: "linear-gradient(145deg, #deecd8, #b8d8a8)" }}
-                >
-                  <span className="text-2xl block mb-1.5">🛤️</span>
-                  <div className="text-xs font-bold text-stone-950">Paths</div>
-                  <div className="text-[10.5px] text-stone-700">Guided journeys</div>
-                </div>
               </div>
             </div>
 
-            {/* FEATURED SCRIPTURES */}
+            {/* COMPLETE SCRIPTURE CATALOG */}
             <div className="px-4 space-y-3">
               <div className="px-1">
                 <span
                   className="text-[10.5px] font-extrabold tracking-widest uppercase"
                   style={{ color: themeGoldLight }}
                 >
-                  FEATURED SCRIPTURES
+                  SACRED SCRIPTURE CORPUS
                 </span>
               </div>
 
               {/* Filter Pills */}
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {["All", "Vedas", "Upanishads", "Itihasa", "Puranas", "Darshana", "Stotra"].map(
-                  (pill) => (
-                    <button
-                      key={pill}
-                      onClick={() => setExplorePill(pill)}
-                      className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                        explorePill === pill
-                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                          : "bg-white/5 text-stone-400 hover:text-stone-200"
-                      }`}
-                    >
-                      {pill}
-                    </button>
-                  )
-                )}
+                {["All", "Itihasa", "Darshana", "Upanishads", "Vedanta"].map((pill) => (
+                  <button
+                    key={pill}
+                    onClick={() => setExplorePill(pill)}
+                    className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                      explorePill === pill
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                        : "bg-white/5 text-stone-400 hover:text-stone-200"
+                    }`}
+                  >
+                    {pill}
+                  </button>
+                ))}
               </div>
 
               {/* Scriptures List */}
               <div className="rounded-3xl bg-stone-900/60 border border-amber-500/20 overflow-hidden divide-y divide-white/5">
-                {[
-                  {
-                    icon: "गी",
-                    name: "Bhagavad Gita",
-                    meta: "18 Chapters · 700 Verses · Itihasa",
-                    prog: 62,
-                    action: () => setSubScreen("scripture"),
-                  },
-                  {
-                    icon: "ई",
-                    name: "Isha Upanishad",
-                    meta: "1 Chapter · 18 Mantras · Upanishads",
-                    prog: 0,
-                    action: () => openVerseScreen("bg_2_47"),
-                  },
-                  {
-                    icon: "यो",
-                    name: "Yoga Sutras of Patanjali",
-                    meta: "4 Chapters · 196 Sutras · Darshana",
-                    prog: 12,
-                    action: () => openVerseScreen("bg_2_50"),
-                  },
-                  {
-                    icon: "वि",
-                    name: "Vivekachudamani",
-                    meta: "1 Chapter · 580 Verses · Vedanta",
-                    prog: 0,
-                    action: () => openVerseScreen("bg_3_19"),
-                  },
-                  {
-                    icon: "म",
-                    name: "Mandukya Upanishad",
-                    meta: "1 Chapter · 12 Mantras · Upanishads",
-                    prog: 0,
-                    action: () => openVerseScreen("bg_4_18"),
-                  },
-                ].map((item, idx) => (
-                  <div
-                    key={idx}
-                    onClick={item.action}
-                    className="p-4 flex items-center space-x-3.5 cursor-pointer hover:bg-white/5 transition-colors group"
-                  >
-                    <div className="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center font-sanskrit text-xl text-amber-300 flex-shrink-0">
-                      {item.icon}
+                {Object.values(SCRIPTURES_CORPUS)
+                  .filter((sc) => explorePill === "All" || sc.category === explorePill)
+                  .map((sc) => (
+                    <div
+                      key={sc.id}
+                      onClick={() => openScriptureScreen(sc.id)}
+                      className="p-4 flex items-center space-x-3.5 cursor-pointer hover:bg-white/5 transition-colors group"
+                    >
+                      <div className="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center font-sanskrit text-lg text-amber-300 flex-shrink-0">
+                        {sc.sanskritName.slice(0, 2)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-bold text-stone-100 truncate">
+                          {sc.name}
+                        </div>
+                        <div className="text-[11px] text-stone-400 truncate mt-0.5">
+                          {sc.totalChapters} {sc.id === "yoga_sutras" ? "Padas" : "Chapters"} · {sc.totalVerses} Verses · {sc.category}
+                        </div>
+                        <div className="w-full bg-stone-800 h-1 rounded-full mt-2 overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full"
+                            style={{ width: sc.id === "bhagavad_gita" ? "62%" : "15%" }}
+                          />
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-stone-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-stone-100 truncate">
-                        {item.name}
-                      </div>
-                      <div className="text-[11px] text-stone-400 truncate mt-0.5">
-                        {item.meta}
-                      </div>
-                      <div className="w-full bg-stone-800 h-1 rounded-full mt-2 overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full"
-                          style={{ width: `${item.prog}%` }}
-                        />
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-stone-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
           </div>
@@ -1078,7 +1210,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
           <div className="space-y-5 animate-fadeIn">
             <div className="px-5 pt-2">
               <h2 className="font-serif-sacred text-2xl font-bold text-stone-100">
-                Search
+                Search Sacred Corpus
               </h2>
             </div>
 
@@ -1090,202 +1222,188 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="What are you seeking?"
+                  placeholder="Type a Sanskrit shloka, keyword ('karma', 'atman', 'dharma')..."
                   className="flex-1 bg-transparent text-xs text-stone-100 placeholder-stone-500 outline-none"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="text-stone-500 hover:text-stone-300 text-xs font-bold"
+                    className="text-stone-500 hover:text-stone-300 text-xs font-bold px-1"
                   >
                     ✕
                   </button>
                 )}
               </div>
-
-              {/* Mode Toggle: Find Text vs Search by Meaning */}
-              <div className="flex p-1 rounded-xl bg-white/5 border border-white/5">
-                <button
-                  onClick={() => setSearchMode("text")}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    searchMode === "text"
-                      ? "bg-amber-500/20 text-amber-300"
-                      : "text-stone-400 hover:text-stone-200"
-                  }`}
-                >
-                  Find text
-                </button>
-                <button
-                  onClick={() => setSearchMode("meaning")}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    searchMode === "meaning"
-                      ? "bg-amber-500/20 text-amber-300"
-                      : "text-stone-400 hover:text-stone-200"
-                  }`}
-                >
-                  Search by meaning
-                </button>
-              </div>
             </div>
 
-            {/* Meaning Hint Banner */}
-            <div className="px-4">
-              <div className="p-3.5 rounded-2xl bg-[#2A7A6A]/15 border border-[#2A7A6A]/30 flex items-start space-x-3">
-                <span className="text-xl">💡</span>
-                <div className="space-y-0.5">
-                  <div className="text-xs font-bold text-stone-100">
-                    Search by meaning
+            {/* Live Search Results if Query Present */}
+            {searchQuery.trim() ? (
+              <div className="px-4 space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <span
+                    className="text-[10.5px] font-extrabold tracking-widest uppercase"
+                    style={{ color: themeGoldLight }}
+                  >
+                    SEARCH RESULTS ({searchResults.length})
+                  </span>
+                </div>
+
+                {searchResults.length === 0 ? (
+                  <div className="p-6 rounded-2xl bg-white/5 text-center text-xs text-stone-400">
+                    No verses found matching "{searchQuery}". Try searching for "karma", "equanimity", or "yoga".
                   </div>
-                  <div className="text-[11px] leading-relaxed text-stone-300">
-                    Try "I am struggling with attachment" or "What does the Gita say about fear?"
+                ) : (
+                  <div className="space-y-2.5">
+                    {searchResults.map((verse) => (
+                      <div
+                        key={verse.id}
+                        onClick={() => openVerseScreen(verse.id)}
+                        className="p-4 rounded-2xl bg-stone-900/70 border border-white/5 hover:border-amber-500/40 cursor-pointer transition-all space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-amber-400">
+                            {verse.source} · {verse.title}
+                          </span>
+                          <ChevronRight className="w-4 h-4 text-stone-500" />
+                        </div>
+                        <div className="font-sanskrit text-sm text-stone-100 line-clamp-2 leading-relaxed">
+                          {verse.sanskrit}
+                        </div>
+                        <p className="text-xs text-stone-300 line-clamp-2">
+                          {verse.meaning}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* Popular Topics Chips */}
+                <div className="px-4 space-y-2">
+                  <div className="px-1">
+                    <span
+                      className="text-[10.5px] font-extrabold tracking-widest uppercase"
+                      style={{ color: themeGoldLight }}
+                    >
+                      POPULAR TOPICS (TAP TO FILTER)
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      "Karma",
+                      "Dharma",
+                      "Bhakti",
+                      "Jnana",
+                      "Detachment",
+                      "Meditation",
+                      "Self-mastery",
+                      "Equanimity",
+                      "OM",
+                      "Advaita",
+                    ].map((topic, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSearchQuery(topic)}
+                        className="px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-colors"
+                      >
+                        {topic}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Recent Searches */}
-            <div className="px-4 space-y-2">
-              <div className="px-1">
-                <span
-                  className="text-[10.5px] font-extrabold tracking-widest uppercase"
-                  style={{ color: themeGoldLight }}
-                >
-                  RECENT
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {["karma", "dharma", "meditation", "detachment"].map((chip, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSearchQuery(chip)}
-                    className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-stone-300 hover:bg-white/10 transition-colors flex items-center space-x-1.5"
-                  >
-                    <span>🕐</span>
-                    <span>{chip}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Popular Topics */}
-            <div className="px-4 space-y-2">
-              <div className="px-1">
-                <span
-                  className="text-[10.5px] font-extrabold tracking-widest uppercase"
-                  style={{ color: themeGoldLight }}
-                >
-                  POPULAR TOPICS
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  "Dharma",
-                  "Karma",
-                  "Bhakti",
-                  "Jnana",
-                  "Detachment",
-                  "Meditation",
-                  "Self-knowledge",
-                  "Maya",
-                  "Moksha",
-                  "Ahimsa",
-                ].map((topic, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSearchQuery(topic)}
-                    className="px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-colors"
-                  >
-                    {topic}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Traditions */}
-            <div className="px-4 space-y-2">
-              <div className="px-1">
-                <span
-                  className="text-[10.5px] font-extrabold tracking-widest uppercase"
-                  style={{ color: themeGoldLight }}
-                >
-                  EXPLORE BY TRADITION
-                </span>
-              </div>
-              <div className="rounded-2xl bg-stone-900/60 border border-amber-500/20 divide-y divide-white/5">
-                {[
-                  {
-                    icon: "🕉️",
-                    title: "Advaita Vedanta",
-                    sub: "Non-dual philosophy · Shankara",
-                    action: () => openVerseScreen("bg_4_18"),
-                  },
-                  {
-                    icon: "🏹",
-                    title: "Vaishnava",
-                    sub: "Bhakti traditions · Ramanuja",
-                    action: () => openVerseScreen("bg_2_47"),
-                  },
-                  {
-                    icon: "🧘",
-                    title: "Raja Yoga",
-                    sub: "Patanjali's eight limbs",
-                    action: () => openVerseScreen("bg_2_50"),
-                  },
-                ].map((trad, idx) => (
-                  <div
-                    key={idx}
-                    onClick={trad.action}
-                    className="p-3.5 flex items-center space-x-3 cursor-pointer hover:bg-white/5 transition-colors"
-                  >
-                    <span className="text-xl">{trad.icon}</span>
-                    <div className="flex-1">
-                      <div className="text-xs font-bold text-stone-100">
-                        {trad.title}
-                      </div>
-                      <div className="text-[10.5px] text-stone-400">
-                        {trad.sub}
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-stone-500" />
+                {/* Explore by Tradition */}
+                <div className="px-4 space-y-2">
+                  <div className="px-1">
+                    <span
+                      className="text-[10.5px] font-extrabold tracking-widest uppercase"
+                      style={{ color: themeGoldLight }}
+                    >
+                      EXPLORE BY TRADITION
+                    </span>
                   </div>
-                ))}
-              </div>
-            </div>
+                  <div className="rounded-2xl bg-stone-900/60 border border-amber-500/20 divide-y divide-white/5">
+                    {[
+                      {
+                        icon: "🕉️",
+                        title: "Advaita Vedanta",
+                        sub: "Non-dual philosophy · Shankara & Ashtavakra",
+                        action: () => openVerseScreen("bg_4_18"),
+                      },
+                      {
+                        icon: "🏹",
+                        title: "Karma Yoga",
+                        sub: "Selfless action without attachment · Gita",
+                        action: () => openVerseScreen("bg_2_47"),
+                      },
+                      {
+                        icon: "🧘",
+                        title: "Raja Yoga",
+                        sub: "Eight limbs & mental stilling · Patanjali",
+                        action: () => openVerseScreen("ys_1_2"),
+                      },
+                      {
+                        icon: "📜",
+                        title: "Upanishadic Non-duality",
+                        sub: "Cosmic vision & renunciation · Isha",
+                        action: () => openVerseScreen("isha_1"),
+                      },
+                    ].map((trad, idx) => (
+                      <div
+                        key={idx}
+                        onClick={trad.action}
+                        className="p-3.5 flex items-center space-x-3 cursor-pointer hover:bg-white/5 transition-colors"
+                      >
+                        <span className="text-xl">{trad.icon}</span>
+                        <div className="flex-1">
+                          <div className="text-xs font-bold text-stone-100">
+                            {trad.title}
+                          </div>
+                          <div className="text-[10.5px] text-stone-400">
+                            {trad.sub}
+                          </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-stone-500" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 
         {/* 4. JOURNEY SCREEN */}
         {activeTab === "journey" && subScreen === "none" && (
           <div className="space-y-5 animate-fadeIn">
-            {/* Header */}
             <div className="px-5 pt-2 flex items-center justify-between">
-              <div>
-                <h2 className="font-serif-sacred text-2xl font-bold text-stone-100">
-                  Your Journey
-                </h2>
-                <p className="text-xs mt-0.5" style={{ color: themeMist }}>
-                  You've returned 8 times this month. Keep going.
-                </p>
-              </div>
-              <button
-                onClick={() => setSubScreen("pref")}
-                className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-stone-300"
-              >
-                <Settings className="w-4 h-4" />
-              </button>
+              <h2 className="font-serif-sacred text-2xl font-bold text-stone-100">
+                My Sādhana Sanctuary
+              </h2>
+              {reflections.length > 0 && (
+                <button
+                  onClick={handleExportReflections}
+                  className="px-3 py-1 rounded-xl text-xs font-bold bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 flex items-center space-x-1"
+                  title="Export Journal as Markdown"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export</span>
+                </button>
+              )}
             </div>
 
-            {/* Stats Row */}
-            <div className="grid grid-cols-3 gap-2.5 px-4">
+            {/* Stats Cards */}
+            <div className="px-4 grid grid-cols-3 gap-2.5">
               <div
                 className="p-3.5 rounded-2xl text-center"
                 style={{ background: "linear-gradient(145deg, #fdf0d0, #f5e0a0)" }}
               >
-                <div className="font-serif-sacred text-2xl font-bold text-amber-700 leading-none">
-                  12
+                <div className="font-serif-sacred text-2xl font-bold text-amber-950 leading-none">
+                  {streakData.currentStreak}
                 </div>
                 <div className="text-[10.5px] font-bold text-stone-900 mt-1">
-                  Day streak
+                  Day Streak 🔥
                 </div>
               </div>
 
@@ -1293,7 +1411,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                 className="p-3.5 rounded-2xl text-center"
                 style={{ background: "linear-gradient(145deg, #fad8ce, #f4b09a)" }}
               >
-                <div className="font-serif-sacred text-2xl font-bold text-rose-800 leading-none">
+                <div className="font-serif-sacred text-2xl font-bold text-rose-950 leading-none">
                   {savedVerses.length}
                 </div>
                 <div className="text-[10.5px] font-bold text-stone-900 mt-1">
@@ -1305,47 +1423,12 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                 className="p-3.5 rounded-2xl text-center"
                 style={{ background: "linear-gradient(145deg, #c6ede0, #96d8c2)" }}
               >
-                <div className="font-serif-sacred text-2xl font-bold text-teal-800 leading-none">
+                <div className="font-serif-sacred text-2xl font-bold text-teal-950 leading-none">
                   {reflections.length}
                 </div>
                 <div className="text-[10.5px] font-bold text-stone-900 mt-1">
                   Reflections
                 </div>
-              </div>
-            </div>
-
-            {/* Continue Section */}
-            <div className="px-4 space-y-2">
-              <div className="px-1">
-                <span
-                  className="text-[10.5px] font-extrabold tracking-widest uppercase"
-                  style={{ color: themeGoldLight }}
-                >
-                  CONTINUE
-                </span>
-              </div>
-              <div
-                onClick={() => setSubScreen("scripture")}
-                className="p-4 rounded-2xl bg-stone-900/60 border border-amber-500/20 cursor-pointer flex items-center space-x-3.5"
-              >
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-stone-950 flex items-center justify-center text-xl flex-shrink-0">
-                  📗
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-stone-100">
-                    Bhagavad Gita
-                  </div>
-                  <div className="text-[11px] text-stone-400 mt-0.5">
-                    Chapter 4 · Verse 12 · up next
-                  </div>
-                  <div className="w-full bg-stone-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full"
-                      style={{ width: "62%" }}
-                    />
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-amber-400" />
               </div>
             </div>
 
@@ -1356,10 +1439,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                   className="text-[10.5px] font-extrabold tracking-widest uppercase"
                   style={{ color: themeGoldLight }}
                 >
-                  SAVED WISDOM
-                </span>
-                <span className="text-xs font-bold text-stone-400">
-                  View all {savedVerses.length} →
+                  SAVED SACRED VERSES ({savedVerses.length})
                 </span>
               </div>
               <div className="space-y-2">
@@ -1387,71 +1467,85 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
               </div>
             </div>
 
-            {/* MY REFLECTIONS */}
+            {/* MY REFLECTIONS WITH INLINE EDIT */}
             <div className="px-4 space-y-2">
               <div className="flex items-center justify-between px-1">
                 <span
                   className="text-[10.5px] font-extrabold tracking-widest uppercase"
                   style={{ color: themeGoldLight }}
                 >
-                  MY REFLECTIONS
+                  MY CONTEMPLATION NOTES ({reflections.length})
                 </span>
               </div>
-              {reflections.map((ref) => (
-                <div
-                  key={ref.id}
-                  className="p-4 rounded-2xl"
-                  style={{ background: themeCardBg, color: "#2B1A08" }}
-                >
-                  <div className="text-[11px] font-bold text-amber-800 mb-1">
-                    {ref.date} · {ref.verseRef}
-                  </div>
-                  <div className="text-xs leading-relaxed italic text-stone-800">
-                    "{ref.text}"
-                  </div>
+              {reflections.length === 0 ? (
+                <div className="p-4 rounded-2xl bg-white/5 text-center text-xs text-stone-400">
+                  No reflection notes yet. Read a shloka and record your personal insight!
                 </div>
-              ))}
-            </div>
-
-            {/* RECENTLY READ TIMELINE */}
-            <div className="px-4 space-y-2">
-              <div className="flex items-center justify-between px-1">
-                <span
-                  className="text-[10.5px] font-extrabold tracking-widest uppercase"
-                  style={{ color: themeGoldLight }}
-                >
-                  RECENTLY READ
-                </span>
-              </div>
-              <div className="p-3 rounded-2xl bg-stone-900/60 border border-white/5 divide-y divide-white/5">
-                {[
-                  { day: "TODAY", title: "Bhagavad Gita", ref: "Chapter 2 · Verse 47", action: () => openVerseScreen("bg_2_47") },
-                  { day: "YEST.", title: "Bhagavad Gita", ref: "Chapter 2 · Verse 20", action: () => openVerseScreen("bg_2_47") },
-                  { day: "YEST.", title: "Bhagavad Gita", ref: "Chapter 3 · Verse 19", action: () => openVerseScreen("bg_3_19") },
-                  { day: "MON", title: "Isha Upanishad", ref: "Mantra 1", action: () => openVerseScreen("bg_2_47") },
-                ].map((h, idx) => (
+              ) : (
+                reflections.map((ref) => (
                   <div
-                    key={idx}
-                    onClick={h.action}
-                    className="py-2.5 flex items-center space-x-3 cursor-pointer hover:bg-white/5 transition-colors px-1"
+                    key={ref.id}
+                    className="p-4 rounded-2xl space-y-2"
+                    style={{ background: themeCardBg, color: "#2B1A08" }}
                   >
-                    <span className="text-[10px] font-extrabold tracking-wider text-stone-500 w-12">
-                      {h.day}
-                    </span>
-                    <div className="flex-1">
-                      <div className="text-xs font-semibold text-stone-200">
-                        {h.title}
-                      </div>
-                      <div
-                        className="text-[10.5px] font-bold mt-0.5"
-                        style={{ color: themeGoldLight }}
-                      >
-                        {h.ref}
+                    <div className="flex items-center justify-between text-[11px] font-bold text-amber-900 border-b border-amber-900/15 pb-1.5">
+                      <span>
+                        {ref.date} · {ref.verseRef}
+                      </span>
+                      <div className="flex items-center space-x-2">
+                        {editingRefId !== ref.id && (
+                          <button
+                            onClick={() => {
+                              setEditingRefId(ref.id);
+                              setEditingRefText(ref.text);
+                            }}
+                            className="p-1 text-stone-700 hover:text-stone-950"
+                            title="Edit Note"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeleteReflection(ref.id)}
+                          className="p-1 text-rose-700 hover:text-rose-900"
+                          title="Delete Note"
+                        >
+                          ✕
+                        </button>
                       </div>
                     </div>
+
+                    {editingRefId === ref.id ? (
+                      <div className="space-y-2 pt-1">
+                        <textarea
+                          rows={3}
+                          value={editingRefText}
+                          onChange={(e) => setEditingRefText(e.target.value)}
+                          className="w-full p-2.5 rounded-xl bg-white/80 text-xs text-stone-950 border border-amber-900/30 outline-none resize-none"
+                        />
+                        <div className="flex justify-end space-x-2">
+                          <button
+                            onClick={() => setEditingRefId(null)}
+                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-stone-200 text-stone-800"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleSaveEditReflection(ref.id)}
+                            className="px-3 py-1 rounded-lg text-xs font-bold bg-amber-600 text-white shadow"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs leading-relaxed italic text-stone-900 whitespace-pre-wrap">
+                        "{ref.text}"
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
+                ))
+              )}
             </div>
           </div>
         )}
@@ -1461,35 +1555,14 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
           <div className="space-y-5 animate-fadeIn">
             <div className="px-5 pt-2">
               <h2 className="font-serif-sacred text-2xl font-bold text-stone-100">
-                More
+                More & Sādhaka Account
               </h2>
-            </div>
-
-            {/* Profile Bar */}
-            <div className="px-5 flex items-center space-x-3.5 py-3 border-b border-white/5">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-2xl flex-shrink-0">
-                🙏
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-bold text-stone-100">
-                  Guest Sādhaka
-                </div>
-                <div className="text-xs text-stone-400">
-                  Sign in to sync across devices
-                </div>
-              </div>
-              <button
-                onClick={() => alert("Sign in modal / Google Auth triggered")}
-                className="text-xs font-bold text-amber-400 hover:text-amber-300"
-              >
-                Sign in
-              </button>
             </div>
 
             {/* LEARN */}
             <div className="space-y-1">
               <div className="px-5 text-[10.5px] font-extrabold tracking-widest uppercase text-stone-500">
-                LEARN
+                LEARN & SCRIPTURAL FOUNDATIONS
               </div>
               <div
                 onClick={() => setSubScreen("about")}
@@ -1517,25 +1590,30 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
               >
                 <span className="text-base">🛤️</span>
                 <span className="text-xs font-semibold text-stone-200 flex-1">
-                  Start a Guided Path
+                  Start a Guided Spiritual Path
                 </span>
                 <ChevronRight className="w-4 h-4 text-stone-500" />
               </div>
             </div>
 
-            {/* YOUR ACCOUNT */}
+            {/* YOUR ACCOUNT & PREFERENCES */}
             <div className="space-y-1">
               <div className="px-5 text-[10.5px] font-extrabold tracking-widest uppercase text-stone-500">
-                YOUR ACCOUNT
+                ATMOSPHERE & PREFERENCES
               </div>
               <div
                 onClick={() => setSubScreen("pref")}
                 className="px-5 py-3.5 flex items-center space-x-3 cursor-pointer hover:bg-white/5 transition-colors border-b border-white/5"
               >
                 <span className="text-base">⚙️</span>
-                <span className="text-xs font-semibold text-stone-200 flex-1">
-                  Preferences & Themes
-                </span>
+                <div className="flex-1">
+                  <div className="text-xs font-semibold text-stone-200">
+                    Preferences & Themes
+                  </div>
+                  <div className="text-[10.5px] text-amber-400 mt-0.5">
+                    Currently: {isSandstone ? "Sandstone Temple" : "Amethyst Twilight"}
+                  </div>
+                </div>
                 <ChevronRight className="w-4 h-4 text-stone-500" />
               </div>
               <div
@@ -1582,10 +1660,10 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
           </div>
         )}
 
-        {/* ════════════ SUB-SCREEN 1: SCRIPTURE DETAIL ════════════ */}
+        {/* ════════════ SUB-SCREEN 1: SCRIPTURE DETAIL (DYNAMIC CORPUS) ════════════ */}
         {subScreen === "scripture" && (
           <div
-            className="fixed inset-0 max-w-[430px] mx-auto z-40 flex flex-col overflow-y-auto animate-fadeIn"
+            className="fixed inset-0 max-w-[430px] mx-auto z-40 flex flex-col overflow-y-auto animate-fadeIn pb-24"
             style={{ backgroundColor: isSandstone ? "#120A04" : "#0F0A1A" }}
           >
             {/* Sub Bar */}
@@ -1599,138 +1677,119 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <span className="font-bold text-sm text-stone-100">
-                Bhagavad Gita
+              <span className="font-bold text-sm text-stone-100 truncate max-w-[200px]">
+                {activeScriptureData.name}
               </span>
-              <button className="text-stone-400 p-1">
-                <MoreHorizontal className="w-5 h-5" />
+              <button
+                onClick={handleToggleTanpura}
+                className="text-stone-300 p-1"
+                title="Toggle Tanpura Drone"
+              >
+                <Radio className={`w-4 h-4 ${isDroneActive ? "text-amber-400" : ""}`} />
               </button>
             </div>
 
             {/* Scripture Hero */}
             <div className="p-6 border-b border-amber-500/10 space-y-4">
-              <h1 className="font-serif-sacred text-3xl font-bold text-stone-100">
-                Bhagavad Gita
-              </h1>
+              <div className="space-y-1">
+                <div className="font-sanskrit text-amber-300 text-lg">
+                  {activeScriptureData.sanskritName}
+                </div>
+                <h1 className="font-serif-sacred text-3xl font-bold text-stone-100">
+                  {activeScriptureData.name}
+                </h1>
+              </div>
+
               <p className="text-xs leading-relaxed" style={{ color: themeMist }}>
-                The eternal dialogue between Krishna and Arjuna on the battlefield of Kurukshetra — a 700-verse synthesis of duty, devotion, knowledge, and liberation.
+                {activeScriptureData.description}
               </p>
 
               {/* Tags */}
               <div className="flex flex-wrap gap-1.5">
-                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 border border-amber-500/20 text-amber-300">
-                  Itihasa
-                </span>
-                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-500/10 border border-rose-500/20 text-rose-300">
-                  Sanskrit
-                </span>
-                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-teal-500/10 border border-teal-500/20 text-teal-300">
-                  English · Hindi
-                </span>
-                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-500/10 border border-purple-500/20 text-purple-300">
-                  Commentary available
-                </span>
+                {activeScriptureData.tags.map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 border border-amber-500/20 text-amber-300"
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
 
               {/* Stats */}
               <div className="flex space-x-6 pt-2">
                 <div>
                   <div className="font-serif-sacred text-xl font-bold text-amber-400">
-                    18
+                    {activeScriptureData.totalChapters}
                   </div>
                   <div className="text-[10.5px] font-bold text-stone-400">
-                    Chapters
+                    {activeScriptureData.sectionType?.split(" ")[0] || (activeScriptureData.id === "yoga_sutras" ? "Pādas" : activeScriptureData.id.includes("upanishad") ? "Khaṇḍas" : "Chapters")}
                   </div>
                 </div>
                 <div>
                   <div className="font-serif-sacred text-xl font-bold text-amber-400">
-                    700
+                    {activeScriptureData.totalVerses}
                   </div>
                   <div className="text-[10.5px] font-bold text-stone-400">
-                    Verses
+                    {activeScriptureData.id === "yoga_sutras" ? "Sūtras" : activeScriptureData.id.includes("upanishad") ? "Mantras" : "Verses / Shlokas"}
                   </div>
                 </div>
                 <div>
                   <div className="font-serif-sacred text-xl font-bold text-amber-400">
-                    3
+                    {activeScriptureData.category}
                   </div>
                   <div className="text-[10.5px] font-bold text-stone-400">
-                    Translations
+                    Tradition
                   </div>
-                </div>
-              </div>
-
-              {/* Progress */}
-              <div className="space-y-1.5 pt-2">
-                <div className="flex justify-between text-xs font-bold text-stone-400">
-                  <span>Your progress</span>
-                  <span className="text-amber-400">62% · 266 verses</span>
-                </div>
-                <div className="w-full bg-stone-800 h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full"
-                    style={{ width: "62%" }}
-                  />
                 </div>
               </div>
 
               <button
-                onClick={() => openVerseScreen("bg_2_47")}
-                className="w-full py-3 rounded-full font-bold text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-stone-950 shadow"
+                onClick={() => openVerseScreen(activeScriptureData.defaultVerseId)}
+                className="w-full py-3 rounded-full font-bold text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-stone-950 shadow hover:scale-[1.02] transition-transform"
               >
-                Continue reading →
+                {activeScriptureData.id === "yoga_sutras" ? "Read First Yoga Sūtra →" : activeScriptureData.id.includes("upanishad") ? "Read Opening Vedic Mantra →" : "Read Featured Shloka →"}
               </button>
             </div>
 
-            {/* Chapters List */}
+            {/* Chapters / Pādas / Khaṇḍas Complete List */}
             <div className="p-4 space-y-2">
               <div className="px-2">
                 <span
                   className="text-[10.5px] font-extrabold tracking-widest uppercase"
                   style={{ color: themeGoldLight }}
                 >
-                  CHAPTERS
+                  {activeScriptureData.id === "yoga_sutras"
+                    ? `4 RADICAL PĀDAS OF RĀJA YOGA`
+                    : activeScriptureData.id === "isha_upanishad"
+                    ? `3 VEDIC KHAṆḌAS OF ISHA UPANISHAD`
+                    : activeScriptureData.id === "mandukya_upanishad"
+                    ? `4 CONSCIOUSNESS PRAKARAṆAS OF MANDUKYA`
+                    : activeScriptureData.id === "vivekachudamani"
+                    ? `5 PHILOSOPHICAL PRAKARAṆAS OF VIVEKACHUDAMANI`
+                    : `ALL ${activeScriptureData.chapters.length} ${activeScriptureData.sectionType?.toUpperCase() || "CHAPTERS"}`}
                 </span>
               </div>
 
               <div className="divide-y divide-white/5">
-                {[
-                  { num: 1, name: "Arjuna Vishada Yoga", sub: "47 verses · The grief of Arjuna", current: false },
-                  { num: 2, name: "Sankhya Yoga", sub: "72 verses · You are here · Verse 47", current: true },
-                  { num: 3, name: "Karma Yoga", sub: "43 verses · The path of action", current: false },
-                  { num: 4, name: "Jnana Karma Sanyasa Yoga", sub: "42 verses · Knowledge and renunciation", current: false },
-                  { num: 5, name: "Karma Vairagya Yoga", sub: "29 verses · Renunciation of action", current: false },
-                  { num: 6, name: "Dhyana Yoga", sub: "47 verses · Meditation", current: false },
-                ].map((ch) => (
+                {activeScriptureData.chapters.map((ch) => (
                   <div
                     key={ch.num}
-                    onClick={() => openVerseScreen("bg_2_47")}
-                    className={`py-3.5 px-2 flex items-center space-x-3.5 cursor-pointer rounded-xl ${
-                      ch.current ? "bg-amber-500/10 text-amber-300" : "hover:bg-white/5"
-                    }`}
+                    onClick={() => openVerseScreen(ch.featuredVerseId || activeScriptureData.defaultVerseId)}
+                    className="py-3.5 px-2 flex items-center space-x-3.5 cursor-pointer rounded-xl hover:bg-white/5 transition-colors group"
                   >
-                    <div
-                      className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                        ch.current
-                          ? "bg-amber-500/30 border-amber-400 text-amber-200"
-                          : "bg-white/5 border-white/10 text-stone-300"
-                      }`}
-                    >
+                    <div className="w-8 h-8 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-300 flex items-center justify-center text-xs font-bold flex-shrink-0 group-hover:bg-amber-500 group-hover:text-stone-950 transition-colors">
                       {ch.num}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div
-                        className={`text-xs font-bold truncate ${
-                          ch.current ? "text-amber-300" : "text-stone-200"
-                        }`}
-                      >
-                        {ch.name}
+                      <div className="text-xs font-bold text-stone-100 group-hover:text-amber-300 transition-colors truncate">
+                        {ch.name} <span className="font-sanskrit font-normal text-stone-400">({ch.sanskritName})</span>
                       </div>
                       <div className="text-[11px] text-stone-400 truncate mt-0.5">
-                        {ch.sub}
+                        {ch.versesCount} {activeScriptureData.id === "yoga_sutras" ? "sūtras" : activeScriptureData.id.includes("upanishad") ? "mantras" : "verses"} · {ch.summary}
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-stone-500" />
+                    <ChevronRight className="w-4 h-4 text-stone-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 ))}
               </div>
@@ -1738,10 +1797,10 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
           </div>
         )}
 
-        {/* ════════════ SUB-SCREEN 2: VERSE DETAIL ════════════ */}
+        {/* ════════════ SUB-SCREEN 2: VERSE DETAIL (DYNAMIC MULTI-SCRIPTURE) ════════════ */}
         {subScreen === "verse" && (
           <div
-            className="fixed inset-0 max-w-[430px] mx-auto z-40 flex flex-col overflow-y-auto animate-fadeIn pb-20"
+            className="fixed inset-0 max-w-[430px] mx-auto z-40 flex flex-col overflow-y-auto animate-fadeIn pb-24"
             style={{ backgroundColor: isSandstone ? "#120A04" : "#0F0A1A" }}
           >
             {/* Sub Bar */}
@@ -1751,20 +1810,29 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
             >
               <button
                 onClick={() => setSubScreen("none")}
-                className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-stone-200"
+                className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-stone-200 hover:bg-white/10"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <span className="font-bold text-sm text-stone-100">
-                Chapter {selectedVerseData.chapterNum} · Verse {selectedVerseData.verseNum}
+              <span className="font-bold text-sm text-stone-100 truncate max-w-[200px]">
+                {selectedVerseData.title}
               </span>
-              <button
-                onClick={handleOpenShare}
-                className="text-stone-300 p-1"
-                title="Share this verse"
-              >
-                <Share2 className="w-4 h-4" />
-              </button>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handleToggleTanpura}
+                  className={`p-1.5 rounded-full ${isDroneActive ? "text-amber-400" : "text-stone-400"}`}
+                  title="Toggle Tanpura Drone"
+                >
+                  <Radio className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={handleOpenShare}
+                  className="text-stone-300 p-1"
+                  title="Share this verse"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Verse Hero Card */}
@@ -1773,13 +1841,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                 className="text-[10.5px] font-extrabold tracking-widest uppercase"
                 style={{ color: themeGoldLight }}
               >
-                {selectedVerseData.source.toUpperCase()} · CHAPTER {selectedVerseData.chapterNum}
-              </div>
-              <div
-                className="font-serif-sacred italic text-sm"
-                style={{ color: themeMist }}
-              >
-                {selectedVerseData.chapterName}
+                {selectedVerseData.source.toUpperCase()} · {selectedVerseData.chapterName.toUpperCase()}
               </div>
 
               {/* Sacred Lotus Rule Divider */}
@@ -1793,11 +1855,13 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
               </div>
 
               {/* Sanskrit Shloka */}
-              <div className="font-sanskrit text-2xl leading-[2.1] text-stone-100 py-2">
-                {selectedVerseData.sanskrit.split("\n").map((line, idx) => (
-                  <div key={idx}>{line}</div>
-                ))}
-              </div>
+              {(prefScript === "both" || prefScript === "devanagari") && (
+                <div className="font-sanskrit text-2xl leading-[2.2] text-stone-100 py-2 select-text">
+                  {selectedVerseData.sanskrit.split("\n").map((line, idx) => (
+                    <div key={idx}>{line}</div>
+                  ))}
+                </div>
+              )}
 
               {/* Sacred Lotus Rule Divider */}
               <div className="flex items-center space-x-2.5 py-1">
@@ -1810,33 +1874,72 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
               </div>
             </div>
 
-            {/* TRANSLITERATION */}
-            <div className="px-6 py-4 border-t border-white/5 space-y-2">
-              <div
-                className="text-[10.5px] font-extrabold tracking-widest uppercase"
-                style={{ color: themeGoldLight }}
-              >
-                TRANSLITERATION
+            {/* TRANSLITERATION (IAST) */}
+            {(prefScript === "both" || prefScript === "transliteration") && (
+              <div className="px-6 py-4 border-t border-white/5 space-y-2">
+                <div
+                  className="text-[10.5px] font-extrabold tracking-widest uppercase"
+                  style={{ color: themeGoldLight }}
+                >
+                  IAST ROMAN TRANSLITERATION
+                </div>
+                <div
+                  className="text-xs italic leading-relaxed font-mono whitespace-pre-line"
+                  style={{ color: themeMist }}
+                >
+                  {selectedVerseData.transliteration}
+                </div>
               </div>
-              <div
-                className="text-xs italic leading-relaxed font-mono whitespace-pre-line"
-                style={{ color: themeMist }}
-              >
-                {selectedVerseData.transliteration}
-              </div>
-            </div>
+            )}
 
-            {/* MEANING */}
+            {/* WORD-BY-WORD VOCABULARY DICTIONARY */}
+            {selectedVerseData.wordDict && (
+              <div className="px-6 py-4 border-t border-white/5 space-y-2.5">
+                <div
+                  className="text-[10.5px] font-extrabold tracking-widest uppercase flex items-center justify-between"
+                  style={{ color: themeGoldLight }}
+                >
+                  <span>WORD-BY-WORD BREAKDOWN (पदच्छेद)</span>
+                  <span className="text-[9px] text-stone-400 lowercase">tap word for sound</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(selectedVerseData.wordDict).map(([sanskritWord, details]) => (
+                    <div
+                      key={sanskritWord}
+                      onClick={() => handleWordTap(sanskritWord)}
+                      className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 cursor-pointer transition-colors space-y-0.5"
+                    >
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-sanskrit font-bold text-amber-300">{sanskritWord}</span>
+                        <span className="text-[10px] text-stone-400 font-mono italic">{details.trans}</span>
+                      </div>
+                      <div className="text-[11px] text-stone-200">
+                        {prefLang === "hi" ? details.hi : details.en}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* MEANING (ENGLISH / HINDI / DUAL) */}
             <div className="px-6 py-4 border-t border-white/5 space-y-2">
               <div
                 className="text-[10.5px] font-extrabold tracking-widest uppercase"
                 style={{ color: themeGoldLight }}
               >
-                MEANING
+                MEANING (अर्थ)
               </div>
-              <div className="text-sm font-medium leading-relaxed text-stone-100">
-                {selectedVerseData.meaning}
-              </div>
+              {(prefLang === "dual" || prefLang === "en") && (
+                <div className="text-sm font-medium leading-relaxed text-stone-100">
+                  {selectedVerseData.meaning}
+                </div>
+              )}
+              {(prefLang === "dual" || prefLang === "hi") && selectedVerseData.hindiMeaning && (
+                <div className="text-xs font-serif-sacred leading-relaxed text-amber-200/90 pt-1">
+                  {selectedVerseData.hindiMeaning}
+                </div>
+              )}
             </div>
 
             {/* COMMENTARY */}
@@ -1845,7 +1948,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                 className="text-[10.5px] font-extrabold tracking-widest uppercase"
                 style={{ color: themeGoldLight }}
               >
-                COMMENTARY
+                AUTHENTIC LINEAGE COMMENTARY
               </div>
               <div
                 className="text-xs leading-relaxed text-stone-300"
@@ -1867,10 +1970,16 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
             <div className="px-6 py-4 border-t border-white/5 grid grid-cols-4 gap-2">
               <button
                 onClick={handleStartListen}
-                className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 flex flex-col items-center justify-center space-y-1"
+                className={`p-3 rounded-2xl flex flex-col items-center justify-center space-y-1 transition-all ${
+                  isSpeakingChant
+                    ? "bg-amber-500 text-stone-950 font-bold"
+                    : "bg-white/5 hover:bg-white/10 text-stone-300"
+                }`}
               >
-                <Volume2 className="w-5 h-5 text-amber-400" />
-                <span className="text-[11px] font-bold text-stone-300">Listen</span>
+                <Volume2 className={`w-5 h-5 ${isSpeakingChant ? "text-stone-950 animate-bounce" : "text-amber-400"}`} />
+                <span className="text-[11px] font-bold">
+                  {isSpeakingChant ? "Chanting..." : "Listen"}
+                </span>
               </button>
 
               <button
@@ -1896,7 +2005,11 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
               </button>
 
               <button
-                onClick={() => alert("Context: Battlefield of Kurukshetra — dialogue before the Great War.")}
+                onClick={() => {
+                  soundEngine.playTempleBell(330);
+                  setThemeToast(`Context: Spoken in ${selectedVerseData.source}`);
+                  setTimeout(() => setThemeToast(null), 2500);
+                }}
                 className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 flex flex-col items-center justify-center space-y-1"
               >
                 <BookOpen className="w-5 h-5 text-amber-400" />
@@ -1910,7 +2023,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                 className="text-[10.5px] font-extrabold tracking-widest uppercase"
                 style={{ color: themeGoldLight }}
               >
-                REFLECT
+                RECORD CONTEMPLATION (स्वाध्याय)
               </div>
               <textarea
                 rows={3}
@@ -1924,7 +2037,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                   onClick={handleSaveReflection}
                   className="px-4 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-amber-400 to-orange-500 text-stone-950 shadow hover:scale-105 transition-transform"
                 >
-                  Save reflection
+                  Save to Sādhana Journal
                 </button>
                 {reflectionSavedMessage && (
                   <span className="text-xs text-emerald-400 font-semibold animate-fadeIn">
@@ -1934,19 +2047,69 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
               </div>
             </div>
 
-            {/* RELATED WISDOM */}
+            {/* CONSECUTIVE SCRIPTURAL NAVIGATION */}
+            {(() => {
+              const { prevVerse, nextVerse } = getAdjacentVerses(selectedVerseData.id);
+              return (
+                <div className="px-6 py-4 border-t border-white/5 space-y-2">
+                  <div
+                    className="text-[10.5px] font-extrabold tracking-widest uppercase"
+                    style={{ color: themeGoldLight }}
+                  >
+                    SCRIPTURAL SEQUENTIAL NAVIGATION
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    {prevVerse ? (
+                      <button
+                        onClick={() => openVerseScreen(prevVerse.id)}
+                        className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 text-left transition-all group"
+                      >
+                        <div className="text-[10px] text-stone-400 font-mono">← PREVIOUS</div>
+                        <div className="text-xs font-bold text-stone-200 truncate mt-0.5 group-hover:text-amber-300">
+                          {prevVerse.title}
+                        </div>
+                      </button>
+                    ) : (
+                      <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/[0.02] text-left opacity-40">
+                        <div className="text-[10px] text-stone-500 font-mono">START OF TEXT</div>
+                        <div className="text-xs font-bold text-stone-500 truncate mt-0.5">First Verse</div>
+                      </div>
+                    )}
+
+                    {nextVerse ? (
+                      <button
+                        onClick={() => openVerseScreen(nextVerse.id)}
+                        className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 text-right transition-all group"
+                      >
+                        <div className="text-[10px] text-stone-400 font-mono">NEXT →</div>
+                        <div className="text-xs font-bold text-stone-200 truncate mt-0.5 group-hover:text-amber-300">
+                          {nextVerse.title}
+                        </div>
+                      </button>
+                    ) : (
+                      <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/[0.02] text-right opacity-40">
+                        <div className="text-[10px] text-stone-500 font-mono">END OF CORPUS</div>
+                        <div className="text-xs font-bold text-stone-500 truncate mt-0.5">Last Verse</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* RELATED WISDOM (CONNECTED LINKS) */}
             <div className="px-6 py-4 border-t border-white/5 space-y-2.5">
               <div
                 className="text-[10.5px] font-extrabold tracking-widest uppercase"
                 style={{ color: themeGoldLight }}
               >
-                RELATED WISDOM
+                CONNECTED SACRED VERSES
               </div>
               <div className="space-y-2">
                 {[
-                  { ref: "Gita 2.50", snippet: "योगः कर्मसु कौशलम्…", id: "bg_2_50" },
-                  { ref: "Gita 3.19", snippet: "तस्मादसक्तः सततं…", id: "bg_3_19" },
-                  { ref: "Gita 4.18", snippet: "कर्मण्यकर्म यः पश्येत्…", id: "bg_4_18" },
+                  { ref: "Gita 2.50", snippet: "योगः कर्मसु कौशलम्… (Skill in action)", id: "bg_2_50" },
+                  { ref: "Patanjali 1.2", snippet: "योगश्चित्तवृत्तिनिरोधः… (Stilling mind)", id: "ys_1_2" },
+                  { ref: "Isha Mantra 1", snippet: "ईशा वास्यमिदँ सर्वं… (Divine unity)", id: "isha_1" },
                 ].map((item, idx) => (
                   <div
                     key={idx}
@@ -2021,7 +2184,6 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                       : "bg-stone-900/40 border-stone-800/80 hover:bg-stone-800/40 opacity-75 hover:opacity-100"
                   }`}
                 >
-                  {/* Active Indicator Ribbon */}
                   {isSandstone && (
                     <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-amber-600 text-stone-950 font-bold text-[9.5px] uppercase tracking-wider px-3 py-0.5 rounded-bl-xl shadow flex items-center space-x-1">
                       <Check className="w-3 h-3 stroke-[3]" />
@@ -2041,17 +2203,6 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                       <p className="text-xs text-stone-300 mt-1 leading-relaxed">
                         Warm temple ochre, rich amber accents (#E8921A), gold leaf highlights & deep espresso sanctum ground.
                       </p>
-
-                      {/* Swatch dots */}
-                      <div className="flex items-center space-x-2 mt-3">
-                        <div className="flex -space-x-1">
-                          <span className="w-4 h-4 rounded-full bg-[#120A04] border border-amber-500/40 shadow-sm" title="#120A04 Base" />
-                          <span className="w-4 h-4 rounded-full bg-[#78300C] border border-amber-500/40 shadow-sm" title="#78300C Terracotta" />
-                          <span className="w-4 h-4 rounded-full bg-[#E8921A] border border-amber-500/40 shadow-sm" title="#E8921A Gold" />
-                          <span className="w-4 h-4 rounded-full bg-[#F7EDDB] border border-amber-500/40 shadow-sm" title="#F7EDDB Ivory" />
-                        </div>
-                        <span className="text-[10px] text-stone-400 font-mono">Terracotta & Gold</span>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -2065,7 +2216,6 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                       : "bg-stone-900/40 border-stone-800/80 hover:bg-stone-800/40 opacity-75 hover:opacity-100"
                   }`}
                 >
-                  {/* Active Indicator Ribbon */}
                   {!isSandstone && (
                     <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-400 to-indigo-500 text-stone-950 font-bold text-[9.5px] uppercase tracking-wider px-3 py-0.5 rounded-bl-xl shadow flex items-center space-x-1">
                       <Check className="w-3 h-3 stroke-[3]" />
@@ -2085,70 +2235,8 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                       <p className="text-xs text-stone-300 mt-1 leading-relaxed">
                         Meditative deep violet dusk (#0F0A1A), celestial purple aura (#4A2264), radiant amber & moonlit cream.
                       </p>
-
-                      {/* Swatch dots */}
-                      <div className="flex items-center space-x-2 mt-3">
-                        <div className="flex -space-x-1">
-                          <span className="w-4 h-4 rounded-full bg-[#0F0A1A] border border-purple-400/40 shadow-sm" title="#0F0A1A Base" />
-                          <span className="w-4 h-4 rounded-full bg-[#4A2264] border border-purple-400/40 shadow-sm" title="#4A2264 Violet" />
-                          <span className="w-4 h-4 rounded-full bg-[#E8A93E] border border-purple-400/40 shadow-sm" title="#E8A93E Amber" />
-                          <span className="w-4 h-4 rounded-full bg-[#F8F2E8] border border-purple-400/40 shadow-sm" title="#F8F2E8 Moonlit" />
-                        </div>
-                        <span className="text-[10px] text-stone-400 font-mono">Violet & Celestial Gold</span>
-                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              {/* LocalStorage Persistence Confirmation Box */}
-              <div className="p-3.5 rounded-2xl bg-white/5 border border-emerald-500/30 flex items-start space-x-3">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                <div className="text-xs space-y-0.5">
-                  <div className="font-bold text-emerald-300">Persistent Storage Active</div>
-                  <p className="text-stone-300 text-[11px] leading-relaxed">
-                    Saved in <code className="bg-black/40 px-1 py-0.5 rounded text-amber-300 font-mono">localStorage("sutrasparsh_theme")</code> as <strong className="text-stone-100 font-semibold">"{theme}"</strong>. Your choice remains active when you return or refresh.
-                  </p>
-                </div>
-              </div>
-
-              {/* Live Shloka Preview Sandbox */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span
-                    className="text-[10.5px] font-extrabold tracking-widest uppercase"
-                    style={{ color: themeGoldLight }}
-                  >
-                    LIVE PREVIEW SANDBOX
-                  </span>
-                  <span className="text-[10.5px] text-stone-400">
-                    Theme: {isSandstone ? "Sandstone" : "Amethyst"}
-                  </span>
-                </div>
-
-                <div className={`p-4 rounded-2xl ${themeCardDark} space-y-2.5 transition-all duration-300 shadow-md`}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10.5px] font-bold" style={{ color: themeGoldLight }}>
-                      Gita 2.47 · Sankhya Yoga
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-stone-200">
-                      Sample Card
-                    </span>
-                  </div>
-
-                  <div className="font-sanskrit text-sm leading-relaxed text-stone-100 text-center py-1">
-                    कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।
-                  </div>
-
-                  <div className="flex items-center space-x-2 py-0.5">
-                    <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
-                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: themeGold }} />
-                    <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
-                  </div>
-
-                  <p className="text-[11px] text-center italic" style={{ color: themeMist }}>
-                    "You have a right only to action, never to its fruits."
-                  </p>
                 </div>
               </div>
 
@@ -2162,7 +2250,6 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                   <span>SCRIPT & TRANSLATION DISPLAY</span>
                 </div>
 
-                {/* Script Display Options */}
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     { id: "both", label: "Devanagari + IAST", sub: "Dual Script" },
@@ -2225,7 +2312,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                     <Music className="w-4 h-4 text-amber-400" />
                     <div>
                       <div className="text-xs font-bold text-stone-200">Chant Recitation Tempo</div>
-                      <div className="text-[10.5px] text-stone-400">Pace of audio chanting</div>
+                      <div className="text-[10.5px] text-stone-400">Pace of TTS recitation</div>
                     </div>
                   </div>
 
@@ -2246,7 +2333,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                   </div>
                 </div>
 
-                {/* Daily Brahma Muhurta Reminder */}
+                {/* Daily Brahma Muhurta Reminder with Permission Request */}
                 <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5">
                   <div className="flex items-center space-x-2.5">
                     <Bell className="w-4 h-4 text-amber-400" />
@@ -2264,7 +2351,10 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                     ].map((item) => (
                       <button
                         key={item.time}
-                        onClick={() => setPrefReminder(item.time)}
+                        onClick={() => {
+                          setPrefReminder(item.time);
+                          handleRequestNotifications();
+                        }}
                         className={`px-2 py-1 rounded-lg text-[10.5px] font-bold transition-colors ${
                           prefReminder === item.time
                             ? "bg-amber-500 text-stone-950"
@@ -2275,6 +2365,41 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                       </button>
                     ))}
                   </div>
+                </div>
+              </div>
+
+              {/* SĀDHANA DATA BACKUP & CLOUD RESTORE */}
+              <div className="pt-2 space-y-3">
+                <div
+                  className="text-[10.5px] font-extrabold tracking-widest uppercase flex items-center space-x-1.5"
+                  style={{ color: themeGoldLight }}
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>DATA PORTABILITY & BACKUP (JSON)</span>
+                </div>
+                <p className="text-xs text-stone-400 leading-relaxed">
+                  Export all your saved verses, journal entries, streaks, and reading progress to a portable JSON file, or restore from a previous backup.
+                </p>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button
+                    onClick={handleExportBackupJson}
+                    className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-amber-500/30 text-amber-300 text-xs font-bold transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Download className="w-4 h-4 flex-shrink-0" />
+                    <span>Export Backup</span>
+                  </button>
+
+                  <label className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-stone-200 text-xs font-bold transition-colors flex items-center justify-center space-x-2 cursor-pointer">
+                    <Upload className="w-4 h-4 flex-shrink-0 text-amber-400" />
+                    <span>Import Backup</span>
+                    <input
+                      type="file"
+                      accept=".json,application/json"
+                      onChange={handleImportBackupJson}
+                      className="hidden"
+                    />
+                  </label>
                 </div>
               </div>
 
@@ -2321,24 +2446,25 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
                 ॐ
               </span>
               <h1 className="font-serif-sacred text-2xl font-bold text-stone-100">
-                SutraSparsh
+                SutraSparsh 2.0
               </h1>
               <p className="text-xs leading-relaxed text-left text-stone-300" style={{ color: themeMist }}>
-                SutraSparsh is a digital sanctuary engineered to bring the timeless wisdom of ancient Sanskrit scriptures—the Bhagavad Gita, Upanishads, Patanjali Yoga Sutras, and Ashtavakra Gita—directly into modern contemplative daily life.
+                SutraSparsh is a digital temple engineered to bring the timeless wisdom of ancient Sanskrit scriptures—the Bhagavad Gita, Upanishads, Patanjali Yoga Sutras, and Ashtavakra Gita—directly into contemplative daily life.
               </p>
 
               <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-left space-y-2">
-                <div className="text-xs font-bold text-amber-300">Core Principles:</div>
+                <div className="text-xs font-bold text-amber-300">Core Architecture:</div>
                 <ul className="text-xs space-y-1.5 text-stone-300 list-disc list-inside">
-                  <li>Living Shloka philosophy (practical daily reflection)</li>
-                  <li>Pure Sanskrit typography with IAST romanization</li>
-                  <li>Traditional authentic lineage commentaries</li>
-                  <li>High-contrast contemplative color palettes</li>
+                  <li>Full 18-chapter Bhagavad Gita and multi-scripture indexing</li>
+                  <li>Pure Sanskrit typography with word-by-word padaccheda</li>
+                  <li>Deterministic daily shloka calendar rotation</li>
+                  <li>Continuous 432Hz meditative Tanpura drone synthesizer</li>
+                  <li>Persistent Sandstone & Amethyst atmospheres</li>
                 </ul>
               </div>
 
               <div className="text-[11px] text-stone-500 pt-4">
-                Version 2.4.0 · Sandstone & Amethyst Engine
+                Version 2.0.0 · Sacred Sanskrit Sanctuary
               </div>
             </div>
           </div>
@@ -2370,12 +2496,13 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
 
             <div className="p-5 space-y-3">
               {[
-                { term: "Dharma (धर्म)", root: "√dhṛ (to hold, support, sustain)", meaning: "Cosmic order, sacred duty, righteous living, that which upholds truth." },
-                { term: "Karma (कर्म)", root: "√kṛ (to do, perform, act)", meaning: "Action, deeds, cause and effect, purposeful intentional effort." },
-                { term: "Yoga (योग)", root: "√yuj (to yoke, unite, join)", meaning: "Union of individual consciousness with universal divine truth." },
+                { term: "Dharma (धर्म)", root: "√dhṛ (to hold, sustain)", meaning: "Cosmic order, sacred duty, righteous living, that which upholds truth." },
+                { term: "Karma (कर्म)", root: "√kṛ (to do, perform)", meaning: "Action, deeds, cause and effect, intentional dedicated effort." },
+                { term: "Yoga (योग)", root: "√yuj (to yoke, unite)", meaning: "Union of individual consciousness with universal divine truth." },
+                { term: "Chitta (चित्त)", root: "√cit (to perceive)", meaning: "Mind-stuff, the subconscious storehouse of memories and impressions." },
                 { term: "Atman (आत्मन्)", root: "√an (to breathe, live)", meaning: "The immortal inner Self, unchanging consciousness beyond the body and mind." },
                 { term: "Brahman (ब्रह्मन्)", root: "√bṛh (to expand, grow)", meaning: "The ultimate, transcendent, infinite reality underlying the cosmos." },
-                { term: "Moksha (मोक्ष)", root: "√muc (to release, set free)", meaning: "Liberation from the cycle of rebirth and suffering." },
+                { term: "Moksha (मोक्ष)", root: "√muc (to release, set free)", meaning: "Liberation from the cycle of rebirth and worldly suffering." },
               ].map((item, idx) => (
                 <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-1">
                   <div className="flex items-center justify-between">
@@ -2412,16 +2539,14 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
 
             <div className="p-5 space-y-3.5">
               {[
-                { title: "Karma Yoga Track", sub: "The Path of Selfless Action", verses: "14 Verses · 7 Days", icon: "⚖️" },
-                { title: "Jnana Yoga Track", sub: "The Path of Discrimination & Wisdom", verses: "21 Verses · 14 Days", icon: "🕯️" },
-                { title: "Bhakti Yoga Track", sub: "The Path of Loving Devotion", verses: "18 Verses · 10 Days", icon: "🪷" },
-                { title: "Dhyana Yoga Track", sub: "The Path of Meditation & Equanimity", verses: "12 Verses · 6 Days", icon: "🧘" },
+                { title: "Karma Yoga Track", sub: "The Path of Selfless Action", verses: "14 Verses · 7 Days", icon: "⚖️", verseId: "bg_2_47" },
+                { title: "Raja Yoga & Meditation", sub: "Patanjali's Eightfold Path to Stillness", verses: "12 Verses · 6 Days", icon: "🧘", verseId: "ys_1_2" },
+                { title: "Jnana & Non-duality Track", sub: "Advaita Vedanta from Isha & Mandukya", verses: "21 Verses · 14 Days", icon: "🕯️", verseId: "isha_1" },
+                { title: "Bhakti Yoga Track", sub: "The Path of Loving Devotion & Surrender", verses: "18 Verses · 10 Days", icon: "🪷", verseId: "bg_2_50" },
               ].map((track, idx) => (
                 <div
                   key={idx}
-                  onClick={() => {
-                    setSubScreen("verse");
-                  }}
+                  onClick={() => openVerseScreen(track.verseId)}
                   className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center space-x-3.5 cursor-pointer hover:bg-white/10 transition-colors"
                 >
                   <span className="text-2xl">{track.icon}</span>
@@ -2448,7 +2573,13 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
             }}
           >
             <button
-              onClick={() => setIsPlaying(!isPlaying)}
+              onClick={() => {
+                if (isPlaying) {
+                  recitationEngine.pause();
+                } else {
+                  recitationEngine.resume(selectedVerseData.sanskrit, prefChantSpeed);
+                }
+              }}
               className="w-9 h-9 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-stone-950 flex items-center justify-center shadow hover:scale-105 transition-transform flex-shrink-0"
             >
               {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-stone-950" />}
@@ -2460,16 +2591,25 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
               </div>
               <div className="flex items-center space-x-2 mt-1">
                 <span className="text-[10px] text-stone-400 font-mono">
-                  0:{audioProgress.toString().padStart(2, "0")}
+                  {Math.floor(audioProgress / 60)}:{(audioProgress % 60).toString().padStart(2, "0")}
                 </span>
-                <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    const newProgress = Math.round((clickX / rect.width) * audioDuration);
+                    recitationEngine.seek(newProgress);
+                  }}
+                  className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden cursor-pointer flex items-center"
+                  title="Click to seek recitation"
+                >
                   <div
-                    className="h-full bg-amber-400 rounded-full transition-all duration-300"
-                    style={{ width: `${(audioProgress / audioDuration) * 100}%` }}
+                    className="h-full bg-amber-400 rounded-full transition-all duration-150"
+                    style={{ width: `${Math.min(100, (audioProgress / Math.max(1, audioDuration)) * 100)}%` }}
                   />
                 </div>
                 <span className="text-[10px] text-stone-400 font-mono">
-                  0:{audioDuration}
+                  {Math.floor(audioDuration / 60)}:{(audioDuration % 60).toString().padStart(2, "0")}
                 </span>
               </div>
             </div>
@@ -2477,7 +2617,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
             <button
               onClick={() => {
                 setPlayerVisible(false);
-                setIsPlaying(false);
+                recitationEngine.stop();
               }}
               className="p-1.5 text-stone-400 hover:text-stone-100 rounded-full"
             >
@@ -2521,7 +2661,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
           })}
         </nav>
 
-        {/* ════════════ SOCIAL SHARING MODAL (Phase 25) ════════════ */}
+        {/* ════════════ SOCIAL SHARING MODAL ════════════ */}
         <ShareModal
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
