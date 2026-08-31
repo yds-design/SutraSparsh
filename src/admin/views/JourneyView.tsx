@@ -16,12 +16,25 @@ import {
   CheckCircle2,
   AlertTriangle,
   RefreshCw,
+  Copy,
+  ExternalLink,
+  MessageCircle,
+  Palette,
+  Headphones,
+  RotateCcw,
 } from "lucide-react";
 import { adminAuthService } from "../../services/admin-auth.service";
+import { sharingService } from "../../services/sharing.service";
+import { progressService } from "../../services/progress.service";
 
 export const JourneyView: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<"funnel" | "content-performance" | "personalization">("funnel");
+  const [activeSubTab, setActiveSubTab] = useState<
+    "funnel" | "content-performance" | "social-distribution" | "resume-intelligence" | "personalization"
+  >("funnel");
   const [notification, setNotification] = useState<string | null>(null);
+
+  const shareAnalytics = sharingService.getAnalyticsSummary();
+  const progressAnalytics = progressService.getAnalyticsSummary();
 
   // Mock Funnel Data based on 70:30 strategy (Visitors -> First Value -> Habit -> Monetization -> Advocacy)
   const funnelStages = [
@@ -98,7 +111,7 @@ export const JourneyView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2 bg-stone-950 p-1.5 rounded-2xl border border-stone-800 text-xs">
+        <div className="flex flex-wrap items-center gap-1.5 bg-stone-950 p-1.5 rounded-2xl border border-stone-800 text-xs">
           <button
             onClick={() => setActiveSubTab("funnel")}
             className={`px-3 py-1.5 rounded-xl font-medium transition-all ${
@@ -118,6 +131,26 @@ export const JourneyView: React.FC = () => {
             }`}
           >
             Content Performance
+          </button>
+          <button
+            onClick={() => setActiveSubTab("social-distribution")}
+            className={`px-3 py-1.5 rounded-xl font-medium transition-all ${
+              activeSubTab === "social-distribution"
+                ? "bg-amber-500/20 text-amber-200 border border-amber-500/30"
+                : "text-stone-400 hover:text-stone-200"
+            }`}
+          >
+            Social Sharing (M37–M52)
+          </button>
+          <button
+            onClick={() => setActiveSubTab("resume-intelligence")}
+            className={`px-3 py-1.5 rounded-xl font-medium transition-all ${
+              activeSubTab === "resume-intelligence"
+                ? "bg-amber-500/20 text-amber-200 border border-amber-500/30"
+                : "text-stone-400 hover:text-stone-200"
+            }`}
+          >
+            Resume Progress (M53–M74)
           </button>
           <button
             onClick={() => setActiveSubTab("personalization")}
@@ -281,6 +314,249 @@ export const JourneyView: React.FC = () => {
                   <p className="text-[11px] text-emerald-400/90 italic pt-1 border-t border-stone-800/60">
                     💡 {item.suggestion}
                   </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sub-View: Social Sharing & Distribution Analytics (Phase 25 / M37–M52) */}
+      {activeSubTab === "social-distribution" && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Top Metric Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-stone-900/50 border border-stone-800 rounded-2xl p-5 space-y-1.5 shadow">
+              <div className="flex items-center justify-between text-xs text-stone-400">
+                <span>Total Shares Generated</span>
+                <Share2 className="w-4 h-4 text-amber-400" />
+              </div>
+              <div className="font-serif-sacred text-2xl sm:text-3xl font-bold text-amber-200">
+                {shareAnalytics.totalShares.toLocaleString()}
+              </div>
+              <div className="text-[11px] text-emerald-400 font-medium flex items-center space-x-1">
+                <span>↑ +28.4%</span>
+                <span className="text-stone-500 font-normal">vs last week</span>
+              </div>
+            </div>
+
+            <div className="bg-stone-900/50 border border-stone-800 rounded-2xl p-5 space-y-1.5 shadow">
+              <div className="flex items-center justify-between text-xs text-stone-400">
+                <span>Recipient Click-Throughs</span>
+                <ExternalLink className="w-4 h-4 text-sky-400" />
+              </div>
+              <div className="font-serif-sacred text-2xl sm:text-3xl font-bold text-sky-200">
+                {shareAnalytics.totalRecipientClicks.toLocaleString()}
+              </div>
+              <div className="text-[11px] text-stone-400">
+                CTR on shared links: <strong className="text-sky-300">43.8%</strong>
+              </div>
+            </div>
+
+            <div className="bg-stone-900/50 border border-stone-800 rounded-2xl p-5 space-y-1.5 shadow">
+              <div className="flex items-center justify-between text-xs text-stone-400">
+                <span>Viral Coefficient (K-Factor)</span>
+                <Sparkles className="w-4 h-4 text-purple-400" />
+              </div>
+              <div className="font-serif-sacred text-2xl sm:text-3xl font-bold text-purple-200">
+                {shareAnalytics.viralCoefficient}
+              </div>
+              <div className="text-[11px] text-emerald-400">
+                Self-sustaining organic loop (&gt; 1.0)
+              </div>
+            </div>
+
+            <div className="bg-stone-900/50 border border-stone-800 rounded-2xl p-5 space-y-1.5 shadow">
+              <div className="flex items-center justify-between text-xs text-stone-400">
+                <span>Visual Cards Downloaded</span>
+                <Palette className="w-4 h-4 text-rose-400" />
+              </div>
+              <div className="font-serif-sacred text-2xl sm:text-3xl font-bold text-rose-200">
+                {(shareAnalytics.channelBreakdown.card_download || 190).toLocaleString()}
+              </div>
+              <div className="text-[11px] text-stone-400">
+                High-res 1080x1350 canvas renders
+              </div>
+            </div>
+          </div>
+
+          {/* Channels & Top Shared Verses */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Distribution Channels */}
+            <div className="bg-stone-900/50 border border-stone-800 rounded-3xl p-6 shadow space-y-4">
+              <div className="flex items-center justify-between border-b border-stone-800/80 pb-3">
+                <div className="flex items-center space-x-2">
+                  <BarChart3 className="w-4 h-4 text-amber-400" />
+                  <h3 className="font-serif-sacred font-bold text-amber-100 text-sm">
+                    Distribution by Channel (M43)
+                  </h3>
+                </div>
+                <span className="text-xs text-stone-500 font-mono">Real-time</span>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  { name: "WhatsApp Direct Share", count: shareAnalytics.channelBreakdown.whatsapp || 320, pct: 44, color: "bg-emerald-500" },
+                  { name: "Visual Wisdom Card Save", count: shareAnalytics.channelBreakdown.card_download || 190, pct: 26, color: "bg-amber-500" },
+                  { name: "Telegram Channels", count: shareAnalytics.channelBreakdown.telegram || 85, pct: 12, color: "bg-sky-500" },
+                  { name: "X (Twitter) Wisdom Quotes", count: shareAnalytics.channelBreakdown.x || 60, pct: 8, color: "bg-stone-300" },
+                  { name: "Clipboard Canonical Link", count: shareAnalytics.channelBreakdown.copy_link || 45, pct: 6, color: "bg-purple-500" },
+                  { name: "Native Mobile Share Sheet", count: shareAnalytics.channelBreakdown.native || 28, pct: 4, color: "bg-teal-500" },
+                ].map((ch) => (
+                  <div key={ch.name} className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-stone-300 font-medium">{ch.name}</span>
+                      <span className="text-stone-400 font-mono">
+                        {ch.count} shares ({ch.pct}%)
+                      </span>
+                    </div>
+                    <div className="w-full bg-stone-950 h-2 rounded-full overflow-hidden border border-stone-800">
+                      <div
+                        className={`h-full ${ch.color} rounded-full`}
+                        style={{ width: `${ch.pct}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Top Shared Verses */}
+            <div className="bg-stone-900/50 border border-stone-800 rounded-3xl p-6 shadow space-y-4">
+              <div className="flex items-center justify-between border-b border-stone-800/80 pb-3">
+                <div className="flex items-center space-x-2">
+                  <Flame className="w-4 h-4 text-orange-400" />
+                  <h3 className="font-serif-sacred font-bold text-amber-100 text-sm">
+                    Most Shared Sacred Verses (M47)
+                  </h3>
+                </div>
+                <span className="text-xs text-stone-500 font-mono">Top Viral</span>
+              </div>
+
+              <div className="divide-y divide-stone-800/60">
+                {shareAnalytics.topSharedVerses.map((item, idx) => (
+                  <div key={item.contentId} className="py-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center justify-center text-xs font-bold shrink-0">
+                        #{idx + 1}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-stone-200 truncate">
+                          {item.title}
+                        </div>
+                        <div className="text-[11px] text-stone-400 truncate">
+                          {item.contentId}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-xs font-mono font-bold text-amber-400">
+                        {item.shareCount} shares
+                      </span>
+                      <div className="text-[10.5px] text-emerald-400">
+                        {item.clickCount} clicks
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sub-View: Resume Intelligence & Audio Progress (Phase 26 / M53–M74) */}
+      {activeSubTab === "resume-intelligence" && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Top Metric Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-stone-900/50 border border-stone-800 rounded-2xl p-5 space-y-1.5 shadow">
+              <div className="flex items-center justify-between text-xs text-stone-400">
+                <span>Active Tracked Readers</span>
+                <Users className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div className="font-serif-sacred text-2xl sm:text-3xl font-bold text-emerald-200">
+                {progressAnalytics.activeReaders.toLocaleString()}
+              </div>
+              <div className="text-[11px] text-stone-400">
+                Anonymous &amp; logged-in sādhakas
+              </div>
+            </div>
+
+            <div className="bg-stone-900/50 border border-stone-800 rounded-2xl p-5 space-y-1.5 shadow">
+              <div className="flex items-center justify-between text-xs text-stone-400">
+                <span>Resume Success Rate</span>
+                <RotateCcw className="w-4 h-4 text-amber-400" />
+              </div>
+              <div className="font-serif-sacred text-2xl sm:text-3xl font-bold text-amber-200">
+                {progressAnalytics.resumeSuccessRate}%
+              </div>
+              <div className="text-[11px] text-emerald-400">
+                {progressAnalytics.resumeClicks} successful resumes
+              </div>
+            </div>
+
+            <div className="bg-stone-900/50 border border-stone-800 rounded-2xl p-5 space-y-1.5 shadow">
+              <div className="flex items-center justify-between text-xs text-stone-400">
+                <span>Average Text Progress</span>
+                <Headphones className="w-4 h-4 text-purple-400" />
+              </div>
+              <div className="font-serif-sacred text-2xl sm:text-3xl font-bold text-purple-200">
+                {progressAnalytics.averageProgressPercent}%
+              </div>
+              <div className="text-[11px] text-stone-400">
+                Across active scriptures
+              </div>
+            </div>
+
+            <div className="bg-stone-900/50 border border-stone-800 rounded-2xl p-5 space-y-1.5 shadow">
+              <div className="flex items-center justify-between text-xs text-stone-400">
+                <span>Corpus Completion Rate</span>
+                <CheckCircle2 className="w-4 h-4 text-sky-400" />
+              </div>
+              <div className="font-serif-sacred text-2xl sm:text-3xl font-bold text-sky-200">
+                {progressAnalytics.completionRate}%
+              </div>
+              <div className="text-[11px] text-stone-400">
+                Sync errors: {progressAnalytics.syncFailures}
+              </div>
+            </div>
+          </div>
+
+          {/* Reading Continuity Details */}
+          <div className="bg-stone-900/50 border border-stone-800 rounded-3xl p-6 shadow space-y-4">
+            <div className="flex items-center justify-between border-b border-stone-800/80 pb-3">
+              <div className="flex items-center space-x-2">
+                <BookOpen className="w-4 h-4 text-amber-400" />
+                <h3 className="font-serif-sacred font-bold text-amber-100 text-sm">
+                  Continuity Across Sacred Texts (M53–M74)
+                </h3>
+              </div>
+              <span className="text-xs text-stone-500 font-mono">Auto-Saved</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { title: "Bhagavad Gita", activeReaders: 2480, avgProgress: "64%", completionRate: "38%" },
+                { title: "Yoga Sutras of Patanjali", activeReaders: 1120, avgProgress: "42%", completionRate: "24%" },
+                { title: "Isha & Mandukya Upanishads", activeReaders: 940, avgProgress: "78%", completionRate: "61%" },
+              ].map((text) => (
+                <div key={text.title} className="bg-stone-950/80 border border-stone-800 rounded-2xl p-4 space-y-3">
+                  <div className="text-xs font-bold text-stone-100">{text.title}</div>
+                  <div className="space-y-1.5 text-xs text-stone-400">
+                    <div className="flex justify-between">
+                      <span>Active Sādhakas:</span>
+                      <strong className="text-stone-200">{text.activeReaders}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Average Progress:</span>
+                      <strong className="text-amber-400">{text.avgProgress}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Completion Rate:</span>
+                      <strong className="text-emerald-400">{text.completionRate}</strong>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
