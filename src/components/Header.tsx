@@ -11,16 +11,30 @@ import {
   Zap,
   Heart,
   Crown,
+  Sliders,
 } from "lucide-react";
 import { soundEngine } from "../utils/audio";
 
-export type NavTab = "today" | "explore" | "search" | "my-journey" | "daily-app" | "explorer" | "daily" | "journal" | "membership";
+export type NavTab =
+  | "today"
+  | "explore"
+  | "search"
+  | "my-journey"
+  | "preferences"
+  | "daily-app"
+  | "explorer"
+  | "daily"
+  | "journal"
+  | "membership";
 
 interface HeaderProps {
   activeTab: NavTab;
   setActiveTab: (tab: NavTab) => void;
   savedCount: number;
   backendOnline: boolean;
+  theme?: "sandstone" | "amethyst" | "light" | "festival";
+  onToggleTheme?: () => void;
+  onOpenProfile?: () => void;
   onOpenPricing?: () => void;
   onOpenDonation?: () => void;
   onOpenAdminConsole?: () => void;
@@ -31,11 +45,18 @@ export const Header: React.FC<HeaderProps> = ({
   setActiveTab,
   savedCount,
   backendOnline,
+  theme = "sandstone",
+  onToggleTheme,
+  onOpenProfile,
   onOpenPricing,
   onOpenDonation,
   onOpenAdminConsole,
 }) => {
   const [isDroneActive, setIsDroneActive] = React.useState(false);
+  const isLight = theme === "light";
+  const isFestival = theme === "festival";
+  const isAmethyst = theme === "amethyst";
+  const isSandstone = theme === "sandstone";
 
   const toggleSoundscape = () => {
     const active = soundEngine.toggleTanpuraDrone();
@@ -46,158 +67,307 @@ export const Header: React.FC<HeaderProps> = ({
   const isExploreActive = activeTab === "explore" || activeTab === "explorer";
   const isSearchActive = activeTab === "search";
   const isJourneyActive = activeTab === "my-journey" || activeTab === "journal" || activeTab === "membership";
+  const isPreferencesActive = activeTab === "preferences";
+
+  const headerBg = isLight
+    ? "rgba(255, 251, 245, 0.94)"
+    : isFestival
+    ? "rgba(75, 14, 23, 0.94)"
+    : isAmethyst
+    ? "rgba(15, 10, 26, 0.94)"
+    : "rgba(18, 13, 9, 0.94)";
+
+  const headerBorder = isLight
+    ? "#E6D7C3"
+    : isFestival
+    ? "rgba(255, 138, 0, 0.3)"
+    : isAmethyst
+    ? "rgba(196, 168, 230, 0.2)"
+    : "rgba(216, 137, 22, 0.2)";
+
+  const brandTextColor = isLight ? "#3A2818" : isFestival ? "#FFF6E3" : "#F4E9D2";
 
   return (
-    <header className="sticky top-0 z-40 bg-stone-950/80 backdrop-blur-md border-b border-stone-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20">
-          {/* Logo & Brand */}
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab("today")}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-600/30 border border-amber-500/40 flex items-center justify-center text-amber-300 shadow-inner">
-              <span className="font-sanskrit text-xl font-bold">ॐ</span>
+    <header
+      id="main-app-header"
+      className="sticky top-0 z-40 backdrop-blur-xl border-b transition-colors duration-300 overflow-x-hidden"
+      style={{
+        backgroundColor: headerBg,
+        borderColor: headerBorder,
+      }}
+    >
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-18 lg:h-20">
+          {/* Logo & Brand Identity */}
+          <div
+            className="flex items-center space-x-2.5 sm:space-x-3 cursor-pointer select-none group touch-manipulation"
+            onClick={() => setActiveTab("today")}
+            role="button"
+            aria-label="SutraSparsh Home"
+          >
+            <div
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-inner transition-transform duration-200 group-hover:scale-105 border"
+              style={{
+                background: isSandstone
+                  ? "linear-gradient(135deg, rgba(232,146,26,0.25), rgba(120,48,12,0.4))"
+                  : "linear-gradient(135deg, rgba(196,168,230,0.25), rgba(82,41,122,0.4))",
+                borderColor: isSandstone ? "rgba(232,146,26,0.5)" : "rgba(196,168,230,0.5)",
+                color: isSandstone ? "#F4B24B" : "#D4BEF2",
+              }}
+            >
+              <span className="font-sanskrit text-lg sm:text-xl font-bold">ॐ</span>
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-serif-sacred text-lg sm:text-xl font-bold tracking-wider text-amber-100">
+              <div className="flex items-center space-x-1.5 sm:space-x-2">
+                <span
+                  className="font-serif-sacred text-base sm:text-xl font-bold tracking-tight"
+                  style={{ color: brandTextColor }}
+                >
                   SutraSparsh
                 </span>
-                <span className="font-sanskrit text-xs px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <span
+                  className="font-sanskrit text-[10px] sm:text-xs px-1.5 py-0.5 rounded border hidden xs:inline"
+                  style={{
+                    backgroundColor: isSandstone ? "rgba(232,146,26,0.12)" : "rgba(196,168,230,0.12)",
+                    borderColor: isSandstone ? "rgba(232,146,26,0.3)" : "rgba(196,168,230,0.3)",
+                    color: isSandstone ? "#F4B24B" : "#D4BEF2",
+                  }}
+                >
                   सूत्रस्पर्श
                 </span>
               </div>
-              <p className="text-[11px] text-stone-400 font-light hidden sm:block">
-                A daily space to discover, understand and reflect on timeless wisdom
+              <p className="text-[10px] sm:text-[11px] text-stone-400 font-light hidden 2xl:block truncate max-w-sm">
+                A sacred space to discover, understand, and reflect on timeless wisdom
               </p>
             </div>
           </div>
 
-          {/* Canonical 4-Tab User Navigation: TODAY | EXPLORE | SEARCH | MY JOURNEY */}
-          <nav className="flex items-center space-x-1 sm:space-x-2">
+          {/* Desktop Navigation Tabs (Hidden on Mobile & Tablet to prevent horizontal overflow; handled by BottomNav) */}
+          <nav
+            aria-label="Main Desktop Navigation"
+            className="hidden md:flex items-center space-x-1 lg:space-x-1.5 flex-shrink-0"
+          >
             {/* 1. TODAY */}
             <button
               id="tab-today"
+              type="button"
               onClick={() => setActiveTab("today")}
-              className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+              className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer ${
                 isTodayActive
                   ? "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
-                  : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
               }`}
             >
               <Sun className="w-4 h-4 text-amber-400" />
               <span>Today</span>
-              <span className="text-[10px] text-amber-400/80 font-sanskrit hidden md:inline">आज</span>
+              <span className="text-[10px] text-amber-400/80 font-sanskrit hidden 2xl:inline">आज</span>
             </button>
 
             {/* 2. EXPLORE */}
             <button
               id="tab-explore"
+              type="button"
               onClick={() => setActiveTab("explore")}
-              className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+              className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer ${
                 isExploreActive
                   ? "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
-                  : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
               }`}
             >
               <BookOpen className="w-4 h-4 text-amber-400" />
               <span>Explore</span>
-              <span className="text-[10px] text-amber-400/80 font-sanskrit hidden md:inline">दर्शन</span>
+              <span className="text-[10px] text-amber-400/80 font-sanskrit hidden 2xl:inline">दर्शन</span>
             </button>
 
             {/* 3. SEARCH */}
             <button
               id="tab-search"
+              type="button"
               onClick={() => setActiveTab("search")}
-              className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+              className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer ${
                 isSearchActive
                   ? "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
-                  : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
               }`}
             >
               <Search className="w-4 h-4 text-amber-400" />
               <span>Search</span>
-              <span className="text-[10px] text-amber-400/80 font-sanskrit hidden md:inline">खोज</span>
+              <span className="text-[10px] text-amber-400/80 font-sanskrit hidden 2xl:inline">खोज</span>
             </button>
 
             {/* 4. MY JOURNEY */}
             <button
               id="tab-my-journey"
+              type="button"
               onClick={() => setActiveTab("my-journey")}
-              className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all relative ${
+              className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 relative cursor-pointer ${
                 isJourneyActive
                   ? "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
-                  : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
               }`}
             >
               <Compass className="w-4 h-4 text-amber-400" />
               <span>My Journey</span>
-              <span className="text-[10px] text-amber-400/80 font-sanskrit hidden md:inline">साधना</span>
+              <span className="text-[10px] text-amber-400/80 font-sanskrit hidden 2xl:inline">साधना</span>
               {savedCount > 0 && (
                 <span className="bg-amber-500/30 text-amber-300 text-[10px] px-1.5 py-0.2 rounded-full font-bold">
                   {savedCount}
                 </span>
               )}
             </button>
+
+            {/* 5. PREFERENCES / SETTINGS (Icon-only, accessible label) */}
+            <button
+              id="tab-preferences"
+              type="button"
+              onClick={() => setActiveTab("preferences")}
+              title="Sacred Atmosphere, Recitation & Settings"
+              aria-label="Settings"
+              className={`p-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer ${
+                isPreferencesActive
+                  ? "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
+              }`}
+            >
+              <Sliders className="w-4 h-4 text-amber-400" />
+            </button>
           </nav>
 
-          {/* Action buttons (Monetization Quick CTAs + Audio Drone + Admin Gateway) */}
-          <div className="flex items-center space-x-2 sm:space-x-2.5">
+          {/* Action Group: Theme, Tanpura, Profile, Seva, Sadhaka, Admin, API Live */}
+          <div className="flex items-center space-x-1 sm:space-x-1.5 flex-shrink-0">
+            {/* Theme Toggle Button (Icon-focused to save critical space) */}
+            {onToggleTheme && (
+              <button
+                id="btn-toggle-theme"
+                type="button"
+                onClick={onToggleTheme}
+                aria-label={`Atmosphere: ${theme}. Click to cycle sacred theme.`}
+                title={`Atmosphere: ${theme.toUpperCase()} (Click to cycle themes)`}
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border text-xs font-bold transition-all duration-150 active:scale-95 flex items-center justify-center touch-manipulation cursor-pointer"
+                style={{
+                  backgroundColor: isLight
+                    ? "rgba(216,137,22,0.15)"
+                    : isFestival
+                    ? "rgba(255,138,0,0.2)"
+                    : isAmethyst
+                    ? "rgba(196,168,230,0.18)"
+                    : "rgba(232,146,26,0.18)",
+                  borderColor: isLight
+                    ? "#D88916"
+                    : isFestival
+                    ? "#FF8A00"
+                    : isAmethyst
+                    ? "rgba(196,168,230,0.45)"
+                    : "rgba(232,146,26,0.45)",
+                  color: isLight
+                    ? "#3A2818"
+                    : isFestival
+                    ? "#FDE68A"
+                    : isAmethyst
+                    ? "#D4BEF2"
+                    : "#F4B24B",
+                }}
+              >
+                <span className="text-sm">
+                  {isLight ? "☀️" : isFestival ? "🪔" : isAmethyst ? "🔮" : "🏛️"}
+                </span>
+              </button>
+            )}
+
+            {/* Tanpura Drone Ambient Audio Button (Icon-focused) */}
+            <button
+              id="btn-drone-soundscape"
+              type="button"
+              onClick={toggleSoundscape}
+              aria-label={isDroneActive ? "Mute Tanpura Drone (136.1Hz Om)" : "Play Meditative Tanpura Ambience"}
+              title={isDroneActive ? "Mute Tanpura Drone (136.1Hz Om)" : "Play Meditative Tanpura Ambience (432Hz)"}
+              className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-xs transition-all duration-150 border flex items-center justify-center touch-manipulation cursor-pointer active:scale-95 ${
+                isDroneActive
+                  ? "bg-amber-500/25 border-amber-500/60 text-amber-200 animate-pulse shadow-[0_0_12px_rgba(232,146,26,0.3)]"
+                  : "bg-white/5 border-white/10 text-stone-300 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              {isDroneActive ? (
+                <Volume2 className="w-4 h-4 text-amber-400" />
+              ) : (
+                <VolumeX className="w-4 h-4 text-stone-400" />
+              )}
+            </button>
+
+            {/* Sādhaka Profile Button (Icon-focused with Om badge) */}
+            {onOpenProfile && (
+              <button
+                id="btn-open-sadhaka-profile"
+                type="button"
+                onClick={onOpenProfile}
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-xs font-semibold border flex items-center justify-center touch-manipulation cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-sm"
+                style={{
+                  backgroundColor: isLight ? "rgba(216, 137, 22, 0.12)" : "rgba(255, 255, 255, 0.08)",
+                  borderColor: isLight ? "#D88916" : "rgba(216, 137, 22, 0.4)",
+                  color: isLight ? "#3A2818" : "#F4E9D2",
+                }}
+                title="Sādhaka Profile, Sacred Streaks & Spiritual Stats (7d streak active)"
+                aria-label="Open Sādhaka Profile"
+              >
+                <div className="w-5 h-5 rounded-full bg-amber-500/25 text-amber-500 flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                  ॐ
+                </div>
+              </button>
+            )}
+
+            {/* Sacred Gurudakshina & Seva Button */}
+            {onOpenDonation && (
+              <button
+                type="button"
+                onClick={onOpenDonation}
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-xs text-rose-300 hover:text-rose-200 bg-rose-950/30 border border-rose-800/40 hover:border-rose-700 transition-all cursor-pointer"
+                title="Sacred Gurudakshina & Seva (80G Tax Exemption)"
+                aria-label="Seva"
+              >
+                <Heart className="w-3.5 h-3.5 text-rose-400 fill-rose-400/30" />
+              </button>
+            )}
+
+            {/* Sādhaka Sacred Membership Button */}
+            {onOpenPricing && (
+              <button
+                type="button"
+                onClick={onOpenPricing}
+                className="h-8 sm:h-9 px-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-stone-950 shadow-md hover:scale-105 active:scale-95 transition-all flex items-center space-x-1 touch-manipulation cursor-pointer"
+                title="Upgrade to Sādhaka Sacred Membership"
+                aria-label="Sādhaka Membership"
+              >
+                <Zap className="w-3.5 h-3.5 fill-current" />
+                <span className="hidden sm:inline">Sādhaka</span>
+              </button>
+            )}
+
+            {/* Admin Gateway Button - Hidden on mobile as Admin is a separate login app */}
             {onOpenAdminConsole && (
               <button
                 id="btn-open-admin-console"
+                type="button"
                 onClick={onOpenAdminConsole}
-                className="hidden sm:flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-stone-900 border border-stone-800 hover:border-amber-500/40 text-stone-400 hover:text-amber-300 text-xs transition-colors"
-                title="Open SutraSparsh Admin Console (admin.sutrasparsh.com)"
+                className="hidden md:flex w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/5 border border-white/10 hover:border-amber-500/40 text-stone-400 hover:text-amber-300 items-center justify-center transition-colors cursor-pointer"
+                title="Open SutraSparsh Admin Console"
+                aria-label="Admin"
               >
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-[11px] font-mono">Admin</span>
-              </button>
-            )}
-            {onOpenDonation && (
-              <button
-                onClick={onOpenDonation}
-                className="hidden lg:flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-300 hover:text-rose-200 bg-rose-950/30 border border-rose-800/40 hover:border-rose-700 transition-all"
-                title="Sacred Gurudakshina & Seva (80G Tax Exemption)"
-              >
-                <Heart className="w-3.5 h-3.5 text-rose-400 fill-rose-400/30" />
-                <span>Seva</span>
+                <ShieldCheck className="w-4 h-4 text-amber-400" />
               </button>
             )}
 
-            {onOpenPricing && (
-              <button
-                onClick={onOpenPricing}
-                className="flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-stone-950 shadow hover:scale-105 active:scale-95 transition-all"
-                title="Upgrade to Sādhaka Sacred Membership"
-              >
-                <Zap className="w-3.5 h-3.5 fill-current" />
-                <span>Sādhaka</span>
-              </button>
-            )}
-
-            <button
-              id="btn-drone-soundscape"
-              onClick={toggleSoundscape}
-              title={isDroneActive ? "Mute Tanpura Drone (136.1Hz)" : "Play Meditative Tanpura Ambience"}
-              className={`flex items-center space-x-1.5 px-2 py-1.5 rounded-lg text-xs transition-all border ${
-                isDroneActive
-                  ? "bg-amber-500/20 border-amber-500/50 text-amber-200 animate-pulse"
-                  : "bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200 hover:border-stone-700"
-              }`}
-            >
-              {isDroneActive ? <Volume2 className="w-4 h-4 text-amber-400" /> : <VolumeX className="w-4 h-4" />}
-            </button>
-
+            {/* API Engine Pulsating Orange Dot - Visible across screen/mobile/tablet */}
             <div
-              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] border ${
-                backendOnline
-                  ? "bg-emerald-950/40 border-emerald-800/60 text-emerald-300"
-                  : "bg-amber-950/40 border-amber-800/60 text-amber-300"
-              }`}
+              id="api-engine-indicator"
+              className="flex items-center space-x-1.5 px-2 py-1 rounded-full text-[10px] sm:text-[10.5px] font-semibold border bg-orange-950/40 border-orange-500/40 text-orange-300 flex-shrink-0 shadow-sm"
+              title="API Engine: Online & Synced"
+              aria-label="API Engine Live"
             >
-              <span
-                className={`w-2 h-2 rounded-full ${backendOnline ? "bg-emerald-400 animate-ping" : "bg-amber-400"}`}
-              />
-              <span className="hidden sm:inline">{backendOnline ? "API Live" : "API Ready"}</span>
+              <span className="relative flex h-2 w-2 flex-shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.95)]"></span>
+              </span>
+              <span className="whitespace-nowrap tracking-wide font-sans">API Engine</span>
             </div>
           </div>
         </div>

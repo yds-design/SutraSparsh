@@ -44,6 +44,7 @@ import {
   CheckCheck,
 } from "lucide-react";
 import { ShareModal } from "./ShareModal";
+import { MoreView } from "./MoreView";
 import { progressService, type StreakData } from "../services/progress.service";
 import { sharingService } from "../services/sharing.service";
 import type { ReadingProgress } from "../types/progress";
@@ -62,27 +63,45 @@ import {
   type DetailedVerse,
 } from "../data/scriptureCorpus";
 
-export type AppTheme = "sandstone" | "amethyst";
+export type AppTheme = "sandstone" | "amethyst" | "light" | "festival";
 
 interface SutraSparshTempleAppProps {
   onOpenAdmin?: () => void;
   onOpenPricing?: () => void;
   onOpenDonation?: () => void;
+  hideHeaderAndNav?: boolean;
+  theme?: AppTheme;
+  onSelectTheme?: (theme: AppTheme) => void;
+  initialSubScreen?: "none" | "scripture" | "verse" | "glossary" | "paths" | "about" | "pref";
+  onNavigateTab?: (tab: string) => void;
 }
 
 export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   onOpenAdmin,
   onOpenPricing,
   onOpenDonation,
+  hideHeaderAndNav = false,
+  theme: propTheme,
+  onSelectTheme,
+  initialSubScreen = "none",
+  onNavigateTab,
 }) => {
   // Theme state
-  const [theme, setTheme] = useState<AppTheme>(() => {
+  const [internalTheme, setInternalTheme] = useState<AppTheme>(() => {
     try {
       return (localStorage.getItem("sutrasparsh_theme") as AppTheme) || "sandstone";
     } catch {
       return "sandstone";
     }
   });
+
+  const theme = propTheme || internalTheme;
+
+  useEffect(() => {
+    if (propTheme && propTheme !== internalTheme) {
+      setInternalTheme(propTheme);
+    }
+  }, [propTheme]);
 
   // Onboarding state
   const [onboardingDone, setOnboardingDone] = useState<boolean>(() => {
@@ -99,7 +118,13 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   const [activeTab, setActiveTab] = useState<"home" | "explore" | "search" | "journey" | "more">("home");
   const [subScreen, setSubScreen] = useState<
     "none" | "scripture" | "verse" | "glossary" | "paths" | "about" | "pref"
-  >("none");
+  >(initialSubScreen);
+
+  useEffect(() => {
+    if (initialSubScreen && initialSubScreen !== "none") {
+      setSubScreen(initialSubScreen);
+    }
+  }, [initialSubScreen]);
 
   // Scripture & Reading Preferences state (persisted to localStorage)
   const [prefScript, setPrefScript] = useState<"both" | "devanagari" | "transliteration">(() => {
@@ -242,6 +267,29 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareableContent, setShareableContent] = useState<ShareableContent | null>(null);
 
+  // Quick Access Scroller state & helpers
+  const quickAccessRef = React.useRef<HTMLDivElement>(null);
+  const [quickScrollRatio, setQuickScrollRatio] = useState<number>(0);
+
+  const handleQuickScroll = () => {
+    if (quickAccessRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = quickAccessRef.current;
+      const max = scrollWidth - clientWidth;
+      setQuickScrollRatio(max > 0 ? Math.min(1, Math.max(0, scrollLeft / max)) : 0);
+    }
+  };
+
+  const scrollQuickAccess = (direction: "left" | "right") => {
+    soundEngine.playTempleBell(direction === "right" ? 330 : 260);
+    if (quickAccessRef.current) {
+      const amount = 220;
+      quickAccessRef.current.scrollBy({
+        left: direction === "right" ? amount : -amount,
+        behavior: "smooth",
+      });
+    }
+  };
+
   // Sync Progress Service, Streak Engine, and Recitation Engine on mount
   useEffect(() => {
     const unsubProgress = progressService.subscribe((current) => {
@@ -294,11 +342,45 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
     } catch {}
   }, [prefScript, prefLang, prefChantSpeed, prefReminder]);
 
+  // Real-time synchronization listeners for preferences changed anywhere in the app
+  useEffect(() => {
+    const handleScriptEvent = (e: any) => {
+      if (e.detail) setPrefScript(e.detail);
+    };
+    const handleLangEvent = (e: any) => {
+      if (e.detail) setPrefLang(e.detail);
+    };
+    const handleSpeedEvent = (e: any) => {
+      if (e.detail) {
+        setPrefChantSpeed(e.detail);
+        recitationEngine.setPlaybackRate(e.detail);
+      }
+    };
+    const handleReminderEvent = (e: any) => {
+      if (e.detail) setPrefReminder(e.detail);
+    };
+
+    window.addEventListener("sutrasparsh:pref_script", handleScriptEvent);
+    window.addEventListener("sutrasparsh:pref_lang", handleLangEvent);
+    window.addEventListener("sutrasparsh:pref_speed", handleSpeedEvent);
+    window.addEventListener("sutrasparsh:pref_reminder", handleReminderEvent);
+
+    return () => {
+      window.removeEventListener("sutrasparsh:pref_script", handleScriptEvent);
+      window.removeEventListener("sutrasparsh:pref_lang", handleLangEvent);
+      window.removeEventListener("sutrasparsh:pref_speed", handleSpeedEvent);
+      window.removeEventListener("sutrasparsh:pref_reminder", handleReminderEvent);
+    };
+  }, []);
+
   const handleSelectTheme = (newTheme: AppTheme) => {
-    setTheme(newTheme);
+    setInternalTheme(newTheme);
     try {
       localStorage.setItem("sutrasparsh_theme", newTheme);
     } catch {}
+    if (onSelectTheme) {
+      onSelectTheme(newTheme);
+    }
     soundEngine.playTempleBell(newTheme === "sandstone" ? 220 : 330);
     const themeName = newTheme === "sandstone" ? "Sandstone Temple" : "Amethyst Twilight";
     setThemeToast(`Atmosphere switched to ${themeName}`);
@@ -308,7 +390,10 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   };
 
   const handleResetPreferences = () => {
-    setTheme("sandstone");
+    setInternalTheme("sandstone");
+    if (onSelectTheme) {
+      onSelectTheme("sandstone");
+    }
     setPrefScript("both");
     setPrefLang("dual");
     setPrefChantSpeed(1.0);
@@ -533,7 +618,7 @@ ${reflections
             const refl = localStorage.getItem("sutrasparsh_reflections_list");
             if (refl) setReflections(JSON.parse(refl));
             const th = localStorage.getItem("sutrasparsh_theme") as AppTheme;
-            if (th) setTheme(th);
+            if (th) handleSelectTheme(th);
             setStreakData(progressService.getStreakData());
           } catch {}
           soundEngine.playTempleBell(440);
@@ -597,17 +682,29 @@ ${reflections
   };
 
   // Theme-driven CSS class tokens
-  const isSandstone = theme === "sandstone";
-  const themeCardDark = isSandstone
-    ? "bg-gradient-to-b from-[#2B1706] to-[#1D0F04] border border-[#78300C]/40 text-[#F5E4C8]"
-    : "bg-gradient-to-b from-[#251640] to-[#150B28] border border-[#52297A]/40 text-[#EDE0F8]";
+  const isLight = theme === "light";
+  const isFestival = theme === "festival";
+  const isAmethyst = theme === "amethyst";
+  const isSandstone = theme === "sandstone" || (!isLight && !isFestival && !isAmethyst);
 
-  const themeGold = isSandstone ? "#E8921A" : "#C4A8E6";
-  const themeGoldLight = isSandstone ? "#F4B24B" : "#D4BEF2";
-  const themeMist = isSandstone ? "#D4BC96" : "#B8A4CC";
-  const themeCardBg = isSandstone
-    ? "linear-gradient(145deg, #fdf0d0, #f5e0a0)"
-    : "linear-gradient(145deg, #ede2f8, #d8c2f0)";
+  const themeCardDark = isLight
+    ? "bg-gradient-to-b from-[#FFFFFF] to-[#F6EDE1] border border-[#E6D7C3] text-[#3A2818]"
+    : isFestival
+    ? "bg-gradient-to-b from-[#5E111C] to-[#4B0E17] border border-[#FF8A00]/40 text-[#FFF6E3]"
+    : isAmethyst
+    ? "bg-gradient-to-b from-[#251640] to-[#150B28] border border-[#52297A]/40 text-[#EDE0F8]"
+    : "bg-gradient-to-b from-[#2B1706] to-[#1D0F04] border border-[#78300C]/40 text-[#F5E4C8]";
+
+  const themeGold = isLight ? "#B9680D" : isFestival ? "#FF8A00" : isAmethyst ? "#C4A8E6" : "#E8921A";
+  const themeGoldLight = isLight ? "#D88916" : isFestival ? "#FFD54A" : isAmethyst ? "#D4BEF2" : "#F4B24B";
+  const themeMist = isLight ? "#8A7763" : isFestival ? "#FFDDB3" : isAmethyst ? "#B8A4CC" : "#D4BC96";
+  const themeCardBg = isLight
+    ? "linear-gradient(145deg, #FFFBF5, #F6EDE1)"
+    : isFestival
+    ? "linear-gradient(145deg, #7A1825, #4B0E17)"
+    : isAmethyst
+    ? "linear-gradient(145deg, #ede2f8, #d8c2f0)"
+    : "linear-gradient(145deg, #fdf0d0, #f5e0a0)";
 
   // Filtered Corpus for Search Tab with Diacritic-Agnostic & Phonetic Sanskrit Search
   const searchResults = React.useMemo(() => {
@@ -630,23 +727,34 @@ ${reflections
 
   return (
     <div
-      className="min-h-screen flex justify-center selection:bg-amber-500/30 selection:text-amber-200"
-      style={{ backgroundColor: isSandstone ? "#0A0502" : "#080410" }}
+      className={`w-full ${
+        hideHeaderAndNav
+          ? "transition-colors duration-300"
+          : "min-h-dvh flex justify-center selection:bg-amber-500/30 selection:text-amber-200"
+      }`}
+      style={{ backgroundColor: hideHeaderAndNav ? "transparent" : isSandstone ? "#0A0502" : "#080410" }}
     >
-      {/* Mobile Shell Container */}
+      {/* Container: Fluid max-w-7xl on desktop when embedded, or mobile shell when standalone */}
       <div
-        className="w-full max-w-[430px] min-h-screen flex flex-col relative overflow-hidden shadow-2xl transition-colors duration-300 pb-28 font-sans"
-        style={{ backgroundColor: isSandstone ? "#120A04" : "#0F0A1A" }}
+        className={`w-full ${
+          hideHeaderAndNav
+            ? "max-w-7xl mx-auto flex flex-col relative transition-colors duration-300 font-sans"
+            : "max-w-[430px] min-h-dvh flex flex-col relative overflow-hidden shadow-2xl transition-colors duration-300 pb-28 font-sans"
+        }`}
+        style={{ backgroundColor: hideHeaderAndNav ? "transparent" : isSandstone ? "#120A04" : "#0F0A1A" }}
       >
         {/* ════════════ ONBOARDING MODAL ════════════ */}
         {!onboardingDone && (
           <div
-            className="fixed inset-0 max-w-[430px] mx-auto z-50 flex flex-col justify-between p-6 overflow-y-auto animate-fadeIn backdrop-blur-xl"
-            style={{
-              backgroundColor: isSandstone ? "rgba(18,10,4,0.98)" : "rgba(15,10,26,0.98)",
-            }}
+            className="fixed inset-0 z-50 overflow-y-auto animate-fadeIn backdrop-blur-xl bg-stone-950/85 flex justify-center p-0 sm:p-4 lg:p-6"
           >
-            <div className="space-y-6 pt-6">
+            <div
+              className="w-full max-w-lg min-h-dvh sm:min-h-0 sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col justify-between p-6 sm:p-8 overflow-y-auto border border-white/10"
+              style={{
+                backgroundColor: isSandstone ? "rgba(18,10,4,0.98)" : "rgba(15,10,26,0.98)",
+              }}
+            >
+            <div className="space-y-6 pt-2">
               <div className="text-center space-y-3">
                 <span
                   className="font-sanskrit text-5xl block"
@@ -654,10 +762,10 @@ ${reflections
                 >
                   ॐ
                 </span>
-                <h1 className="font-serif-sacred text-2xl font-bold text-stone-100">
+                <h1 className="font-serif-sacred text-2xl sm:text-3xl font-bold text-stone-100">
                   Welcome to SutraSparsh
                 </h1>
-                <p className="text-xs leading-relaxed max-w-xs mx-auto" style={{ color: themeMist }}>
+                <p className="text-xs sm:text-sm leading-relaxed max-w-sm mx-auto" style={{ color: themeMist }}>
                   A daily contemplative sanctuary for authentic Sanskrit scriptures, transliterations, and lineage commentaries.
                 </p>
               </div>
@@ -712,10 +820,12 @@ ${reflections
                 <span>→</span>
               </button>
             </div>
+            </div>
           </div>
         )}
 
-        {/* ════════════ APP BAR ════════════ */}
+        {/* ════════════ APP BAR (Hidden when embedded into main responsive shell) ════════════ */}
+        {!hideHeaderAndNav && (
         <header
           className="sticky top-0 z-30 flex items-center justify-between px-5 py-3.5 backdrop-blur-md border-b border-white/5 transition-colors duration-300"
           style={{ backgroundColor: isSandstone ? "rgba(18,10,4,0.92)" : "rgba(15,10,26,0.92)" }}
@@ -772,6 +882,7 @@ ${reflections
             </button>
           </div>
         </header>
+        )}
 
         {/* Global Toast Notification for Theme & Preferences */}
         {themeToast && (
@@ -788,50 +899,53 @@ ${reflections
         {/* 1. HOME SCREEN */}
         {activeTab === "home" && subScreen === "none" && (
           <div className="space-y-5 animate-fadeIn">
-            {/* Greeting */}
-            <div className="px-5 pt-3 pb-1">
-              <div
-                className="text-[11px] font-extrabold tracking-widest uppercase mb-1"
-                style={{ color: themeGoldLight }}
-              >
-                {getGreeting()}
+            {/* Greeting & Date Navigation in 1 single clean line */}
+            <div className="px-5 pt-2 pb-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
+              <div className="flex items-center space-x-2 min-w-0">
+                <span
+                  className="text-[11px] font-extrabold tracking-widest uppercase flex-shrink-0"
+                  style={{ color: themeGoldLight }}
+                >
+                  {getGreeting()}
+                </span>
+                <span className="text-stone-500 text-xs flex-shrink-0">·</span>
+                <h2 className="font-serif-sacred text-base sm:text-lg font-bold text-stone-100 truncate">
+                  Take a moment with today's wisdom
+                </h2>
               </div>
-              <h2 className="font-serif-sacred text-2xl font-bold text-stone-100 leading-tight">
-                Take a moment<br />with today's wisdom.
-              </h2>
-              <div className="flex items-center justify-between mt-1 text-xs" style={{ color: themeMist }}>
-                <span>Daily Contemplation Habit</span>
-                {/* Date Navigation Buttons */}
-                <div className="flex items-center space-x-1">
-                  <button
-                    onClick={() => setSelectedDateOffset((prev) => prev - 1)}
-                    className="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-stone-300 text-[10px]"
-                    title="Yesterday's Shloka"
-                  >
-                    ← Prev
-                  </button>
-                  <span className="font-mono text-[10.5px] px-1 text-amber-300 font-bold">
-                    {selectedDateOffset === 0
-                      ? "Today"
-                      : selectedDateOffset === -1
-                      ? "Yesterday"
-                      : selectedDateOffset === 1
-                      ? "Tomorrow"
-                      : `Day ${selectedDateOffset > 0 ? "+" : ""}${selectedDateOffset}`}
-                  </span>
-                  <button
-                    onClick={() => setSelectedDateOffset((prev) => prev + 1)}
-                    className="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-stone-300 text-[10px]"
-                    title="Tomorrow's Shloka"
-                  >
-                    Next →
-                  </button>
-                </div>
+
+              {/* Date Navigation Buttons */}
+              <div className="flex items-center space-x-1.5 self-end sm:self-auto flex-shrink-0">
+                <button
+                  onClick={() => setSelectedDateOffset((prev) => prev - 1)}
+                  className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-stone-300 text-[10.5px] font-medium transition-colors cursor-pointer"
+                  title="Yesterday's Shloka"
+                  aria-label="Previous Day"
+                >
+                  ← Prev
+                </button>
+                <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 font-bold border border-amber-500/25">
+                  {selectedDateOffset === 0
+                    ? "Today"
+                    : selectedDateOffset === -1
+                    ? "Yesterday"
+                    : selectedDateOffset === 1
+                    ? "Tomorrow"
+                    : `Day ${selectedDateOffset > 0 ? "+" : ""}${selectedDateOffset}`}
+                </span>
+                <button
+                  onClick={() => setSelectedDateOffset((prev) => prev + 1)}
+                  className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-stone-300 text-[10.5px] font-medium transition-colors cursor-pointer"
+                  title="Tomorrow's Shloka"
+                  aria-label="Next Day"
+                >
+                  Next →
+                </button>
               </div>
             </div>
 
             {/* Today's Wisdom Card (Dynamic Daily Rotation) */}
-            <div className={`mx-4 p-6 rounded-3xl ${themeCardDark} space-y-4 shadow-xl`}>
+            <div className={`mx-4 p-5 sm:p-6 rounded-3xl ${themeCardDark} space-y-4 shadow-xl`}>
               <div className="flex items-center justify-between">
                 <span
                   className="text-[10.5px] font-extrabold tracking-widest uppercase"
@@ -839,16 +953,30 @@ ${reflections
                 >
                   DAILY SHLOKA ROTATION
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono">
-                  {currentDailyVerse.source}
-                </span>
+                <div className="flex items-center space-x-1.5">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono">
+                    {currentDailyVerse.source}
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-stone-300 font-mono">
+                    {prefChantSpeed}x
+                  </span>
+                </div>
               </div>
 
-              {/* Sacred Sanskrit Verse */}
-              <div className="font-sanskrit text-xl leading-[2.1] text-stone-100 text-center py-1">
-                {currentDailyVerse.sanskrit.split("\n").map((line, idx) => (
-                  <div key={idx}>{line}</div>
-                ))}
+              {/* Sacred Sanskrit Verse & Roman Transliteration (Respecting prefScript) */}
+              <div className="space-y-2 py-1">
+                {(prefScript === "both" || prefScript === "devanagari") && (
+                  <div className="font-sanskrit text-lg sm:text-xl leading-[2.1] text-stone-100 text-center">
+                    {currentDailyVerse.sanskrit.split("\n").map((line, idx) => (
+                      <div key={idx}>{line}</div>
+                    ))}
+                  </div>
+                )}
+                {(prefScript === "both" || prefScript === "transliteration") && (
+                  <div className="font-serif italic text-xs sm:text-sm leading-relaxed text-amber-200/90 text-center px-2">
+                    {currentDailyVerse.transliteration}
+                  </div>
+                )}
               </div>
 
               {/* Sacred Lotus Rule Divider */}
@@ -861,13 +989,22 @@ ${reflections
                 <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
               </div>
 
-              {/* Meaning */}
-              <p
-                className="text-xs italic leading-relaxed text-center"
-                style={{ color: themeMist }}
-              >
-                "{currentDailyVerse.meaning}"
-              </p>
+              {/* Meaning & Commentary (Respecting prefLang) */}
+              <div className="space-y-1.5 text-center px-1">
+                {(prefLang === "dual" || prefLang === "en") && (
+                  <p
+                    className="text-xs sm:text-sm italic leading-relaxed"
+                    style={{ color: themeMist }}
+                  >
+                    "{currentDailyVerse.meaning}"
+                  </p>
+                )}
+                {(prefLang === "dual" || prefLang === "hi") && currentDailyVerse.hindiMeaning && (
+                  <p className="text-xs font-sanskrit leading-relaxed text-amber-300/80">
+                    "{currentDailyVerse.hindiMeaning}"
+                  </p>
+                )}
+              </div>
 
               {/* Reference */}
               <div
@@ -885,26 +1022,33 @@ ${reflections
               <div className="flex space-x-2.5 pt-2">
                 <button
                   onClick={() => openVerseScreen(currentDailyVerse.id)}
-                  className="flex-1 py-2.5 rounded-full font-bold text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-stone-950 shadow hover:scale-[1.02] transition-transform text-center"
+                  className="flex-1 py-2.5 rounded-full font-bold text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-stone-950 shadow hover:scale-[1.02] transition-transform text-center cursor-pointer"
                 >
                   Read & Study
                 </button>
                 <button
                   onClick={() => {
-                    openVerseScreen(currentDailyVerse.id);
-                    handleStartListen();
+                    setSelectedVerseData(currentDailyVerse);
+                    setPlayerVisible(true);
+                    soundEngine.playTempleBell(440);
+                    recitationEngine.play(
+                      currentDailyVerse.id,
+                      currentDailyVerse.sanskrit,
+                      prefChantSpeed
+                    );
                   }}
-                  className="flex-1 py-2.5 rounded-full font-bold text-xs bg-white/10 hover:bg-white/15 text-stone-200 border border-white/10 transition-colors flex items-center justify-center space-x-1.5"
+                  className="flex-1 py-2.5 rounded-full font-bold text-xs bg-white/10 hover:bg-white/15 text-stone-200 border border-white/10 transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
+                  aria-label="Listen to recitation at chant speed"
                 >
                   <Volume2 className="w-3.5 h-3.5" />
-                  <span>Listen</span>
+                  <span>Listen ({prefChantSpeed}x)</span>
                 </button>
                 <button
                   onClick={() => {
                     setSelectedVerseData(currentDailyVerse);
                     handleOpenShare();
                   }}
-                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 flex items-center justify-center transition-colors"
+                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 flex items-center justify-center transition-colors cursor-pointer"
                   title="Share Shloka"
                 >
                   <Share2 className="w-4 h-4" />
@@ -998,59 +1142,195 @@ ${reflections
               </div>
             </div>
 
-            {/* QUICK ACCESS TILES */}
+            {/* QUICK ACCESS TILES (ENHANCED 2-ROW RESPONSIVE GRID) */}
             <div className="px-4 space-y-2.5 pt-2">
-              <div className="px-1">
-                <span
-                  className="text-[10.5px] font-extrabold tracking-widest uppercase"
-                  style={{ color: themeGoldLight }}
-                >
-                  QUICK ACCESS
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center space-x-1.5">
+                  <span className="text-amber-500 text-xs">✨</span>
+                  <span
+                    className="text-[11px] font-extrabold tracking-wider uppercase font-sans"
+                    style={{ color: themeGoldLight }}
+                  >
+                    Quick Access • त्वरित सेवा
+                  </span>
+                </div>
+                <span className="text-[10px] text-amber-300/80 font-mono font-bold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                  8 Sacred Portals
                 </span>
               </div>
-              <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none">
+
+              {/* 2-Row Responsive Grid (4 columns on sm/tablet/desktop, 2 columns on mobile) */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+                {/* 1. Saved Verses Tile */}
                 <div
                   onClick={() => setActiveTab("journey")}
-                  className="flex-shrink-0 w-28 p-3.5 rounded-2xl cursor-pointer hover:opacity-90 transition-opacity"
-                  style={{ background: "linear-gradient(145deg, #fdf0d0, #f5e0a0)" }}
+                  className="p-3 sm:p-3.5 rounded-2xl cursor-pointer hover:opacity-95 transition-all shadow-md active:scale-95 border border-amber-400/30 group flex flex-col justify-between"
+                  style={{ background: "linear-gradient(145deg, #FFB347, #E88916)" }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`View ${savedVerses.length} saved shlokas`}
                 >
-                  <span className="text-xl block mb-1">☆</span>
-                  <div className="text-xs font-bold text-stone-950">
-                    {savedVerses.length} Saved
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xl group-hover:scale-110 transition-transform">⭐</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider bg-stone-950/20 text-stone-900 px-1.5 py-0.5 rounded-md">
+                      Corpus
+                    </span>
                   </div>
-                  <div className="text-[10px] text-stone-700">Your verses</div>
+                  <div>
+                    <div className="text-sm font-bold text-stone-950 tracking-tight truncate">
+                      {savedVerses.length} Saved
+                    </div>
+                    <div className="text-[10px] text-stone-800 font-medium truncate">Favorite Shlokas</div>
+                  </div>
                 </div>
 
+                {/* 2. Sanskrit Glossary Tile */}
                 <div
                   onClick={() => setSubScreen("glossary")}
-                  className="flex-shrink-0 w-28 p-3.5 rounded-2xl cursor-pointer hover:opacity-90 transition-opacity"
-                  style={{ background: "linear-gradient(145deg, #c6ede0, #96d8c2)" }}
+                  className="p-3 sm:p-3.5 rounded-2xl cursor-pointer hover:opacity-95 transition-all shadow-md active:scale-95 border border-emerald-400/30 group flex flex-col justify-between"
+                  style={{ background: "linear-gradient(145deg, #D4ECD5, #9ED4A3)" }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Open Sanskrit Glossary"
                 >
-                  <span className="text-xl block mb-1">📚</span>
-                  <div className="text-xs font-bold text-stone-950">Glossary</div>
-                  <div className="text-[10px] text-stone-700">Sanskrit terms</div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xl group-hover:scale-110 transition-transform">📚</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider bg-stone-950/20 text-stone-900 px-1.5 py-0.5 rounded-md">
+                      Dhātu
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-stone-950 tracking-tight truncate">Glossary</div>
+                    <div className="text-[10px] text-stone-800 font-medium truncate">Roots & Meaning</div>
+                  </div>
                 </div>
 
+                {/* 3. Guided Paths Tile */}
                 <div
                   onClick={() => setSubScreen("paths")}
-                  className="flex-shrink-0 w-28 p-3.5 rounded-2xl cursor-pointer hover:opacity-90 transition-opacity"
-                  style={{ background: "linear-gradient(145deg, #f5e4c8, #e8c88a)" }}
+                  className="p-3 sm:p-3.5 rounded-2xl cursor-pointer hover:opacity-95 transition-all shadow-md active:scale-95 border border-amber-300/40 group flex flex-col justify-between"
+                  style={{ background: "linear-gradient(145deg, #FDE6B8, #F0C475)" }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Start Guided Spiritual Paths"
                 >
-                  <span className="text-xl block mb-1">🛤️</span>
-                  <div className="text-xs font-bold text-stone-950">Paths</div>
-                  <div className="text-[10px] text-stone-700">Guided journeys</div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xl group-hover:scale-110 transition-transform">🛤️</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider bg-stone-950/20 text-stone-900 px-1.5 py-0.5 rounded-md">
+                      Track
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-stone-950 tracking-tight truncate">Paths</div>
+                    <div className="text-[10px] text-stone-800 font-medium truncate">Guided Journeys</div>
+                  </div>
                 </div>
 
+                {/* 4. Personal Notes & Reflections */}
                 <div
                   onClick={() => setActiveTab("journey")}
-                  className="flex-shrink-0 w-28 p-3.5 rounded-2xl cursor-pointer hover:opacity-90 transition-opacity"
-                  style={{ background: "linear-gradient(145deg, #fad8ce, #f4b09a)" }}
+                  className="p-3 sm:p-3.5 rounded-2xl cursor-pointer hover:opacity-95 transition-all shadow-md active:scale-95 border border-rose-300/40 group flex flex-col justify-between"
+                  style={{ background: "linear-gradient(145deg, #FBD5CC, #F7AB9C)" }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`View ${reflections.length} reflections`}
                 >
-                  <span className="text-xl block mb-1">📝</span>
-                  <div className="text-xs font-bold text-stone-950">
-                    {reflections.length} Notes
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xl group-hover:scale-110 transition-transform">✍️</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider bg-stone-950/20 text-stone-900 px-1.5 py-0.5 rounded-md">
+                      Sādhana
+                    </span>
                   </div>
-                  <div className="text-[10px] text-stone-700">Your reflections</div>
+                  <div>
+                    <div className="text-sm font-bold text-stone-950 tracking-tight truncate">
+                      {reflections.length} Notes
+                    </div>
+                    <div className="text-[10px] text-stone-800 font-medium truncate">Your Reflections</div>
+                  </div>
+                </div>
+
+                {/* 5. 432Hz Chanting Audio */}
+                <div
+                  onClick={() => handleStartListen()}
+                  className="p-3 sm:p-3.5 rounded-2xl cursor-pointer hover:opacity-95 transition-all shadow-md active:scale-95 border border-purple-400/30 group flex flex-col justify-between"
+                  style={{ background: "linear-gradient(145deg, #E6D2F7, #C6A1EC)" }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Listen to 432Hz Chanting Audio"
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xl group-hover:scale-110 transition-transform">🪔</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider bg-stone-950/20 text-stone-900 px-1.5 py-0.5 rounded-md">
+                      Audio
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-stone-950 tracking-tight truncate">Recitation</div>
+                    <div className="text-[10px] text-stone-800 font-medium truncate">432Hz Vedic Tone</div>
+                  </div>
+                </div>
+
+                {/* 6. Brahma Muhurta Reminder */}
+                <div
+                  onClick={() => setSubScreen("pref")}
+                  className="p-3 sm:p-3.5 rounded-2xl cursor-pointer hover:opacity-95 transition-all shadow-md active:scale-95 border border-amber-500/40 group flex flex-col justify-between"
+                  style={{ background: "linear-gradient(145deg, #FFE082, #FFB300)" }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Configure Brahma Muhurta Reminder"
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xl group-hover:scale-110 transition-transform">🌅</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider bg-stone-950/20 text-stone-900 px-1.5 py-0.5 rounded-md">
+                      Muhūrta
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-stone-950 tracking-tight truncate">{prefReminder} IST</div>
+                    <div className="text-[10px] text-stone-800 font-medium truncate">Dawn Reminder</div>
+                  </div>
+                </div>
+
+                {/* 7. Sacred Gurudakshina / Seva */}
+                <div
+                  onClick={() => onOpenDonation?.()}
+                  className="p-3 sm:p-3.5 rounded-2xl cursor-pointer hover:opacity-95 transition-all shadow-md active:scale-95 border border-rose-600/40 group flex flex-col justify-between"
+                  style={{ background: "linear-gradient(145deg, #7A1825, #4B0E17)" }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Sacred Seva and Gurudakshina"
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xl group-hover:scale-110 transition-transform">💛</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider bg-white/20 text-amber-200 px-1.5 py-0.5 rounded-md">
+                      80G Tax
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-[#FFF6E3] tracking-tight truncate">Gurudakshina</div>
+                    <div className="text-[10px] text-amber-200/80 font-medium truncate">Sacred Seva</div>
+                  </div>
+                </div>
+
+                {/* 8. Sādhaka Club / Membership */}
+                <div
+                  onClick={() => onOpenPricing?.()}
+                  className="p-3 sm:p-3.5 rounded-2xl cursor-pointer hover:opacity-95 transition-all shadow-md active:scale-95 border border-amber-500/30 group flex flex-col justify-between"
+                  style={{ background: "linear-gradient(145deg, #2D1B4E, #1A0D2E)" }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Sādhaka Membership Access"
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xl group-hover:scale-110 transition-transform">⚡</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded-md">
+                      Premium
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-amber-200 tracking-tight truncate">Sādhaka Access</div>
+                    <div className="text-[10px] text-purple-200/80 font-medium truncate">Exclusive Corpus</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1254,26 +1534,53 @@ ${reflections
                   </div>
                 ) : (
                   <div className="space-y-2.5">
-                    {searchResults.map((verse) => (
-                      <div
-                        key={verse.id}
-                        onClick={() => openVerseScreen(verse.id)}
-                        className="p-4 rounded-2xl bg-stone-900/70 border border-white/5 hover:border-amber-500/40 cursor-pointer transition-all space-y-2"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-amber-400">
-                            {verse.source} · {verse.title}
-                          </span>
-                          <ChevronRight className="w-4 h-4 text-stone-500" />
+                    {searchResults.map((verse) => {
+                      const displaySource =
+                        verse.source && !["json", "production", "manual"].includes(verse.source.toLowerCase())
+                          ? verse.source
+                          : "Bhagavad Gita";
+
+                      return (
+                        <div
+                          key={verse.id}
+                          onClick={() => openVerseScreen(verse.id)}
+                          className={`p-4 rounded-2xl border cursor-pointer transition-all space-y-2 ${
+                            isLight
+                              ? "bg-white border-stone-200 hover:border-amber-400 shadow-sm text-stone-900"
+                              : isFestival
+                              ? "bg-[#480C14]/90 border-[#FF8A00]/30 hover:border-[#FF8A00]/60 text-[#FFF6E3]"
+                              : isAmethyst
+                              ? "bg-[#180C2C]/90 border-[#52297A]/40 hover:border-[#8A4AC7]/60 text-[#EDE0F8]"
+                              : "bg-stone-900/70 border-white/5 hover:border-amber-500/40 text-stone-100"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span
+                              className={`text-xs font-bold ${
+                                isLight ? "text-amber-800" : "text-amber-400"
+                              }`}
+                            >
+                              {displaySource} · {verse.title}
+                            </span>
+                            <ChevronRight className="w-4 h-4 text-stone-400" />
+                          </div>
+                          <div
+                            className={`font-sanskrit text-sm line-clamp-2 leading-relaxed ${
+                              isLight ? "text-stone-950 font-semibold" : "text-stone-100"
+                            }`}
+                          >
+                            {verse.sanskrit}
+                          </div>
+                          <p
+                            className={`text-xs line-clamp-2 ${
+                              isLight ? "text-stone-600" : "text-stone-300"
+                            }`}
+                          >
+                            {verse.meaning}
+                          </p>
                         </div>
-                        <div className="font-sanskrit text-sm text-stone-100 line-clamp-2 leading-relaxed">
-                          {verse.sanskrit}
-                        </div>
-                        <p className="text-xs text-stone-300 line-clamp-2">
-                          {verse.meaning}
-                        </p>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -1550,122 +1857,41 @@ ${reflections
           </div>
         )}
 
-        {/* 5. MORE SCREEN */}
+        {/* 5. MORE SCREEN (High-Contrast UI/UX with Clean Hierarchy) */}
         {activeTab === "more" && subScreen === "none" && (
-          <div className="space-y-5 animate-fadeIn">
-            <div className="px-5 pt-2">
-              <h2 className="font-serif-sacred text-2xl font-bold text-stone-100">
-                More & Sādhaka Account
-              </h2>
-            </div>
-
-            {/* LEARN */}
-            <div className="space-y-1">
-              <div className="px-5 text-[10.5px] font-extrabold tracking-widest uppercase text-stone-500">
-                LEARN & SCRIPTURAL FOUNDATIONS
-              </div>
-              <div
-                onClick={() => setSubScreen("about")}
-                className="px-5 py-3.5 flex items-center space-x-3 cursor-pointer hover:bg-white/5 transition-colors border-b border-white/5"
-              >
-                <span className="text-base">🕉️</span>
-                <span className="text-xs font-semibold text-stone-200 flex-1">
-                  About SutraSparsh
-                </span>
-                <ChevronRight className="w-4 h-4 text-stone-500" />
-              </div>
-              <div
-                onClick={() => setSubScreen("glossary")}
-                className="px-5 py-3.5 flex items-center space-x-3 cursor-pointer hover:bg-white/5 transition-colors border-b border-white/5"
-              >
-                <span className="text-base">📖</span>
-                <span className="text-xs font-semibold text-stone-200 flex-1">
-                  Sanskrit Glossary & Root Etymology
-                </span>
-                <ChevronRight className="w-4 h-4 text-stone-500" />
-              </div>
-              <div
-                onClick={() => setSubScreen("paths")}
-                className="px-5 py-3.5 flex items-center space-x-3 cursor-pointer hover:bg-white/5 transition-colors border-b border-white/5"
-              >
-                <span className="text-base">🛤️</span>
-                <span className="text-xs font-semibold text-stone-200 flex-1">
-                  Start a Guided Spiritual Path
-                </span>
-                <ChevronRight className="w-4 h-4 text-stone-500" />
-              </div>
-            </div>
-
-            {/* YOUR ACCOUNT & PREFERENCES */}
-            <div className="space-y-1">
-              <div className="px-5 text-[10.5px] font-extrabold tracking-widest uppercase text-stone-500">
-                ATMOSPHERE & PREFERENCES
-              </div>
-              <div
-                onClick={() => setSubScreen("pref")}
-                className="px-5 py-3.5 flex items-center space-x-3 cursor-pointer hover:bg-white/5 transition-colors border-b border-white/5"
-              >
-                <span className="text-base">⚙️</span>
-                <div className="flex-1">
-                  <div className="text-xs font-semibold text-stone-200">
-                    Preferences & Themes
-                  </div>
-                  <div className="text-[10.5px] text-amber-400 mt-0.5">
-                    Currently: {isSandstone ? "Sandstone Temple" : "Amethyst Twilight"}
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-stone-500" />
-              </div>
-              <div
-                onClick={() => onOpenPricing && onOpenPricing()}
-                className="px-5 py-3.5 flex items-center space-x-3 cursor-pointer hover:bg-white/5 transition-colors border-b border-white/5 text-amber-300"
-              >
-                <span className="text-base">⭐</span>
-                <span className="text-xs font-bold flex-1">
-                  SutraSparsh Premium (Unlimited Chants)
-                </span>
-                <ChevronRight className="w-4 h-4 text-amber-400" />
-              </div>
-            </div>
-
-            {/* SUPPORT & SEVA */}
-            <div className="space-y-1">
-              <div className="px-5 text-[10.5px] font-extrabold tracking-widest uppercase text-stone-500">
-                SUPPORT & SEVA
-              </div>
-              <div
-                onClick={() => onOpenDonation && onOpenDonation()}
-                className="px-5 py-3.5 flex items-center space-x-3 cursor-pointer hover:bg-white/5 transition-colors border-b border-white/5"
-              >
-                <span className="text-base">💙</span>
-                <span className="text-xs font-semibold text-stone-200 flex-1">
-                  Gurudakshina / Seva (80G Tax Exemption)
-                </span>
-                <ChevronRight className="w-4 h-4 text-stone-500" />
-              </div>
-            </div>
-
-            {/* ADMIN CONSOLE SWITCHER */}
-            {onOpenAdmin && (
-              <div className="px-5 pt-2">
-                <button
-                  onClick={onOpenAdmin}
-                  className="w-full py-3 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center justify-center space-x-2 hover:bg-amber-500/25 transition-all"
-                >
-                  <Shield className="w-4 h-4" />
-                  <span>Open SutraSparsh Admin Console</span>
-                </button>
-              </div>
-            )}
+          <div className="animate-fadeIn">
+            <MoreView
+              theme={theme}
+              onSelectTheme={handleSelectTheme}
+              onOpenProfile={() => setSubScreen("pref")}
+              onOpenPricing={onOpenPricing}
+              onOpenDonation={onOpenDonation}
+              onOpenAdminConsole={onOpenAdmin}
+              onNavigateTab={(tab) => {
+                if (tab === "today") setActiveTab("home");
+                else if (tab === "explore") setActiveTab("explore");
+                else if (tab === "search") setActiveTab("search");
+                else if (tab === "my-journey") setActiveTab("journey");
+                else if (tab === "about") setSubScreen("about");
+                else if (tab === "glossary") setSubScreen("glossary");
+                else if (tab === "paths") setSubScreen("paths");
+                else if (tab === "preferences") setSubScreen("pref");
+              }}
+              savedCount={savedVerses.length}
+              journalCount={reflections.length}
+            />
           </div>
         )}
 
         {/* ════════════ SUB-SCREEN 1: SCRIPTURE DETAIL (DYNAMIC CORPUS) ════════════ */}
         {subScreen === "scripture" && (
           <div
-            className="fixed inset-0 max-w-[430px] mx-auto z-40 flex flex-col overflow-y-auto animate-fadeIn pb-24"
-            style={{ backgroundColor: isSandstone ? "#120A04" : "#0F0A1A" }}
+            className="fixed inset-0 z-50 overflow-y-auto animate-fadeIn backdrop-blur-xl bg-stone-950/80 flex justify-center p-0 sm:p-4 lg:p-6 pb-20 sm:pb-8"
           >
+            <div
+              className="w-full max-w-3xl min-h-dvh sm:min-h-0 sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-white/10"
+              style={{ backgroundColor: isSandstone ? "#120A04" : "#0F0A1A" }}
+            >
             {/* Sub Bar */}
             <div
               className="sticky top-0 z-10 flex items-center justify-between px-4 py-3.5 border-b border-white/5 backdrop-blur-md"
@@ -1795,14 +2021,18 @@ ${reflections
               </div>
             </div>
           </div>
+        </div>
         )}
 
         {/* ════════════ SUB-SCREEN 2: VERSE DETAIL (DYNAMIC MULTI-SCRIPTURE) ════════════ */}
         {subScreen === "verse" && (
           <div
-            className="fixed inset-0 max-w-[430px] mx-auto z-40 flex flex-col overflow-y-auto animate-fadeIn pb-24"
-            style={{ backgroundColor: isSandstone ? "#120A04" : "#0F0A1A" }}
+            className="fixed inset-0 z-50 overflow-y-auto animate-fadeIn backdrop-blur-xl bg-stone-950/80 flex justify-center p-0 sm:p-4 lg:p-6 pb-20 sm:pb-8"
           >
+            <div
+              className="w-full max-w-3xl min-h-dvh sm:min-h-0 sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-white/10"
+              style={{ backgroundColor: isSandstone ? "#120A04" : "#0F0A1A" }}
+            >
             {/* Sub Bar */}
             <div
               className="sticky top-0 z-10 flex items-center justify-between px-4 py-3.5 border-b border-white/5 backdrop-blur-md"
@@ -2131,14 +2361,18 @@ ${reflections
               </div>
             </div>
           </div>
+        </div>
         )}
 
         {/* ════════════ SUB-SCREEN 3: PREFERENCES & THEMES (PERSISTENT) ════════════ */}
         {subScreen === "pref" && (
           <div
-            className="fixed inset-0 max-w-[430px] mx-auto z-40 flex flex-col overflow-y-auto animate-fadeIn pb-24"
-            style={{ backgroundColor: isSandstone ? "#120A04" : "#0F0A1A" }}
+            className="fixed inset-0 z-50 overflow-y-auto animate-fadeIn backdrop-blur-xl bg-stone-950/80 flex justify-center p-0 sm:p-4 lg:p-6 pb-20 sm:pb-8"
           >
+            <div
+              className="w-full max-w-3xl min-h-dvh sm:min-h-0 sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-white/10"
+              style={{ backgroundColor: isSandstone ? "#120A04" : "#0F0A1A" }}
+            >
             {/* Top Bar */}
             <div
               className="sticky top-0 z-10 flex items-center justify-between px-4 py-3.5 border-b border-white/5 backdrop-blur-md"
@@ -2169,11 +2403,89 @@ ${reflections
                   <span>SACRED ATMOSPHERE & COLOR PALETTE</span>
                 </div>
                 <p className="text-xs leading-relaxed" style={{ color: themeMist }}>
-                  Choose your sacred reading environment. Your palette is saved to local storage and persists across all app sessions.
+                  Choose your sacred reading environment. Your preference is automatically saved to local storage and persists across sessions.
                 </p>
               </div>
 
-              {/* Theme Palette Switcher Cards */}
+              {/* ════ Persistent Theme Toggle Component ════ */}
+              <div
+                className="p-3.5 rounded-2xl border transition-all shadow-inner"
+                style={{
+                  backgroundColor: isSandstone ? "rgba(40,22,8,0.75)" : "rgba(36,21,64,0.75)",
+                  borderColor: isSandstone ? "rgba(232,146,26,0.3)" : "rgba(196,168,230,0.3)",
+                }}
+              >
+                <div className="flex items-center justify-between mb-3 px-1">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-bold text-stone-200">Atmosphere Theme</span>
+                    <span className="text-[10px] text-stone-400 font-serif-sacred">स्वरुप</span>
+                  </div>
+                  <span
+                    className="text-[10.5px] font-bold px-2.5 py-0.5 rounded-full border flex items-center space-x-1 transition-all"
+                    style={{
+                      backgroundColor: isSandstone ? "rgba(232,146,26,0.2)" : "rgba(196,168,230,0.2)",
+                      borderColor: isSandstone ? "rgba(232,146,26,0.5)" : "rgba(196,168,230,0.5)",
+                      color: isSandstone ? "#F4B24B" : "#D4BEF2",
+                    }}
+                  >
+                    <span>{isSandstone ? "🏛️ Sandstone Active" : "🔮 Amethyst Active"}</span>
+                  </span>
+                </div>
+
+                {/* Persistent Segmented Switch Toggle (4 Themes) */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-black/40 rounded-xl border border-white/5 relative">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTheme("sandstone")}
+                    className={`py-2 px-2 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                      isSandstone
+                        ? "bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 shadow-md scale-[1.01]"
+                        : "text-stone-400 hover:text-stone-200"
+                    }`}
+                  >
+                    <span>🏛️</span>
+                    <span>Sandstone</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTheme("amethyst")}
+                    className={`py-2 px-2 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                      isAmethyst
+                        ? "bg-gradient-to-r from-purple-400 to-indigo-500 text-stone-950 shadow-md scale-[1.01]"
+                        : "text-stone-400 hover:text-stone-200"
+                    }`}
+                  >
+                    <span>🔮</span>
+                    <span>Amethyst</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTheme("light")}
+                    className={`py-2 px-2 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                      isLight
+                        ? "bg-gradient-to-r from-amber-200 to-amber-400 text-stone-950 shadow-md scale-[1.01]"
+                        : "text-stone-400 hover:text-stone-200"
+                    }`}
+                  >
+                    <span>☀️</span>
+                    <span>Light</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTheme("festival")}
+                    className={`py-2 px-2 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                      isFestival
+                        ? "bg-gradient-to-r from-amber-400 to-orange-500 text-stone-950 shadow-md scale-[1.01]"
+                        : "text-stone-400 hover:text-stone-200"
+                    }`}
+                  >
+                    <span>🪔</span>
+                    <span>Festival</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Theme Palette Cards with Detailed Color Previews */}
               <div className="space-y-3.5">
                 {/* 1. Sandstone Temple Theme Card */}
                 <div
@@ -2211,12 +2523,12 @@ ${reflections
                 <div
                   onClick={() => handleSelectTheme("amethyst")}
                   className={`p-4 rounded-2xl cursor-pointer transition-all border relative overflow-hidden ${
-                    !isSandstone
+                    isAmethyst
                       ? "bg-[#241540]/90 border-purple-400/80 shadow-[0_0_20px_rgba(196,168,230,0.25)]"
                       : "bg-stone-900/40 border-stone-800/80 hover:bg-stone-800/40 opacity-75 hover:opacity-100"
                   }`}
                 >
-                  {!isSandstone && (
+                  {isAmethyst && (
                     <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-400 to-indigo-500 text-stone-950 font-bold text-[9.5px] uppercase tracking-wider px-3 py-0.5 rounded-bl-xl shadow flex items-center space-x-1">
                       <Check className="w-3 h-3 stroke-[3]" />
                       <span>Active Palette</span>
@@ -2234,6 +2546,74 @@ ${reflections
                       </div>
                       <p className="text-xs text-stone-300 mt-1 leading-relaxed">
                         Meditative deep violet dusk (#0F0A1A), celestial purple aura (#4A2264), radiant amber & moonlit cream.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Light Parchment Theme Card */}
+                <div
+                  onClick={() => handleSelectTheme("light")}
+                  className={`p-4 rounded-2xl cursor-pointer transition-all border relative overflow-hidden ${
+                    isLight
+                      ? "bg-[#FFFBF5] border-amber-500 shadow-[0_0_20px_rgba(216,137,22,0.25)] text-stone-950"
+                      : "bg-stone-900/40 border-stone-800/80 hover:bg-stone-800/40 opacity-75 hover:opacity-100 text-stone-200"
+                  }`}
+                >
+                  {isLight && (
+                    <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-amber-600 text-stone-950 font-bold text-[9.5px] uppercase tracking-wider px-3 py-0.5 rounded-bl-xl shadow flex items-center space-x-1">
+                      <Check className="w-3 h-3 stroke-[3]" />
+                      <span>Active Palette</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-start space-x-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FFF8ED] via-[#F4E2C7] to-[#E5CDAA] flex items-center justify-center text-xl flex-shrink-0 shadow border border-amber-400/40">
+                      ☀️
+                    </div>
+                    <div className="flex-1 min-w-0 pr-16">
+                      <div className="flex items-center space-x-2">
+                        <span className={`text-sm font-bold ${isLight ? "text-stone-950" : "text-stone-100"}`}>
+                          Parchment Dawn (Light Mode)
+                        </span>
+                        <span className="text-[11px] font-sanskrit text-amber-600">उषाकाल</span>
+                      </div>
+                      <p className={`text-xs mt-1 leading-relaxed ${isLight ? "text-stone-700" : "text-stone-300"}`}>
+                        Daylight readability on soft manuscript parchment (#FFFBF5), deep sandalwood text (#3A2818) & gold accents.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Festival Maroon & Gold Theme Card */}
+                <div
+                  onClick={() => handleSelectTheme("festival")}
+                  className={`p-4 rounded-2xl cursor-pointer transition-all border relative overflow-hidden ${
+                    isFestival
+                      ? "bg-[#5E111C]/90 border-amber-400 shadow-[0_0_20px_rgba(255,138,0,0.3)] text-stone-100"
+                      : "bg-stone-900/40 border-stone-800/80 hover:bg-stone-800/40 opacity-75 hover:opacity-100 text-stone-200"
+                  }`}
+                >
+                  {isFestival && (
+                    <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-400 to-orange-500 text-stone-950 font-bold text-[9.5px] uppercase tracking-wider px-3 py-0.5 rounded-bl-xl shadow flex items-center space-x-1">
+                      <Check className="w-3 h-3 stroke-[3]" />
+                      <span>Active Palette</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-start space-x-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7A1825] via-[#FF8A00] to-[#4B0E17] flex items-center justify-center text-xl flex-shrink-0 shadow border border-amber-300/50">
+                      🪔
+                    </div>
+                    <div className="flex-1 min-w-0 pr-16">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-bold text-amber-100">
+                          Festival Gold & Maroon
+                        </span>
+                        <span className="text-[11px] font-sanskrit text-amber-300">उत्सव कुंकुम</span>
+                      </div>
+                      <p className="text-xs text-amber-200/90 mt-1 leading-relaxed">
+                        Royal temple vermilion, kumkum maroon (#4B0E17), blazing deep saffron glow & ceremonial gold ornamentation.
                       </p>
                     </div>
                   </div>
@@ -2316,14 +2696,18 @@ ${reflections
                     </div>
                   </div>
 
-                  <div className="flex space-x-1.5">
-                    {[0.85, 1.0, 1.15].map((speed) => (
+                  <div className="flex flex-wrap gap-1.5 justify-end max-w-[200px]">
+                    {[0.75, 0.85, 1.0, 1.15, 1.25].map((speed) => (
                       <button
                         key={speed}
-                        onClick={() => setPrefChantSpeed(speed)}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-colors ${
+                        onClick={() => {
+                          setPrefChantSpeed(speed);
+                          recitationEngine.setPlaybackRate(speed);
+                          window.dispatchEvent(new CustomEvent("sutrasparsh:pref_speed", { detail: speed }));
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
                           prefChantSpeed === speed
-                            ? "bg-amber-500 text-stone-950"
+                            ? "bg-amber-500 text-stone-950 shadow-sm"
                             : "bg-white/10 text-stone-300 hover:bg-white/15"
                         }`}
                       >
@@ -2334,18 +2718,20 @@ ${reflections
                 </div>
 
                 {/* Daily Brahma Muhurta Reminder with Permission Request */}
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl bg-white/5 border border-white/5 gap-2.5">
                   <div className="flex items-center space-x-2.5">
-                    <Bell className="w-4 h-4 text-amber-400" />
+                    <Bell className="w-4 h-4 text-amber-400 flex-shrink-0" />
                     <div>
-                      <div className="text-xs font-bold text-stone-200">Daily Shloka Notification</div>
-                      <div className="text-[10.5px] text-stone-400">Brahma Muhurta or Sandhya</div>
+                      <div className="text-xs font-bold text-stone-200">Brahma Muhūrta Reminder</div>
+                      <div className="text-[10.5px] text-stone-400">Sacred dawn notification (IST)</div>
                     </div>
                   </div>
 
-                  <div className="flex space-x-1.5">
+                  <div className="flex flex-wrap gap-1.5 self-end sm:self-auto">
                     {[
+                      { time: "04:30", label: "4:30 AM" },
                       { time: "05:30", label: "5:30 AM" },
+                      { time: "06:00", label: "6:00 AM" },
                       { time: "06:30", label: "6:30 AM" },
                       { time: "20:00", label: "8:00 PM" },
                     ].map((item) => (
@@ -2353,11 +2739,12 @@ ${reflections
                         key={item.time}
                         onClick={() => {
                           setPrefReminder(item.time);
+                          window.dispatchEvent(new CustomEvent("sutrasparsh:pref_reminder", { detail: item.time }));
                           handleRequestNotifications();
                         }}
-                        className={`px-2 py-1 rounded-lg text-[10.5px] font-bold transition-colors ${
+                        className={`px-2 py-1 rounded-lg text-[10.5px] font-bold transition-colors cursor-pointer ${
                           prefReminder === item.time
-                            ? "bg-amber-500 text-stone-950"
+                            ? "bg-amber-500 text-stone-950 shadow-sm"
                             : "bg-white/10 text-stone-300 hover:bg-white/15"
                         }`}
                       >
@@ -2415,14 +2802,18 @@ ${reflections
               </div>
             </div>
           </div>
+        </div>
         )}
 
         {/* ════════════ SUB-SCREEN 4: ABOUT SUTRASPARSH ════════════ */}
         {subScreen === "about" && (
           <div
-            className="fixed inset-0 max-w-[430px] mx-auto z-40 flex flex-col overflow-y-auto animate-fadeIn pb-24"
-            style={{ backgroundColor: isSandstone ? "#120A04" : "#0F0A1A" }}
+            className="fixed inset-0 z-50 overflow-y-auto animate-fadeIn backdrop-blur-xl bg-stone-950/80 flex justify-center p-0 sm:p-4 lg:p-6 pb-20 sm:pb-8"
           >
+            <div
+              className="w-full max-w-3xl min-h-dvh sm:min-h-0 sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-white/10"
+              style={{ backgroundColor: isSandstone ? "#120A04" : "#0F0A1A" }}
+            >
             {/* Top Bar */}
             <div
               className="sticky top-0 z-10 flex items-center justify-between px-4 py-3.5 border-b border-white/5 backdrop-blur-md"
@@ -2468,14 +2859,18 @@ ${reflections
               </div>
             </div>
           </div>
+        </div>
         )}
 
         {/* ════════════ SUB-SCREEN 5: SANSKRIT GLOSSARY ════════════ */}
         {subScreen === "glossary" && (
           <div
-            className="fixed inset-0 max-w-[430px] mx-auto z-40 flex flex-col overflow-y-auto animate-fadeIn pb-24"
-            style={{ backgroundColor: isSandstone ? "#120A04" : "#0F0A1A" }}
+            className="fixed inset-0 z-50 overflow-y-auto animate-fadeIn backdrop-blur-xl bg-stone-950/80 flex justify-center p-0 sm:p-4 lg:p-6 pb-20 sm:pb-8"
           >
+            <div
+              className="w-full max-w-3xl min-h-dvh sm:min-h-0 sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-white/10"
+              style={{ backgroundColor: isSandstone ? "#120A04" : "#0F0A1A" }}
+            >
             {/* Top Bar */}
             <div
               className="sticky top-0 z-10 flex items-center justify-between px-4 py-3.5 border-b border-white/5 backdrop-blur-md"
@@ -2514,14 +2909,18 @@ ${reflections
               ))}
             </div>
           </div>
+        </div>
         )}
 
         {/* ════════════ SUB-SCREEN 6: GUIDED PATHS ════════════ */}
         {subScreen === "paths" && (
           <div
-            className="fixed inset-0 max-w-[430px] mx-auto z-40 flex flex-col overflow-y-auto animate-fadeIn pb-24"
-            style={{ backgroundColor: isSandstone ? "#120A04" : "#0F0A1A" }}
+            className="fixed inset-0 z-50 overflow-y-auto animate-fadeIn backdrop-blur-xl bg-stone-950/80 flex justify-center p-0 sm:p-4 lg:p-6 pb-20 sm:pb-8"
           >
+            <div
+              className="w-full max-w-3xl min-h-dvh sm:min-h-0 sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-white/10"
+              style={{ backgroundColor: isSandstone ? "#120A04" : "#0F0A1A" }}
+            >
             {/* Top Bar */}
             <div
               className="sticky top-0 z-10 flex items-center justify-between px-4 py-3.5 border-b border-white/5 backdrop-blur-md"
@@ -2560,12 +2959,17 @@ ${reflections
               ))}
             </div>
           </div>
+        </div>
         )}
 
         {/* ════════════ MINI PLAYER BAR ════════════ */}
         {playerVisible && (
           <div
-            className="fixed bottom-[68px] left-0 right-0 max-w-[430px] mx-auto z-30 p-3 px-4 flex items-center space-x-3 shadow-2xl border-t border-amber-500/20 backdrop-blur-md"
+            className={`fixed ${
+              hideHeaderAndNav
+                ? "bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-8 max-w-lg rounded-2xl border"
+                : "bottom-[68px] left-0 right-0 max-w-[430px] border-t"
+            } mx-auto z-40 p-3 px-4 flex items-center space-x-3 shadow-2xl border-amber-500/20 backdrop-blur-md`}
             style={{
               background: isSandstone
                 ? "linear-gradient(90deg, #2a1404, #1e0e02)"
@@ -2627,39 +3031,41 @@ ${reflections
         )}
 
         {/* ════════════ BOTTOM NAVIGATION BAR ════════════ */}
-        <nav
-          className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-30 py-2 px-3 border-t border-amber-500/20 backdrop-blur-lg flex justify-around"
-          style={{
-            background: isSandstone ? "rgba(16,8,2,0.97)" : "rgba(18,11,28,0.97)",
-          }}
-        >
-          {[
-            { id: "home", label: "Home", icon: "🏠" },
-            { id: "explore", label: "Explore", icon: "🧭" },
-            { id: "search", label: "Search", icon: "🔍" },
-            { id: "journey", label: "Journey", icon: "♡" },
-            { id: "more", label: "More", icon: "☰" },
-          ].map((tab) => {
-            const isActive = activeTab === tab.id && subScreen === "none";
-            return (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  setSubScreen("none");
-                  setActiveTab(tab.id as any);
-                }}
-                className={`flex-1 flex flex-col items-center space-y-0.5 py-1 font-bold text-[10px] transition-all ${
-                  isActive
-                    ? "text-amber-400 scale-105"
-                    : "text-stone-400 hover:text-stone-200"
-                }`}
-              >
-                <span className="text-xl">{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </nav>
+        {!hideHeaderAndNav && (
+          <nav
+            className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-30 py-2 px-3 border-t border-amber-500/20 backdrop-blur-lg flex justify-around"
+            style={{
+              background: isSandstone ? "rgba(16,8,2,0.97)" : "rgba(18,11,28,0.97)",
+            }}
+          >
+            {[
+              { id: "home", label: "Home", icon: "🏠" },
+              { id: "explore", label: "Explore", icon: "🧭" },
+              { id: "search", label: "Search", icon: "🔍" },
+              { id: "journey", label: "Journey", icon: "♡" },
+              { id: "more", label: "More", icon: "☰" },
+            ].map((tab) => {
+              const isActive = activeTab === tab.id && subScreen === "none";
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setSubScreen("none");
+                    setActiveTab(tab.id as any);
+                  }}
+                  className={`flex-1 flex flex-col items-center space-y-0.5 py-1 font-bold text-[10px] transition-all ${
+                    isActive
+                      ? "text-amber-400 scale-105"
+                      : "text-stone-400 hover:text-stone-200"
+                  }`}
+                >
+                  <span className="text-xl">{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        )}
 
         {/* ════════════ SOCIAL SHARING MODAL ════════════ */}
         <ShareModal

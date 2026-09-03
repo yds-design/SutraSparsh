@@ -3,7 +3,7 @@ import { speechSafetyEngine } from "../utils/speech";
 import { recitationEngine } from "../utils/recitationEngine";
 import { PricingModal } from "./PricingModal";
 import { DonationModal } from "./DonationModal";
-import { SutraSparshTempleApp } from "./SutraSparshTempleApp";
+import { SutraSparshTempleApp, type AppTheme } from "./SutraSparshTempleApp";
 
 export interface WordDictEntry {
   trans: string;
@@ -103,9 +103,21 @@ export const DEFAULT_CONFIG: AppConfig = {
 
 export interface DailyShlokaMobileProps {
   onOpenAdmin?: () => void;
+  hideHeaderAndNav?: boolean;
+  theme?: AppTheme;
+  onSelectTheme?: (theme: AppTheme) => void;
+  initialSubScreen?: "none" | "scripture" | "verse" | "glossary" | "paths" | "about" | "pref";
+  onNavigateTab?: (tab: string) => void;
 }
 
-export const DailyShlokaMobile: React.FC<DailyShlokaMobileProps> = ({ onOpenAdmin }) => {
+export const DailyShlokaMobile: React.FC<DailyShlokaMobileProps> = ({
+  onOpenAdmin,
+  hideHeaderAndNav = true,
+  theme,
+  onSelectTheme,
+  initialSubScreen = "none",
+  onNavigateTab,
+}) => {
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   const [isDonationModalOpen, setIsDonationModalOpen] = useState(false);
 
@@ -123,6 +135,11 @@ export const DailyShlokaMobile: React.FC<DailyShlokaMobileProps> = ({ onOpenAdmi
         onOpenAdmin={onOpenAdmin}
         onOpenPricing={() => setIsPricingModalOpen(true)}
         onOpenDonation={() => setIsDonationModalOpen(true)}
+        hideHeaderAndNav={hideHeaderAndNav}
+        theme={theme}
+        onSelectTheme={onSelectTheme}
+        initialSubScreen={initialSubScreen}
+        onNavigateTab={onNavigateTab}
       />
 
       {/* Sādhaka Sacred Membership Pricing Modal */}

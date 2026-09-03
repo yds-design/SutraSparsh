@@ -36,12 +36,12 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
-      source: "json",
+      source: "Bhagavad Gita",
       author: "Bhagavad Gita",
       category: "Karma Yoga",
       chapter: 2,
       verse: 47,
-      tags: ["karma", "gita", "duty", "wisdom", "detachment"]
+      tags: ["Gita", "Yoga", "Karma", "Wisdom", "Duty"]
     }
   },
   {
@@ -55,12 +55,12 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
-      source: "json",
+      source: "Bhagavad Gita",
       author: "Bhagavad Gita",
       category: "Karma Yoga",
       chapter: 2,
       verse: 48,
-      tags: ["yoga", "equanimity", "gita", "peace"]
+      tags: ["Gita", "Yoga", "Equanimity", "Peace"]
     }
   },
   {
@@ -73,12 +73,12 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     commentary: "Krishna analyzes the subtle psychological chain reaction: dwelling on sense objects leads to craving, and unfulfilled craving inevitably spawns anger.",
     metadata: {
       language: "sa",
-      source: "production",
+      source: "Bhagavad Gita",
       author: "Bhagavad Gita",
       category: "Mind & Meditation",
       chapter: 2,
       verse: 62,
-      tags: ["mind", "desire", "psychology", "gita"]
+      tags: ["Gita", "Mind", "Meditation", "Psychology"]
     }
   },
   {
@@ -91,12 +91,12 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     commentary: "Your greatest ally or your fiercest opponent resides within your own psyche. A disciplined mind elevates; an undisciplined mind drags you down.",
     metadata: {
       language: "sa",
-      source: "production",
+      source: "Bhagavad Gita",
       author: "Bhagavad Gita",
       category: "Dhyana Yoga",
       chapter: 6,
       verse: 5,
-      tags: ["self-mastery", "meditation", "mind", "strength"]
+      tags: ["Gita", "Yoga", "Self-Mastery", "Mind"]
     }
   },
   {
@@ -110,12 +110,12 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
-      source: "json",
+      source: "Patanjali Yoga Sutras",
       author: "Patanjali",
       category: "Raja Yoga",
       chapter: 1,
       verse: 1,
-      tags: ["patanjali", "yoga", "sutra", "discipline", "mind"]
+      tags: ["Patanjali", "Yoga", "Sutra", "Discipline"]
     }
   },
   {
@@ -129,12 +129,12 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
-      source: "json",
+      source: "Patanjali Yoga Sutras",
       author: "Patanjali",
       category: "Mind & Meditation",
       chapter: 1,
       verse: 2,
-      tags: ["yoga", "citta", "mind", "meditation", "patanjali"]
+      tags: ["Patanjali", "Yoga", "Citta", "Meditation"]
     }
   },
   {
@@ -148,12 +148,12 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
-      source: "json",
+      source: "Isha Upanishad",
       author: "Upanishads",
       category: "Jnana / Vedanta",
       chapter: 1,
       verse: 1,
-      tags: ["upanishad", "vedanta", "detachment", "brahman", "ishavasya"]
+      tags: ["Upanishad", "Vedanta", "Detachment", "Brahman"]
     }
   },
   {
@@ -167,10 +167,10 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
-      source: "json",
+      source: "Mandukya Upanishad",
       author: "Upanishads",
       category: "Jnana / Vedanta",
-      tags: ["om", "mandukya", "consciousness", "vedanta", "meditation"]
+      tags: ["Upanishad", "OM", "Vedanta", "Consciousness"]
     }
   },
   {
@@ -184,10 +184,10 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
-      source: "json",
+      source: "Rigveda",
       author: "Vedas",
       category: "Vedic Chants",
-      tags: ["mantra", "vedas", "rigveda", "gayatri", "light", "wisdom"]
+      tags: ["Vedas", "Mantra", "Gayatri", "Wisdom"]
     }
   },
   {
@@ -201,10 +201,10 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
-      source: "json",
+      source: "Rigveda / Yajurveda",
       author: "Vedas",
       category: "Vedic Chants",
-      tags: ["mantra", "vedas", "healing", "shiva", "liberation"]
+      tags: ["Vedas", "Mantra", "Shiva", "Liberation"]
     }
   }
 ];

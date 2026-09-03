@@ -10,10 +10,13 @@ import { SutraSparshAdminApp } from "./admin/SutraSparshAdminApp";
 import { DailyShlokaMobile } from "./components/DailyShlokaMobile";
 import { MyJourneyView } from "./components/MyJourneyView";
 import { SearchView } from "./components/SearchView";
+import { MobileBottomNav } from "./components/MobileBottomNav";
 import { PricingModal } from "./components/PricingModal";
 import { PaywallModal } from "./components/PaywallModal";
 import { DonationModal } from "./components/DonationModal";
 import { SubscriptionManagementPanel } from "./components/SubscriptionManagementPanel";
+import { MoreView } from "./components/MoreView";
+import { SadhakaProfileModal } from "./components/SadhakaProfileModal";
 import type { SubscriptionPlanId } from "./types/monetization";
 
 const TRADITIONS = ["All", "Bhagavad Gita", "Patanjali", "Upanishads", "Vedas"];
@@ -31,6 +34,39 @@ export default function App() {
   const [selectedVerse, setSelectedVerse] = useState<ContentItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [backendOnline, setBackendOnline] = useState(true);
+
+  // Profile Modal State (Restored for user profile & sacred streak tracking)
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Persistent Theme Atmosphere ('sandstone' | 'amethyst' | 'light' | 'festival')
+  const [theme, setTheme] = useState<"sandstone" | "amethyst" | "light" | "festival">(() => {
+    try {
+      return (localStorage.getItem("sutrasparsh_theme") as "sandstone" | "amethyst" | "light" | "festival") || "sandstone";
+    } catch {
+      return "sandstone";
+    }
+  });
+
+  const handleToggleTheme = () => {
+    const cycle: Record<"sandstone" | "amethyst" | "light" | "festival", "sandstone" | "amethyst" | "light" | "festival"> = {
+      sandstone: "amethyst",
+      amethyst: "light",
+      light: "festival",
+      festival: "sandstone",
+    };
+    const next = cycle[theme] || "sandstone";
+    setTheme(next);
+    try {
+      localStorage.setItem("sutrasparsh_theme", next);
+    } catch {}
+  };
+
+  const handleSelectTheme = (newTheme: "sandstone" | "amethyst" | "light" | "festival") => {
+    setTheme(newTheme);
+    try {
+      localStorage.setItem("sutrasparsh_theme", newTheme);
+    } catch {}
+  };
 
   // Monetization Modals & State (Phases 16–21)
   const [isPricingOpen, setIsPricingOpen] = useState(false);
@@ -156,24 +192,43 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col selection:bg-amber-500/30 selection:text-amber-200">
+    <div
+      className={`min-h-dvh flex flex-col selection:bg-amber-500/30 selection:text-amber-200 transition-colors duration-300 overflow-x-hidden ${
+        theme === "light"
+          ? "bg-[#FDFBF7] text-stone-900"
+          : theme === "festival"
+          ? "bg-[#280509] text-stone-100"
+          : theme === "amethyst"
+          ? "bg-[#080410] text-stone-100"
+          : "bg-[#0A0502] text-stone-100"
+      }`}
+    >
       {/* Top Navigation */}
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         savedCount={bookmarks.length}
         backendOnline={backendOnline}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+        onOpenProfile={() => setIsProfileOpen(true)}
         onOpenPricing={() => setIsPricingOpen(true)}
         onOpenDonation={() => setIsDonationOpen(true)}
         onOpenAdminConsole={() => setAppMode("admin")}
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-24 md:pb-12 overflow-x-hidden">
         {/* 1. TODAY: Daily Habit & First Value Aha Moment */}
         {(activeTab === "today" || activeTab === "daily-app" || activeTab === "daily") && (
           <div className="space-y-8 animate-fadeIn">
-            <DailyShlokaMobile onOpenAdmin={() => setAppMode("admin")} />
+            <DailyShlokaMobile
+              onOpenAdmin={() => setAppMode("admin")}
+              theme={theme}
+              onSelectTheme={handleSelectTheme}
+              initialSubScreen="none"
+              onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
+            />
           </div>
         )}
 
@@ -351,7 +406,45 @@ export default function App() {
             onNavigateTab={(tab) => setActiveTab(tab)}
           />
         )}
+
+        {/* 5. PREFERENCES & SACRED ATMOSPHERE (Accessible via More / Settings) */}
+        {activeTab === "preferences" && (
+          <div className="space-y-8 animate-fadeIn">
+            <MoreView
+              theme={theme}
+              onSelectTheme={handleSelectTheme}
+              onOpenProfile={() => setIsProfileOpen(true)}
+              onOpenPricing={() => setIsPricingOpen(true)}
+              onOpenDonation={() => setIsDonationOpen(true)}
+              onOpenAdminConsole={() => setAppMode("admin")}
+              onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
+              savedCount={bookmarks.length}
+              journalCount={journalEntries.length}
+            />
+          </div>
+        )}
       </main>
+
+      {/* Mobile Bottom Navigation (Visible on mobile/tablet screens < 768px) */}
+      <MobileBottomNav
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        savedCount={bookmarks.length}
+        theme={theme}
+      />
+
+      {/* Sādhaka Seeker Profile Modal */}
+      <SadhakaProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        savedCount={bookmarks.length}
+        journalCount={journalEntries.length}
+        theme={theme}
+        onSelectTheme={handleSelectTheme}
+        onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
+        onOpenPricing={() => setIsPricingOpen(true)}
+        onOpenDonation={() => setIsDonationOpen(true)}
+      />
 
       {/* Verse Detail Reader Modal */}
       <VerseModal
@@ -372,11 +465,13 @@ export default function App() {
         }}
       />
 
+      {/* Donation Modal */}
       <DonationModal
         isOpen={isDonationOpen}
         onClose={() => setIsDonationOpen(false)}
       />
 
+      {/* Paywall Modal */}
       <PaywallModal
         isOpen={isPaywallOpen}
         onClose={() => setIsPaywallOpen(false)}

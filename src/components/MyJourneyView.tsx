@@ -36,6 +36,7 @@ interface MyJourneyViewProps {
   onOpenPricing: () => void;
   onOpenDonation: () => void;
   onNavigateTab: (tab: "today" | "explore" | "search" | "my-journey") => void;
+  theme?: "sandstone" | "amethyst" | "light" | "festival";
 }
 
 export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
@@ -49,7 +50,26 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
   onOpenPricing,
   onOpenDonation,
   onNavigateTab,
+  theme: propTheme,
 }) => {
+  const currentTheme =
+    propTheme ||
+    (typeof window !== "undefined"
+      ? (localStorage.getItem("sutrasparsh_theme") as any) || "sandstone"
+      : "sandstone");
+
+  const isLight = currentTheme === "light";
+  const isFestival = currentTheme === "festival";
+  const isAmethyst = currentTheme === "amethyst";
+
+  const bannerBgClass = isLight
+    ? "bg-white border-stone-200 text-stone-900 shadow-md"
+    : isFestival
+    ? "bg-[#450A12]/90 border-[#FF8A00]/30 text-[#FFF6E3] shadow-2xl"
+    : isAmethyst
+    ? "bg-[#180C2C]/90 border-[#52297A]/40 text-[#EDE0F8] shadow-2xl"
+    : "bg-gradient-to-br from-amber-950/40 via-stone-900 to-stone-950 border-amber-500/30 text-stone-100 shadow-2xl";
+
   const [subSection, setSubSection] = useState<
     "overview" | "saved" | "reflections" | "recommendations" | "membership" | "advocacy"
   >("overview");
@@ -103,34 +123,54 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fadeIn">
       {/* Journey Banner & Philosophy Header */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-950/40 via-stone-900 to-stone-950 border border-amber-500/30 p-6 sm:p-10 shadow-2xl">
+      <div className={`relative overflow-hidden rounded-3xl border p-6 sm:p-10 ${bannerBgClass}`}>
         <div className="absolute -top-10 -right-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center space-x-2 text-amber-400 text-xs font-mono uppercase tracking-wider">
+            <div className="flex items-center space-x-2 text-amber-500 text-xs font-mono uppercase tracking-wider">
               <Compass className="w-4 h-4" />
               <span>Personal Sanctuary • मेरी साधना</span>
             </div>
-            <h1 className="font-serif-sacred text-2xl sm:text-4xl font-bold text-amber-100">
+            <h1
+              className={`font-serif-sacred text-2xl sm:text-4xl font-bold ${
+                isLight ? "text-[#221509]" : "text-amber-100"
+              }`}
+            >
               My Sacred Journey
             </h1>
-            <p className="text-stone-300 text-xs sm:text-sm font-light leading-relaxed">
+            <p
+              className={`text-xs sm:text-sm font-light leading-relaxed ${
+                isLight ? "text-[#5C4533]" : "text-stone-300"
+              }`}
+            >
               Where timeless Sanskrit wisdom transforms into personal daily practice. Track your habit, review saved verses, journal contemplations, and deepen your spiritual journey.
             </p>
           </div>
 
           {/* Sādhana Habit Signals (Dynamic Streak) */}
-          <div className="flex items-center gap-3 bg-stone-950/80 border border-amber-500/30 rounded-2xl p-4 sm:p-5 shadow-inner">
+          <div
+            className={`flex items-center gap-3 border rounded-2xl p-4 sm:p-5 shadow-inner ${
+              isLight
+                ? "bg-[#FAF7F0] border-stone-300 text-stone-900"
+                : "bg-stone-950/80 border-amber-500/30"
+            }`}
+          >
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-600/30 border border-orange-500/40 flex items-center justify-center text-orange-400">
               <Flame className="w-6 h-6 fill-current animate-pulse" />
             </div>
             <div>
               <div className="flex items-center space-x-1.5">
-                <span className="font-mono text-2xl font-bold text-amber-200">{streakData.currentStreak}</span>
-                <span className="text-xs font-bold text-amber-400">Days</span>
+                <span
+                  className={`font-mono text-2xl font-bold ${
+                    isLight ? "text-amber-900" : "text-amber-200"
+                  }`}
+                >
+                  {streakData.currentStreak}
+                </span>
+                <span className="text-xs font-bold text-amber-600">Days</span>
               </div>
-              <p className="text-[11px] text-stone-400 font-medium">
+              <p className={`text-[11px] font-medium ${isLight ? "text-stone-600" : "text-stone-400"}`}>
                 {streakData.checkedInToday ? "Consecutive Sādhana Active" : "Daily Sādhana Check-in Ready"}
               </p>
             </div>
@@ -138,16 +178,24 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
         </div>
 
         {/* Sub-Navigation Tabs inside My Journey */}
-        <div className="mt-8 pt-6 border-t border-stone-800/80 flex flex-wrap gap-2 text-xs">
+        <div
+          className={`mt-8 pt-6 border-t flex flex-wrap gap-2 text-xs ${
+            isLight ? "border-stone-200" : "border-stone-800/80"
+          }`}
+        >
           <button
             onClick={() => setSubSection("overview")}
             className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all ${
               subSection === "overview"
-                ? "bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm"
+                ? isLight
+                  ? "bg-amber-100 text-amber-900 border border-amber-300 shadow-sm font-semibold"
+                  : "bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm"
+                : isLight
+                ? "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
                 : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
             }`}
           >
-            <Sun className="w-4 h-4 text-amber-400" />
+            <Sun className="w-4 h-4 text-amber-500" />
             <span>Practice & Habits</span>
           </button>
 
@@ -155,11 +203,15 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             onClick={() => setSubSection("saved")}
             className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all ${
               subSection === "saved"
-                ? "bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm"
+                ? isLight
+                  ? "bg-amber-100 text-amber-900 border border-amber-300 shadow-sm font-semibold"
+                  : "bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm"
+                : isLight
+                ? "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
                 : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
             }`}
           >
-            <Bookmark className="w-4 h-4 text-amber-400" />
+            <Bookmark className="w-4 h-4 text-amber-500" />
             <span>Saved Wisdom ({savedVersesList.length})</span>
           </button>
 
@@ -167,11 +219,15 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             onClick={() => setSubSection("reflections")}
             className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all ${
               subSection === "reflections"
-                ? "bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm"
+                ? isLight
+                  ? "bg-amber-100 text-amber-900 border border-amber-300 shadow-sm font-semibold"
+                  : "bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm"
+                : isLight
+                ? "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
                 : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
             }`}
           >
-            <Feather className="w-4 h-4 text-amber-400" />
+            <Feather className="w-4 h-4 text-amber-500" />
             <span>Reflections & Journal ({journalEntries.length})</span>
           </button>
 
@@ -179,11 +235,15 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             onClick={() => setSubSection("recommendations")}
             className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all ${
               subSection === "recommendations"
-                ? "bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm"
+                ? isLight
+                  ? "bg-amber-100 text-amber-900 border border-amber-300 shadow-sm font-semibold"
+                  : "bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm"
+                : isLight
+                ? "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
                 : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
             }`}
           >
-            <Sparkles className="w-4 h-4 text-amber-400" />
+            <Sparkles className="w-4 h-4 text-amber-500" />
             <span>Recommendations</span>
           </button>
 
@@ -191,7 +251,11 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             onClick={() => setSubSection("membership")}
             className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all ${
               subSection === "membership"
-                ? "bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-200 border border-amber-400/40 shadow-sm"
+                ? isLight
+                  ? "bg-amber-100 text-amber-900 border border-amber-400 shadow-sm font-semibold"
+                  : "bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-200 border border-amber-400/40 shadow-sm"
+                : isLight
+                ? "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
                 : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
             }`}
           >

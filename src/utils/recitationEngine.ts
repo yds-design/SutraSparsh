@@ -99,6 +99,12 @@ class ShlokaRecitationEngine {
     return this.state;
   }
 
+  public setPlaybackRate(speed: number): void {
+    if (this.audioEl) {
+      this.audioEl.playbackRate = speed;
+    }
+  }
+
   /**
    * Play Shloka recitation:
    * Prioritizes high-fidelity pre-recorded audio stream if available.
