@@ -1,5 +1,19 @@
 import React, { useState } from "react";
-import { Calendar, Moon, Sun, Sparkles, Bell, BellCheck, ChevronRight, Filter, BookOpen, Flame, Compass } from "lucide-react";
+import {
+  Calendar,
+  Moon,
+  Sun,
+  Sparkles,
+  Bell,
+  BellCheck,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  Filter,
+  BookOpen,
+  Flame,
+  Compass,
+} from "lucide-react";
 import { soundEngine } from "../utils/audio";
 
 export interface TithiItem {
@@ -164,12 +178,15 @@ export const CURRENT_MONTH_TITHIS: TithiItem[] = [
 interface ImportantTithisParvProps {
   theme?: "sandstone" | "amethyst" | "light" | "festival";
   onSelectVerse?: (verseId: string) => void;
+  defaultCollapsed?: boolean;
 }
 
 export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
   theme = "sandstone",
   onSelectVerse,
+  defaultCollapsed = true,
 }) => {
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(defaultCollapsed);
   const [activeFilter, setActiveFilter] = useState<"all" | "ekadashi" | "purnima_amavasya" | "festival">("all");
   const [savedReminders, setSavedReminders] = useState<string[]>(() => {
     try {
@@ -185,6 +202,11 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
   const isSandstone = theme === "sandstone" || (!isLight && !isFestival && !isAmethyst);
+
+  const toggleCollapse = () => {
+    soundEngine.playTempleBell(isCollapsed ? 520 : 440);
+    setIsCollapsed((prev) => !prev);
+  };
 
   const filteredItems = CURRENT_MONTH_TITHIS.filter((item) => {
     if (activeFilter === "all") return true;
@@ -220,29 +242,89 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
   const cardBgClass = isLight ? "bg-white hover:bg-[#FAF7F0]" : isFestival ? "bg-[#3D0A11]/90 hover:bg-[#4E0D16]" : isAmethyst ? "bg-[#180C2C]/90 hover:bg-[#22123D]" : "bg-stone-900/70 hover:bg-stone-900/90";
 
   return (
-    <div id="important-tithis-parv-section" className="px-4 space-y-3.5 pt-4">
-      {/* Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-1">
-        <div className="space-y-0.5">
-          <div className="flex items-center space-x-2">
-            <span className="text-base">📅</span>
-            <h3 className={`font-serif-sacred text-base sm:text-lg font-bold tracking-tight ${sectionTitleColor}`}>
-              Important Tithis & Parv Dates • महत्वपूर्ण तिथियाँ एवं पर्व
-            </h3>
+    <div id="important-tithis-parv-section" className="px-4 space-y-2.5 pt-3">
+      {/* Interactive Collapsible Section Header */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={toggleCollapse}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            toggleCollapse();
+          }
+        }}
+        aria-expanded={!isCollapsed}
+        className={`p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer select-none flex items-center justify-between gap-3 ${cardBgClass} ${cardBorderClass} shadow-xs hover:border-amber-500/40`}
+      >
+        <div className="flex items-center space-x-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center flex-shrink-0 text-base">
+            📅
           </div>
-          <p className="text-xs text-stone-500 font-medium">
-            Bhadrapada – Ashvina (भाद्रपद - आश्विन) • September 2026
-          </p>
+          <div className="space-y-0.5 min-w-0">
+            <div className="flex items-center space-x-2 flex-wrap">
+              <h3 className={`font-serif-sacred text-sm sm:text-base font-bold tracking-tight truncate ${sectionTitleColor}`}>
+                Important Tithis & Parv Dates • महत्वपूर्ण तिथियाँ एवं पर्व
+              </h3>
+              <span className="text-[10.5px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-300 font-semibold">
+                10 Dates
+              </span>
+            </div>
+            <p className="text-xs text-stone-500 truncate">
+              Bhadrapada – Ashvina (भाद्रपद - आश्विन) • September 2026
+            </p>
+          </div>
         </div>
 
-        {/* Current Lunar Cycle Badge */}
-        <div className="inline-flex items-center space-x-1.5 self-start sm:self-auto px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-bold text-amber-400">
-          <Moon className="w-3 h-3 text-amber-400" />
-          <span>Shukla & Krishna Paksha</span>
+        <div className="flex items-center space-x-2 flex-shrink-0">
+          <div className="hidden sm:inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-bold text-amber-400">
+            <Moon className="w-3 h-3 text-amber-400" />
+            <span>Shukla & Krishna</span>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleCollapse();
+            }}
+            className="px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 flex items-center space-x-1.5 text-xs text-amber-300 transition-all font-semibold cursor-pointer"
+            aria-label={isCollapsed ? "Expand Tithis & Parv section" : "Collapse Tithis & Parv section"}
+          >
+            <span>{isCollapsed ? "Expand" : "Collapse"}</span>
+            {isCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+          </button>
         </div>
       </div>
 
-      {/* Filter Tabs */}
+      {/* Collapsed State Summary Strip */}
+      {isCollapsed && (
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={toggleCollapse}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              toggleCollapse();
+            }
+          }}
+          className="px-3.5 py-2 rounded-xl bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/20 text-[11.5px] text-stone-400 flex items-center justify-between cursor-pointer transition-all"
+        >
+          <div className="flex items-center space-x-2 truncate">
+            <span className="text-amber-400 font-bold flex-shrink-0">Upcoming:</span>
+            <span className="truncate">🌿 Aja Ekadashi (Sep 8) • 🪔 Parivartini Ekadashi (Sep 22) • 🌕 Ananta Chaturdashi (Sep 24)</span>
+          </div>
+          <span className="text-amber-400 font-semibold flex items-center space-x-0.5 ml-2 flex-shrink-0">
+            <span>Tap to View All</span>
+            <ChevronDown className="w-3 h-3" />
+          </span>
+        </div>
+      )}
+
+      {/* Expanded Content: Filter Tabs & Sacred Tithis Card List */}
+      {!isCollapsed && (
+        <div className="space-y-3.5 pt-1 animate-fadeIn">
+          {/* Filter Tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
         {[
           { id: "all" as const, label: "All Tithis", icon: "✨" },
@@ -397,7 +479,9 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
             </div>
           );
         })}
-      </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notification */}
       {toastMessage && (

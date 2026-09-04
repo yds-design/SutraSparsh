@@ -15,9 +15,13 @@ import {
   Palette,
   ArrowRight,
   Sparkles,
+  LogOut,
+  LogIn,
+  FileText,
 } from "lucide-react";
 import { soundEngine } from "../utils/audio";
 import { progressService, type StreakData } from "../services/progress.service";
+import { authService, type SeekerUser } from "../services/auth.service";
 
 interface SadhakaProfileModalProps {
   isOpen: boolean;
@@ -29,6 +33,8 @@ interface SadhakaProfileModalProps {
   onNavigateTab: (tab: string) => void;
   onOpenPricing: () => void;
   onOpenDonation: () => void;
+  onOpenAuth?: () => void;
+  onOpenPrivacy?: () => void;
 }
 
 export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
@@ -41,19 +47,35 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
   onNavigateTab,
   onOpenPricing,
   onOpenDonation,
+  onOpenAuth,
+  onOpenPrivacy,
 }) => {
   const [streakData, setStreakData] = React.useState<StreakData>(() =>
     progressService.getStreakData()
   );
+  const [currentUser, setCurrentUser] = React.useState<SeekerUser | null>(() =>
+    authService.getCurrentUser()
+  );
 
   React.useEffect(() => {
-    const unsub = progressService.subscribeStreak((streak) => {
+    const unsubStreak = progressService.subscribeStreak((streak) => {
       setStreakData(streak);
     });
-    return unsub;
+    const unsubAuth = authService.subscribe((user) => {
+      setCurrentUser(user);
+    });
+    return () => {
+      unsubStreak();
+      unsubAuth();
+    };
   }, []);
 
   if (!isOpen) return null;
+
+  const handleSignOff = async () => {
+    soundEngine.playTempleBell(220);
+    await authService.signOut();
+  };
 
   const isLight = theme === "light";
   const isFestival = theme === "festival";
@@ -164,7 +186,7 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
                   className="font-serif-sacred text-xl font-bold truncate"
                   style={{ color: isLight ? "#3A2818" : "#F4E9D2" }}
                 >
-                  Vishal Kumar
+                  {currentUser ? currentUser.displayName : "Guest Sādhaka"}
                 </h2>
                 <span
                   className="text-[10px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0 uppercase tracking-wider"
@@ -174,20 +196,20 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
                     color: isLight ? "#B9680D" : "#F2B333",
                   }}
                 >
-                  Sādhaka
+                  {currentUser ? (currentUser.provider === "google" ? "Google" : "Email") : "Guest"}
                 </span>
               </div>
               <p
                 className="text-xs font-sanskrit mt-0.5"
                 style={{ color: isLight ? "#8A7763" : "#B9A995" }}
               >
-                साधना स्तर ३ • ज्ञान एवं कर्म योग खोजी
+                {currentUser?.spiritualTitle || "साधना स्तर ३ • ज्ञान एवं कर्म योग खोजी"}
               </p>
               <p
-                className="text-[11px] mt-0.5 truncate"
+                className="text-[11px] mt-0.5 truncate font-mono"
                 style={{ color: isLight ? "#6B5844" : "#8A7961" }}
               >
-                vishal.kr.gupta@gmail.com
+                {currentUser ? currentUser.email : "Not signed in • Tap below to link account"}
               </p>
             </div>
           </div>
@@ -440,6 +462,48 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
               </div>
               <ArrowRight className="w-4 h-4 text-stone-400" />
             </button>
+
+            {/* Auth Sign In / Sign Off Action */}
+            {currentUser ? (
+              <button
+                onClick={handleSignOff}
+                className="w-full py-3 px-4 rounded-xl border border-rose-500/30 bg-rose-950/20 hover:bg-rose-950/50 text-rose-300 flex items-center justify-between text-xs font-bold transition-all active:scale-[0.99] cursor-pointer"
+              >
+                <div className="flex items-center space-x-2.5">
+                  <LogOut className="w-4 h-4 text-rose-400" />
+                  <span>Sign Off (साधना विश्राम) • {currentUser.email}</span>
+                </div>
+                <span className="text-[10px] font-mono text-rose-400/80">Sign Out</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  onClose();
+                  if (onOpenAuth) onOpenAuth();
+                }}
+                className="w-full py-3 px-4 rounded-xl border border-amber-500/40 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 flex items-center justify-between text-xs font-bold transition-all active:scale-[0.99] cursor-pointer"
+              >
+                <div className="flex items-center space-x-2.5">
+                  <LogIn className="w-4 h-4 text-amber-400" />
+                  <span>Sign In via Gmail / Firebase or Email ID</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-amber-400" />
+              </button>
+            )}
+
+            {/* Legal Privacy Policy Link */}
+            {onOpenPrivacy && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenPrivacy();
+                }}
+                className="w-full py-2.5 px-4 rounded-xl flex items-center justify-center space-x-2 text-[11px] opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
+              >
+                <FileText className="w-3.5 h-3.5 text-stone-400" />
+                <span>Privacy Policy & Data Sovereignty</span>
+              </button>
+            )}
           </div>
         </div>
 

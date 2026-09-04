@@ -1,0 +1,29 @@
+{
+  "app_name": "SutraSparsh",
+  "subtitle": "Touch the Sacred Sanskrit Sutras",
+  "bundle_id": "com.sutrasparsh.app",
+  "primary_language": "en-US",
+  "additional_languages": ["hi-IN", "sa-IN"],
+  "primary_category": "Books & Reference / Education",
+  "secondary_category": "Lifestyle / Health & Fitness",
+  "age_rating": "4+ / Everyone",
+  "privacy_policy_url": "https://ais-dev-z2uvcnewtnoiucjecebq6f-246687965285.asia-southeast1.run.app/privacy.html",
+  "terms_url": "https://ais-dev-z2uvcnewtnoiucjecebq6f-246687965285.asia-southeast1.run.app/terms.html",
+  "support_url": "https://ais-dev-z2uvcnewtnoiucjecebq6f-246687965285.asia-southeast1.run.app",
+  "marketing_url": "https://sutrasparsh.com",
+  "promotional_text": "Experience authentic Sanskrit chanting, word-by-word padaccheda, continuous Tanpura drone, and daily sacred sadhana offline.",
+  "keywords": [
+    "Bhagavad Gita",
+    "Patanjali Yoga Sutras",
+    "Upanishads",
+    "Sanskrit chanting",
+    "Vedic mantras",
+    "Adhyatma",
+    "Meditation",
+    "Tanpura drone",
+    "Sadhana streak",
+    "Spiritual journal"
+  ],
+  "short_description": "Offline-first sacred Sanskrit sanctuary: Bhagavad Gita, Yoga Sutras, chanting & daily sadhana.",
+  "full_description": "Touch the sacred essence of ancient Sanskrit wisdom. SutraSparsh is an offline-first contemplation sanctuary crafted for spiritual seekers, yogis, and scholars.\n\nKey Highlights:\n• Complete Scripture Corpus: All 18 chapters of the Bhagavad Gita, Patanjali's 196 Yoga Sutras, and classical Vedic Upanishads.\n• Authentic Study: Original Devanagari script, IAST transliteration, word-by-word padaccheda breakdown, and dual English & Hindi commentaries.\n• Acoustic Atmosphere: Tap-to-chant recitation accompanied by an acoustic, microtonal Tanpura drone generator (136.1Hz Om / 432Hz natural frequency).\n• Daily Sādhana Tracking: Brahma Muhurta dawn reminders, consecutive day streak tracker, radial daily study goal meter, and a private contemplative journal.\n• Four Temple Themes: Hand-tuned Sandstone, Amethyst Nocturnal, Parchment Daylight, and Festival Deepam palettes.\n• Data Sovereignty: 100% offline functionality with seamless JSON export and optional encrypted cloud sync.\n\nOm Shanti Shanti Shanti."
+}

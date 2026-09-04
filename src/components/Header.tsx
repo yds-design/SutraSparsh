@@ -12,8 +12,13 @@ import {
   Heart,
   Crown,
   Sliders,
+  User,
+  LogIn,
+  LogOut,
+  Smartphone,
 } from "lucide-react";
 import { soundEngine } from "../utils/audio";
+import { authService, type SeekerUser } from "../services/auth.service";
 
 export type NavTab =
   | "today"
@@ -38,6 +43,8 @@ interface HeaderProps {
   onOpenPricing?: () => void;
   onOpenDonation?: () => void;
   onOpenAdminConsole?: () => void;
+  onOpenAuth?: () => void;
+  onOpenAssets?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -51,8 +58,20 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenPricing,
   onOpenDonation,
   onOpenAdminConsole,
+  onOpenAuth,
+  onOpenAssets,
 }) => {
+  const [currentUser, setCurrentUser] = React.useState<SeekerUser | null>(() =>
+    authService.getCurrentUser()
+  );
   const [isDroneActive, setIsDroneActive] = React.useState(false);
+
+  React.useEffect(() => {
+    const unsub = authService.subscribe((user) => {
+      setCurrentUser(user);
+    });
+    return unsub;
+  }, []);
   const isLight = theme === "light";
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
@@ -315,6 +334,60 @@ export const Header: React.FC<HeaderProps> = ({
                 <VolumeX className="w-4 h-4 text-stone-400" />
               )}
             </button>
+
+            {/* App Store & Google Play Assets Viewer Button */}
+            {onOpenAssets && (
+              <button
+                type="button"
+                onClick={onOpenAssets}
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-xs text-amber-300 hover:text-amber-200 bg-amber-500/10 border border-amber-500/25 hover:border-amber-500/50 transition-all cursor-pointer"
+                title="App Store & Play Store Assets (1024x1024 Icon & Screens)"
+                aria-label="Store Assets"
+              >
+                <Smartphone className="w-4 h-4 text-amber-400" />
+              </button>
+            )}
+
+            {/* Auth Sign In / User Account Screen Button */}
+            {onOpenAuth && (
+              <button
+                type="button"
+                onClick={onOpenAuth}
+                className="h-8 sm:h-9 px-2 sm:px-2.5 rounded-xl border flex items-center space-x-1.5 text-xs font-semibold transition-all cursor-pointer hover:scale-105 active:scale-95"
+                style={{
+                  backgroundColor: currentUser
+                    ? isLight
+                      ? "rgba(216, 137, 22, 0.15)"
+                      : "rgba(255, 255, 255, 0.08)"
+                    : isLight
+                    ? "#FAF6EE"
+                    : "rgba(216, 137, 22, 0.15)",
+                  borderColor: isLight ? "#D88916" : "rgba(216, 137, 22, 0.4)",
+                  color: isLight ? "#3A2818" : "#F4E9D2",
+                }}
+                title={
+                  currentUser
+                    ? `Signed in as ${currentUser.displayName} (${currentUser.email}). Click to manage or Sign Off.`
+                    : "Sign In via Gmail / Firebase or Email ID"
+                }
+              >
+                {currentUser ? (
+                  <>
+                    <div className="w-4 h-4 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-bold text-[9px] flex items-center justify-center">
+                      {currentUser.displayName.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="hidden md:inline font-mono text-[11px] truncate max-w-[90px]">
+                      {currentUser.displayName.split(" ")[0]}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="hidden sm:inline text-[11px]">Sign In</span>
+                  </>
+                )}
+              </button>
+            )}
 
             {/* Sādhaka Profile Button (Icon-focused with Om badge) */}
             {onOpenProfile && (

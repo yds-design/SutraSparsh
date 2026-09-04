@@ -17,6 +17,9 @@ import { DonationModal } from "./components/DonationModal";
 import { SubscriptionManagementPanel } from "./components/SubscriptionManagementPanel";
 import { MoreView } from "./components/MoreView";
 import { SadhakaProfileModal } from "./components/SadhakaProfileModal";
+import { AuthModal } from "./components/AuthModal";
+import { PrivacyPolicyModal } from "./components/PrivacyPolicyModal";
+import { StoreAssetsViewer } from "./components/StoreAssetsViewer";
 import type { SubscriptionPlanId } from "./types/monetization";
 
 const TRADITIONS = ["All", "Bhagavad Gita", "Patanjali", "Upanishads", "Vedas"];
@@ -73,6 +76,15 @@ export default function App() {
   const [isDonationOpen, setIsDonationOpen] = useState(false);
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
   const [paywallFeature, setPaywallFeature] = useState({ title: "", description: "" });
+
+  // Auth, Privacy Policy & Store Assets Modals
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
+  const [isAssetsOpen, setIsAssetsOpen] = useState(false);
+
+  // Explore screen virtualization & lazy loading
+  const [visibleVerseLimit, setVisibleVerseLimit] = useState(12);
+  const loadMoreSentinelRef = React.useRef<HTMLDivElement | null>(null);
 
   // Local storage for Bookmarks and Journal
   const [bookmarks, setBookmarks] = useState<string[]>(() => {
@@ -185,6 +197,32 @@ export default function App() {
     );
   });
 
+  // Reset lazy load limit when filters change
+  useEffect(() => {
+    setVisibleVerseLimit(12);
+  }, [selectedTradition, selectedCategory, searchTerm]);
+
+  const displayedVerses = filteredVerses.slice(0, visibleVerseLimit);
+  const hasMoreVerses = visibleVerseLimit < filteredVerses.length;
+
+  // IntersectionObserver for seamless infinite scrolling & lazy loading
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreVerses) {
+          setVisibleVerseLimit((prev) => Math.min(prev + 12, filteredVerses.length));
+        }
+      },
+      { rootMargin: "300px" }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMoreVerses, filteredVerses.length]);
+
   const dailyVerse = verses.length > 0 ? verses[0] : null;
 
   if (appMode === "admin") {
@@ -215,6 +253,8 @@ export default function App() {
         onOpenPricing={() => setIsPricingOpen(true)}
         onOpenDonation={() => setIsDonationOpen(true)}
         onOpenAdminConsole={() => setAppMode("admin")}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenAssets={() => setIsAssetsOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -359,16 +399,48 @@ export default function App() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredVerses.map((item) => (
-                    <VerseCard
-                      key={item.id}
-                      item={item}
-                      isBookmarked={bookmarks.includes(item.id)}
-                      onToggleBookmark={toggleBookmark}
-                      onSelect={handleOpenVerse}
-                    />
-                  ))}
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {displayedVerses.map((item) => (
+                      <VerseCard
+                        key={item.id}
+                        item={item}
+                        isBookmarked={bookmarks.includes(item.id)}
+                        onToggleBookmark={toggleBookmark}
+                        onSelect={handleOpenVerse}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Virtualized / Lazy Loading Sentinel & Pagination Controls */}
+                  {hasMoreVerses && (
+                    <div
+                      ref={loadMoreSentinelRef}
+                      className="pt-6 pb-2 flex flex-col items-center justify-center space-y-2.5"
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setVisibleVerseLimit((prev) => Math.min(prev + 12, filteredVerses.length))
+                        }
+                        className="px-6 py-2.5 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 text-xs font-bold transition-all shadow cursor-pointer active:scale-95 flex items-center space-x-2"
+                      >
+                        <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                        <span>
+                          Load Next Verses ({filteredVerses.length - displayedVerses.length} remaining)
+                        </span>
+                      </button>
+                      <span className="text-[11px] text-stone-500 font-mono">
+                        Showing {displayedVerses.length} of {filteredVerses.length} verses • Auto-loads on scroll
+                      </span>
+                    </div>
+                  )}
+
+                  {!hasMoreVerses && filteredVerses.length > 12 && (
+                    <div className="py-6 text-center text-xs text-stone-500 font-mono border-t border-stone-800/60 mt-4">
+                      ✨ सम्पूर्णम् • All {filteredVerses.length} sacred verses loaded in sanctuary
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -444,6 +516,33 @@ export default function App() {
         onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
         onOpenPricing={() => setIsPricingOpen(true)}
         onOpenDonation={() => setIsDonationOpen(true)}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenPrivacy={() => setIsPrivacyOpen(true)}
+      />
+
+      {/* Seeker User Sign In & Sign Off Modal (via Gmail / Firebase & Email ID) */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        theme={theme}
+        onOpenPrivacyPolicy={() => {
+          setIsAuthOpen(false);
+          setIsPrivacyOpen(true);
+        }}
+      />
+
+      {/* Legal Privacy Policy Modal */}
+      <PrivacyPolicyModal
+        isOpen={isPrivacyOpen}
+        onClose={() => setIsPrivacyOpen(false)}
+        theme={theme}
+      />
+
+      {/* Store Assets & App Icon Showcase Modal (1024x1024 Icon & Screenshots) */}
+      <StoreAssetsViewer
+        isOpen={isAssetsOpen}
+        onClose={() => setIsAssetsOpen(false)}
+        theme={theme}
       />
 
       {/* Verse Detail Reader Modal */}
@@ -481,15 +580,51 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-stone-900 bg-stone-950 py-8 mt-12 text-center text-xs text-stone-500 space-y-2">
+      <footer className="border-t border-stone-900 bg-stone-950 py-8 mt-12 text-center text-xs text-stone-500 space-y-3">
         <div className="flex items-center justify-center space-x-2 text-stone-400">
           <span className="font-serif-sacred font-bold text-amber-200">SutraSparsh</span>
           <span>•</span>
           <span className="font-sanskrit">सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः</span>
         </div>
-        <p className="text-[11px]">
+        <p className="text-[11px] max-w-lg mx-auto px-4 text-stone-400">
           Dedicated to the preservation, exploration, and meditative study of sacred spiritual wisdom.
         </p>
+
+        {/* Store Listing, Legal, and Seeker Navigation Links */}
+        <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] pt-1 text-stone-400">
+          <button
+            type="button"
+            onClick={() => setIsAuthOpen(true)}
+            className="hover:text-amber-300 transition-colors cursor-pointer"
+          >
+            Seeker Sign In / Sign Off
+          </button>
+          <span>•</span>
+          <button
+            type="button"
+            onClick={() => setIsAssetsOpen(true)}
+            className="hover:text-amber-300 transition-colors cursor-pointer"
+          >
+            Store Assets (1024x1024 Icon & Screens)
+          </button>
+          <span>•</span>
+          <button
+            type="button"
+            onClick={() => setIsPrivacyOpen(true)}
+            className="hover:text-amber-300 transition-colors cursor-pointer"
+          >
+            Privacy Policy
+          </button>
+          <span>•</span>
+          <a
+            href="/terms.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-amber-300 transition-colors"
+          >
+            Terms of Service
+          </a>
+        </div>
       </footer>
     </div>
   );

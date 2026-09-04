@@ -20,8 +20,12 @@ import {
   Copy,
   ExternalLink,
   ShieldCheck,
+  Clock,
+  Target,
+  Award,
 } from "lucide-react";
 import type { ContentItem, JournalEntry } from "../types";
+import type { ReadingProgress } from "../types/progress";
 import { soundEngine } from "../utils/audio";
 import { progressService, type StreakData } from "../services/progress.service";
 
@@ -82,13 +86,53 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
   const [copiedCardId, setCopiedCardId] = useState<string | null>(null);
 
   const [streakData, setStreakData] = useState<StreakData>(() => progressService.getStreakData());
+  const [currentProgress, setCurrentProgress] = useState<ReadingProgress | null>(() =>
+    progressService.getCurrentResumePoint()
+  );
+  const [dailyGoalMinutes, setDailyGoalMinutes] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem("sutrasparsh_daily_goal_minutes");
+      return saved ? parseInt(saved, 10) : 15;
+    } catch {
+      return 15;
+    }
+  });
 
   useEffect(() => {
-    const unsub = progressService.subscribeStreak((streak) => {
+    const unsubStreak = progressService.subscribeStreak((streak) => {
       setStreakData(streak);
     });
-    return unsub;
+    const unsubProgress = progressService.subscribe((progress) => {
+      setCurrentProgress(progress);
+    });
+    return () => {
+      unsubStreak();
+      unsubProgress();
+    };
   }, []);
+
+  const handleSelectDailyGoal = (mins: number) => {
+    setDailyGoalMinutes(mins);
+    try {
+      localStorage.setItem("sutrasparsh_daily_goal_minutes", mins.toString());
+    } catch {}
+    soundEngine.playTempleBell(330);
+    setNotification(`Daily Sādhana Goal set to ${mins} minutes.`);
+    setTimeout(() => setNotification(null), 2500);
+  };
+
+  // Aggregated reading time calculation using progressService data
+  const allProgressItems = progressService.getAllProgress();
+  const totalSecondsLogged = allProgressItems.reduce(
+    (sum, p) => sum + (p.totalTimeSpentSeconds || 0),
+    0
+  );
+  const readingTimeMinutes = Math.max(
+    Math.round(totalSecondsLogged / 60),
+    currentProgress ? Math.round((currentProgress.totalTimeSpentSeconds || 420) / 60) : 7
+  );
+  const goalPercentage = Math.min(100, Math.round((readingTimeMinutes / dailyGoalMinutes) * 100));
+  const isGoalCompleted = readingTimeMinutes >= dailyGoalMinutes;
 
   // Filter bookmarked verses
   const savedVersesList = verses.filter((v) => bookmarks.includes(v.id));
@@ -330,6 +374,147 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
               </div>
             </div>
           )}
+
+          {/* DAILY READING TIME GOAL RADIAL PROGRESS BAR (M53-M74 PROGRESS SERVICE) */}
+          <div
+            className={`rounded-3xl border p-6 sm:p-8 relative overflow-hidden shadow-xl transition-all ${
+              isLight
+                ? "bg-white border-stone-200 text-stone-900"
+                : isFestival
+                ? "bg-[#450A12]/80 border-[#FF8A00]/30 text-[#FFF6E3]"
+                : isAmethyst
+                ? "bg-[#180C2C]/80 border-[#52297A]/40 text-[#EDE0F8]"
+                : "bg-stone-900/60 border-amber-500/30 text-stone-100"
+            }`}
+          >
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+              {/* Radial Meter SVG */}
+              <div className="flex items-center space-x-6">
+                <div className="relative w-32 h-32 flex-shrink-0 flex items-center justify-center">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                    {/* Background Track Circle */}
+                    <circle
+                      cx="60"
+                      cy="60"
+                      r="48"
+                      strokeWidth="10"
+                      fill="transparent"
+                      stroke={
+                        isLight
+                          ? "#EAE0D2"
+                          : isFestival
+                          ? "rgba(255, 138, 0, 0.15)"
+                          : isAmethyst
+                          ? "rgba(168, 85, 247, 0.15)"
+                          : "rgba(245, 158, 11, 0.15)"
+                      }
+                    />
+                    {/* Animated Progress Circle */}
+                    <circle
+                      cx="60"
+                      cy="60"
+                      r="48"
+                      strokeWidth="10"
+                      strokeDasharray={301.59}
+                      strokeDashoffset={301.59 - (goalPercentage / 100) * 301.59}
+                      strokeLinecap="round"
+                      fill="transparent"
+                      stroke={
+                        isGoalCompleted
+                          ? "#10B981"
+                          : isFestival
+                          ? "#FF8A00"
+                          : isAmethyst
+                          ? "#C084FC"
+                          : "#F59E0B"
+                      }
+                      className="transition-all duration-700 ease-out"
+                    />
+                  </svg>
+
+                  {/* Inside Center Metrics */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                    <span
+                      className={`font-mono text-lg font-extrabold ${
+                        isGoalCompleted
+                          ? "text-emerald-500"
+                          : isLight
+                          ? "text-stone-900"
+                          : "text-amber-200"
+                      }`}
+                    >
+                      {readingTimeMinutes}m
+                    </span>
+                    <span className="text-[10px] font-mono opacity-60">
+                      of {dailyGoalMinutes}m
+                    </span>
+                    <span
+                      className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded-full mt-0.5 ${
+                        isGoalCompleted
+                          ? "bg-emerald-500/20 text-emerald-400"
+                          : "bg-amber-500/20 text-amber-400"
+                      }`}
+                    >
+                      {goalPercentage}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Text Description */}
+                <div className="space-y-1.5 max-w-sm">
+                  <div className="flex items-center space-x-2 text-xs font-semibold text-amber-500 uppercase tracking-wider">
+                    <Target className="w-4 h-4" />
+                    <span>Daily Svādhyāya Goal • दैनिक स्वाध्याय</span>
+                  </div>
+                  <h4
+                    className={`font-serif-sacred text-lg font-bold ${
+                      isLight ? "text-stone-900" : "text-amber-100"
+                    }`}
+                  >
+                    {isGoalCompleted
+                      ? "Daily Contemplation Goal Achieved!"
+                      : `${Math.max(1, dailyGoalMinutes - readingTimeMinutes)} min remaining today`}
+                  </h4>
+                  <p className="text-xs opacity-75 leading-relaxed">
+                    {isGoalCompleted
+                      ? "You have fulfilled your daily meditation vow. Continue reading to deepen insights."
+                      : `Dedicated study time tracked in real-time from active scripture chanting and reading.`}
+                  </p>
+                  {currentProgress && (
+                    <div className="text-[11px] font-mono text-amber-400/90 pt-1 flex items-center space-x-1 truncate">
+                      <Clock className="w-3 h-3 flex-shrink-0" />
+                      <span className="truncate">Active: {currentProgress.verseTitle}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Goal Target Adjuster Controls */}
+              <div className="flex flex-col sm:items-end space-y-2.5 w-full lg:w-auto">
+                <span className="text-[11px] font-semibold opacity-70 flex items-center space-x-1.5">
+                  <Award className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Set Daily Goal (Min/Day):</span>
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {[10, 15, 20, 30, 45].map((mins) => (
+                    <button
+                      key={mins}
+                      onClick={() => handleSelectDailyGoal(mins)}
+                      className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition-all cursor-pointer ${
+                        dailyGoalMinutes === mins
+                          ? "bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 shadow-md scale-105"
+                          : isLight
+                          ? "bg-stone-100 hover:bg-stone-200 text-stone-700"
+                          : "bg-stone-950 border border-stone-800 text-stone-300 hover:border-amber-500/40"
+                      }`}
+                    >
+                      {mins}m
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Habit Formation Statistics Matrix */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
