@@ -20,6 +20,8 @@ import {
   Info,
   Sliders,
   ExternalLink,
+  Lock,
+  Monitor,
 } from "lucide-react";
 import { soundEngine } from "../utils/audio";
 import { recitationEngine } from "../utils/recitationEngine";
@@ -51,6 +53,24 @@ export const MoreView: React.FC<MoreViewProps> = ({
   const isLight = theme === "light";
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
+
+  // Device classification: Admin Console is strictly enabled ONLY from device: screen
+  const [isScreenDevice, setIsScreenDevice] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const isDesktopWidth = window.innerWidth >= 1024;
+    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    return isDesktopWidth && !isMobileUA;
+  });
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      const isDesktopWidth = window.innerWidth >= 1024;
+      const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      setIsScreenDevice(isDesktopWidth && !isMobileUA);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Scripture & Reading Preferences state (persisted to localStorage)
   const [prefScript, setPrefScript] = useState<"both" | "devanagari" | "transliteration">(() => {
@@ -829,21 +849,53 @@ export const MoreView: React.FC<MoreViewProps> = ({
         </div>
       </div>
 
-      {/* 6. TEMPLE ADMIN CONSOLE BUTTON - Hidden on mobile as Admin is on a separate login app */}
-      <div className="pt-2 hidden md:block">
-        <button
-          type="button"
-          onClick={onOpenAdminConsole}
-          className="w-full py-3.5 px-4 rounded-2xl border flex items-center justify-center space-x-2 text-xs font-bold transition-all hover:bg-white/5 active:scale-[0.99] cursor-pointer"
-          style={{
-            backgroundColor: cardBg,
-            borderColor: cardBorder,
-            color: textPrimary,
-          }}
-        >
-          <ShieldCheck className="w-4 h-4 text-amber-500" />
-          <span>Launch SutraSparsh Temple Admin Operations Console</span>
-        </button>
+      {/* 6. TEMPLE ADMIN CONSOLE BUTTON - Enabled ONLY from device: screen; disabled on all other devices */}
+      <div className="pt-3">
+        {isScreenDevice ? (
+          <div className="space-y-1.5">
+            <button
+              type="button"
+              id="btn-launch-admin-console"
+              onClick={onOpenAdminConsole}
+              className="w-full py-3.5 px-4 rounded-2xl border flex items-center justify-center space-x-2 text-xs font-bold transition-all hover:bg-white/5 active:scale-[0.99] cursor-pointer shadow-sm group"
+              style={{
+                backgroundColor: cardBg,
+                borderColor: cardBorder,
+                color: textPrimary,
+              }}
+              title="Launch SutraSparsh Temple Admin Operations Console (Device: Screen Verified)"
+            >
+              <ShieldCheck className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
+              <span>Launch SutraSparsh Temple Admin Operations Console</span>
+              <span className="text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-mono font-normal ml-1">
+                Screen Device Active
+              </span>
+            </button>
+            <p className="text-[11px] text-stone-500 text-center font-mono">
+              🖥️ Device: Screen verified • Administrative control plane enabled
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            <button
+              type="button"
+              id="btn-launch-admin-console-disabled"
+              disabled
+              aria-disabled="true"
+              className="w-full py-3.5 px-4 rounded-2xl border flex items-center justify-center space-x-2 text-xs font-bold opacity-50 cursor-not-allowed bg-stone-900/40 border-stone-800 text-stone-500 shadow-none"
+              title="Admin Console is disabled on mobile/handheld devices. Exclusively enabled for device: screen."
+            >
+              <Lock className="w-4 h-4 text-stone-500" />
+              <span>Launch SutraSparsh Temple Admin Operations Console</span>
+              <span className="text-[10px] bg-stone-800 text-stone-400 border border-stone-700 px-2 py-0.5 rounded-full font-mono font-normal ml-1">
+                Disabled on Mobile
+              </span>
+            </button>
+            <p className="text-[11px] text-amber-500/80 text-center font-mono">
+              🔒 Admin Console is enabled only from device: screen. Disabled on mobile/handheld devices.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -33,3 +33,17 @@
   animation: speakPulse 1s ease-in-out infinite;
 }
 
+/* Sacred Text Selection Styling */
+::selection {
+  background-color: rgba(217, 119, 6, 0.4);
+  color: #fffbeb;
+}
+
+/* Light Theme High-Contrast Text Selection: rich warm golden highlight with dark legible text */
+.theme-light ::selection,
+[data-theme="light"] ::selection,
+.light-mode ::selection {
+  background-color: #FCD34D !important;
+  color: #1C1917 !important;
+}
+

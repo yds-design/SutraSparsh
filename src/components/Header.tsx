@@ -15,7 +15,6 @@ import {
   User,
   LogIn,
   LogOut,
-  Smartphone,
 } from "lucide-react";
 import { soundEngine } from "../utils/audio";
 import { authService, type SeekerUser } from "../services/auth.service";
@@ -335,19 +334,6 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </button>
 
-            {/* App Store & Google Play Assets Viewer Button */}
-            {onOpenAssets && (
-              <button
-                type="button"
-                onClick={onOpenAssets}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-xs text-amber-300 hover:text-amber-200 bg-amber-500/10 border border-amber-500/25 hover:border-amber-500/50 transition-all cursor-pointer"
-                title="App Store & Play Store Assets (1024x1024 Icon & Screens)"
-                aria-label="Store Assets"
-              >
-                <Smartphone className="w-4 h-4 text-amber-400" />
-              </button>
-            )}
-
             {/* Auth Sign In / User Account Screen Button */}
             {onOpenAuth && (
               <button
@@ -437,25 +423,25 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Admin Gateway Button - Hidden on mobile as Admin is a separate login app */}
+            {/* Admin Gateway Button - Exclusively enabled on screen / desktop workstations */}
             {onOpenAdminConsole && (
               <button
                 id="btn-open-admin-console"
                 type="button"
                 onClick={onOpenAdminConsole}
-                className="hidden md:flex w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/5 border border-white/10 hover:border-amber-500/40 text-stone-400 hover:text-amber-300 items-center justify-center transition-colors cursor-pointer"
-                title="Open SutraSparsh Admin Console"
-                aria-label="Admin"
+                className="hidden lg:flex w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/5 border border-white/10 hover:border-amber-500/40 text-stone-400 hover:text-amber-300 items-center justify-center transition-colors cursor-pointer"
+                title="Open SutraSparsh Admin Console (Screen / Desktop Only)"
+                aria-label="Admin Console"
               >
                 <ShieldCheck className="w-4 h-4 text-amber-400" />
               </button>
             )}
 
-            {/* API Engine Pulsating Orange Dot - Visible across screen/mobile/tablet */}
+            {/* API Engine Pulsating Orange Dot - Screen / Desktop Toolbar only (Moved to Bottom Toolbar on Mobile) */}
             <div
               id="api-engine-indicator"
-              className="flex items-center space-x-1.5 px-2 py-1 rounded-full text-[10px] sm:text-[10.5px] font-semibold border bg-orange-950/40 border-orange-500/40 text-orange-300 flex-shrink-0 shadow-sm"
-              title="API Engine: Online & Synced"
+              className="hidden md:flex items-center space-x-1.5 px-2 py-1 rounded-full text-[10px] sm:text-[10.5px] font-semibold border bg-orange-950/40 border-orange-500/40 text-orange-300 flex-shrink-0 shadow-sm"
+              title="API Engine: Online & Synced (Screen Toolbar)"
               aria-label="API Engine Live"
             >
               <span className="relative flex h-2 w-2 flex-shrink-0">

@@ -225,20 +225,67 @@ export default function App() {
 
   const dailyVerse = verses.length > 0 ? verses[0] : null;
 
+  // Device detection: Admin console functionality is strictly restricted to device: screen
+  const [isScreenDevice, setIsScreenDevice] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const isDesktopWidth = window.innerWidth >= 1024;
+    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    return isDesktopWidth && !isMobileUA;
+  });
+
+  useEffect(() => {
+    const handleDeviceCheck = () => {
+      const isDesktopWidth = window.innerWidth >= 1024;
+      const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      setIsScreenDevice(isDesktopWidth && !isMobileUA);
+    };
+    window.addEventListener("resize", handleDeviceCheck);
+    return () => window.removeEventListener("resize", handleDeviceCheck);
+  }, []);
+
+  const handleOpenAdminConsole = () => {
+    if (!isScreenDevice) return;
+    setAppMode("admin");
+  };
+
   if (appMode === "admin") {
+    if (!isScreenDevice) {
+      return (
+        <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col items-center justify-center p-6 text-center selection:bg-amber-500/40 selection:text-amber-100">
+          <div className="max-w-md w-full bg-stone-900/90 border border-stone-800 rounded-3xl p-8 space-y-5 shadow-2xl">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center mx-auto text-2xl">
+              🔒
+            </div>
+            <h2 className="font-serif-sacred text-xl font-bold text-amber-200">
+              Admin Console Screen-Only
+            </h2>
+            <p className="text-xs text-stone-400 leading-relaxed">
+              The SutraSparsh Temple Admin Operations Console is enabled exclusively on <strong>device: screen</strong> (desktop workstations). Admin operations are disabled on mobile and handheld devices for operational security.
+            </p>
+            <button
+              type="button"
+              onClick={() => setAppMode("user")}
+              className="w-full py-3 px-6 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs transition-all shadow cursor-pointer"
+            >
+              Return to Sacred Temple App
+            </button>
+          </div>
+        </div>
+      );
+    }
     return <SutraSparshAdminApp onSwitchToUserApp={() => setAppMode("user")} />;
   }
 
   return (
     <div
-      className={`min-h-dvh flex flex-col selection:bg-amber-500/30 selection:text-amber-200 transition-colors duration-300 overflow-x-hidden ${
+      className={`min-h-dvh flex flex-col transition-colors duration-300 overflow-x-hidden ${
         theme === "light"
-          ? "bg-[#FDFBF7] text-stone-900"
+          ? "bg-[#FDFBF7] text-stone-900 selection:bg-amber-300 selection:text-stone-950 light-mode"
           : theme === "festival"
-          ? "bg-[#280509] text-stone-100"
+          ? "bg-[#280509] text-stone-100 selection:bg-amber-500/40 selection:text-amber-100"
           : theme === "amethyst"
-          ? "bg-[#080410] text-stone-100"
-          : "bg-[#0A0502] text-stone-100"
+          ? "bg-[#080410] text-stone-100 selection:bg-amber-500/40 selection:text-amber-100"
+          : "bg-[#0A0502] text-stone-100 selection:bg-amber-500/40 selection:text-amber-100"
       }`}
     >
       {/* Top Navigation */}
@@ -252,9 +299,8 @@ export default function App() {
         onOpenProfile={() => setIsProfileOpen(true)}
         onOpenPricing={() => setIsPricingOpen(true)}
         onOpenDonation={() => setIsDonationOpen(true)}
-        onOpenAdminConsole={() => setAppMode("admin")}
+        onOpenAdminConsole={isScreenDevice ? handleOpenAdminConsole : undefined}
         onOpenAuth={() => setIsAuthOpen(true)}
-        onOpenAssets={() => setIsAssetsOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -488,7 +534,7 @@ export default function App() {
               onOpenProfile={() => setIsProfileOpen(true)}
               onOpenPricing={() => setIsPricingOpen(true)}
               onOpenDonation={() => setIsDonationOpen(true)}
-              onOpenAdminConsole={() => setAppMode("admin")}
+              onOpenAdminConsole={handleOpenAdminConsole}
               onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
               savedCount={bookmarks.length}
               journalCount={journalEntries.length}

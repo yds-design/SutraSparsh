@@ -766,7 +766,9 @@ ${reflections
       className={`w-full ${
         hideHeaderAndNav
           ? "transition-colors duration-300"
-          : "min-h-dvh flex justify-center selection:bg-amber-500/30 selection:text-amber-200"
+          : isLight
+          ? "min-h-dvh flex justify-center selection:bg-amber-300 selection:text-stone-950 light-mode"
+          : "min-h-dvh flex justify-center selection:bg-amber-500/40 selection:text-amber-100"
       }`}
       style={{
         backgroundColor: hideHeaderAndNav

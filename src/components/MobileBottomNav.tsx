@@ -15,6 +15,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   savedCount,
   theme = "sandstone",
 }) => {
+  const [showApiStatus, setShowApiStatus] = React.useState(false);
+
   const isLight = theme === "light";
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
@@ -115,7 +117,38 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         borderColor: navBorder,
       }}
     >
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
+      {/* Interactive Toast on API Engine Button Tap */}
+      {showApiStatus && (
+        <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-50 bg-stone-900 border border-amber-500/40 text-amber-200 text-[10.5px] px-3 py-1 rounded-full shadow-lg flex items-center space-x-1.5 whitespace-nowrap animate-fadeIn">
+          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span>API Engine v1.0.0 Online • Firestore Synced</span>
+        </div>
+      )}
+
+      {/* Mobile Bottom Toolbar: API Engine Status Button */}
+      <div className="flex items-center justify-center pt-1.5 pb-0.5 px-3">
+        <button
+          type="button"
+          id="mobile-bottom-api-engine-btn"
+          onClick={() => {
+            setShowApiStatus(true);
+            setTimeout(() => setShowApiStatus(false), 3000);
+          }}
+          className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-semibold border bg-orange-950/60 border-orange-500/40 text-orange-300 shadow-sm active:scale-95 transition-all cursor-pointer"
+          title="API Engine: Online & Synced (Mobile Bottom Toolbar)"
+          aria-label="API Engine Live"
+        >
+          <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-orange-500 shadow-[0_0_6px_rgba(249,115,22,0.95)]"></span>
+          </span>
+          <span className="whitespace-nowrap tracking-wider uppercase font-mono text-[8.5px]">
+            API Engine • Online
+          </span>
+        </button>
+      </div>
+
+      <div className="flex items-center justify-around h-14 max-w-lg mx-auto px-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
