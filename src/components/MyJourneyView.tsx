@@ -306,7 +306,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                   {lastActiveVerse.body}
                 </p>
                 {lastActiveVerse.meaning && (
-                  <p className="text-stone-300 text-xs sm:text-sm italic line-clamp-2">
+                  <p className="text-stone-300 text-xs sm:text-sm italic leading-relaxed">
                     "{lastActiveVerse.meaning}"
                   </p>
                 )}
@@ -444,12 +444,12 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                       </button>
                     </div>
 
-                    <p className="font-sanskrit text-amber-200 text-sm whitespace-pre-line line-clamp-3">
+                    <p className="font-sanskrit text-amber-200 text-sm whitespace-pre-line leading-relaxed">
                       {verse.body}
                     </p>
 
                     {verse.meaning && (
-                      <p className="text-stone-400 text-xs italic line-clamp-2">
+                      <p className="text-stone-400 text-xs italic leading-relaxed">
                         "{verse.meaning}"
                       </p>
                     )}
@@ -612,12 +612,12 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                     {verse.title}
                   </h4>
 
-                  <p className="font-sanskrit text-amber-200 text-xs whitespace-pre-line line-clamp-3">
+                  <p className="font-sanskrit text-amber-200 text-xs whitespace-pre-line leading-relaxed">
                     {verse.body}
                   </p>
 
                   {verse.meaning && (
-                    <p className="text-stone-400 text-xs italic line-clamp-2">
+                    <p className="text-stone-400 text-xs italic leading-relaxed">
                       "{verse.meaning}"
                     </p>
                   )}

@@ -1127,7 +1127,7 @@ export const ProductionHardeningPanel: React.FC<ProductionHardeningPanelProps> =
                       )}
                     </div>
                     <div className="font-semibold text-stone-200">{s.name}</div>
-                    <div className="text-[11px] text-stone-400 line-clamp-2">{s.details}</div>
+                    <div className="text-[11px] text-stone-400 leading-relaxed">{s.details}</div>
                     <div className="text-[10px] font-mono text-stone-500">{s.durationMs}ms</div>
                   </div>
                 ))}

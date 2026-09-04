@@ -154,13 +154,17 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setActiveTab("today")}
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer ${
                 isTodayActive
-                  ? "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
+                  ? isLight
+                    ? "bg-amber-100 text-amber-950 border border-amber-300 shadow-xs ring-1 ring-amber-400/30 font-bold"
+                    : "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
+                  : isLight
+                  ? "text-stone-700 hover:text-stone-950 hover:bg-stone-200/60"
                   : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
               }`}
             >
-              <Sun className="w-4 h-4 text-amber-400" />
+              <Sun className="w-4 h-4 text-amber-500" />
               <span>Today</span>
-              <span className="text-[10px] text-amber-400/80 font-sanskrit hidden 2xl:inline">आज</span>
+              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-amber-800" : "text-amber-400/80"}`}>आज</span>
             </button>
 
             {/* 2. EXPLORE */}
@@ -170,13 +174,17 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setActiveTab("explore")}
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer ${
                 isExploreActive
-                  ? "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
+                  ? isLight
+                    ? "bg-amber-100 text-amber-950 border border-amber-300 shadow-xs ring-1 ring-amber-400/30 font-bold"
+                    : "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
+                  : isLight
+                  ? "text-stone-700 hover:text-stone-950 hover:bg-stone-200/60"
                   : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
               }`}
             >
-              <BookOpen className="w-4 h-4 text-amber-400" />
+              <BookOpen className="w-4 h-4 text-amber-500" />
               <span>Explore</span>
-              <span className="text-[10px] text-amber-400/80 font-sanskrit hidden 2xl:inline">दर्शन</span>
+              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-amber-800" : "text-amber-400/80"}`}>दर्शन</span>
             </button>
 
             {/* 3. SEARCH */}
@@ -186,13 +194,17 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setActiveTab("search")}
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer ${
                 isSearchActive
-                  ? "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
+                  ? isLight
+                    ? "bg-amber-100 text-amber-950 border border-amber-300 shadow-xs ring-1 ring-amber-400/30 font-bold"
+                    : "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
+                  : isLight
+                  ? "text-stone-700 hover:text-stone-950 hover:bg-stone-200/60"
                   : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
               }`}
             >
-              <Search className="w-4 h-4 text-amber-400" />
+              <Search className="w-4 h-4 text-amber-500" />
               <span>Search</span>
-              <span className="text-[10px] text-amber-400/80 font-sanskrit hidden 2xl:inline">खोज</span>
+              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-amber-800" : "text-amber-400/80"}`}>खोज</span>
             </button>
 
             {/* 4. MY JOURNEY */}
@@ -202,15 +214,21 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setActiveTab("my-journey")}
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 relative cursor-pointer ${
                 isJourneyActive
-                  ? "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
+                  ? isLight
+                    ? "bg-amber-100 text-amber-950 border border-amber-300 shadow-xs ring-1 ring-amber-400/30 font-bold"
+                    : "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
+                  : isLight
+                  ? "text-stone-700 hover:text-stone-950 hover:bg-stone-200/60"
                   : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
               }`}
             >
-              <Compass className="w-4 h-4 text-amber-400" />
+              <Compass className="w-4 h-4 text-amber-500" />
               <span>My Journey</span>
-              <span className="text-[10px] text-amber-400/80 font-sanskrit hidden 2xl:inline">साधना</span>
+              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-amber-800" : "text-amber-400/80"}`}>साधना</span>
               {savedCount > 0 && (
-                <span className="bg-amber-500/30 text-amber-300 text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  isLight ? "bg-amber-200 text-amber-950" : "bg-amber-500/30 text-amber-300"
+                }`}>
                   {savedCount}
                 </span>
               )}
@@ -225,11 +243,15 @@ export const Header: React.FC<HeaderProps> = ({
               aria-label="Settings"
               className={`p-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer ${
                 isPreferencesActive
-                  ? "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
+                  ? isLight
+                    ? "bg-amber-100 text-amber-950 border border-amber-300 shadow-xs ring-1 ring-amber-400/30"
+                    : "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
+                  : isLight
+                  ? "text-stone-700 hover:text-stone-950 hover:bg-stone-200/60"
                   : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
               }`}
             >
-              <Sliders className="w-4 h-4 text-amber-400" />
+              <Sliders className="w-4 h-4 text-amber-500" />
             </button>
           </nav>
 

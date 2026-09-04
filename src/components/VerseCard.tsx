@@ -181,8 +181,8 @@ export const VerseCard: React.FC<VerseCardProps> = ({
         {/* Transliteration */}
         {item.transliteration && (
           <p
-            className={`text-xs font-mono italic mb-3 line-clamp-2 ${
-              isLight ? "text-[#614E3E]" : "text-stone-400"
+            className={`text-xs font-mono italic mb-3 leading-relaxed ${
+              isLight ? "text-[#5C4533]" : "text-stone-300"
             }`}
           >
             {item.transliteration}
@@ -192,8 +192,8 @@ export const VerseCard: React.FC<VerseCardProps> = ({
         {/* English Meaning */}
         {item.meaning && (
           <p
-            className={`text-sm leading-relaxed line-clamp-3 ${
-              isLight ? "text-[#3B291B]" : "text-stone-300"
+            className={`text-sm leading-relaxed ${
+              isLight ? "text-[#2B1B10] font-normal" : "text-stone-200"
             }`}
           >
             {item.meaning}

@@ -145,7 +145,7 @@ export function DonationModal({ isOpen, onClose, lang = "en" }: DonationModalPro
                       }`}
                     >
                       <div className="font-bold text-sm sm:text-base">{p.label}</div>
-                      <div className="text-[10px] text-stone-400 mt-1 line-clamp-2">{p.meaning}</div>
+                      <div className="text-[10px] text-stone-400 mt-1 leading-snug">{p.meaning}</div>
                     </button>
                   ))}
                 </div>

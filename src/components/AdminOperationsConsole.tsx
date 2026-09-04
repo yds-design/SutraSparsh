@@ -839,11 +839,11 @@ export const AdminOperationsConsole: React.FC<AdminOperationsConsoleProps> = ({ 
                       )}
                     </div>
 
-                    <p className="text-sm font-serif-devanagari text-amber-100/90 line-clamp-1">
+                    <p className="text-sm font-serif-devanagari text-amber-100/90 leading-relaxed whitespace-pre-line">
                       {item.body}
                     </p>
 
-                    <p className="text-xs text-stone-400 line-clamp-1">
+                    <p className="text-xs text-stone-400 leading-relaxed">
                       {item.meaning}
                     </p>
                   </div>

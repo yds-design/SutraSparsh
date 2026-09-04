@@ -328,10 +328,10 @@ export const ContentView: React.FC = () => {
                       )}
                     </div>
 
-                    <p className="font-sanskrit text-stone-300 text-xs sm:text-sm line-clamp-1">
+                    <p className="font-sanskrit text-stone-300 text-xs sm:text-sm leading-relaxed whitespace-pre-line">
                       {item.body}
                     </p>
-                    <p className="text-stone-400 text-xs line-clamp-1 italic font-light">
+                    <p className="text-stone-400 text-xs leading-relaxed italic font-light">
                       {item.meaning || item.transliteration}
                     </p>
                   </div>

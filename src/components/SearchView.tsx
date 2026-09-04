@@ -379,7 +379,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
                   </h3>
 
                   <p
-                    className={`font-sanskrit text-sm leading-relaxed line-clamp-3 ${
+                    className={`font-sanskrit text-sm leading-relaxed ${
                       isLight ? "text-[#1C0F05] font-semibold" : "text-amber-200/90"
                     }`}
                   >
@@ -388,10 +388,10 @@ export const SearchView: React.FC<SearchViewProps> = ({
 
                   {verse.meaning && (
                     <p
-                      className={`text-xs italic line-clamp-2 pt-1 border-t ${
+                      className={`text-xs italic leading-relaxed pt-1.5 border-t ${
                         isLight
                           ? "text-[#4D3929] border-stone-200"
-                          : "text-stone-400 border-stone-800/60"
+                          : "text-stone-300 border-stone-800/60"
                       }`}
                     >
                       "{verse.meaning}"

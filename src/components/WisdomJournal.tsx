@@ -391,11 +391,11 @@ ${v.meaning || "—"}
                       {verse.title}
                     </h4>
 
-                    <p className="font-sanskrit text-amber-200/90 text-sm line-clamp-2 leading-relaxed">
+                    <p className="font-sanskrit text-amber-200/90 text-sm leading-relaxed whitespace-pre-line">
                       {verse.body}
                     </p>
 
-                    <p className="text-xs text-stone-400 line-clamp-2">
+                    <p className="text-xs text-stone-400 leading-relaxed">
                       {verse.meaning}
                     </p>
                   </div>
