@@ -28,6 +28,7 @@ import type { ContentItem, JournalEntry } from "../types";
 import type { ReadingProgress } from "../types/progress";
 import { soundEngine } from "../utils/audio";
 import { progressService, type StreakData } from "../services/progress.service";
+import { useFeatureFlags } from "../services/feature-flags.service";
 
 interface MyJourneyViewProps {
   verses: ContentItem[];
@@ -65,6 +66,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
   const isLight = currentTheme === "light";
   const isFestival = currentTheme === "festival";
   const isAmethyst = currentTheme === "amethyst";
+  const { isSadhakaEnabled, isGurudakshinaEnabled } = useFeatureFlags();
 
   const bannerBgClass = isLight
     ? "bg-white border-stone-200 text-stone-900 shadow-md"
@@ -291,21 +293,23 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             <span>Recommendations</span>
           </button>
 
-          <button
-            onClick={() => setSubSection("membership")}
-            className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all ${
-              subSection === "membership"
-                ? isLight
-                  ? "bg-amber-100 text-amber-900 border border-amber-400 shadow-sm font-semibold"
-                  : "bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-200 border border-amber-400/40 shadow-sm"
-                : isLight
-                ? "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
-                : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
-            }`}
-          >
-            <Crown className="w-4 h-4 text-amber-400" />
-            <span>Membership & Seva</span>
-          </button>
+          {(isSadhakaEnabled || isGurudakshinaEnabled) && (
+            <button
+              onClick={() => setSubSection("membership")}
+              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all ${
+                subSection === "membership"
+                  ? isLight
+                    ? "bg-amber-100 text-amber-900 border border-amber-400 shadow-sm font-semibold"
+                    : "bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-200 border border-amber-400/40 shadow-sm"
+                  : isLight
+                  ? "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
+              }`}
+            >
+              <Crown className="w-4 h-4 text-amber-400" />
+              <span>Membership & Seva</span>
+            </button>
+          )}
 
           <button
             onClick={() => setSubSection("advocacy")}
@@ -567,23 +571,25 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             </div>
           </div>
 
-          {/* Value Recognition Prompt */}
-          <div className="bg-gradient-to-r from-amber-950/30 via-stone-900 to-stone-950 border border-amber-500/20 rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="space-y-1">
-              <span className="font-serif-sacred font-bold text-amber-100 text-sm sm:text-base">
-                "SutraSparsh has become part of my daily spiritual practice."
-              </span>
-              <p className="text-xs text-stone-400">
-                Deepen your journey with full audios, guided study paths, and offline chanting under Sādhaka Membership.
-              </p>
+          {/* Value Recognition Prompt (Phase 2 Feature: Shown when membership or seva is active) */}
+          {(isSadhakaEnabled || isGurudakshinaEnabled) && (
+            <div className="bg-gradient-to-r from-amber-950/30 via-stone-900 to-stone-950 border border-amber-500/20 rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="space-y-1">
+                <span className="font-serif-sacred font-bold text-amber-100 text-sm sm:text-base">
+                  "SutraSparsh has become part of my daily spiritual practice."
+                </span>
+                <p className="text-xs text-stone-400">
+                  Deepen your journey with full audios, guided study paths, and offline chanting under Sādhaka Membership.
+                </p>
+              </div>
+              <button
+                onClick={() => setSubSection("membership")}
+                className="shrink-0 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 text-xs font-bold transition-all"
+              >
+                Explore Membership & Seva →
+              </button>
             </div>
-            <button
-              onClick={() => setSubSection("membership")}
-              className="shrink-0 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 text-xs font-bold transition-all"
-            >
-              Explore Membership & Seva →
-            </button>
-          </div>
+          )}
         </div>
       )}
 
@@ -823,103 +829,116 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
         </div>
       )}
 
-      {/* SECTION 5: MEMBERSHIP & SEVA (30% BUSINESS LAYER PRESENTED NATURALLY) */}
+      {/* SECTION 5: MEMBERSHIP & SEVA (Phase 2 Features: Shown only when active) */}
       {subSection === "membership" && (
         <div className="space-y-8 animate-fadeIn">
           {/* Sādhaka & Rishi Plan Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className={`grid grid-cols-1 ${isSadhakaEnabled && isGurudakshinaEnabled ? "md:grid-cols-2" : "max-w-xl mx-auto"} gap-6`}>
             {/* Sādhaka Membership */}
-            <div className="bg-gradient-to-br from-stone-900 to-stone-950 border border-amber-500/40 rounded-3xl p-6 sm:p-8 space-y-6 relative shadow-2xl">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2 text-amber-400 text-xs font-mono uppercase tracking-wider">
-                    <Crown className="w-4 h-4" />
-                    <span>Sādhaka Membership</span>
+            {isSadhakaEnabled && (
+              <div className="bg-gradient-to-br from-stone-900 to-stone-950 border border-amber-500/40 rounded-3xl p-6 sm:p-8 space-y-6 relative shadow-2xl">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2 text-amber-400 text-xs font-mono uppercase tracking-wider">
+                      <Crown className="w-4 h-4" />
+                      <span>Sādhaka Membership</span>
+                    </div>
+                    <h3 className="font-serif-sacred text-2xl font-bold text-amber-100">
+                      Deepen Your Daily Practice
+                    </h3>
                   </div>
-                  <h3 className="font-serif-sacred text-2xl font-bold text-amber-100">
-                    Deepen Your Daily Practice
-                  </h3>
+                  <div className="text-right">
+                    <span className="font-mono text-2xl font-bold text-amber-300">₹199</span>
+                    <span className="text-xs text-stone-400">/mo</span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="font-mono text-2xl font-bold text-amber-300">₹199</span>
-                  <span className="text-xs text-stone-400">/mo</span>
-                </div>
+
+                <ul className="space-y-2.5 text-xs text-stone-300">
+                  <li className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Full Sanskrit audio chants with variable tempo pronunciation</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Complete Shankaracharya & Ramanuja comparative commentaries</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Offline study downloads for contemplative meditation</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Unlimited journal sync across devices</span>
+                  </li>
+                </ul>
+
+                <button
+                  onClick={onOpenPricing}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-bold text-xs shadow-lg hover:scale-105 transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                >
+                  <Zap className="w-4 h-4 fill-current" />
+                  <span>Begin Sādhaka Practice →</span>
+                </button>
               </div>
-
-              <ul className="space-y-2.5 text-xs text-stone-300">
-                <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>Full Sanskrit audio chants with variable tempo pronunciation</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>Complete Shankaracharya & Ramanuja comparative commentaries</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>Offline study downloads for contemplative meditation</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>Unlimited journal sync across devices</span>
-                </li>
-              </ul>
-
-              <button
-                onClick={onOpenPricing}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-bold text-xs shadow-lg hover:scale-105 transition-all flex items-center justify-center space-x-2"
-              >
-                <Zap className="w-4 h-4 fill-current" />
-                <span>Begin Sādhaka Practice →</span>
-              </button>
-            </div>
+            )}
 
             {/* Sacred Gurudakshina / Seva (80G Tax Exemption) */}
-            <div className="bg-gradient-to-br from-rose-950/20 via-stone-900 to-stone-950 border border-rose-800/40 rounded-3xl p-6 sm:p-8 space-y-6 relative shadow-2xl">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2 text-rose-400 text-xs font-mono uppercase tracking-wider">
-                    <Heart className="w-4 h-4 fill-rose-400/20" />
-                    <span>Sacred Seva & Gurudakshina</span>
+            {isGurudakshinaEnabled && (
+              <div className="bg-gradient-to-br from-rose-950/20 via-stone-900 to-stone-950 border border-rose-800/40 rounded-3xl p-6 sm:p-8 space-y-6 relative shadow-2xl">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2 text-rose-400 text-xs font-mono uppercase tracking-wider">
+                      <Heart className="w-4 h-4 fill-rose-400/20" />
+                      <span>Sacred Seva & Gurudakshina</span>
+                    </div>
+                    <h3 className="font-serif-sacred text-2xl font-bold text-rose-100">
+                      Preserve Vedic Heritage
+                    </h3>
                   </div>
-                  <h3 className="font-serif-sacred text-2xl font-bold text-rose-100">
-                    Preserve Vedic Heritage
-                  </h3>
+                  <div className="text-right">
+                    <span className="font-mono text-xs px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20">
+                      80G Tax Exempt
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="font-mono text-xs px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20">
-                    80G Tax Exempt
-                  </span>
-                </div>
+
+                <p className="text-xs text-stone-300 leading-relaxed">
+                  Support the scholarly digitization, audio chanting archival, and free open access of ancient Sanskrit wisdom for seekers worldwide.
+                </p>
+
+                <ul className="space-y-2.5 text-xs text-stone-300">
+                  <li className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span>Instant 80G Tax Exemption receipt generation</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span>Preserves endangered Vedic manuscripts & chanting oral traditions</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span>Transparent ashram & scholarship allocation</span>
+                  </li>
+                </ul>
+
+                <button
+                  onClick={onOpenDonation}
+                  className="w-full py-3 rounded-xl bg-rose-950/80 border border-rose-700/80 text-rose-200 hover:bg-rose-900 font-bold text-xs shadow-lg transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                >
+                  <Heart className="w-4 h-4 text-rose-400 fill-current" />
+                  <span>Offer Seva / Gurudakshina →</span>
+                </button>
               </div>
+            )}
 
-              <p className="text-xs text-stone-300 leading-relaxed">
-                Support the scholarly digitization, audio chanting archival, and free open access of ancient Sanskrit wisdom for seekers worldwide.
-              </p>
-
-              <ul className="space-y-2.5 text-xs text-stone-300">
-                <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span>Instant 80G Tax Exemption receipt generation</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span>Preserves endangered Vedic manuscripts & chanting oral traditions</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span>Transparent ashram & scholarship allocation</span>
-                </li>
-              </ul>
-
-              <button
-                onClick={onOpenDonation}
-                className="w-full py-3 rounded-xl bg-rose-950/80 border border-rose-700/80 text-rose-200 hover:bg-rose-900 font-bold text-xs shadow-lg transition-all flex items-center justify-center space-x-2"
-              >
-                <Heart className="w-4 h-4 text-rose-400 fill-current" />
-                <span>Offer Seva / Gurudakshina →</span>
-              </button>
-            </div>
+            {!isSadhakaEnabled && !isGurudakshinaEnabled && (
+              <div className="col-span-full text-center py-12 p-6 rounded-3xl bg-stone-900/50 border border-stone-800 space-y-2">
+                <p className="font-serif-sacred text-amber-200 text-base font-bold">Phase 1 Sanctuary</p>
+                <p className="text-stone-400 text-xs max-w-md mx-auto">
+                  Sādhaka and Gurudakshina portals are currently reserved for Phase 2 launch. Enjoy complete, uninterrupted sacred study.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { soundEngine } from "../utils/audio";
 import { authService, type SeekerUser } from "../services/auth.service";
+import { useFeatureFlags } from "../services/feature-flags.service";
 
 export type NavTab =
   | "today"
@@ -60,6 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAuth,
   onOpenAssets,
 }) => {
+  const { isSadhakaEnabled, isGurudakshinaEnabled } = useFeatureFlags();
   const [currentUser, setCurrentUser] = React.useState<SeekerUser | null>(() =>
     authService.getCurrentUser()
   );
@@ -396,8 +398,8 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Sacred Gurudakshina & Seva Button */}
-            {onOpenDonation && (
+            {/* Sacred Gurudakshina & Seva Button (Phase 2 Feature: Disabled by default) */}
+            {onOpenDonation && isGurudakshinaEnabled && (
               <button
                 type="button"
                 onClick={onOpenDonation}
@@ -409,8 +411,8 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Sādhaka Sacred Membership Button (Desktop/Tablet; shifted to More view on mobile) */}
-            {onOpenPricing && (
+            {/* Sādhaka Sacred Membership Button (Phase 2 Feature: Disabled by default) */}
+            {onOpenPricing && isSadhakaEnabled && (
               <button
                 type="button"
                 onClick={onOpenPricing}

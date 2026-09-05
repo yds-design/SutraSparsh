@@ -27,6 +27,7 @@ import {
 import { soundEngine } from "../utils/audio";
 import { recitationEngine } from "../utils/recitationEngine";
 import { progressService, type StreakData } from "../services/progress.service";
+import { useFeatureFlags } from "../services/feature-flags.service";
 
 interface MoreViewProps {
   theme?: "sandstone" | "amethyst" | "light" | "festival";
@@ -54,6 +55,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
   const isLight = theme === "light";
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
+  const { isSadhakaEnabled, isGurudakshinaEnabled } = useFeatureFlags();
 
   // Device classification: Admin Console is strictly enabled ONLY from device: screen
   const [isScreenDevice, setIsScreenDevice] = useState<boolean>(() => {
@@ -452,55 +454,57 @@ export const MoreView: React.FC<MoreViewProps> = ({
         </div>
       </div>
 
-      {/* SĀDHAKA SACRED MEMBERSHIP (Shifted from top toolbar for mobiles & more filter) */}
-      <div
-        id="more-view-sadhaka-membership-card"
-        className="p-5 sm:p-6 rounded-3xl border shadow-lg space-y-4 relative overflow-hidden"
-        style={{
-          backgroundColor: cardBg,
-          borderColor: isLight ? "#E6D7C3" : "rgba(245, 158, 11, 0.35)",
-        }}
-      >
-        {/* Sacred ambient glow */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* SĀDHAKA SACRED MEMBERSHIP (Phase 2 Feature: Disabled across all devices by default) */}
+      {isSadhakaEnabled && (
+        <div
+          id="more-view-sadhaka-membership-card"
+          className="p-5 sm:p-6 rounded-3xl border shadow-lg space-y-4 relative overflow-hidden"
+          style={{
+            backgroundColor: cardBg,
+            borderColor: isLight ? "#E6D7C3" : "rgba(245, 158, 11, 0.35)",
+          }}
+        >
+          {/* Sacred ambient glow */}
+          <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-1.5 min-w-0 flex-1">
-            <div className="flex items-center space-x-2 flex-wrap">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-stone-950 shadow-xs flex-shrink-0">
-                <Zap className="w-4 h-4 fill-stone-950 text-stone-950" />
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-1.5 min-w-0 flex-1">
+              <div className="flex items-center space-x-2 flex-wrap">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-stone-950 shadow-xs flex-shrink-0">
+                  <Zap className="w-4 h-4 fill-stone-950 text-stone-950" />
+                </div>
+                <h2 className="font-serif-sacred text-base sm:text-lg font-bold truncate" style={{ color: textPrimary }}>
+                  Sādhaka Sacred Membership • साधक
+                </h2>
+                <span
+                  className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider"
+                  style={{
+                    backgroundColor: isLight ? "rgba(185,104,13,0.12)" : "rgba(245,158,11,0.2)",
+                    color: isLight ? "#8C4A00" : "#FCD34D",
+                  }}
+                >
+                  Sacred Tier
+                </span>
               </div>
-              <h2 className="font-serif-sacred text-base sm:text-lg font-bold truncate" style={{ color: textPrimary }}>
-                Sādhaka Sacred Membership • साधक
-              </h2>
-              <span
-                className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider"
-                style={{
-                  backgroundColor: isLight ? "rgba(185,104,13,0.12)" : "rgba(245,158,11,0.2)",
-                  color: isLight ? "#8C4A00" : "#FCD34D",
-                }}
-              >
-                Sacred Tier
-              </span>
+              <p className="text-xs sm:text-sm leading-relaxed" style={{ color: textSecondary }}>
+                Deepen your daily sadhana with authentic 432Hz Vedic recitation chants, offline study, personalized journey bookmarks, and unlimited access to the entire Sanskrit scripture corpus.
+              </p>
             </div>
-            <p className="text-xs sm:text-sm leading-relaxed" style={{ color: textSecondary }}>
-              Deepen your daily sadhana with authentic 432Hz Vedic recitation chants, offline study, personalized journey bookmarks, and unlimited access to the entire Sanskrit scripture corpus.
-            </p>
-          </div>
 
-          <button
-            type="button"
-            id="btn-more-open-sadhaka"
-            onClick={onOpenPricing}
-            className="flex-shrink-0 py-3 px-5 rounded-2xl font-bold text-xs sm:text-sm bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-stone-950 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2 cursor-pointer touch-manipulation"
-            title="Open Sādhaka Sacred Membership"
-          >
-            <Zap className="w-4 h-4 fill-current" />
-            <span>Sādhaka Membership</span>
-            <ChevronRight className="w-4 h-4" />
-          </button>
+            <button
+              type="button"
+              id="btn-more-open-sadhaka"
+              onClick={onOpenPricing}
+              className="flex-shrink-0 py-3 px-5 rounded-2xl font-bold text-xs sm:text-sm bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-stone-950 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2 cursor-pointer touch-manipulation"
+              title="Open Sādhaka Sacred Membership"
+            >
+              <Zap className="w-4 h-4 fill-current" />
+              <span>Sādhaka Membership</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 3. SCRIPT & RECITATION PREFERENCES */}
       <div
@@ -845,60 +849,66 @@ export const MoreView: React.FC<MoreViewProps> = ({
         </div>
       </div>
 
-      {/* 5. MEMBERSHIP, SEVA & ADMIN ROW */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Sādhaka Sacred Membership */}
-        <div
-          className="p-5 rounded-3xl border flex flex-col justify-between space-y-3"
-          style={{
-            backgroundColor: cardBg,
-            borderColor: cardBorder,
-          }}
-        >
-          <div>
-            <div className="flex items-center space-x-2 text-amber-500 font-bold text-sm mb-1">
-              <Crown className="w-4 h-4 fill-amber-500/30" />
-              <span>Sādhaka Sacred Membership</span>
+      {/* 5. MEMBERSHIP & SEVA ROW (Phase 2 Features: Shown only when activated from Admin Console) */}
+      {(isSadhakaEnabled || isGurudakshinaEnabled) && (
+        <div className={`grid grid-cols-1 ${isSadhakaEnabled && isGurudakshinaEnabled ? "sm:grid-cols-2" : "sm:grid-cols-1"} gap-4`}>
+          {/* Sādhaka Sacred Membership */}
+          {isSadhakaEnabled && (
+            <div
+              className="p-5 rounded-3xl border flex flex-col justify-between space-y-3"
+              style={{
+                backgroundColor: cardBg,
+                borderColor: cardBorder,
+              }}
+            >
+              <div>
+                <div className="flex items-center space-x-2 text-amber-500 font-bold text-sm mb-1">
+                  <Crown className="w-4 h-4 fill-amber-500/30" />
+                  <span>Sādhaka Sacred Membership</span>
+                </div>
+                <p className="text-xs leading-relaxed" style={{ color: textSecondary }}>
+                  Unlock unlimited offline recitations, guided tracks, and ad-free contemplation sanctuary.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onOpenPricing}
+                className="w-full py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 shadow hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              >
+                View Sādhaka Plans
+              </button>
             </div>
-            <p className="text-xs leading-relaxed" style={{ color: textSecondary }}>
-              Unlock unlimited offline recitations, guided tracks, and ad-free contemplation sanctuary.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onOpenPricing}
-            className="w-full py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 shadow hover:scale-105 active:scale-95 transition-all cursor-pointer"
-          >
-            View Sādhaka Plans
-          </button>
-        </div>
+          )}
 
-        {/* Gurudakshina & Seva */}
-        <div
-          className="p-5 rounded-3xl border flex flex-col justify-between space-y-3"
-          style={{
-            backgroundColor: cardBg,
-            borderColor: cardBorder,
-          }}
-        >
-          <div>
-            <div className="flex items-center space-x-2 text-rose-500 font-bold text-sm mb-1">
-              <Heart className="w-4 h-4 fill-rose-500/30" />
-              <span>Sacred Gurudakshina (Seva)</span>
+          {/* Gurudakshina & Seva */}
+          {isGurudakshinaEnabled && (
+            <div
+              className="p-5 rounded-3xl border flex flex-col justify-between space-y-3"
+              style={{
+                backgroundColor: cardBg,
+                borderColor: cardBorder,
+              }}
+            >
+              <div>
+                <div className="flex items-center space-x-2 text-rose-500 font-bold text-sm mb-1">
+                  <Heart className="w-4 h-4 fill-rose-500/30" />
+                  <span>Sacred Gurudakshina (Seva)</span>
+                </div>
+                <p className="text-xs leading-relaxed" style={{ color: textSecondary }}>
+                  Support preservation and digital dissemination of Vedic & Sanskrit heritage. 80G Tax Exempt.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onOpenDonation}
+                className="w-full py-2.5 rounded-xl text-xs font-bold border border-rose-500/50 text-rose-400 hover:bg-rose-950/30 transition-all cursor-pointer"
+              >
+                Offer Seva / Gurudakshina
+              </button>
             </div>
-            <p className="text-xs leading-relaxed" style={{ color: textSecondary }}>
-              Support preservation and digital dissemination of Vedic & Sanskrit heritage. 80G Tax Exempt.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onOpenDonation}
-            className="w-full py-2.5 rounded-xl text-xs font-bold border border-rose-500/50 text-rose-400 hover:bg-rose-950/30 transition-all cursor-pointer"
-          >
-            Offer Seva / Gurudakshina
-          </button>
+          )}
         </div>
-      </div>
+      )}
 
       {/* 6. TEMPLE ADMIN CONSOLE BUTTON - Enabled ONLY from device: screen; disabled on all other devices */}
       <div className="pt-3">

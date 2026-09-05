@@ -22,6 +22,7 @@ import {
 import { soundEngine } from "../utils/audio";
 import { progressService, type StreakData } from "../services/progress.service";
 import { authService, type SeekerUser } from "../services/auth.service";
+import { useFeatureFlags } from "../services/feature-flags.service";
 
 interface SadhakaProfileModalProps {
   isOpen: boolean;
@@ -50,6 +51,7 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
   onOpenAuth,
   onOpenPrivacy,
 }) => {
+  const { isSadhakaEnabled, isGurudakshinaEnabled } = useFeatureFlags();
   const [streakData, setStreakData] = React.useState<StreakData>(() =>
     progressService.getStreakData()
   );
@@ -331,42 +333,44 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
             </div>
           </div>
 
-          {/* Sādhaka Membership Banner */}
-          <div
-            className="p-4 rounded-2xl border relative overflow-hidden"
-            style={{
-              background: isLight
-                ? "linear-gradient(135deg, #F6EDE1, #FFFBF5)"
-                : isFestival
-                ? "linear-gradient(135deg, #7A1825, #4B0E17)"
-                : "linear-gradient(135deg, #2E1C12, #1C120B)",
-              borderColor: "#D88916",
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center space-x-1.5">
-                  <Crown className="w-4 h-4 text-amber-500 fill-amber-500/20" />
-                  <span className="text-xs font-bold" style={{ color: isLight ? "#3A2818" : "#F4E9D2" }}>
-                    Sādhaka Sacred Membership
-                  </span>
+          {/* Sādhaka Membership Banner (Phase 2: Gated) */}
+          {isSadhakaEnabled && (
+            <div
+              className="p-4 rounded-2xl border relative overflow-hidden"
+              style={{
+                background: isLight
+                  ? "linear-gradient(135deg, #F6EDE1, #FFFBF5)"
+                  : isFestival
+                  ? "linear-gradient(135deg, #7A1825, #4B0E17)"
+                  : "linear-gradient(135deg, #2E1C12, #1C120B)",
+                borderColor: "#D88916",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-1.5">
+                    <Crown className="w-4 h-4 text-amber-500 fill-amber-500/20" />
+                    <span className="text-xs font-bold" style={{ color: isLight ? "#3A2818" : "#F4E9D2" }}>
+                      Sādhaka Sacred Membership
+                    </span>
+                  </div>
+                  <p className="text-[11px]" style={{ color: isLight ? "#8A7763" : "#B9A995" }}>
+                    Unlimited chants, offline audio packs, and guided paths.
+                  </p>
                 </div>
-                <p className="text-[11px]" style={{ color: isLight ? "#8A7763" : "#B9A995" }}>
-                  Unlimited chants, offline audio packs, and guided paths.
-                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenPricing();
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 shadow hover:scale-105 active:scale-95 transition-all flex-shrink-0 cursor-pointer"
+                >
+                  Upgrade
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onOpenPricing();
-                }}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 shadow hover:scale-105 active:scale-95 transition-all flex-shrink-0 cursor-pointer"
-              >
-                Upgrade
-              </button>
             </div>
-          </div>
+          )}
 
           {/* Quick Atmosphere Selector (Dark, Light, Festival) */}
           {onSelectTheme && (
@@ -445,23 +449,25 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
               <ArrowRight className="w-4 h-4 text-stone-400" />
             </button>
 
-            <button
-              onClick={() => {
-                onClose();
-                onOpenDonation();
-              }}
-              className="w-full py-3 px-4 rounded-xl border flex items-center justify-between text-xs font-bold transition-all hover:bg-white/5 active:scale-[0.99] cursor-pointer"
-              style={{
-                borderColor: isLight ? "#E6D7C3" : "rgba(255, 255, 255, 0.08)",
-                color: isLight ? "#3A2818" : "#F4E9D2",
-              }}
-            >
-              <div className="flex items-center space-x-2.5">
-                <Heart className="w-4 h-4 text-rose-500 fill-rose-500/20" />
-                <span>Sacred Gurudakshina / Seva (80G Exemption)</span>
-              </div>
-              <ArrowRight className="w-4 h-4 text-stone-400" />
-            </button>
+            {isGurudakshinaEnabled && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenDonation();
+                }}
+                className="w-full py-3 px-4 rounded-xl border flex items-center justify-between text-xs font-bold transition-all hover:bg-white/5 active:scale-[0.99] cursor-pointer"
+                style={{
+                  borderColor: isLight ? "#E6D7C3" : "rgba(255, 255, 255, 0.08)",
+                  color: isLight ? "#3A2818" : "#F4E9D2",
+                }}
+              >
+                <div className="flex items-center space-x-2.5">
+                  <Heart className="w-4 h-4 text-rose-500 fill-rose-500/20" />
+                  <span>Sacred Gurudakshina / Seva (80G Exemption)</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-stone-400" />
+              </button>
+            )}
 
             {/* Auth Sign In / Sign Off Action */}
             {currentUser ? (

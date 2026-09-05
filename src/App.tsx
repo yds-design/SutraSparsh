@@ -21,6 +21,7 @@ import { AuthModal } from "./components/AuthModal";
 import { PrivacyPolicyModal } from "./components/PrivacyPolicyModal";
 import { StoreAssetsViewer } from "./components/StoreAssetsViewer";
 import type { SubscriptionPlanId } from "./types/monetization";
+import { useFeatureFlags } from "./services/feature-flags.service";
 
 const TRADITIONS = ["All", "Bhagavad Gita", "Patanjali", "Upanishads", "Vedas"];
 const CATEGORIES = ["All", "Karma Yoga", "Raja Yoga", "Mind & Meditation", "Jnana / Vedanta", "Vedic Chants"];
@@ -44,6 +45,7 @@ export default function App() {
     }
     return "user";
   });
+  const { isSadhakaEnabled, isGurudakshinaEnabled } = useFeatureFlags();
   const [activeTab, setActiveTab] = useState<NavTab>("today");
   const [verses, setVerses] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -655,9 +657,9 @@ export default function App() {
         onSaveJournalNote={handleSaveJournalNote}
       />
 
-      {/* Global Monetization & Billing Modals (Phases 16–21) */}
+      {/* Global Monetization & Billing Modals (Phase 2 Features: Gated by Feature Flags) */}
       <PricingModal
-        isOpen={isPricingOpen}
+        isOpen={isPricingOpen && isSadhakaEnabled}
         onClose={() => setIsPricingOpen(false)}
         onSuccessSubscription={() => {
           setActiveTab("my-journey");
@@ -666,15 +668,17 @@ export default function App() {
 
       {/* Donation Modal */}
       <DonationModal
-        isOpen={isDonationOpen}
+        isOpen={isDonationOpen && isGurudakshinaEnabled}
         onClose={() => setIsDonationOpen(false)}
       />
 
       {/* Paywall Modal */}
       <PaywallModal
-        isOpen={isPaywallOpen}
+        isOpen={isPaywallOpen && isSadhakaEnabled}
         onClose={() => setIsPaywallOpen(false)}
-        onOpenPricing={() => setIsPricingOpen(true)}
+        onOpenPricing={() => {
+          if (isSadhakaEnabled) setIsPricingOpen(true);
+        }}
         featureTitle={paywallFeature.title}
         featureDescription={paywallFeature.description}
       />

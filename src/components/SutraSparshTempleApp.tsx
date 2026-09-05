@@ -58,6 +58,7 @@ import type { ReadingProgress } from "../types/progress";
 import type { ShareableContent } from "../types/sharing";
 import { soundEngine } from "../utils/audio";
 import { speechSafetyEngine } from "../utils/speech";
+import { useFeatureFlags } from "../services/feature-flags.service";
 import { recitationEngine, type RecitationState } from "../utils/recitationEngine";
 import { matchesSanskritQuery } from "../utils/sanskritSearch";
 import {
@@ -93,6 +94,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   initialSubScreen = "none",
   onNavigateTab,
 }) => {
+  const { isSadhakaEnabled, isGurudakshinaEnabled } = useFeatureFlags();
   // Theme state
   const [internalTheme, setInternalTheme] = useState<AppTheme>(() => {
     try {
@@ -1578,47 +1580,51 @@ ${reflections
                   </div>
                 </div>
 
-                {/* 7. Sacred Gurudakshina / Seva */}
-                <div
-                  onClick={() => onOpenDonation?.()}
-                  className="p-3 sm:p-3.5 rounded-2xl cursor-pointer hover:opacity-95 transition-all shadow-md active:scale-95 border border-rose-600/40 group flex flex-col justify-between min-h-[102px]"
-                  style={{ background: "linear-gradient(145deg, #7A1825, #4B0E17)" }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Sacred Seva and Gurudakshina"
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xl group-hover:scale-110 transition-transform">💛</span>
-                    <span className="text-[9px] font-bold uppercase tracking-wider bg-white/20 text-amber-200 px-1.5 py-0.5 rounded-md">
-                      80G Tax
-                    </span>
+                {/* 7. Sacred Gurudakshina / Seva (Phase 2 Feature: Disabled by default) */}
+                {isGurudakshinaEnabled && (
+                  <div
+                    onClick={() => onOpenDonation?.()}
+                    className="p-3 sm:p-3.5 rounded-2xl cursor-pointer hover:opacity-95 transition-all shadow-md active:scale-95 border border-rose-600/40 group flex flex-col justify-between min-h-[102px]"
+                    style={{ background: "linear-gradient(145deg, #7A1825, #4B0E17)" }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Sacred Seva and Gurudakshina"
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xl group-hover:scale-110 transition-transform">💛</span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider bg-white/20 text-amber-200 px-1.5 py-0.5 rounded-md">
+                        80G Tax
+                      </span>
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-[#FFF6E3] tracking-tight leading-tight break-words">Gurudakshina</div>
+                      <div className="text-[10px] text-amber-200/80 font-medium leading-tight mt-0.5">Sacred Seva</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-sm font-bold text-[#FFF6E3] tracking-tight leading-tight break-words">Gurudakshina</div>
-                    <div className="text-[10px] text-amber-200/80 font-medium leading-tight mt-0.5">Sacred Seva</div>
-                  </div>
-                </div>
+                )}
 
-                {/* 8. Sādhaka Club / Membership */}
-                <div
-                  onClick={() => onOpenPricing?.()}
-                  className="p-3 sm:p-3.5 rounded-2xl cursor-pointer hover:opacity-95 transition-all shadow-md active:scale-95 border border-amber-500/30 group flex flex-col justify-between min-h-[102px]"
-                  style={{ background: "linear-gradient(145deg, #2D1B4E, #1A0D2E)" }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Sādhaka Membership Access"
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xl group-hover:scale-110 transition-transform">⚡</span>
-                    <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded-md">
-                      Premium
-                    </span>
+                {/* 8. Sādhaka Club / Membership (Phase 2 Feature: Disabled by default) */}
+                {isSadhakaEnabled && (
+                  <div
+                    onClick={() => onOpenPricing?.()}
+                    className="p-3 sm:p-3.5 rounded-2xl cursor-pointer hover:opacity-95 transition-all shadow-md active:scale-95 border border-amber-500/30 group flex flex-col justify-between min-h-[102px]"
+                    style={{ background: "linear-gradient(145deg, #2D1B4E, #1A0D2E)" }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Sādhaka Membership Access"
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xl group-hover:scale-110 transition-transform">⚡</span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded-md">
+                        Premium
+                      </span>
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-amber-200 tracking-tight leading-tight break-words">Sādhaka Access</div>
+                      <div className="text-[10px] text-purple-200/80 font-medium leading-tight mt-0.5">Exclusive Corpus</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-sm font-bold text-amber-200 tracking-tight leading-tight break-words">Sādhaka Access</div>
-                    <div className="text-[10px] text-purple-200/80 font-medium leading-tight mt-0.5">Exclusive Corpus</div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
