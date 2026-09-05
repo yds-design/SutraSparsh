@@ -42,6 +42,11 @@ import {
   Copy,
   Calendar,
   CheckCheck,
+  ChevronDown,
+  ChevronUp,
+  Minus,
+  Plus,
+  Sunrise,
 } from "lucide-react";
 import { ShareModal } from "./ShareModal";
 import { MoreView } from "./MoreView";
@@ -268,6 +273,62 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   // Share Modal state
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareableContent, setShareableContent] = useState<ShareableContent | null>(null);
+
+  // Collapsible section state for Home Screen (Block 4: Brahma Muhūrta & Explore Sacred Scriptures)
+  const [isCollapsibleSectionOpen, setIsCollapsibleSectionOpen] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem("sutrasparsh_collapse_sec4");
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
+  });
+  const [isBrahmaMuhurtaOpen, setIsBrahmaMuhurtaOpen] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem("sutrasparsh_collapse_muhurta");
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
+  });
+  const [isExploreScripturesOpen, setIsExploreScripturesOpen] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem("sutrasparsh_collapse_scriptures");
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleCollapsibleSection = () => {
+    setIsCollapsibleSectionOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("sutrasparsh_collapse_sec4", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const toggleBrahmaMuhurta = () => {
+    setIsBrahmaMuhurtaOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("sutrasparsh_collapse_muhurta", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const toggleExploreScriptures = () => {
+    setIsExploreScripturesOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("sutrasparsh_collapse_scriptures", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
 
   // Quick Access Scroller state & helpers
   const quickAccessRef = React.useRef<HTMLDivElement>(null);
@@ -957,17 +1018,18 @@ ${reflections
         {/* 1. HOME SCREEN */}
         {activeTab === "home" && subScreen === "none" && (
           <div className="space-y-5 animate-fadeIn">
-            {/* Greeting & Date Navigation in 1 single clean line */}
-            <div className="px-5 pt-2 pb-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
-              <div className="flex items-center space-x-2 min-w-0">
-                <span
-                  className="text-[11px] font-extrabold tracking-widest uppercase flex-shrink-0"
+            {/* Greeting & Date Navigation: Line 1 = Day's greeting, Line 2 = "Take a moment with today's wisdom" */}
+            <div className="px-5 pt-2 pb-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="flex flex-col min-w-0">
+                {/* 1st line: Day's greeting */}
+                <div
+                  className="text-[11px] font-extrabold tracking-widest uppercase"
                   style={{ color: themeGoldLight }}
                 >
                   {getGreeting()}
-                </span>
-                <span className="text-stone-500 text-xs flex-shrink-0">·</span>
-                <h2 className={`font-serif-sacred text-base sm:text-lg font-bold ${themeTextColor} leading-snug`}>
+                </div>
+                {/* 2nd line: Take a moment with today's wisdom */}
+                <h2 className={`font-serif-sacred text-base sm:text-lg font-bold ${themeTextColor} leading-snug mt-0.5`}>
                   Take a moment with today's wisdom
                 </h2>
               </div>
@@ -1016,9 +1078,7 @@ ${reflections
               </div>
             </div>
 
-            {/* Brahma Muhūrta Live Countdown & Dawn Awakening Timer */}
-            <BrahmaMuhurtaTimer theme={theme} onOpenPref={() => setSubScreen("pref")} />
-
+            {/* 1. DAILY SHLOKA ROTATION SECTION */}
             {/* Today's Wisdom Card (Dynamic Daily Rotation) */}
             <div className={`mx-4 p-5 sm:p-6 rounded-3xl ${themeCardDark} space-y-4 shadow-xl`}>
               <div className="flex items-center justify-between">
@@ -1233,38 +1293,140 @@ ${reflections
               </div>
             </div>
 
-            {/* EXPLORE WISDOM CORPUS */}
-            <div className="px-4 space-y-2.5 pt-2">
-              <div className="px-1">
-                <span
-                  className="text-[10.5px] font-extrabold tracking-widest uppercase"
-                  style={{ color: themeGoldLight }}
-                >
-                  EXPLORE SACRED SCRIPTURES
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { label: "📗 Bhagavad Gita", action: () => openScriptureScreen("bhagavad_gita") },
-                  { label: "🧘 Yoga Sutras", action: () => openScriptureScreen("yoga_sutras") },
-                  { label: "📜 Isha Upanishad", action: () => openScriptureScreen("isha_upanishad") },
-                  { label: "🕉️ Mandukya Upanishad", action: () => openScriptureScreen("mandukya_upanishad") },
-                  { label: "💎 Vivekachudamani", action: () => openScriptureScreen("vivekachudamani") },
-                  { label: "⚔️ Ashtavakra Gita", action: () => openScriptureScreen("ashtavakra_gita") },
-                ].map((chip, idx) => (
-                  <button
-                    key={idx}
-                    onClick={chip.action}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
-                      isLight
-                        ? "border-stone-300 bg-white text-stone-800 hover:bg-amber-50 hover:border-amber-400 shadow-xs"
-                        : "border-white/10 bg-white/5 text-stone-200 hover:bg-amber-500/10 hover:border-amber-500/30"
-                    }`}
+            {/* 4. WITH COLLAPSIBLE OPTION: 1. Brahma Muhūrta section, 2. EXPLORE SACRED SCRIPTURES */}
+            <div className="space-y-3 pt-1">
+              <div className="px-5 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-amber-500 text-xs">🌅</span>
+                  <span
+                    className="text-[10.5px] font-extrabold tracking-widest uppercase"
+                    style={{ color: themeGoldLight }}
                   >
-                    {chip.label}
-                  </button>
-                ))}
+                    Brahma Muhūrta & Scriptures • ब्रह्म मुहूर्त एवं शास्त्र
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={toggleCollapsibleSection}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center space-x-1.5 border transition-colors cursor-pointer ${
+                    isLight
+                      ? "bg-white hover:bg-stone-100 text-stone-800 border-stone-300 shadow-xs"
+                      : "bg-white/5 hover:bg-white/10 text-amber-300 border-white/10"
+                  }`}
+                  aria-expanded={isCollapsibleSectionOpen}
+                  aria-label="Toggle Brahma Muhurta and Scriptures section"
+                >
+                  <span>{isCollapsibleSectionOpen ? "Collapse" : "Expand"}</span>
+                  {isCollapsibleSectionOpen ? (
+                    <Minus className="w-3 h-3 text-amber-500" />
+                  ) : (
+                    <Plus className="w-3 h-3 text-amber-500" />
+                  )}
+                </button>
               </div>
+
+              {isCollapsibleSectionOpen && (
+                <div className="space-y-4 animate-fadeIn">
+                  {/* 4.1 Brahma Muhūrta section (with collapsible toggle) */}
+                  <div className="space-y-1.5">
+                    <div className="px-5 flex items-center justify-between text-[11px]">
+                      <span className={`font-semibold flex items-center space-x-1.5 ${isLight ? "text-stone-700" : "text-stone-300"}`}>
+                        <span className="font-mono text-[10px] text-amber-500">4.1</span>
+                        <span>Brahma Muhūrta Section</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={toggleBrahmaMuhurta}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded border transition-colors cursor-pointer ${
+                          isLight ? "bg-stone-100 text-stone-700 border-stone-200" : "bg-white/5 text-amber-400/90 border-white/10"
+                        }`}
+                        title={isBrahmaMuhurtaOpen ? "Collapse Brahma Muhurta" : "Expand Brahma Muhurta"}
+                      >
+                        {isBrahmaMuhurtaOpen ? "— Collapse" : "+ Expand"}
+                      </button>
+                    </div>
+
+                    {isBrahmaMuhurtaOpen ? (
+                      <BrahmaMuhurtaTimer theme={theme} onOpenPref={() => setSubScreen("pref")} />
+                    ) : (
+                      <div
+                        onClick={toggleBrahmaMuhurta}
+                        className={`mx-4 px-4 py-2.5 rounded-2xl border cursor-pointer flex items-center justify-between text-xs transition-colors ${
+                          isLight
+                            ? "bg-amber-50 border-amber-200 text-stone-800 hover:bg-amber-100/70"
+                            : "bg-stone-900/50 border-amber-500/20 text-amber-300 hover:bg-stone-900/80"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <Sunrise className="w-4 h-4 text-amber-500" />
+                          <span className="font-bold">Brahma Muhūrta Window (04:30 – 05:18 AM)</span>
+                        </div>
+                        <span className="text-[10.5px] font-mono text-amber-500">Tap to expand →</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 4.2 EXPLORE SACRED SCRIPTURES (with collapsible toggle) */}
+                  <div className="px-4 space-y-2.5">
+                    <div className="flex items-center justify-between px-1">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="font-mono text-[10px] text-amber-500">4.2</span>
+                        <span
+                          className="text-[10.5px] font-extrabold tracking-widest uppercase"
+                          style={{ color: themeGoldLight }}
+                        >
+                          EXPLORE SACRED SCRIPTURES
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          type="button"
+                          onClick={toggleExploreScriptures}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded border transition-colors cursor-pointer ${
+                            isLight ? "bg-stone-100 text-stone-700 border-stone-200" : "bg-white/5 text-amber-400/90 border-white/10"
+                          }`}
+                          title={isExploreScripturesOpen ? "Collapse Scriptures" : "Expand Scriptures"}
+                        >
+                          {isExploreScripturesOpen ? "— Collapse" : "+ Expand"}
+                        </button>
+                        <button
+                          onClick={() => setActiveTab("explore")}
+                          className={`text-xs font-bold transition-colors ${
+                            isLight ? "text-amber-800 hover:text-amber-950" : "text-stone-400 hover:text-amber-300"
+                          }`}
+                        >
+                          View all
+                        </button>
+                      </div>
+                    </div>
+
+                    {isExploreScripturesOpen && (
+                      <div className="flex flex-wrap gap-2 animate-fadeIn">
+                        {[
+                          { label: "📗 Bhagavad Gita", action: () => openScriptureScreen("bhagavad_gita") },
+                          { label: "🧘 Yoga Sutras", action: () => openScriptureScreen("yoga_sutras") },
+                          { label: "📜 Isha Upanishad", action: () => openScriptureScreen("isha_upanishad") },
+                          { label: "🕉️ Mandukya Upanishad", action: () => openScriptureScreen("mandukya_upanishad") },
+                          { label: "💎 Vivekachudamani", action: () => openScriptureScreen("vivekachudamani") },
+                          { label: "⚔️ Ashtavakra Gita", action: () => openScriptureScreen("ashtavakra_gita") },
+                        ].map((chip, idx) => (
+                          <button
+                            key={idx}
+                            onClick={chip.action}
+                            className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
+                              isLight
+                                ? "border-stone-300 bg-white text-stone-800 hover:bg-amber-50 hover:border-amber-400 shadow-xs"
+                                : "border-white/10 bg-white/5 text-stone-200 hover:bg-amber-500/10 hover:border-amber-500/30"
+                            }`}
+                          >
+                            {chip.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* QUICK ACCESS TILES (ENHANCED 2-ROW RESPONSIVE GRID) */}

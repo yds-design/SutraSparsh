@@ -22,6 +22,7 @@ import {
   ExternalLink,
   Lock,
   Monitor,
+  Zap,
 } from "lucide-react";
 import { soundEngine } from "../utils/audio";
 import { recitationEngine } from "../utils/recitationEngine";
@@ -448,6 +449,56 @@ export const MoreView: React.FC<MoreViewProps> = ({
               <span className="w-3.5 h-3.5 rounded-full bg-[#FFD54A]" title="Golden #FFD54A" />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* SĀDHAKA SACRED MEMBERSHIP (Shifted from top toolbar for mobiles & more filter) */}
+      <div
+        id="more-view-sadhaka-membership-card"
+        className="p-5 sm:p-6 rounded-3xl border shadow-lg space-y-4 relative overflow-hidden"
+        style={{
+          backgroundColor: cardBg,
+          borderColor: isLight ? "#E6D7C3" : "rgba(245, 158, 11, 0.35)",
+        }}
+      >
+        {/* Sacred ambient glow */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-1.5 min-w-0 flex-1">
+            <div className="flex items-center space-x-2 flex-wrap">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-stone-950 shadow-xs flex-shrink-0">
+                <Zap className="w-4 h-4 fill-stone-950 text-stone-950" />
+              </div>
+              <h2 className="font-serif-sacred text-base sm:text-lg font-bold truncate" style={{ color: textPrimary }}>
+                Sādhaka Sacred Membership • साधक
+              </h2>
+              <span
+                className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider"
+                style={{
+                  backgroundColor: isLight ? "rgba(185,104,13,0.12)" : "rgba(245,158,11,0.2)",
+                  color: isLight ? "#8C4A00" : "#FCD34D",
+                }}
+              >
+                Sacred Tier
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm leading-relaxed" style={{ color: textSecondary }}>
+              Deepen your daily sadhana with authentic 432Hz Vedic recitation chants, offline study, personalized journey bookmarks, and unlimited access to the entire Sanskrit scripture corpus.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            id="btn-more-open-sadhaka"
+            onClick={onOpenPricing}
+            className="flex-shrink-0 py-3 px-5 rounded-2xl font-bold text-xs sm:text-sm bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-stone-950 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2 cursor-pointer touch-manipulation"
+            title="Open Sādhaka Sacred Membership"
+          >
+            <Zap className="w-4 h-4 fill-current" />
+            <span>Sādhaka Membership</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
 

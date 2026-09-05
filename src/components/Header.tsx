@@ -409,17 +409,17 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Sādhaka Sacred Membership Button */}
+            {/* Sādhaka Sacred Membership Button (Desktop/Tablet; shifted to More view on mobile) */}
             {onOpenPricing && (
               <button
                 type="button"
                 onClick={onOpenPricing}
-                className="h-8 sm:h-9 px-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-stone-950 shadow-md hover:scale-105 active:scale-95 transition-all flex items-center space-x-1 touch-manipulation cursor-pointer"
+                className="hidden md:flex h-8 sm:h-9 px-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-stone-950 shadow-md hover:scale-105 active:scale-95 transition-all items-center space-x-1 touch-manipulation cursor-pointer"
                 title="Upgrade to Sādhaka Sacred Membership"
                 aria-label="Sādhaka Membership"
               >
                 <Zap className="w-3.5 h-3.5 fill-current" />
-                <span className="hidden sm:inline">Sādhaka</span>
+                <span>Sādhaka</span>
               </button>
             )}
 

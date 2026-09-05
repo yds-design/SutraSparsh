@@ -27,7 +27,23 @@ const CATEGORIES = ["All", "Karma Yoga", "Raja Yoga", "Mind & Meditation", "Jnan
 
 export default function App() {
   // App Mode Separation (Phase 22, M38-M46): 'user' (sutrasparsh.com) vs 'admin' (admin.sutrasparsh.com)
-  const [appMode, setAppMode] = useState<"user" | "admin">("user");
+  const [appMode, setAppMode] = useState<"user" | "admin">(() => {
+    if (typeof window !== "undefined") {
+      const search = new URLSearchParams(window.location.search);
+      const path = window.location.pathname;
+      const host = window.location.hostname;
+      if (
+        search.get("mode") === "admin" ||
+        search.get("view") === "admin" ||
+        search.get("admin") === "true" ||
+        path.startsWith("/admin") ||
+        host.startsWith("admin.")
+      ) {
+        return "admin";
+      }
+    }
+    return "user";
+  });
   const [activeTab, setActiveTab] = useState<NavTab>("today");
   const [verses, setVerses] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -246,7 +262,45 @@ export default function App() {
   const handleOpenAdminConsole = () => {
     if (!isScreenDevice) return;
     setAppMode("admin");
+    if (typeof window !== "undefined" && window.history) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("mode", "admin");
+      window.history.pushState({}, "", url.toString());
+    }
   };
+
+  const handleSwitchToUserApp = () => {
+    setAppMode("user");
+    if (typeof window !== "undefined" && window.history) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("mode");
+      url.searchParams.delete("view");
+      url.searchParams.delete("admin");
+      window.history.pushState({}, "", url.toString());
+    }
+  };
+
+  // Sync popstate for browser back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const search = new URLSearchParams(window.location.search);
+      const path = window.location.pathname;
+      const host = window.location.hostname;
+      if (
+        search.get("mode") === "admin" ||
+        search.get("view") === "admin" ||
+        search.get("admin") === "true" ||
+        path.startsWith("/admin") ||
+        host.startsWith("admin.")
+      ) {
+        setAppMode("admin");
+      } else {
+        setAppMode("user");
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   if (appMode === "admin") {
     if (!isScreenDevice) {
@@ -264,7 +318,7 @@ export default function App() {
             </p>
             <button
               type="button"
-              onClick={() => setAppMode("user")}
+              onClick={handleSwitchToUserApp}
               className="w-full py-3 px-6 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs transition-all shadow cursor-pointer"
             >
               Return to Sacred Temple App
@@ -273,7 +327,7 @@ export default function App() {
         </div>
       );
     }
-    return <SutraSparshAdminApp onSwitchToUserApp={() => setAppMode("user")} />;
+    return <SutraSparshAdminApp onSwitchToUserApp={handleSwitchToUserApp} />;
   }
 
   return (
