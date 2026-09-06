@@ -37,7 +37,7 @@ interface HeaderProps {
   setActiveTab: (tab: NavTab) => void;
   savedCount: number;
   backendOnline: boolean;
-  theme?: "sandstone" | "amethyst" | "light" | "festival";
+  theme?: "sandstone" | "amethyst" | "light" | "festival" | "golden-hour";
   onToggleTheme?: () => void;
   onOpenProfile?: () => void;
   onOpenPricing?: () => void;
@@ -76,7 +76,8 @@ export const Header: React.FC<HeaderProps> = ({
   const isLight = theme === "light";
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
-  const isSandstone = theme === "sandstone";
+  const isGoldenHour = theme === "golden-hour";
+  const isSandstone = theme === "sandstone" || (!isLight && !isFestival && !isAmethyst && !isGoldenHour);
 
   const toggleSoundscape = () => {
     const active = soundEngine.toggleTanpuraDrone();
@@ -95,6 +96,8 @@ export const Header: React.FC<HeaderProps> = ({
     ? "rgba(75, 14, 23, 0.94)"
     : isAmethyst
     ? "rgba(15, 10, 26, 0.94)"
+    : isGoldenHour
+    ? "rgba(24, 17, 11, 0.94)"
     : "rgba(18, 13, 9, 0.94)";
 
   const headerBorder = isLight
@@ -103,9 +106,11 @@ export const Header: React.FC<HeaderProps> = ({
     ? "rgba(255, 138, 0, 0.3)"
     : isAmethyst
     ? "rgba(196, 168, 230, 0.2)"
+    : isGoldenHour
+    ? "rgba(201, 130, 43, 0.35)"
     : "rgba(216, 137, 22, 0.2)";
 
-  const brandTextColor = isLight ? "#3A2818" : isFestival ? "#FFF6E3" : "#F4E9D2";
+  const brandTextColor = isLight ? "#3A2818" : isFestival ? "#FFF6E3" : isGoldenHour ? "#FFF4D8" : "#F4E9D2";
 
   return (
     <header
@@ -125,17 +130,13 @@ export const Header: React.FC<HeaderProps> = ({
             role="button"
             aria-label="SutraSparsh Home"
           >
-            <div
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-inner transition-transform duration-200 group-hover:scale-105 border"
-              style={{
-                background: isSandstone
-                  ? "linear-gradient(135deg, rgba(232,146,26,0.25), rgba(120,48,12,0.4))"
-                  : "linear-gradient(135deg, rgba(196,168,230,0.25), rgba(82,41,122,0.4))",
-                borderColor: isSandstone ? "rgba(232,146,26,0.5)" : "rgba(196,168,230,0.5)",
-                color: isSandstone ? "#F4B24B" : "#D4BEF2",
-              }}
-            >
-              <span className="font-sanskrit text-lg sm:text-xl font-bold">ॐ</span>
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-md transition-transform duration-200 group-hover:scale-105 border border-amber-500/30 flex-shrink-0 bg-stone-900">
+              <img
+                src="/icon.png"
+                alt="SutraSparsh Logo"
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
             </div>
             <div>
               <div className="flex items-center space-x-1.5 sm:space-x-2">
@@ -285,7 +286,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={onToggleTheme}
                 aria-label={`Atmosphere: ${theme}. Click to cycle sacred theme.`}
                 title={`Atmosphere: ${theme.toUpperCase()} (Click to cycle themes)`}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border text-xs font-bold transition-all duration-150 active:scale-95 flex items-center justify-center touch-manipulation cursor-pointer"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border text-xs font-bold transition-all duration-500 active:scale-90 flex items-center justify-center touch-manipulation cursor-pointer hover:scale-105"
                 style={{
                   backgroundColor: isLight
                     ? "rgba(216,137,22,0.15)"
@@ -293,6 +294,8 @@ export const Header: React.FC<HeaderProps> = ({
                     ? "rgba(255,138,0,0.2)"
                     : isAmethyst
                     ? "rgba(196,168,230,0.18)"
+                    : isGoldenHour
+                    ? "rgba(201,130,43,0.25)"
                     : "rgba(232,146,26,0.18)",
                   borderColor: isLight
                     ? "#D88916"
@@ -300,6 +303,8 @@ export const Header: React.FC<HeaderProps> = ({
                     ? "#FF8A00"
                     : isAmethyst
                     ? "rgba(196,168,230,0.45)"
+                    : isGoldenHour
+                    ? "#C9822B"
                     : "rgba(232,146,26,0.45)",
                   color: isLight
                     ? "#3A2818"
@@ -307,11 +312,13 @@ export const Header: React.FC<HeaderProps> = ({
                     ? "#FDE68A"
                     : isAmethyst
                     ? "#D4BEF2"
+                    : isGoldenHour
+                    ? "#F6DFA6"
                     : "#F4B24B",
                 }}
               >
                 <span className="text-sm">
-                  {isLight ? "☀️" : isFestival ? "🪔" : isAmethyst ? "🔮" : "🏛️"}
+                  {isLight ? "☀️" : isFestival ? "🪔" : isAmethyst ? "🔮" : isGoldenHour ? "🌅" : "🏛️"}
                 </span>
               </button>
             )}

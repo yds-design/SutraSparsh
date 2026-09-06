@@ -52,6 +52,7 @@ import { ShareModal } from "./ShareModal";
 import { MoreView } from "./MoreView";
 import { BrahmaMuhurtaTimer } from "./BrahmaMuhurtaTimer";
 import { ImportantTithisParv } from "./ImportantTithisParv";
+import { StreakFireCounter } from "./StreakFireCounter";
 import { progressService, type StreakData } from "../services/progress.service";
 import { sharingService } from "../services/sharing.service";
 import type { ReadingProgress } from "../types/progress";
@@ -71,7 +72,7 @@ import {
   type DetailedVerse,
 } from "../data/scriptureCorpus";
 
-export type AppTheme = "sandstone" | "amethyst" | "light" | "festival";
+export type AppTheme = "sandstone" | "amethyst" | "light" | "festival" | "golden-hour";
 
 interface SutraSparshTempleAppProps {
   onOpenAdmin?: () => void;
@@ -446,9 +447,15 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
     if (onSelectTheme) {
       onSelectTheme(newTheme);
     }
-    soundEngine.playTempleBell(newTheme === "sandstone" ? 220 : 330);
-    const themeName = newTheme === "sandstone" ? "Sandstone Temple" : "Amethyst Twilight";
-    setThemeToast(`Atmosphere switched to ${themeName}`);
+    soundEngine.playTempleBell(newTheme === "sandstone" ? 220 : newTheme === "golden-hour" ? 256 : 330);
+    const themeNames: Record<AppTheme, string> = {
+      sandstone: "Sandstone Temple",
+      amethyst: "Amethyst Twilight",
+      light: "Parchment Dawn (Light)",
+      festival: "Festival Maroon",
+      "golden-hour": "Golden Hour (गोधूलि वेला)",
+    };
+    setThemeToast(`Atmosphere switched to ${themeNames[newTheme] || newTheme}`);
     setTimeout(() => {
       setThemeToast(null);
     }, 2800);
@@ -734,7 +741,7 @@ ${reflections
       if (permission === "granted") {
         new Notification("SutraSparsh · Daily Shloka", {
           body: `Brahma Muhurta notifications configured for ${prefReminder} IST.`,
-          icon: "/favicon.ico",
+          icon: "/icon.png",
         });
         setThemeToast(`✓ Notifications enabled for ${prefReminder}`);
       } else {
@@ -750,7 +757,8 @@ ${reflections
   const isLight = theme === "light";
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
-  const isSandstone = theme === "sandstone" || (!isLight && !isFestival && !isAmethyst);
+  const isGoldenHour = theme === "golden-hour";
+  const isSandstone = theme === "sandstone" || (!isLight && !isFestival && !isAmethyst && !isGoldenHour);
 
   const themeCardDark = isLight
     ? "bg-gradient-to-b from-[#FFFFFF] to-[#F6EDE1] border border-[#E6D7C3] text-[#3A2818]"
@@ -758,19 +766,23 @@ ${reflections
     ? "bg-gradient-to-b from-[#5E111C] to-[#4B0E17] border border-[#FF8A00]/40 text-[#FFF6E3]"
     : isAmethyst
     ? "bg-gradient-to-b from-[#251640] to-[#150B28] border border-[#52297A]/40 text-[#EDE0F8]"
+    : isGoldenHour
+    ? "bg-gradient-to-b from-[#312318] to-[#1C140D] border border-[#C9822B]/40 text-[#FFF4D8]"
     : "bg-gradient-to-b from-[#2B1706] to-[#1D0F04] border border-[#78300C]/40 text-[#F5E4C8]";
 
-  const themeGold = isLight ? "#B9680D" : isFestival ? "#FF8A00" : isAmethyst ? "#C4A8E6" : "#E8921A";
-  const themeGoldLight = isLight ? "#B9680D" : isFestival ? "#FFD54A" : isAmethyst ? "#D4BEF2" : "#F4B24B";
-  const themeMist = isLight ? "#574332" : isFestival ? "#FFDDB3" : isAmethyst ? "#B8A4CC" : "#D4BC96";
-  const themeTextColor = isLight ? "text-stone-900" : isFestival ? "text-[#FFF6E3]" : isAmethyst ? "text-[#EDE0F8]" : "text-stone-100";
-  const themeSubTextColor = isLight ? "text-stone-700" : isFestival ? "text-amber-200/80" : isAmethyst ? "text-purple-200/80" : "text-stone-400";
+  const themeGold = isLight ? "#B9680D" : isFestival ? "#FF8A00" : isAmethyst ? "#C4A8E6" : isGoldenHour ? "#C9822B" : "#E8921A";
+  const themeGoldLight = isLight ? "#B9680D" : isFestival ? "#FFD54A" : isAmethyst ? "#D4BEF2" : isGoldenHour ? "#F6DFA6" : "#F4B24B";
+  const themeMist = isLight ? "#574332" : isFestival ? "#FFDDB3" : isAmethyst ? "#B8A4CC" : isGoldenHour ? "#A89F94" : "#D4BC96";
+  const themeTextColor = isLight ? "text-stone-900" : isFestival ? "text-[#FFF6E3]" : isAmethyst ? "text-[#EDE0F8]" : isGoldenHour ? "text-[#FFF4D8]" : "text-stone-100";
+  const themeSubTextColor = isLight ? "text-stone-700" : isFestival ? "text-amber-200/80" : isAmethyst ? "text-purple-200/80" : isGoldenHour ? "text-[#F6DFA6]/80" : "text-stone-400";
   const themeCardBg = isLight
     ? "linear-gradient(145deg, #FFFBF5, #F6EDE1)"
     : isFestival
     ? "linear-gradient(145deg, #7A1825, #4B0E17)"
     : isAmethyst
     ? "linear-gradient(145deg, #ede2f8, #d8c2f0)"
+    : isGoldenHour
+    ? "linear-gradient(145deg, #38271A, #1C140D)"
     : "linear-gradient(145deg, #fdf0d0, #f5e0a0)";
 
   const subScreenBg = isLight
@@ -779,6 +791,8 @@ ${reflections
     ? "#38060D"
     : isAmethyst
     ? "#120924"
+    : isGoldenHour
+    ? "#140E08"
     : "#120A04";
 
   const subScreenBarBg = isLight
@@ -787,6 +801,8 @@ ${reflections
     ? "rgba(56,6,13,0.96)"
     : isAmethyst
     ? "rgba(18,9,36,0.96)"
+    : isGoldenHour
+    ? "rgba(20,14,8,0.96)"
     : "rgba(18,10,4,0.96)";
 
   const subScreenBorder = isLight
@@ -795,6 +811,8 @@ ${reflections
     ? "border-[#FF8A00]/25"
     : isAmethyst
     ? "border-[#52297A]/40"
+    : isGoldenHour
+    ? "border-[#C9822B]/35"
     : "border-white/10";
 
   const subScreenHeaderBorder = isLight
@@ -803,6 +821,8 @@ ${reflections
     ? "border-[#FF8A00]/20"
     : isAmethyst
     ? "border-[#52297A]/30"
+    : isGoldenHour
+    ? "border-[#C9822B]/25"
     : "border-white/5";
 
   // Filtered Corpus for Search Tab with Diacritic-Agnostic & Phonetic Sanskrit Search
@@ -828,10 +848,10 @@ ${reflections
     <div
       className={`w-full ${
         hideHeaderAndNav
-          ? "transition-colors duration-300"
+          ? "transition-colors duration-500"
           : isLight
-          ? "min-h-dvh flex justify-center selection:bg-amber-300 selection:text-stone-950 light-mode"
-          : "min-h-dvh flex justify-center selection:bg-amber-500/40 selection:text-amber-100"
+          ? "min-h-dvh flex justify-center selection:bg-amber-300 selection:text-stone-950 light-mode transition-colors duration-500"
+          : "min-h-dvh flex justify-center selection:bg-amber-500/40 selection:text-amber-100 transition-colors duration-500"
       }`}
       style={{
         backgroundColor: hideHeaderAndNav
@@ -842,6 +862,8 @@ ${reflections
           ? "#280509"
           : isAmethyst
           ? "#080410"
+          : isGoldenHour
+          ? "#140E08"
           : "#0A0502",
       }}
     >
@@ -849,8 +871,8 @@ ${reflections
       <div
         className={`w-full ${
           hideHeaderAndNav
-            ? "max-w-7xl mx-auto flex flex-col relative transition-colors duration-300 font-sans"
-            : "max-w-[430px] min-h-dvh flex flex-col relative overflow-hidden shadow-2xl transition-colors duration-300 pb-28 font-sans"
+            ? "max-w-7xl mx-auto flex flex-col relative transition-colors duration-500 font-sans"
+            : "max-w-[430px] min-h-dvh flex flex-col relative overflow-hidden shadow-2xl transition-colors duration-500 pb-28 font-sans"
         }`}
         style={{
           backgroundColor: hideHeaderAndNav
@@ -861,6 +883,8 @@ ${reflections
             ? "#38090F"
             : isAmethyst
             ? "#0F0A1A"
+            : isGoldenHour
+            ? "#251A10"
             : "#120A04",
         }}
       >
@@ -984,11 +1008,20 @@ ${reflections
 
             {/* Theme Switcher Quick Toggle */}
             <button
-              onClick={() => handleSelectTheme(isSandstone ? "amethyst" : "sandstone")}
+              onClick={() => {
+                const nextMap: Record<AppTheme, AppTheme> = {
+                  sandstone: "amethyst",
+                  amethyst: "light",
+                  light: "festival",
+                  festival: "golden-hour",
+                  "golden-hour": "sandstone",
+                };
+                handleSelectTheme(nextMap[theme] || "sandstone");
+              }}
               className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs transition-transform active:scale-95 shadow-sm"
-              title={`Switch atmosphere to ${isSandstone ? "Amethyst Twilight" : "Sandstone Temple"} (Persisted)`}
+              title={`Switch atmosphere (Current: ${theme})`}
             >
-              {isSandstone ? "🏛️" : "🔮"}
+              {isLight ? "☀️" : isFestival ? "🪔" : isAmethyst ? "🔮" : isGoldenHour ? "🌅" : "🏛️"}
             </button>
 
             {/* Search Button */}
@@ -1227,21 +1260,15 @@ ${reflections
               </div>
             </div>
 
-            {/* Streak Bar (Dynamic from Progress Engine) */}
-            <div className="px-5 flex items-center space-x-2.5">
-              <div
-                className={`inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full border text-xs font-bold ${
-                  isLight
-                    ? "bg-amber-100/90 text-amber-950 border-amber-300 shadow-xs"
-                    : "bg-amber-500/10 border-amber-500/20 text-amber-300"
-                }`}
-              >
-                <span>🔥</span>
-                <span>{streakData.currentStreak}-day streak</span>
-              </div>
-              <span className={`text-xs ${isLight ? "text-stone-700" : ""}`} style={{ color: isLight ? undefined : themeMist }}>
-                {streakData.checkedInToday ? "Brahma Muhurta habit active today" : "Daily check-in ready"}
-              </span>
+            {/* Streak Bar (Dynamic with subtle fire pulse animation & habit milestone feedback) */}
+            <div className="px-5">
+              <StreakFireCounter
+                streakData={streakData}
+                isLight={isLight}
+                onCheckin={() => {
+                  progressService.triggerMilestoneCheckin();
+                }}
+              />
             </div>
 
             {/* CONTINUE YOUR SCRIPTURE JOURNEY */}
@@ -1310,19 +1337,19 @@ ${reflections
                 <button
                   type="button"
                   onClick={toggleCollapsibleSection}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center space-x-1.5 border transition-colors cursor-pointer ${
+                  className={`p-1.5 rounded-lg border transition-colors cursor-pointer flex items-center justify-center ${
                     isLight
                       ? "bg-white hover:bg-stone-100 text-stone-800 border-stone-300 shadow-xs"
                       : "bg-white/5 hover:bg-white/10 text-amber-300 border-white/10"
                   }`}
                   aria-expanded={isCollapsibleSectionOpen}
-                  aria-label="Toggle Brahma Muhurta and Scriptures section"
+                  aria-label={isCollapsibleSectionOpen ? "Collapse section" : "Expand section"}
+                  title={isCollapsibleSectionOpen ? "Collapse" : "Expand"}
                 >
-                  <span>{isCollapsibleSectionOpen ? "Collapse" : "Expand"}</span>
                   {isCollapsibleSectionOpen ? (
-                    <Minus className="w-3 h-3 text-amber-500" />
+                    <ChevronUp className="w-4 h-4 text-amber-500" />
                   ) : (
-                    <Plus className="w-3 h-3 text-amber-500" />
+                    <ChevronDown className="w-4 h-4 text-amber-500" />
                   )}
                 </button>
               </div>
@@ -1339,12 +1366,18 @@ ${reflections
                       <button
                         type="button"
                         onClick={toggleBrahmaMuhurta}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded border transition-colors cursor-pointer ${
-                          isLight ? "bg-stone-100 text-stone-700 border-stone-200" : "bg-white/5 text-amber-400/90 border-white/10"
+                        className={`p-1.5 rounded-lg border transition-colors cursor-pointer flex items-center justify-center ${
+                          isLight ? "bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-200" : "bg-white/5 hover:bg-white/10 text-amber-400 border-white/10"
                         }`}
                         title={isBrahmaMuhurtaOpen ? "Collapse Brahma Muhurta" : "Expand Brahma Muhurta"}
+                        aria-label={isBrahmaMuhurtaOpen ? "Collapse Brahma Muhurta" : "Expand Brahma Muhurta"}
+                        aria-expanded={isBrahmaMuhurtaOpen}
                       >
-                        {isBrahmaMuhurtaOpen ? "— Collapse" : "+ Expand"}
+                        {isBrahmaMuhurtaOpen ? (
+                          <ChevronUp className="w-3.5 h-3.5 text-amber-500" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5 text-amber-500" />
+                        )}
                       </button>
                     </div>
 
@@ -1353,6 +1386,16 @@ ${reflections
                     ) : (
                       <div
                         onClick={toggleBrahmaMuhurta}
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Expand Brahma Muhurta"
+                        aria-expanded={false}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            toggleBrahmaMuhurta();
+                          }
+                        }}
                         className={`mx-4 px-4 py-2.5 rounded-2xl border cursor-pointer flex items-center justify-between text-xs transition-colors ${
                           isLight
                             ? "bg-amber-50 border-amber-200 text-stone-800 hover:bg-amber-100/70"
@@ -1363,7 +1406,9 @@ ${reflections
                           <Sunrise className="w-4 h-4 text-amber-500" />
                           <span className="font-bold">Brahma Muhūrta Window (04:30 – 05:18 AM)</span>
                         </div>
-                        <span className="text-[10.5px] font-mono text-amber-500">Tap to expand →</span>
+                        <span className="p-1 rounded-md border border-amber-500/20 bg-amber-500/10 flex items-center justify-center text-amber-400">
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </span>
                       </div>
                     )}
                   </div>
@@ -1384,12 +1429,18 @@ ${reflections
                         <button
                           type="button"
                           onClick={toggleExploreScriptures}
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded border transition-colors cursor-pointer ${
-                            isLight ? "bg-stone-100 text-stone-700 border-stone-200" : "bg-white/5 text-amber-400/90 border-white/10"
+                          className={`p-1.5 rounded-lg border transition-colors cursor-pointer flex items-center justify-center ${
+                            isLight ? "bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-200" : "bg-white/5 hover:bg-white/10 text-amber-400 border-white/10"
                           }`}
                           title={isExploreScripturesOpen ? "Collapse Scriptures" : "Expand Scriptures"}
+                          aria-label={isExploreScripturesOpen ? "Collapse Scriptures" : "Expand Scriptures"}
+                          aria-expanded={isExploreScripturesOpen}
                         >
-                          {isExploreScripturesOpen ? "— Collapse" : "+ Expand"}
+                          {isExploreScripturesOpen ? (
+                            <ChevronUp className="w-3.5 h-3.5 text-amber-500" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5 text-amber-500" />
+                          )}
                         </button>
                         <button
                           onClick={() => setActiveTab("explore")}
@@ -2057,8 +2108,12 @@ ${reflections
             {/* Stats Cards */}
             <div className="px-4 grid grid-cols-3 gap-2.5">
               <div
-                className="p-3.5 rounded-2xl text-center shadow-xs"
+                onClick={() => {
+                  progressService.triggerMilestoneCheckin();
+                }}
+                className="p-3.5 rounded-2xl text-center shadow-xs cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-transform select-none"
                 style={{ background: "linear-gradient(145deg, #fdf0d0, #f5e0a0)" }}
+                title="Tap to celebrate daily habit milestone"
               >
                 <div className="font-serif-sacred text-2xl font-bold text-amber-950 leading-none">
                   {streakData.currentStreak}
@@ -2586,14 +2641,26 @@ ${reflections
                   ? `${selectedVerseData.commentary} Shankara emphasizes that Karma Yoga is the purification of mental tendencies (citta-shuddhi). When actions are undertaken free from possessiveness, one naturally attains clarity, leading smoothly into Jnana Yoga (the direct realization of non-dual Truth).`
                   : selectedVerseData.commentary}
               </div>
-              <button
-                onClick={() => setCommentaryExpanded(!commentaryExpanded)}
-                className={`text-xs font-bold pt-1 flex items-center space-x-1 cursor-pointer ${
-                  isLight ? "text-amber-800 hover:text-amber-900" : "text-amber-400 hover:text-amber-300"
-                }`}
-              >
-                <span>{commentaryExpanded ? "Show concise summary ↑" : "Read full commentary ↓"}</span>
-              </button>
+              <div className="pt-1 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setCommentaryExpanded(!commentaryExpanded)}
+                  className={`p-1.5 rounded-lg border transition-colors cursor-pointer flex items-center justify-center ${
+                    isLight
+                      ? "bg-amber-100/70 hover:bg-amber-100 text-amber-900 border-amber-300"
+                      : "bg-white/5 hover:bg-white/10 text-amber-400 border-white/10"
+                  }`}
+                  title={commentaryExpanded ? "Collapse commentary" : "Expand commentary"}
+                  aria-label={commentaryExpanded ? "Collapse commentary" : "Expand commentary"}
+                  aria-expanded={commentaryExpanded}
+                >
+                  {commentaryExpanded ? (
+                    <ChevronUp className="w-4 h-4 text-amber-500" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-amber-500" />
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* ACTION BAR */}
@@ -2863,9 +2930,9 @@ ${reflections
                   <span
                     className="text-[10.5px] font-bold px-2.5 py-0.5 rounded-full border flex items-center space-x-1 transition-all"
                     style={{
-                      backgroundColor: isSandstone ? "rgba(232,146,26,0.2)" : isAmethyst ? "rgba(196,168,230,0.2)" : isLight ? "rgba(217,119,6,0.15)" : "rgba(255,138,0,0.2)",
-                      borderColor: isSandstone ? "rgba(232,146,26,0.5)" : isAmethyst ? "rgba(196,168,230,0.5)" : isLight ? "rgba(217,119,6,0.4)" : "rgba(255,138,0,0.5)",
-                      color: isSandstone ? "#F4B24B" : isAmethyst ? "#D4BEF2" : isLight ? "#92400E" : "#FFD54A",
+                      backgroundColor: isSandstone ? "rgba(232,146,26,0.2)" : isAmethyst ? "rgba(196,168,230,0.2)" : isLight ? "rgba(217,119,6,0.15)" : isGoldenHour ? "rgba(201,130,43,0.25)" : "rgba(255,138,0,0.2)",
+                      borderColor: isSandstone ? "rgba(232,146,26,0.5)" : isAmethyst ? "rgba(196,168,230,0.5)" : isLight ? "rgba(217,119,6,0.4)" : isGoldenHour ? "rgba(246,223,166,0.5)" : "rgba(255,138,0,0.5)",
+                      color: isSandstone ? "#F4B24B" : isAmethyst ? "#D4BEF2" : isLight ? "#92400E" : isGoldenHour ? "#F6DFA6" : "#FFD54A",
                     }}
                   >
                     <span>
@@ -2875,17 +2942,19 @@ ${reflections
                         ? "🔮 Amethyst Active"
                         : isLight
                         ? "☀️ Light Active"
+                        : isGoldenHour
+                        ? "🌅 Golden Hour Active"
                         : "🪔 Festival Active"}
                     </span>
                   </span>
                 </div>
 
-                {/* Persistent Segmented Switch Toggle (4 Themes) */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-black/40 rounded-xl border border-white/5 relative">
+                {/* Persistent Segmented Switch Toggle (5 Themes) */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1 bg-black/40 rounded-xl border border-white/5 relative">
                   <button
                     type="button"
                     onClick={() => handleSelectTheme("sandstone")}
-                    className={`py-2 px-2 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                    className={`py-2 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1 transition-all cursor-pointer ${
                       isSandstone
                         ? "bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 shadow-md scale-[1.01]"
                         : "text-stone-400 hover:text-stone-200"
@@ -2897,7 +2966,7 @@ ${reflections
                   <button
                     type="button"
                     onClick={() => handleSelectTheme("amethyst")}
-                    className={`py-2 px-2 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                    className={`py-2 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1 transition-all cursor-pointer ${
                       isAmethyst
                         ? "bg-gradient-to-r from-purple-400 to-indigo-500 text-stone-950 shadow-md scale-[1.01]"
                         : "text-stone-400 hover:text-stone-200"
@@ -2909,7 +2978,7 @@ ${reflections
                   <button
                     type="button"
                     onClick={() => handleSelectTheme("light")}
-                    className={`py-2 px-2 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                    className={`py-2 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1 transition-all cursor-pointer ${
                       isLight
                         ? "bg-gradient-to-r from-amber-200 to-amber-400 text-stone-950 shadow-md scale-[1.01]"
                         : "text-stone-400 hover:text-stone-200"
@@ -2921,7 +2990,7 @@ ${reflections
                   <button
                     type="button"
                     onClick={() => handleSelectTheme("festival")}
-                    className={`py-2 px-2 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                    className={`py-2 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1 transition-all cursor-pointer ${
                       isFestival
                         ? "bg-gradient-to-r from-amber-400 to-orange-500 text-stone-950 shadow-md scale-[1.01]"
                         : "text-stone-400 hover:text-stone-200"
@@ -2929,6 +2998,18 @@ ${reflections
                   >
                     <span>🪔</span>
                     <span>Festival</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTheme("golden-hour")}
+                    className={`py-2 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1 transition-all cursor-pointer ${
+                      isGoldenHour
+                        ? "bg-gradient-to-r from-[#C9822B] to-[#F6DFA6] text-stone-950 shadow-md scale-[1.01]"
+                        : "text-stone-400 hover:text-stone-200"
+                    }`}
+                  >
+                    <span>🌅</span>
+                    <span>Golden</span>
                   </button>
                 </div>
               </div>
@@ -3063,6 +3144,47 @@ ${reflections
                       <p className="text-xs text-amber-200/90 mt-1 leading-relaxed">
                         Royal temple vermilion, kumkum maroon (#4B0E17), blazing deep saffron glow & ceremonial gold ornamentation.
                       </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. Golden Hour Theme Card */}
+                <div
+                  onClick={() => handleSelectTheme("golden-hour")}
+                  className={`p-4 rounded-2xl cursor-pointer transition-all border relative overflow-hidden ${
+                    isGoldenHour
+                      ? "bg-[#251A10]/95 border-[#C9822B] shadow-[0_0_20px_rgba(201,130,43,0.3)] text-stone-100"
+                      : "bg-stone-900/40 border-stone-800/80 hover:bg-stone-800/40 opacity-75 hover:opacity-100 text-stone-200"
+                  }`}
+                >
+                  {isGoldenHour && (
+                    <div className="absolute top-0 right-0 bg-gradient-to-l from-[#C9822B] to-[#F6DFA6] text-stone-950 font-bold text-[9.5px] uppercase tracking-wider px-3 py-0.5 rounded-bl-xl shadow flex items-center space-x-1">
+                      <Check className="w-3 h-3 stroke-[3]" />
+                      <span>Active Palette</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-start space-x-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F6DFA6] via-[#C9822B] to-[#171717] flex items-center justify-center text-xl flex-shrink-0 shadow border border-amber-300/40">
+                      🌅
+                    </div>
+                    <div className="flex-1 min-w-0 pr-16">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-bold text-amber-100">
+                          Golden Hour Atmosphere
+                        </span>
+                        <span className="text-[11px] font-sanskrit text-amber-300">गोधूलि वेला</span>
+                      </div>
+                      <p className="text-xs text-[#F6DFA6]/90 mt-1 leading-relaxed">
+                        Butter cream (#F6DFA6), soft vanilla (#FFF4D8), burnt honey (#C9822B), ink black sanctum (#171717) & warm gray accents (#A89F94).
+                      </p>
+                      <div className="flex items-center space-x-1.5 mt-2.5 pt-1.5 border-t border-white/10">
+                        <span className="w-3.5 h-3.5 rounded-full bg-[#F6DFA6] border border-stone-900/40" title="Butter Cream #F6DFA6" />
+                        <span className="w-3.5 h-3.5 rounded-full bg-[#FFF4D8]" title="Soft Vanilla #FFF4D8" />
+                        <span className="w-3.5 h-3.5 rounded-full bg-[#C9822B]" title="Burnt Honey #C9822B" />
+                        <span className="w-3.5 h-3.5 rounded-full bg-[#171717] border border-white/20" title="Ink Black #171717" />
+                        <span className="w-3.5 h-3.5 rounded-full bg-[#A89F94]" title="Warm Gray #A89F94" />
+                      </div>
                     </div>
                   </div>
                 </div>

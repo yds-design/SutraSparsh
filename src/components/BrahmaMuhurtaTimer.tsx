@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Sunrise, Bell, BellRing, Sparkles, Volume2, CheckCircle2, ChevronDown, ChevronUp, Clock } from "lucide-react";
 import { soundEngine } from "../utils/audio";
+import type { AppTheme } from "../types";
 
 interface BrahmaMuhurtaTimerProps {
-  theme?: "sandstone" | "amethyst" | "light" | "festival";
+  theme?: AppTheme;
   onOpenPref?: () => void;
   compact?: boolean;
 }
@@ -35,7 +36,8 @@ export const BrahmaMuhurtaTimer: React.FC<BrahmaMuhurtaTimerProps> = ({
   const isLight = theme === "light";
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
-  const isSandstone = theme === "sandstone" || (!isLight && !isFestival && !isAmethyst);
+  const isGoldenHour = theme === "golden-hour";
+  const isSandstone = theme === "sandstone" || (!isLight && !isFestival && !isAmethyst && !isGoldenHour);
 
   // Compute countdown to Brahma Muhurta (traditionally 04:30 AM local time, 48-min window until 05:18 AM)
   useEffect(() => {
@@ -110,10 +112,12 @@ export const BrahmaMuhurtaTimer: React.FC<BrahmaMuhurtaTimerProps> = ({
     ? "bg-gradient-to-br from-[#5E111C] via-[#480C14] to-[#36080E] border-[#FF8A00]/40 text-[#FFF6E3] shadow-xl"
     : isAmethyst
     ? "bg-gradient-to-br from-[#251640] via-[#1A0F2E] to-[#120822] border-[#7D46B8]/40 text-[#EDE0F8] shadow-xl"
+    : isGoldenHour
+    ? "bg-gradient-to-br from-[#251A10] via-[#1C140D] to-[#140E09] border-[#C9822B]/40 text-[#FFF4D8] shadow-xl"
     : "bg-gradient-to-br from-[#271406] via-[#1D0E04] to-[#140902] border-[#914210]/40 text-[#F5E4C8] shadow-xl";
 
-  const goldAccent = isLight ? "#B9680D" : isFestival ? "#FFB300" : isAmethyst ? "#C4A8E6" : "#E8921A";
-  const subTextColor = isLight ? "text-stone-700" : isFestival ? "text-amber-100/90" : isAmethyst ? "text-purple-200/90" : "text-stone-300";
+  const goldAccent = isLight ? "#B9680D" : isFestival ? "#FFB300" : isAmethyst ? "#C4A8E6" : isGoldenHour ? "#F6DFA6" : "#E8921A";
+  const subTextColor = isLight ? "text-stone-700" : isFestival ? "text-amber-100/90" : isAmethyst ? "text-purple-200/90" : isGoldenHour ? "text-[#F6DFA6]" : "text-stone-300";
 
   return (
     <div
@@ -321,16 +325,18 @@ export const BrahmaMuhurtaTimer: React.FC<BrahmaMuhurtaTimerProps> = ({
 
           {/* Accordion Wisdom Toggle */}
           <button
+            type="button"
             onClick={() => setShowWisdom(!showWisdom)}
-            className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all flex items-center justify-center space-x-1 cursor-pointer border flex-shrink-0 ${
+            className={`p-2 rounded-xl transition-all flex items-center justify-center cursor-pointer border flex-shrink-0 ${
               isLight
                 ? "bg-white text-stone-800 border-stone-300 hover:bg-stone-100 shadow-xs"
                 : "bg-white/5 text-stone-200 border-white/10 hover:bg-white/10"
             }`}
+            title={showWisdom ? "Collapse Vedic Significance" : "Expand Vedic Significance"}
+            aria-label={showWisdom ? "Collapse Vedic Significance" : "Expand Vedic Significance"}
+            aria-expanded={showWisdom}
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden xs:inline">Vedic Significance</span>
-            {showWisdom ? <ChevronUp className="w-3 h-3 ml-0.5" /> : <ChevronDown className="w-3 h-3 ml-0.5" />}
+            {showWisdom ? <ChevronUp className="w-4 h-4 text-amber-400" /> : <ChevronDown className="w-4 h-4 text-amber-400" />}
           </button>
         </div>
 

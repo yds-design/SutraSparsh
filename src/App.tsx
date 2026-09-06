@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Search, Filter, Sparkles, BookOpen, Sun, Activity, Bookmark, Flame, RefreshCw, Smartphone, Crown, Heart, Zap, ShieldCheck, Compass } from "lucide-react";
 import type { ContentItem, ContentResponse, JournalEntry } from "./types";
 import { Header, type NavTab } from "./components/Header";
@@ -20,7 +20,11 @@ import { SadhakaProfileModal } from "./components/SadhakaProfileModal";
 import { AuthModal } from "./components/AuthModal";
 import { PrivacyPolicyModal } from "./components/PrivacyPolicyModal";
 import { StoreAssetsViewer } from "./components/StoreAssetsViewer";
+import { DailyPromoPopup } from "./components/DailyPromoPopup";
+import { AtmosphereCrossfadeBackdrop, ATMOSPHERE_CONFIGS } from "./components/AtmosphereCrossfadeBackdrop";
+import { soundEngine } from "./utils/audio";
 import type { SubscriptionPlanId } from "./types/monetization";
+import type { AppTheme } from "./types";
 import { useFeatureFlags } from "./services/feature-flags.service";
 
 const TRADITIONS = ["All", "Bhagavad Gita", "Patanjali", "Upanishads", "Vedas"];
@@ -59,35 +63,74 @@ export default function App() {
   // Profile Modal State (Restored for user profile & sacred streak tracking)
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // Persistent Theme Atmosphere ('sandstone' | 'amethyst' | 'light' | 'festival')
-  const [theme, setTheme] = useState<"sandstone" | "amethyst" | "light" | "festival">(() => {
+  // Persistent Theme Atmosphere ('sandstone' | 'amethyst' | 'light' | 'festival' | 'golden-hour')
+  const [theme, setTheme] = useState<AppTheme>(() => {
     try {
-      return (localStorage.getItem("sutrasparsh_theme") as "sandstone" | "amethyst" | "light" | "festival") || "sandstone";
+      return (localStorage.getItem("sutrasparsh_theme") as AppTheme) || "sandstone";
     } catch {
       return "sandstone";
     }
   });
 
-  const handleToggleTheme = () => {
-    const cycle: Record<"sandstone" | "amethyst" | "light" | "festival", "sandstone" | "amethyst" | "light" | "festival"> = {
-      sandstone: "amethyst",
-      amethyst: "light",
-      light: "festival",
-      festival: "sandstone",
-    };
-    const next = cycle[theme] || "sandstone";
-    setTheme(next);
-    try {
-      localStorage.setItem("sutrasparsh_theme", next);
-    } catch {}
-  };
+  // Atmospheric cross-fade animation state
+  const [isThemeCrossfading, setIsThemeCrossfading] = useState(false);
+  const crossfadeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleSelectTheme = (newTheme: "sandstone" | "amethyst" | "light" | "festival") => {
+  const triggerThemeTransition = (newTheme: AppTheme) => {
+    if (newTheme === theme) return;
     setTheme(newTheme);
+    setIsThemeCrossfading(true);
+
+    // Harmonically tuned temple chime for sacred atmospheric feedback
+    const cfg = ATMOSPHERE_CONFIGS[newTheme];
+    if (cfg) {
+      soundEngine.playTempleBell(cfg.pitch);
+    }
+
     try {
       localStorage.setItem("sutrasparsh_theme", newTheme);
     } catch {}
+
+    if (crossfadeTimerRef.current) {
+      clearTimeout(crossfadeTimerRef.current);
+    }
+    crossfadeTimerRef.current = setTimeout(() => {
+      setIsThemeCrossfading(false);
+    }, 750);
   };
+
+  const handleToggleTheme = () => {
+    const cycle: Record<AppTheme, AppTheme> = {
+      sandstone: "amethyst",
+      amethyst: "light",
+      light: "festival",
+      festival: "golden-hour",
+      "golden-hour": "sandstone",
+    };
+    const next = cycle[theme] || "sandstone";
+    triggerThemeTransition(next);
+  };
+
+  const handleSelectTheme = (newTheme: AppTheme) => {
+    triggerThemeTransition(newTheme);
+  };
+
+  // Daily Promo Popup ("First load of the day" across all devices)
+  const [isDailyPromoOpen, setIsDailyPromoOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const lastDate = localStorage.getItem("sutrasparsh_promo_last_date");
+      if (lastDate !== todayStr) {
+        // First load of the day: show promo popup
+        const timer = setTimeout(() => {
+          setIsDailyPromoOpen(true);
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    } catch {}
+  }, []);
 
   // Monetization Modals & State (Phases 16–21)
   const [isPricingOpen, setIsPricingOpen] = useState(false);
@@ -334,16 +377,25 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-dvh flex flex-col transition-colors duration-300 overflow-x-hidden ${
+      id="sutrasparsh-app-root"
+      data-theme={theme}
+      className={`min-h-dvh flex flex-col relative overflow-x-hidden ${
+        isThemeCrossfading ? "theme-crossfade-active" : ""
+      } ${
         theme === "light"
-          ? "bg-[#FDFBF7] text-stone-900 selection:bg-amber-300 selection:text-stone-950 light-mode"
+          ? "text-stone-900 selection:bg-amber-300 selection:text-stone-950 light-mode"
           : theme === "festival"
-          ? "bg-[#280509] text-stone-100 selection:bg-amber-500/40 selection:text-amber-100"
+          ? "text-stone-100 selection:bg-amber-500/40 selection:text-amber-100"
           : theme === "amethyst"
-          ? "bg-[#080410] text-stone-100 selection:bg-amber-500/40 selection:text-amber-100"
-          : "bg-[#0A0502] text-stone-100 selection:bg-amber-500/40 selection:text-amber-100"
+          ? "text-stone-100 selection:bg-amber-500/40 selection:text-amber-100"
+          : theme === "golden-hour"
+          ? "text-[#FFF4D8] selection:bg-[#C9822B] selection:text-[#FFF4D8] golden-hour-mode"
+          : "text-stone-100 selection:bg-amber-500/40 selection:text-amber-100"
       }`}
     >
+      {/* Ambient Dual-Layer Cross-Fade Backdrop */}
+      <AtmosphereCrossfadeBackdrop theme={theme} />
+
       {/* Top Navigation */}
       <Header
         activeTab={activeTab}
@@ -605,6 +657,25 @@ export default function App() {
         setActiveTab={setActiveTab}
         savedCount={bookmarks.length}
         theme={theme}
+      />
+
+      {/* Daily Promo Popup ("First load of the day" across all devices) */}
+      <DailyPromoPopup
+        isOpen={isDailyPromoOpen}
+        onClose={() => setIsDailyPromoOpen(false)}
+        onExploreToday={() => {
+          setIsDailyPromoOpen(false);
+          setActiveTab("daily-app");
+        }}
+        todayVerse={
+          dailyVerse
+            ? {
+                devanagari: dailyVerse.title,
+                translation: dailyVerse.meaning || dailyVerse.subtitle || "Excellence and harmony in action is Yoga.",
+                source: `${dailyVerse.metadata?.source || "Bhagavad Gita"}${dailyVerse.metadata?.chapter ? ` ${dailyVerse.metadata.chapter}.${dailyVerse.metadata.verse || ""}` : ""} • प्रातः स्मरण`,
+              }
+            : undefined
+        }
       />
 
       {/* Sādhaka Seeker Profile Modal */}

@@ -36,18 +36,15 @@
       padding-bottom: 20px;
       margin-bottom: 28px;
     }
-    .logo {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+    .logo-img {
+      display: inline-block;
       width: 48px;
       height: 48px;
       border-radius: 14px;
-      background: linear-gradient(135deg, #D88916, #70501F);
-      color: #FFF;
-      font-size: 24px;
-      font-weight: bold;
       margin-bottom: 12px;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255, 138, 0, 0.3);
     }
     h1 { margin: 0 0 6px 0; color: var(--accent-light); font-size: 26px; }
     .meta { color: var(--text-muted); font-size: 13px; }
@@ -59,7 +56,7 @@
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo">ॐ</div>
+      <img src="/icon.png" alt="SutraSparsh Logo" class="logo-img" />
       <h1>SutraSparsh • Terms of Service & EULA</h1>
       <div class="meta">Effective Date: September 2026 • Standard Apple EULA & Google Play Terms</div>
     </div>

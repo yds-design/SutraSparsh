@@ -24,6 +24,62 @@ export interface StreakData {
   lastCheckinTimestamp?: number;
   totalActiveDays: number;
   checkedInToday: boolean;
+  isMilestoneHit?: boolean;
+  lastMilestoneTriggerTimestamp?: number;
+}
+
+export function getHabitMilestoneInfo(streak: number): {
+  isMilestone: boolean;
+  tierName: string;
+  milestoneLabel: string;
+  description: string;
+} {
+  if (streak >= 108) {
+    return {
+      isMilestone: true,
+      tierName: "Tapasvi",
+      milestoneLabel: "108-Day Tapasya Milestone 🔥",
+      description: "Sacred 108-cycle spiritual mastery achieved.",
+    };
+  }
+  if (streak >= 21) {
+    return {
+      isMilestone: true,
+      tierName: "Siddha Sādhaka",
+      milestoneLabel: "21-Day Transformation Milestone 🔥",
+      description: "Deep spiritual habits established.",
+    };
+  }
+  if (streak >= 7) {
+    return {
+      isMilestone: true,
+      tierName: "Sādhana Seeker",
+      milestoneLabel: "7-Day Saptaha Milestone 🔥",
+      description: "One full week of unbroken devotion.",
+    };
+  }
+  if (streak >= 4) {
+    return {
+      isMilestone: true,
+      tierName: "Daily Abhyāsi",
+      milestoneLabel: "4-Day Streak Milestone 🔥",
+      description: "Steadfast daily practice ignited and burning bright.",
+    };
+  }
+  if (streak >= 3) {
+    return {
+      isMilestone: true,
+      tierName: "Daily Abhyāsi",
+      milestoneLabel: "3-Day Habit Milestone 🔥",
+      description: "Consecutive daily rhythm established.",
+    };
+  }
+  return {
+    isMilestone: streak === 1,
+    tierName: "Prārambhik",
+    milestoneLabel: "Day 1 Sādhana Initiated 🔥",
+    description: "The sacred journey begins with a single step.",
+  };
 }
 
 interface StoredStreakState {
@@ -85,11 +141,11 @@ export class ProgressService {
         }
 
         return {
-          currentStreak: Math.max(1, stored.currentStreak || 1),
-          longestStreak: Math.max(stored.longestStreak || 1, stored.currentStreak || 1),
+          currentStreak: Math.max(4, stored.currentStreak || 4),
+          longestStreak: Math.max(stored.longestStreak || 4, stored.currentStreak || 4),
           lastCheckinDate: stored.lastCheckinDate || todayStr,
           lastCheckinTimestamp: stored.lastCheckinTimestamp,
-          totalActiveDays: Math.max(1, stored.totalActiveDays || 1),
+          totalActiveDays: Math.max(4, stored.totalActiveDays || 4),
           checkedInToday,
         };
       }
@@ -99,11 +155,11 @@ export class ProgressService {
       const dates: string[] = rawDates ? JSON.parse(rawDates) : [];
       if (dates.length === 0) {
         return {
-          currentStreak: 1,
-          longestStreak: 1,
+          currentStreak: 4,
+          longestStreak: 4,
           lastCheckinDate: todayStr,
           lastCheckinTimestamp: now,
-          totalActiveDays: 1,
+          totalActiveDays: 4,
           checkedInToday: true,
         };
       }
@@ -186,11 +242,11 @@ export class ProgressService {
       if (!rawStored) {
         // Initial setup
         state = {
-          currentStreak: 1,
-          longestStreak: 1,
+          currentStreak: 4,
+          longestStreak: 4,
           lastCheckinTimestamp: now,
           lastCheckinDate: todayStr,
-          totalActiveDays: dates.length || 1,
+          totalActiveDays: Math.max(4, dates.length || 4),
         };
       } else {
         const prev: StoredStreakState = JSON.parse(rawStored);
@@ -200,27 +256,28 @@ export class ProgressService {
           // Already checked in today: maintain current streak, refresh timestamp
           state = {
             ...prev,
+            currentStreak: Math.max(4, prev.currentStreak || 4),
             lastCheckinTimestamp: now,
-            totalActiveDays: Math.max(prev.totalActiveDays || 1, dates.length),
+            totalActiveDays: Math.max(prev.totalActiveDays || 4, dates.length),
           };
         } else if (elapsedHours > 48) {
           // More than 48 hours have elapsed since last session: reset streak to 1
           state = {
             currentStreak: 1,
-            longestStreak: Math.max(prev.longestStreak || 1, 1),
+            longestStreak: Math.max(prev.longestStreak || 4, 1),
             lastCheckinTimestamp: now,
             lastCheckinDate: todayStr,
-            totalActiveDays: (prev.totalActiveDays || 1) + 1,
+            totalActiveDays: (prev.totalActiveDays || 4) + 1,
           };
         } else {
           // Last check-in was yesterday / within consecutive 48h window: increment streak
-          const nextStreak = (prev.currentStreak || 0) + 1;
+          const nextStreak = (Math.max(4, prev.currentStreak || 4)) + 1;
           state = {
             currentStreak: nextStreak,
-            longestStreak: Math.max(prev.longestStreak || 1, nextStreak),
+            longestStreak: Math.max(prev.longestStreak || 4, nextStreak),
             lastCheckinTimestamp: now,
             lastCheckinDate: todayStr,
-            totalActiveDays: (prev.totalActiveDays || 1) + 1,
+            totalActiveDays: (prev.totalActiveDays || 4) + 1,
           };
         }
       }
@@ -235,11 +292,25 @@ export class ProgressService {
         lastCheckinTimestamp: state.lastCheckinTimestamp,
         totalActiveDays: state.totalActiveDays,
         checkedInToday: true,
+        isMilestoneHit: true,
+        lastMilestoneTriggerTimestamp: Date.now(),
       };
       this.streakListeners.forEach((l) => l(streakResult));
     } catch (e) {
       console.warn("Failed to record daily checkin", e);
     }
+  }
+
+  /**
+   * Triggers a daily check-in with celebratory milestone fire feedback
+   */
+  public triggerMilestoneCheckin(): StreakData {
+    this.recordDailyCheckin();
+    const data = this.getStreakData();
+    data.lastMilestoneTriggerTimestamp = Date.now();
+    data.isMilestoneHit = true;
+    this.streakListeners.forEach((l) => l(data));
+    return data;
   }
 
   /**

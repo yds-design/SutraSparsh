@@ -29,6 +29,7 @@ import type { ReadingProgress } from "../types/progress";
 import { soundEngine } from "../utils/audio";
 import { progressService, type StreakData } from "../services/progress.service";
 import { useFeatureFlags } from "../services/feature-flags.service";
+import { StreakFireCounter } from "./StreakFireCounter";
 
 interface MyJourneyViewProps {
   verses: ContentItem[];
@@ -194,33 +195,15 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             </p>
           </div>
 
-          {/* Sādhana Habit Signals (Dynamic Streak) */}
-          <div
-            className={`flex items-center gap-3 border rounded-2xl p-4 sm:p-5 shadow-inner ${
-              isLight
-                ? "bg-[#FAF7F0] border-stone-300 text-stone-900"
-                : "bg-stone-950/80 border-amber-500/30"
-            }`}
-          >
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-600/30 border border-orange-500/40 flex items-center justify-center text-orange-400">
-              <Flame className="w-6 h-6 fill-current animate-pulse" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-1.5">
-                <span
-                  className={`font-mono text-2xl font-bold ${
-                    isLight ? "text-amber-900" : "text-amber-200"
-                  }`}
-                >
-                  {streakData.currentStreak}
-                </span>
-                <span className="text-xs font-bold text-amber-600">Days</span>
-              </div>
-              <p className={`text-[11px] font-medium ${isLight ? "text-stone-600" : "text-stone-400"}`}>
-                {streakData.checkedInToday ? "Consecutive Sādhana Active" : "Daily Sādhana Check-in Ready"}
-              </p>
-            </div>
-          </div>
+          {/* Sādhana Habit Signals (Dynamic Streak with Fire Pulse Animation) */}
+          <StreakFireCounter
+            variant="card"
+            streakData={streakData}
+            isLight={isLight}
+            onCheckin={() => {
+              progressService.triggerMilestoneCheckin();
+            }}
+          />
         </div>
 
         {/* Sub-Navigation Tabs inside My Journey */}

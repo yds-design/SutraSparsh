@@ -1,10 +1,11 @@
 import React from "react";
 import { X, ShieldCheck, Lock, EyeOff, Database, Globe, CheckCircle2, ExternalLink } from "lucide-react";
+import type { AppTheme } from "../types";
 
 interface PrivacyPolicyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  theme?: "sandstone" | "amethyst" | "light" | "festival";
+  theme?: AppTheme;
 }
 
 export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({
@@ -17,6 +18,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({
   const isLight = theme === "light";
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
+  const isGoldenHour = theme === "golden-hour";
 
   const modalBg = isLight
     ? "#FFFBF5"
@@ -24,15 +26,19 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({
     ? "#4B0E17"
     : isAmethyst
     ? "#140A28"
+    : isGoldenHour
+    ? "#251A10"
     : "#1C120B";
 
   const modalBorder = isLight
     ? "#E6D7C3"
     : isFestival
     ? "rgba(255, 138, 0, 0.35)"
+    : isGoldenHour
+    ? "rgba(201, 130, 43, 0.35)"
     : "rgba(216, 137, 22, 0.3)";
 
-  const textColor = isLight ? "#3A2818" : "#F4E9D2";
+  const textColor = isLight ? "#3A2818" : isGoldenHour ? "#FFF4D8" : "#F4E9D2";
 
   return (
     <div

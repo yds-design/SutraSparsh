@@ -12,6 +12,8 @@ import {
   Heart,
   ShieldCheck,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Check,
   User,
   Flame,
@@ -30,8 +32,8 @@ import { progressService, type StreakData } from "../services/progress.service";
 import { useFeatureFlags } from "../services/feature-flags.service";
 
 interface MoreViewProps {
-  theme?: "sandstone" | "amethyst" | "light" | "festival";
-  onSelectTheme?: (theme: "sandstone" | "amethyst" | "light" | "festival") => void;
+  theme?: "sandstone" | "amethyst" | "light" | "festival" | "golden-hour";
+  onSelectTheme?: (theme: "sandstone" | "amethyst" | "light" | "festival" | "golden-hour") => void;
   onOpenProfile?: () => void;
   onOpenPricing?: () => void;
   onOpenDonation?: () => void;
@@ -55,6 +57,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
   const isLight = theme === "light";
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
+  const isGoldenHour = theme === "golden-hour";
   const { isSadhakaEnabled, isGurudakshinaEnabled } = useFeatureFlags();
 
   // Device classification: Admin Console is strictly enabled ONLY from device: screen
@@ -171,7 +174,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
         if (perm === "granted") {
           new Notification("SutraSparsh • प्रातः स्मरण", {
             body: "Brahma Muhurta contemplation: योगः कर्मसु कौशलम् — Gita 2.50",
-            icon: "/favicon.ico",
+            icon: "/icon.png",
           });
           showToast(`✓ Brahma Muhurta notification triggered for ${prefReminder} IST!`);
           return;
@@ -182,12 +185,12 @@ export const MoreView: React.FC<MoreViewProps> = ({
   };
 
   // Color variables according to design assets
-  const textPrimary = isLight ? "#3A2818" : isFestival ? "#FFF6E3" : isAmethyst ? "#EDE0F8" : "#F4E9D2";
-  const textSecondary = isLight ? "#6B5844" : isFestival ? "#FFDDB3" : isAmethyst ? "#B8A4CC" : "#B9A995";
-  const textMuted = isLight ? "#8A7763" : isFestival ? "#E6B17E" : isAmethyst ? "#8A79A5" : "#8A7961";
-  const cardBg = isLight ? "#FFFFFF" : isFestival ? "#5E111C" : isAmethyst ? "#1A0E2E" : "#1C120B";
-  const cardBorder = isLight ? "#E6D7C3" : isFestival ? "rgba(255, 138, 0, 0.3)" : isAmethyst ? "rgba(196, 168, 230, 0.25)" : "rgba(216, 137, 22, 0.25)";
-  const saffronColor = isFestival ? "#FF8A00" : "#D88916";
+  const textPrimary = isLight ? "#3A2818" : isFestival ? "#FFF6E3" : isAmethyst ? "#EDE0F8" : isGoldenHour ? "#FFF4D8" : "#F4E9D2";
+  const textSecondary = isLight ? "#6B5844" : isFestival ? "#FFDDB3" : isAmethyst ? "#B8A4CC" : isGoldenHour ? "#F6DFA6" : "#B9A995";
+  const textMuted = isLight ? "#8A7763" : isFestival ? "#E6B17E" : isAmethyst ? "#8A79A5" : isGoldenHour ? "#A89F94" : "#8A7961";
+  const cardBg = isLight ? "#FFFFFF" : isFestival ? "#5E111C" : isAmethyst ? "#1A0E2E" : isGoldenHour ? "#251A10" : "#1C120B";
+  const cardBorder = isLight ? "#E6D7C3" : isFestival ? "rgba(255, 138, 0, 0.3)" : isAmethyst ? "rgba(196, 168, 230, 0.25)" : isGoldenHour ? "rgba(201, 130, 43, 0.35)" : "rgba(216, 137, 22, 0.25)";
+  const saffronColor = isFestival ? "#FF8A00" : isGoldenHour ? "#C9822B" : "#D88916";
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12 animate-fadeIn">
@@ -292,9 +295,13 @@ export const MoreView: React.FC<MoreViewProps> = ({
                 ज्ञान एवं कर्म योग साधक • vishal.kr.gupta@gmail.com
               </p>
               <div className="flex items-center space-x-3 mt-2 text-xs">
-                <span className="flex items-center space-x-1 text-amber-500 font-bold">
-                  <Flame className="w-3.5 h-3.5 fill-current" />
-                  <span>{streakData.currentStreak || 7}-Day Streak</span>
+                <span
+                  onClick={() => progressService.triggerMilestoneCheckin()}
+                  className="flex items-center space-x-1 text-amber-500 font-bold cursor-pointer hover:opacity-80 transition-opacity"
+                  title="Tap to celebrate streak milestone"
+                >
+                  <Flame className="w-3.5 h-3.5 fill-current animate-pulse text-orange-400" />
+                  <span>{streakData.currentStreak || 4}-Day Streak</span>
                 </span>
                 <span style={{ color: textMuted }}>•</span>
                 <span className="flex items-center space-x-1" style={{ color: textSecondary }}>
@@ -338,21 +345,23 @@ export const MoreView: React.FC<MoreViewProps> = ({
           </div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-amber-500">
             {theme === "sandstone"
-              ? "Dark Mode Active"
+              ? "Sandstone Mode Active"
               : theme === "light"
               ? "Light Mode Active"
               : theme === "festival"
               ? "Festival Mode Active"
+              : theme === "golden-hour"
+              ? "Golden Hour Active"
               : "Amethyst Mode Active"}
           </span>
         </div>
 
         <p className="text-xs sm:text-sm leading-relaxed" style={{ color: textSecondary }}>
-          Rooted in the warmth of temples, scriptures, and glowing sacred traditions. Select from the 3 authentic modes defined in the SutraSparsh design system:
+          Rooted in the warmth of temples, scriptures, and glowing sacred traditions. Select from the authentic atmospheres defined in the SutraSparsh design system:
         </p>
 
         {/* Theme Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
           {/* A. DARK MODE (Contemplative Sandstone) */}
           <div
             onClick={() => onSelectTheme && onSelectTheme("sandstone")}
@@ -373,7 +382,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
               </div>
             )}
             <div className="text-2xl mb-2">🌙</div>
-            <div className="font-bold text-sm text-[#F4E9D2]">Dark Mode</div>
+            <div className="font-bold text-sm text-[#F4E9D2]">Sandstone Temple</div>
             <div className="text-[11px] font-sanskrit text-amber-400">बलुआ पत्थर • Temple Brown</div>
             <p className="text-[11px] text-[#B9A995] mt-1 leading-relaxed">
               Default contemplative experience. Ink/Night ground (#120D09) with warm saffron & ivory accents.
@@ -386,7 +395,40 @@ export const MoreView: React.FC<MoreViewProps> = ({
             </div>
           </div>
 
-          {/* B. LIGHT MODE (Clean, Calm & Readable) */}
+          {/* B. AMETHYST TWILIGHT ATMOSPHERE */}
+          <div
+            onClick={() => onSelectTheme && onSelectTheme("amethyst")}
+            className={`p-4 rounded-2xl border cursor-pointer transition-all relative overflow-hidden ${
+              theme === "amethyst"
+                ? "ring-2 ring-purple-400 shadow-xl scale-[1.01]"
+                : "opacity-80 hover:opacity-100"
+            }`}
+            style={{
+              backgroundColor: "#140A28",
+              borderColor: theme === "amethyst" ? "#9B68D8" : "#321A54",
+            }}
+          >
+            {theme === "amethyst" && (
+              <div className="absolute top-0 right-0 bg-purple-500 text-stone-950 font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-bl-lg shadow flex items-center space-x-1">
+                <Check className="w-3 h-3 stroke-[3]" />
+                <span>Active</span>
+              </div>
+            )}
+            <div className="text-2xl mb-2">🔮</div>
+            <div className="font-bold text-sm text-[#EDE0F8]">Amethyst Twilight</div>
+            <div className="text-[11px] font-sanskrit text-purple-300">जाम्बूनद एवं मणिरत्न • Mystic Violet</div>
+            <p className="text-[11px] text-[#C4A8E6] mt-1 leading-relaxed">
+              Deep contemplative twilight. Midnight violet (#080410), sacred amethyst (#9B68D8), and soft lilac.
+            </p>
+            <div className="flex items-center space-x-1.5 mt-3 pt-2 border-t border-white/10">
+              <span className="w-3.5 h-3.5 rounded-full bg-[#080410] border border-white/20" title="Night Violet #080410" />
+              <span className="w-3.5 h-3.5 rounded-full bg-[#251640]" title="Deep Amethyst #251640" />
+              <span className="w-3.5 h-3.5 rounded-full bg-[#9B68D8]" title="Sacred Amethyst #9B68D8" />
+              <span className="w-3.5 h-3.5 rounded-full bg-[#EDE0F8]" title="Lilac Mist #EDE0F8" />
+            </div>
+          </div>
+
+          {/* C. LIGHT MODE (Clean, Calm & Readable) */}
           <div
             onClick={() => onSelectTheme && onSelectTheme("light")}
             className={`p-4 rounded-2xl border cursor-pointer transition-all relative overflow-hidden ${
@@ -406,7 +448,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
               </div>
             )}
             <div className="text-2xl mb-2">☀️</div>
-            <div className="font-bold text-sm text-[#3A2818]">Light Mode</div>
+            <div className="font-bold text-sm text-[#3A2818]">Parchment Dawn</div>
             <div className="text-[11px] font-sanskrit text-amber-700">चन्दन एवं पत्र • Sandalwood</div>
             <p className="text-[11px] text-[#6B5844] mt-1 leading-relaxed">
               Clean, calm and readable. Soft ivory ground (#FFFBF5) with parchment and deep brown typography.
@@ -439,7 +481,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
               </div>
             )}
             <div className="text-2xl mb-2">🪔</div>
-            <div className="font-bold text-sm text-[#FFF6E3]">Festival Mode</div>
+            <div className="font-bold text-sm text-[#FFF6E3]">Festival Maroon</div>
             <div className="text-[11px] font-sanskrit text-amber-300">उत्सव एवं मङ्गल • Royal Maroon</div>
             <p className="text-[11px] text-[#FFDDB3] mt-1 leading-relaxed">
               Vibrant, celebratory and auspicious. Deep royal maroon (#4B0E17), vivid saffron (#FF8A00), and gold.
@@ -449,6 +491,39 @@ export const MoreView: React.FC<MoreViewProps> = ({
               <span className="w-3.5 h-3.5 rounded-full bg-[#7A1825]" title="Royal Maroon #7A1825" />
               <span className="w-3.5 h-3.5 rounded-full bg-[#FF8A00]" title="Saffron #FF8A00" />
               <span className="w-3.5 h-3.5 rounded-full bg-[#FFD54A]" title="Golden #FFD54A" />
+            </div>
+          </div>
+
+          {/* D. GOLDEN HOUR ATMOSPHERE (गोधूलि वेला) */}
+          <div
+            onClick={() => onSelectTheme && onSelectTheme("golden-hour")}
+            className={`p-4 rounded-2xl border cursor-pointer transition-all relative overflow-hidden ${
+              theme === "golden-hour"
+                ? "ring-2 ring-amber-400 shadow-xl scale-[1.01]"
+                : "opacity-80 hover:opacity-100"
+            }`}
+            style={{
+              backgroundColor: "#251A10",
+              borderColor: theme === "golden-hour" ? "#C9822B" : "#4A321E",
+            }}
+          >
+            {theme === "golden-hour" && (
+              <div className="absolute top-0 right-0 bg-gradient-to-l from-[#C9822B] to-[#F6DFA6] text-stone-950 font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-bl-lg shadow flex items-center space-x-1">
+                <Check className="w-3 h-3 stroke-[3]" />
+                <span>Active</span>
+              </div>
+            )}
+            <div className="text-2xl mb-2">🌅</div>
+            <div className="font-bold text-sm text-[#FFF4D8]">Golden Hour</div>
+            <div className="text-[11px] font-sanskrit text-amber-300">गोधूलि वेला • Dusk Glow</div>
+            <p className="text-[11px] text-[#F6DFA6] mt-1 leading-relaxed">
+              Warm sunset glow. Butter cream (#F6DFA6), vanilla (#FFF4D8), burnt honey (#C9822B) & ink sanctum (#171717).
+            </p>
+            <div className="flex items-center space-x-1.5 mt-3 pt-2 border-t border-white/10">
+              <span className="w-3.5 h-3.5 rounded-full bg-[#171717] border border-white/20" title="Ink #171717" />
+              <span className="w-3.5 h-3.5 rounded-full bg-[#C9822B]" title="Burnt Honey #C9822B" />
+              <span className="w-3.5 h-3.5 rounded-full bg-[#F6DFA6]" title="Butter Cream #F6DFA6" />
+              <span className="w-3.5 h-3.5 rounded-full bg-[#FFF4D8]" title="Vanilla #FFF4D8" />
             </div>
           </div>
         </div>
@@ -760,8 +835,13 @@ export const MoreView: React.FC<MoreViewProps> = ({
             style={{ borderColor: cardBorder }}
           >
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500 text-sm">
-                ॐ
+              <div className="w-8 h-8 rounded-xl overflow-hidden shadow-sm border border-amber-500/30 flex-shrink-0 bg-stone-900">
+                <img
+                  src="/icon.png"
+                  alt="SutraSparsh Logo"
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
               </div>
               <div>
                 <div className="text-xs font-bold" style={{ color: textPrimary }}>
@@ -772,7 +852,17 @@ export const MoreView: React.FC<MoreViewProps> = ({
                 </div>
               </div>
             </div>
-            <ChevronRight className={`w-4 h-4 transition-transform ${activeSubView === "about" ? "rotate-90" : ""}`} style={{ color: textMuted }} />
+            <div
+              className="p-1 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center transition-colors"
+              aria-label={activeSubView === "about" ? "Collapse About section" : "Expand About section"}
+              title={activeSubView === "about" ? "Collapse" : "Expand"}
+            >
+              {activeSubView === "about" ? (
+                <ChevronUp className="w-4 h-4" style={{ color: textMuted }} />
+              ) : (
+                <ChevronDown className="w-4 h-4" style={{ color: textMuted }} />
+              )}
+            </div>
           </div>
 
           {/* About Drawer expansion */}

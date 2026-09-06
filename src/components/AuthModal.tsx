@@ -16,11 +16,12 @@ import {
 } from "lucide-react";
 import { authService, type SeekerUser } from "../services/auth.service";
 import { soundEngine } from "../utils/audio";
+import type { AppTheme } from "../types";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  theme?: "sandstone" | "amethyst" | "light" | "festival";
+  theme?: AppTheme;
   onOpenPrivacyPolicy?: () => void;
 }
 
@@ -54,6 +55,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const isLight = theme === "light";
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
+  const isGoldenHour = theme === "golden-hour";
 
   const modalBg = isLight
     ? "#FFFBF5"
@@ -61,15 +63,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     ? "#4B0E17"
     : isAmethyst
     ? "#140A28"
+    : isGoldenHour
+    ? "#251A10"
     : "#1C120B";
 
   const modalBorder = isLight
     ? "#E6D7C3"
     : isFestival
     ? "rgba(255, 138, 0, 0.35)"
+    : isGoldenHour
+    ? "rgba(201, 130, 43, 0.35)"
     : "rgba(216, 137, 22, 0.3)";
 
-  const textColor = isLight ? "#3A2818" : "#F4E9D2";
+  const textColor = isLight ? "#3A2818" : isGoldenHour ? "#FFF4D8" : "#F4E9D2";
 
   const handleGoogleSignIn = async (accountEmail?: string) => {
     setErrorMsg(null);

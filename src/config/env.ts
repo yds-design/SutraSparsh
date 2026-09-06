@@ -33,7 +33,7 @@ export function getEnvironmentConfig(): AppEnvironmentConfig {
     isDevelopment: tier === "development" || tier === "local",
     appName: process.env.APP_NAME || "SutraSparsh",
     appVersion: process.env.APP_VERSION || "1.0.0",
-    port: Number(process.env.PORT) || 3000,
+    port: 3000,
     firebaseProjectId: process.env.FIREBASE_PROJECT_ID || "sutrasparsh-dev",
     hasServiceAccount: Boolean(process.env.FIREBASE_SERVICE_ACCOUNT_PATH),
     rateLimitMaxRequests: Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 120,

@@ -6,7 +6,7 @@ interface MobileBottomNavProps {
   activeTab: NavTab;
   setActiveTab: (tab: NavTab) => void;
   savedCount: number;
-  theme?: "sandstone" | "amethyst" | "light" | "festival";
+  theme?: "sandstone" | "amethyst" | "light" | "festival" | "golden-hour";
 }
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
@@ -20,7 +20,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const isLight = theme === "light";
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
-  const isSandstone = theme === "sandstone";
+  const isGoldenHour = theme === "golden-hour";
+  const isSandstone = theme === "sandstone" || (!isLight && !isFestival && !isAmethyst && !isGoldenHour);
 
   const isTodayActive = activeTab === "today" || activeTab === "daily-app" || activeTab === "daily";
   const isExploreActive = activeTab === "explore" || activeTab === "explorer";
@@ -34,6 +35,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     ? "rgba(75, 14, 23, 0.96)"
     : isAmethyst
     ? "rgba(15, 10, 26, 0.96)"
+    : isGoldenHour
+    ? "rgba(24, 17, 11, 0.96)"
     : "rgba(18, 13, 9, 0.96)";
 
   const navBorder = isLight
@@ -42,6 +45,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     ? "rgba(255, 138, 0, 0.3)"
     : isAmethyst
     ? "rgba(196, 168, 230, 0.2)"
+    : isGoldenHour
+    ? "rgba(201, 130, 43, 0.35)"
     : "rgba(216, 137, 22, 0.25)";
 
   const activeColor = isLight
@@ -50,6 +55,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     ? "#FFD54A"
     : isAmethyst
     ? "#C4A8E6"
+    : isGoldenHour
+    ? "#F6DFA6"
     : "#F2B333";
 
   const inactiveColor = isLight
@@ -58,6 +65,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     ? "#E6B17E"
     : isAmethyst
     ? "#8A79A5"
+    : isGoldenHour
+    ? "#A89F94"
     : "#B9A995";
 
   const activePillBg = isLight
@@ -66,6 +75,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     ? "rgba(255, 138, 0, 0.2)"
     : isAmethyst
     ? "rgba(196, 168, 230, 0.15)"
+    : isGoldenHour
+    ? "rgba(201, 130, 43, 0.25)"
     : "rgba(216, 137, 22, 0.15)";
 
   const navItems = [

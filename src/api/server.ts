@@ -1,8 +1,8 @@
 import { createApiApp } from "./app.js";
 import type { Server } from "node:http";
 
-const PORT = Number(process.env.PORT ?? 3000);
-const HOST = process.env.HOST ?? "0.0.0.0";
+const PORT = 3000;
+const HOST = "0.0.0.0";
 
 const app = createApiApp();
 

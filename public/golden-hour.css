@@ -1,0 +1,52 @@
+/* ══════════════════════════════════════════════════════════════
+   SutraSparsh — Golden Hour Atmosphere Theme (गोधूलि वेला)
+   golden-hour.css
+   ══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Core Golden Hour Palette Variables (as specified) */
+  --golden-butter-cream: #F6DFA6;
+  --golden-soft-vanilla: #FFF4D8;
+  --golden-ink-black: #171717;
+  --golden-warm-gray: #A89F94;
+  --golden-burnt-honey: #C9822B;
+
+  /* Atmospheric Theme Extensions & Semantic Tokens */
+  --golden-bg-sanctum: #140E08;
+  --golden-bg-dusk: #1C140D;
+  --golden-bg-surface: #261B12;
+  --golden-bg-card: #312318;
+  --golden-bg-card-hover: #3D2C1F;
+  --golden-card-light: #FFFDF9;
+  
+  --golden-border-subtle: rgba(201, 130, 43, 0.28);
+  --golden-border-medium: rgba(201, 130, 43, 0.45);
+  --golden-border-glow: rgba(246, 223, 166, 0.65);
+
+  --golden-terracotta: #E15A2E;
+  --golden-terracotta-deep: #C6461F;
+  --golden-cream-veil: #FBF3E6;
+  --golden-sand-accent: #EFE1C7;
+
+  --golden-glow: 0 0 24px rgba(201, 130, 43, 0.35);
+  --golden-glow-strong: 0 0 32px rgba(246, 223, 166, 0.45);
+  --golden-gradient-sky: linear-gradient(180deg, #F6ECDC 0%, #EFE1C7 100%);
+  --golden-gradient-dusk: linear-gradient(145deg, #38271A 0%, #1A120B 100%);
+  --golden-gradient-btn: linear-gradient(135deg, #C9822B 0%, #E15A2E 100%);
+  --golden-header-bg: rgba(24, 17, 11, 0.94);
+}
+
+/* Theme Context Selectors */
+[data-theme="golden-hour"],
+.theme-golden-hour {
+  color: var(--golden-soft-vanilla);
+  background-color: var(--golden-bg-sanctum);
+}
+
+/* High-Contrast Sacred Text Selection for Golden Hour */
+[data-theme="golden-hour"] ::selection,
+.theme-golden-hour ::selection,
+.golden-hour-mode ::selection {
+  background-color: var(--golden-burnt-honey) !important;
+  color: var(--golden-soft-vanilla) !important;
+}

@@ -29,8 +29,8 @@ interface SadhakaProfileModalProps {
   onClose: () => void;
   savedCount: number;
   journalCount: number;
-  theme?: "sandstone" | "amethyst" | "light" | "festival";
-  onSelectTheme?: (theme: "sandstone" | "amethyst" | "light" | "festival") => void;
+  theme?: "sandstone" | "amethyst" | "light" | "festival" | "golden-hour";
+  onSelectTheme?: (theme: "sandstone" | "amethyst" | "light" | "festival" | "golden-hour") => void;
   onNavigateTab: (tab: string) => void;
   onOpenPricing: () => void;
   onOpenDonation: () => void;
@@ -243,7 +243,7 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
               </div>
               <div className="text-right">
                 <div className="text-lg font-black text-amber-500">
-                  {streakData.currentStreak || 7} Days
+                  {streakData.currentStreak || 4} Days
                 </div>
                 <div className="text-[10px] text-emerald-500 font-semibold">Active Today ✓</div>
               </div>
@@ -379,11 +379,11 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
                 <Palette className="w-3.5 h-3.5" />
                 <span>SACRED ATMOSPHERE (DESIGN SYSTEM)</span>
               </div>
-              <div className="grid grid-cols-4 gap-1.5 p-1 rounded-2xl border" style={{ backgroundColor: isLight ? "#FFFFFF" : "rgba(0,0,0,0.3)", borderColor: isLight ? "#E6D7C3" : "rgba(255,255,255,0.08)" }}>
+              <div className="grid grid-cols-5 gap-1 p-1 rounded-2xl border" style={{ backgroundColor: isLight ? "#FFFFFF" : "rgba(0,0,0,0.3)", borderColor: isLight ? "#E6D7C3" : "rgba(255,255,255,0.08)" }}>
                 <button
                   type="button"
                   onClick={() => onSelectTheme("sandstone")}
-                  className={`py-2 px-1 rounded-xl text-[11px] font-bold flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer ${
+                  className={`py-2 px-1 rounded-xl text-[10.5px] font-bold flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer ${
                     theme === "sandstone"
                       ? "bg-amber-500 text-stone-950 shadow"
                       : "text-stone-400 hover:text-stone-200"
@@ -395,7 +395,7 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
                 <button
                   type="button"
                   onClick={() => onSelectTheme("light")}
-                  className={`py-2 px-1 rounded-xl text-[11px] font-bold flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer ${
+                  className={`py-2 px-1 rounded-xl text-[10.5px] font-bold flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer ${
                     theme === "light"
                       ? "bg-amber-500 text-stone-950 shadow"
                       : "text-stone-400 hover:text-stone-200"
@@ -407,7 +407,7 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
                 <button
                   type="button"
                   onClick={() => onSelectTheme("festival")}
-                  className={`py-2 px-1 rounded-xl text-[11px] font-bold flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer ${
+                  className={`py-2 px-1 rounded-xl text-[10.5px] font-bold flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer ${
                     theme === "festival"
                       ? "bg-amber-500 text-stone-950 shadow"
                       : "text-stone-400 hover:text-stone-200"
@@ -419,7 +419,7 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
                 <button
                   type="button"
                   onClick={() => onSelectTheme("amethyst")}
-                  className={`py-2 px-1 rounded-xl text-[11px] font-bold flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer ${
+                  className={`py-2 px-1 rounded-xl text-[10.5px] font-bold flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer ${
                     theme === "amethyst"
                       ? "bg-purple-400 text-stone-950 shadow"
                       : "text-stone-400 hover:text-stone-200"
@@ -427,6 +427,18 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
                 >
                   <span>🔮</span>
                   <span>Amethyst</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSelectTheme("golden-hour")}
+                  className={`py-2 px-1 rounded-xl text-[10.5px] font-bold flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer ${
+                    theme === "golden-hour"
+                      ? "bg-gradient-to-r from-[#C9822B] to-[#F6DFA6] text-stone-950 shadow"
+                      : "text-stone-400 hover:text-stone-200"
+                  }`}
+                >
+                  <span>🌅</span>
+                  <span>Golden</span>
                 </button>
               </div>
             </div>

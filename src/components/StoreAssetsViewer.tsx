@@ -14,11 +14,12 @@ import {
   Flame,
   Volume2,
 } from "lucide-react";
+import type { AppTheme } from "../types";
 
 interface StoreAssetsViewerProps {
   isOpen: boolean;
   onClose: () => void;
-  theme?: "sandstone" | "amethyst" | "light" | "festival";
+  theme?: AppTheme;
 }
 
 export const StoreAssetsViewer: React.FC<StoreAssetsViewerProps> = ({
@@ -33,6 +34,7 @@ export const StoreAssetsViewer: React.FC<StoreAssetsViewerProps> = ({
   const isLight = theme === "light";
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
+  const isGoldenHour = theme === "golden-hour";
 
   const modalBg = isLight
     ? "#FFFBF5"
@@ -40,15 +42,19 @@ export const StoreAssetsViewer: React.FC<StoreAssetsViewerProps> = ({
     ? "#4B0E17"
     : isAmethyst
     ? "#140A28"
+    : isGoldenHour
+    ? "#251A10"
     : "#1C120B";
 
   const modalBorder = isLight
     ? "#E6D7C3"
     : isFestival
     ? "rgba(255, 138, 0, 0.35)"
+    : isGoldenHour
+    ? "rgba(201, 130, 43, 0.35)"
     : "rgba(216, 137, 22, 0.3)";
 
-  const textColor = isLight ? "#3A2818" : "#F4E9D2";
+  const textColor = isLight ? "#3A2818" : isGoldenHour ? "#FFF4D8" : "#F4E9D2";
 
   // Mockup store screenshot preview definitions
   const storeScreenshots = [
@@ -185,7 +191,7 @@ export const StoreAssetsViewer: React.FC<StoreAssetsViewerProps> = ({
                 </span>
               </div>
               <p className="text-xs opacity-75 leading-relaxed">
-                Rendered with the sacred golden Om insignia, sandstone texture, and Apple Human Interface Guidelines square format.
+                Rendered with the official SutraSparsh logo, warm saffron-vermilion gradient, bold geometric display typography, and script branding.
               </p>
               <div className="pt-2 flex flex-wrap gap-2 justify-center sm:justify-start">
                 <a

@@ -15,6 +15,7 @@ import {
   Compass,
 } from "lucide-react";
 import { soundEngine } from "../utils/audio";
+import type { AppTheme } from "../types";
 
 export interface TithiItem {
   id: string;
@@ -176,7 +177,7 @@ export const CURRENT_MONTH_TITHIS: TithiItem[] = [
 ];
 
 interface ImportantTithisParvProps {
-  theme?: "sandstone" | "amethyst" | "light" | "festival";
+  theme?: AppTheme;
   onSelectVerse?: (verseId: string) => void;
   defaultCollapsed?: boolean;
 }
@@ -201,7 +202,8 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
   const isLight = theme === "light";
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
-  const isSandstone = theme === "sandstone" || (!isLight && !isFestival && !isAmethyst);
+  const isGoldenHour = theme === "golden-hour";
+  const isSandstone = theme === "sandstone" || (!isLight && !isFestival && !isAmethyst && !isGoldenHour);
 
   const toggleCollapse = () => {
     soundEngine.playTempleBell(isCollapsed ? 520 : 440);
@@ -236,10 +238,10 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const goldAccent = isLight ? "#B9680D" : isFestival ? "#FFB300" : isAmethyst ? "#C4A8E6" : "#E8921A";
-  const sectionTitleColor = isLight ? "text-stone-900" : isFestival ? "text-[#FFF6E3]" : isAmethyst ? "text-[#EDE0F8]" : "text-stone-100";
-  const cardBorderClass = isLight ? "border-stone-200" : isFestival ? "border-[#FF8A00]/25" : isAmethyst ? "border-[#52297A]/40" : "border-white/10";
-  const cardBgClass = isLight ? "bg-white hover:bg-[#FAF7F0]" : isFestival ? "bg-[#3D0A11]/90 hover:bg-[#4E0D16]" : isAmethyst ? "bg-[#180C2C]/90 hover:bg-[#22123D]" : "bg-stone-900/70 hover:bg-stone-900/90";
+  const goldAccent = isLight ? "#B9680D" : isFestival ? "#FFB300" : isAmethyst ? "#C4A8E6" : isGoldenHour ? "#F6DFA6" : "#E8921A";
+  const sectionTitleColor = isLight ? "text-stone-900" : isFestival ? "text-[#FFF6E3]" : isAmethyst ? "text-[#EDE0F8]" : isGoldenHour ? "text-[#FFF4D8]" : "text-stone-100";
+  const cardBorderClass = isLight ? "border-stone-200" : isFestival ? "border-[#FF8A00]/25" : isAmethyst ? "border-[#52297A]/40" : isGoldenHour ? "border-[#C9822B]/35" : "border-white/10";
+  const cardBgClass = isLight ? "bg-white hover:bg-[#FAF7F0]" : isFestival ? "bg-[#3D0A11]/90 hover:bg-[#4E0D16]" : isAmethyst ? "bg-[#180C2C]/90 hover:bg-[#22123D]" : isGoldenHour ? "bg-[#251A10]/90 hover:bg-[#2F2115]" : "bg-stone-900/70 hover:bg-stone-900/90";
 
   return (
     <div id="important-tithis-parv-section" className="px-4 space-y-2.5 pt-3">
@@ -287,11 +289,11 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
               e.stopPropagation();
               toggleCollapse();
             }}
-            className="px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 flex items-center space-x-1.5 text-xs text-amber-300 transition-all font-semibold cursor-pointer"
+            className="p-1.5 sm:p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-300 transition-all cursor-pointer"
             aria-label={isCollapsed ? "Expand Tithis & Parv section" : "Collapse Tithis & Parv section"}
+            title={isCollapsed ? "Expand" : "Collapse"}
           >
-            <span>{isCollapsed ? "Expand" : "Collapse"}</span>
-            {isCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+            {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
           </button>
         </div>
       </div>
@@ -314,9 +316,8 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
             <span className="text-amber-400 font-bold flex-shrink-0">Upcoming:</span>
             <span className="truncate">🌿 Aja Ekadashi (Sep 8) • 🪔 Parivartini Ekadashi (Sep 22) • 🌕 Ananta Chaturdashi (Sep 24)</span>
           </div>
-          <span className="text-amber-400 font-semibold flex items-center space-x-0.5 ml-2 flex-shrink-0">
-            <span>Tap to View All</span>
-            <ChevronDown className="w-3 h-3" />
+          <span className="p-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center ml-2 flex-shrink-0">
+            <ChevronDown className="w-3.5 h-3.5" />
           </span>
         </div>
       )}

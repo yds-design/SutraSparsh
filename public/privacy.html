@@ -37,18 +37,15 @@
       padding-bottom: 20px;
       margin-bottom: 28px;
     }
-    .logo {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+    .logo-img {
+      display: inline-block;
       width: 48px;
       height: 48px;
       border-radius: 14px;
-      background: linear-gradient(135deg, #D88916, #70501F);
-      color: #FFF;
-      font-size: 24px;
-      font-weight: bold;
       margin-bottom: 12px;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255, 138, 0, 0.3);
     }
     h1 {
       margin: 0 0 6px 0;
@@ -97,7 +94,7 @@
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo">ॐ</div>
+      <img src="/icon.png" alt="SutraSparsh Logo" class="logo-img" />
       <h1>SutraSparsh • Privacy Policy</h1>
       <div class="meta">Effective Date: September 3, 2026 • Compliant with Apple App Store & Google Play Store Policies</div>
     </div>

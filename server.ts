@@ -5,8 +5,8 @@ import { createApiApp } from "./src/api/app.js";
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT ?? 3000);
-  const HOST = process.env.HOST ?? "0.0.0.0";
+  const PORT = 3000;
+  const HOST = "0.0.0.0";
 
   // Create API backend app
   const apiApp = createApiApp();
