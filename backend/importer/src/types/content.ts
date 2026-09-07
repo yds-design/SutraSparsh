@@ -1,3 +1,5 @@
+import type { FirestoreAudioMetadata } from "../audio/types.js";
+
 export interface ContentMetadata {
   language: string;
   source: string;
@@ -11,4 +13,5 @@ export interface ContentDocument {
   title: string;
   body: string;
   metadata: ContentMetadata;
+  audio?: FirestoreAudioMetadata;
 }

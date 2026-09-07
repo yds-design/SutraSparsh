@@ -264,11 +264,12 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
             📅
           </div>
           <div className="space-y-0.5 min-w-0">
-            <div className="flex items-center space-x-2 flex-wrap">
+            <div className="flex items-center gap-1.5 min-w-0 flex-nowrap">
               <h3 className={`font-serif-sacred text-sm sm:text-base font-bold tracking-tight truncate ${sectionTitleColor}`}>
-                Important Tithis & Parv Dates • महत्वपूर्ण तिथियाँ एवं पर्व
+                <span className="inline sm:hidden">Important Tithis & Parv</span>
+                <span className="hidden sm:inline">Important Tithis & Parv Dates • महत्वपूर्ण तिथियाँ एवं पर्व</span>
               </h3>
-              <span className="text-[10.5px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-300 font-semibold">
+              <span className="text-[10px] sm:text-[10.5px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-300 font-semibold whitespace-nowrap flex-shrink-0">
                 10 Dates
               </span>
             </div>
@@ -363,11 +364,11 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
               className={`p-4 sm:p-4.5 rounded-2xl border transition-all shadow-sm space-y-2.5 ${cardBgClass} ${cardBorderClass}`}
             >
               {/* Top Row: Date, Tithi Pill, Reminder Toggle */}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center space-x-2 flex-wrap">
+              <div className="flex items-center justify-between gap-2 flex-nowrap w-full">
+                <div className="flex items-center gap-1.5 flex-nowrap min-w-0 overflow-hidden">
                   {/* Date Badge */}
                   <span
-                    className={`font-mono text-xs font-bold px-2.5 py-0.5 rounded-lg border ${
+                    className={`font-mono text-xs font-bold px-2 py-0.5 rounded-lg border whitespace-nowrap flex-shrink-0 ${
                       isLight
                         ? "bg-amber-100/90 text-amber-950 border-amber-300"
                         : "bg-amber-500/15 text-amber-300 border-amber-500/30"
@@ -378,7 +379,7 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
 
                   {/* Paksha / Tithi Badge */}
                   <span
-                    className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-md border ${
+                    className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-md border whitespace-nowrap truncate ${
                       item.paksha === "Shukla"
                         ? isLight
                           ? "bg-stone-100 text-stone-800 border-stone-200"
@@ -388,7 +389,7 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
                         : "bg-stone-800/80 text-stone-300 border-stone-700"
                     }`}
                   >
-                    {item.paksha} Paksha · {item.tithi}
+                    {item.paksha} · {item.tithi}
                   </span>
                 </div>
 
@@ -396,7 +397,7 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
                 <button
                   onClick={() => handleToggleReminder(item.id, item.nameEn)}
                   title={isReminded ? "Remove Reminder" : "Set Sacred Reminder"}
-                  className={`p-1.5 rounded-xl transition-all cursor-pointer border flex-shrink-0 flex items-center space-x-1 ${
+                  className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl transition-all cursor-pointer border flex-shrink-0 flex items-center space-x-1 ${
                     isReminded
                       ? isLight
                         ? "bg-amber-100 text-amber-900 border-amber-400 font-bold"
@@ -422,15 +423,15 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
 
               {/* Title & Sanskrit Name */}
               <div>
-                <div className="flex items-center space-x-2 flex-wrap">
+                <div className="flex items-center gap-1.5 flex-nowrap min-w-0">
                   <h4
-                    className="font-serif-sacred text-base font-bold tracking-tight"
+                    className="font-serif-sacred text-sm sm:text-base font-bold tracking-tight truncate"
                     style={{ color: isLight ? "#1C0F05" : "#FFF7ED" }}
                   >
                     {item.nameEn}
                   </h4>
                   <span
-                    className="font-sanskrit text-sm font-semibold"
+                    className="font-sanskrit text-xs sm:text-sm font-semibold whitespace-nowrap flex-shrink-0"
                     style={{ color: goldAccent }}
                   >
                     ({item.nameHi})

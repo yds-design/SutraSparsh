@@ -30,6 +30,7 @@ import { soundEngine } from "../utils/audio";
 import { progressService, type StreakData } from "../services/progress.service";
 import { useFeatureFlags } from "../services/feature-flags.service";
 import { StreakFireCounter } from "./StreakFireCounter";
+import { CloudSyncStatusBadge } from "./CloudSyncStatusBadge";
 
 interface MyJourneyViewProps {
   verses: ContentItem[];
@@ -42,6 +43,7 @@ interface MyJourneyViewProps {
   onOpenPricing: () => void;
   onOpenDonation: () => void;
   onNavigateTab: (tab: "today" | "explore" | "search" | "my-journey") => void;
+  onManualSync?: () => void;
   theme?: "sandstone" | "amethyst" | "light" | "festival";
 }
 
@@ -56,6 +58,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
   onOpenPricing,
   onOpenDonation,
   onNavigateTab,
+  onManualSync,
   theme: propTheme,
 }) => {
   const currentTheme =
@@ -579,6 +582,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
       {/* SECTION 2: SAVED WISDOM & BOOKMARKS */}
       {subSection === "saved" && (
         <div className="space-y-6 animate-fadeIn">
+          {/* Cloud Sync Status */}
+          <CloudSyncStatusBadge onManualSync={onManualSync} />
+
           <div className="flex items-center justify-between">
             <h2 className="font-serif-sacred text-xl font-bold text-amber-100">
               Saved Verses & Sacred Passages
@@ -657,6 +663,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
       {/* SECTION 3: REFLECTIONS & SPIRITUAL JOURNAL */}
       {subSection === "reflections" && (
         <div className="space-y-6 animate-fadeIn">
+          {/* Cloud Sync Status */}
+          <CloudSyncStatusBadge onManualSync={onManualSync} />
+
           {/* New Reflection Composer */}
           <div className="bg-stone-900/60 border border-stone-800 rounded-3xl p-6 space-y-4">
             <div className="flex items-center space-x-2 text-amber-400 text-xs font-semibold uppercase tracking-wider">

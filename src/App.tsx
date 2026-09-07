@@ -26,6 +26,8 @@ import { soundEngine } from "./utils/audio";
 import type { SubscriptionPlanId } from "./types/monetization";
 import type { AppTheme } from "./types";
 import { useFeatureFlags } from "./services/feature-flags.service";
+import { firestoreSyncService } from "./services/firestore-sync.service";
+import { authService, type SeekerUser } from "./services/auth.service";
 import {
   WordExplorer,
   LookCloserModal,
@@ -157,7 +159,9 @@ export default function App() {
   const [visibleVerseLimit, setVisibleVerseLimit] = useState(12);
   const loadMoreSentinelRef = React.useRef<HTMLDivElement | null>(null);
 
-  // Local storage for Bookmarks and Journal
+  // Local storage & Cloud Sync for Bookmarks and Journal
+  const [currentUser, setCurrentUser] = useState<SeekerUser | null>(() => authService.getCurrentUser());
+
   const [bookmarks, setBookmarks] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem("sutrasparsh_bookmarks");
@@ -183,6 +187,67 @@ export default function App() {
       return [];
     }
   });
+
+  // Track auth user changes
+  useEffect(() => {
+    const unsub = authService.subscribe((user) => {
+      setCurrentUser(user);
+    });
+    return unsub;
+  }, []);
+
+  // Multi-device Cloud Sync (Firestore) listeners & reconciliation
+  useEffect(() => {
+    if (!currentUser || !authService.isFirebaseAuthenticated()) return;
+
+    // 1. Reconcile on initial mount/login
+    firestoreSyncService
+      .reconcileData(currentUser.uid, bookmarks, journalEntries)
+      .then((reconciled) => {
+        setBookmarks(reconciled.bookmarks);
+        setJournalEntries(reconciled.journals);
+      })
+      .catch((err) => {
+        console.warn("Initial Firestore sync reconciliation note:", err);
+      });
+
+    // 2. Real-time Bookmarks listener
+    const unsubBm = firestoreSyncService.subscribeBookmarks(
+      currentUser.uid,
+      (cloudBookmarks) => {
+        if (cloudBookmarks && cloudBookmarks.length > 0) {
+          setBookmarks((prev) => {
+            const merged = Array.from(new Set([...cloudBookmarks, ...prev]));
+            return merged;
+          });
+        }
+      }
+    );
+
+    // 3. Real-time Journal Reflections listener
+    const unsubJn = firestoreSyncService.subscribeJournals(
+      currentUser.uid,
+      (cloudJournals) => {
+        if (cloudJournals && cloudJournals.length > 0) {
+          setJournalEntries((prev) => {
+            const map = new Map<string, JournalEntry>();
+            cloudJournals.forEach((j) => map.set(j.id, j));
+            prev.forEach((j) => {
+              if (!map.has(j.id)) map.set(j.id, j);
+            });
+            return Array.from(map.values()).sort(
+              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+          });
+        }
+      }
+    );
+
+    return () => {
+      unsubBm();
+      unsubJn();
+    };
+  }, [currentUser?.uid]);
 
   useEffect(() => {
     try {
@@ -228,10 +293,24 @@ export default function App() {
     fetchContent();
   }, [selectedCategory, searchTerm]);
 
-  const toggleBookmark = (id: string) => {
+  const toggleBookmark = (id: string, verseTitle?: string) => {
+    const willBookmark = !bookmarks.includes(id);
     setBookmarks((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      willBookmark ? [...prev, id] : prev.filter((item) => item !== id)
     );
+
+    // Sync to Firestore if authenticated with Firebase Auth
+    if (currentUser && authService.isFirebaseAuthenticated()) {
+      if (willBookmark) {
+        firestoreSyncService.setBookmark(currentUser.uid, id, verseTitle || id).catch((err) => {
+          console.warn("Could not sync bookmark to cloud:", err);
+        });
+      } else {
+        firestoreSyncService.removeBookmark(currentUser.uid, id).catch((err) => {
+          console.warn("Could not remove bookmark from cloud:", err);
+        });
+      }
+    }
   };
 
   const handleSaveJournalNote = (verseId: string, verseTitle: string, note: string) => {
@@ -243,10 +322,62 @@ export default function App() {
       createdAt: new Date().toISOString(),
     };
     setJournalEntries((prev) => [newEntry, ...prev]);
+
+    // Sync to Firestore
+    if (currentUser && authService.isFirebaseAuthenticated()) {
+      firestoreSyncService.saveJournalEntry(currentUser.uid, newEntry).catch((err) => {
+        console.warn("Could not sync reflection to cloud:", err);
+      });
+    }
+  };
+
+  const handleEditJournalEntry = (id: string, newNote: string) => {
+    setJournalEntries((prev) =>
+      prev.map((entry) => {
+        if (entry.id === id) {
+          const updated: JournalEntry = {
+            ...entry,
+            note: newNote,
+            updatedAt: new Date().toISOString(),
+          };
+          if (currentUser && authService.isFirebaseAuthenticated()) {
+            firestoreSyncService.saveJournalEntry(currentUser.uid, updated).catch((err) => {
+              console.warn("Could not update reflection in cloud:", err);
+            });
+          }
+          return updated;
+        }
+        return entry;
+      })
+    );
   };
 
   const handleDeleteJournalEntry = (id: string) => {
     setJournalEntries((prev) => prev.filter((entry) => entry.id !== id));
+
+    // Remove from Firestore
+    if (currentUser && authService.isFirebaseAuthenticated()) {
+      firestoreSyncService.deleteJournalEntry(currentUser.uid, id).catch((err) => {
+        console.warn("Could not delete reflection from cloud:", err);
+      });
+    }
+  };
+
+  const handleManualSync = async () => {
+    if (currentUser && authService.isFirebaseAuthenticated()) {
+      const reconciled = await firestoreSyncService.reconcileData(
+        currentUser.uid,
+        bookmarks,
+        journalEntries
+      );
+      setBookmarks(reconciled.bookmarks);
+      setJournalEntries(reconciled.journals);
+      await firestoreSyncService.createCloudBackupSnapshot(
+        currentUser.uid,
+        reconciled.bookmarks,
+        reconciled.journals
+      );
+    }
   };
 
   const handleOpenVerse = (verse: ContentItem) => {
@@ -649,6 +780,7 @@ export default function App() {
             onOpenPricing={() => setIsPricingOpen(true)}
             onOpenDonation={() => setIsDonationOpen(true)}
             onNavigateTab={(tab) => setActiveTab(tab)}
+            onManualSync={handleManualSync}
           />
         )}
 

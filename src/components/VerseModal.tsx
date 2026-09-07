@@ -250,16 +250,17 @@ export const VerseModal: React.FC<VerseModalProps> = ({
               </div>
 
               {/* Word-Level Sanskrit Interaction Header */}
-              <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-                <div className="flex items-center space-x-2">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-amber-300">
-                    Sanskrit Word-Level Layer • पद-विभाग
+              <div className="flex items-center justify-between gap-2 px-1 flex-nowrap w-full">
+                <div className="flex items-center space-x-2 min-w-0">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-300 truncate">
+                    <span className="inline sm:hidden">Word Layer • पद</span>
+                    <span className="hidden sm:inline">Sanskrit Word-Level Layer • पद-विभाग</span>
                   </span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/25">
-                    {identifiedWords.length} Words Identified
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  <span className="px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/25 whitespace-nowrap">
+                    {identifiedWords.length} Words
                   </span>
                   {selectedWordSurface && (
                     <button
@@ -268,9 +269,9 @@ export const VerseModal: React.FC<VerseModalProps> = ({
                         setSelectedWordSurface(null);
                         setActiveVerseWord(null);
                       }}
-                      className="text-[11px] text-stone-400 hover:text-stone-200 underline transition-colors"
+                      className="text-[11px] text-stone-400 hover:text-stone-200 underline transition-colors whitespace-nowrap"
                     >
-                      Clear selection
+                      Clear
                     </button>
                   )}
                 </div>
@@ -402,24 +403,24 @@ export const VerseModal: React.FC<VerseModalProps> = ({
                   </div>
 
                   {/* Action Bar */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                  <div className="flex items-center justify-between gap-1.5 sm:gap-2 pt-1 flex-nowrap w-full">
                     <button
                       type="button"
                       onClick={() => soundEngine.playTempleBell(440)}
-                      className="px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-medium transition-colors flex items-center space-x-1.5"
+                      className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-medium transition-colors flex items-center space-x-1.5 flex-shrink-0"
                     >
-                      <Volume2 className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Sound Chime</span>
+                      <Volume2 className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                      <span className="hidden xs:inline">Chime</span>
                     </button>
 
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1.5 sm:space-x-2 flex-1 justify-end min-w-0">
                       <button
                         type="button"
                         onClick={() => setActiveSubTab("words")}
-                        className="px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-200 border border-stone-700 text-xs font-semibold transition-colors flex items-center space-x-1.5"
+                        className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-200 border border-stone-700 text-xs font-semibold transition-colors flex items-center space-x-1 sm:space-x-1.5 truncate"
                       >
-                        <BookOpen className="w-3.5 h-3.5" />
-                        <span>Inspect Morphology Tab</span>
+                        <BookOpen className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span className="truncate">Morphology<span className="hidden sm:inline"> Tab</span></span>
                       </button>
 
                       <button
@@ -430,10 +431,10 @@ export const VerseModal: React.FC<VerseModalProps> = ({
                             onOpenWord(activeVerseWord.surfaceForm);
                           }
                         }}
-                        className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 text-xs font-bold transition-all shadow-md flex items-center space-x-1.5"
+                        className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 text-xs font-bold transition-all shadow-md flex items-center space-x-1 sm:space-x-1.5 truncate"
                       >
-                        <Layers className="w-3.5 h-3.5" />
-                        <span>Open Word Explorer Drawer</span>
+                        <Layers className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span className="truncate">Explorer<span className="hidden sm:inline"> Drawer</span></span>
                       </button>
                     </div>
                   </div>

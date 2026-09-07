@@ -10,8 +10,12 @@
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
     "lint": "tsc --noEmit",
-    "test:gate": "tsx src/testing/phase12-release-gate.ts",
-    "ci:verify": "tsx scripts/ci-verify.ts",
+    "test": "npx tsx src/testing/phase12-release-gate.ts && npx tsx scripts/ci-verify.ts",
+    "test:gate": "npx tsx src/testing/phase12-release-gate.ts",
+    "tts:voices": "npx tsx backend/importer/src/audio/providers/google/voices.ts",
+    "tts:benchmark": "npx tsx backend/importer/src/audio/benchmark/runner.ts",
+    "tts:benchmark:report": "npx tsx backend/importer/src/audio/benchmark/report.ts",
+    "ci:verify": "npx tsx scripts/ci-verify.ts",
     "format": "prettier --write ."
   },
   "dependencies": {

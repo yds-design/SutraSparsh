@@ -3265,7 +3265,7 @@ ${reflections
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-1.5 justify-end max-w-[200px]">
+                  <div className="flex items-center gap-1 flex-nowrap overflow-x-auto no-scrollbar py-0.5 justify-end">
                     {[0.75, 0.85, 1.0, 1.15, 1.25].map((speed) => (
                       <button
                         key={speed}
@@ -3274,7 +3274,7 @@ ${reflections
                           recitationEngine.setPlaybackRate(speed);
                           window.dispatchEvent(new CustomEvent("sutrasparsh:pref_speed", { detail: speed }));
                         }}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
+                        className={`px-2 py-1 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer flex-shrink-0 ${
                           prefChantSpeed === speed
                             ? "bg-amber-500 text-stone-950 shadow-sm"
                             : isLight
@@ -3300,7 +3300,7 @@ ${reflections
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-1.5 self-end sm:self-auto">
+                  <div className="flex items-center gap-1 flex-nowrap overflow-x-auto no-scrollbar py-0.5 w-full sm:w-auto justify-start sm:justify-end">
                     {[
                       { time: "04:30", label: "4:30 AM" },
                       { time: "05:30", label: "5:30 AM" },
@@ -3315,7 +3315,7 @@ ${reflections
                           window.dispatchEvent(new CustomEvent("sutrasparsh:pref_reminder", { detail: item.time }));
                           handleRequestNotifications();
                         }}
-                        className={`px-2 py-1 rounded-lg text-[10.5px] font-bold transition-colors cursor-pointer ${
+                        className={`px-2 py-1 rounded-lg text-[10.5px] font-bold transition-colors cursor-pointer flex-shrink-0 ${
                           prefReminder === item.time
                             ? "bg-amber-500 text-stone-950 shadow-sm"
                             : isLight

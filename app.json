@@ -23,7 +23,8 @@
       }
     },
     "android": {
-      "package": "com.sutrasparsh.app",
+      "package": "com.yds.sutrasparsh",
+      "googleServicesFile": "./google-services.json",
       "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#120D09",

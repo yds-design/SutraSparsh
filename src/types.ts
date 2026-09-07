@@ -64,6 +64,7 @@ export interface JournalEntry {
   verseTitle: string;
   note: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface AppLogEntry {

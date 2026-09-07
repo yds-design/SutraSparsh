@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { JournalEntry, ContentItem } from "../types";
 import { soundEngine } from "../utils/audio";
+import { CloudSyncStatusBadge } from "./CloudSyncStatusBadge";
 
 interface WisdomJournalProps {
   entries: JournalEntry[];
@@ -25,6 +26,7 @@ interface WisdomJournalProps {
   onEditEntry?: (id: string, newNote: string) => void;
   onOpenVerse: (verse: ContentItem) => void;
   onToggleBookmark: (verseId: string) => void;
+  onManualSync?: () => void;
 }
 
 export const WisdomJournal: React.FC<WisdomJournalProps> = ({
@@ -35,6 +37,7 @@ export const WisdomJournal: React.FC<WisdomJournalProps> = ({
   onEditEntry,
   onOpenVerse,
   onToggleBookmark,
+  onManualSync,
 }) => {
   const [activeView, setActiveView] = useState<"reflections" | "bookmarks">("reflections");
   const [searchTerm, setSearchTerm] = useState("");
@@ -217,6 +220,9 @@ ${v.meaning || "—"}
           </div>
         </div>
       </div>
+
+      {/* Firestore Cloud Sync Status Banner */}
+      <CloudSyncStatusBadge onManualSync={onManualSync} />
 
       {activeView === "reflections" && (
         <div className="space-y-6">

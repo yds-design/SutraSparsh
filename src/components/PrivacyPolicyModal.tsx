@@ -181,10 +181,10 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({
             <p>
               For any questions regarding this Privacy Policy or data requests, contact our dedicated sanctuary guardian at:{" "}
               <a
-                href="mailto:support@sutrasparsh.com"
+                href="mailto:your.daily.shloka@gmail.com"
                 className="text-amber-400 underline font-mono"
               >
-                support@sutrasparsh.com
+                your.daily.shloka@gmail.com
               </a>{" "}
               or{" "}
               <a

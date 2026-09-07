@@ -50,30 +50,33 @@ export const DailySutra: React.FC<DailySutraProps> = ({
         <div className="absolute -top-12 -right-12 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
         
         <div className="relative z-10 space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center space-x-2 text-amber-400 text-xs sm:text-sm font-semibold tracking-wider uppercase">
-              <Sun className="w-5 h-5 text-amber-400" />
-              <span>Sutra of the Day • दैनिक स्वाध्याय</span>
+          <div className="flex items-center justify-between gap-2 flex-nowrap w-full">
+            <div className="flex items-center space-x-2 text-amber-400 text-xs sm:text-sm font-semibold tracking-wider uppercase min-w-0">
+              <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 flex-shrink-0" />
+              <span className="truncate">
+                <span className="inline sm:hidden">Daily Sutra</span>
+                <span className="hidden sm:inline">Sutra of the Day • दैनिक स्वाध्याय</span>
+              </span>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
               <button
                 onClick={handleChime}
                 title="Chime temple bell"
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-stone-900/80 border border-stone-800 text-xs text-amber-300 hover:border-amber-500/40 transition-colors"
+                className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-stone-900/80 border border-stone-800 text-xs text-amber-300 hover:border-amber-500/40 transition-colors"
               >
-                <Volume2 className="w-4 h-4" />
-                <span>Chime Bell</span>
+                <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                <span className="hidden xs:inline">Chime<span className="hidden sm:inline"> Bell</span></span>
               </button>
 
               <button
                 onClick={() => onToggleBookmark(verse.id)}
-                className="p-2 rounded-xl bg-stone-900/80 border border-stone-800 text-stone-300 hover:text-amber-300 hover:border-amber-500/40 transition-colors"
+                className="p-1.5 sm:p-2 rounded-xl bg-stone-900/80 border border-stone-800 text-stone-300 hover:text-amber-300 hover:border-amber-500/40 transition-colors flex-shrink-0"
               >
                 {isBookmarked ? (
-                  <BookmarkCheck className="w-4 h-4 text-amber-400 fill-amber-400/20" />
+                  <BookmarkCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 fill-amber-400/20" />
                 ) : (
-                  <Bookmark className="w-4 h-4" />
+                  <Bookmark className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 )}
               </button>
             </div>

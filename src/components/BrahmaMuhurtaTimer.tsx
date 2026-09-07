@@ -147,15 +147,15 @@ export const BrahmaMuhurtaTimer: React.FC<BrahmaMuhurtaTimerProps> = ({
             </div>
 
             <div className="min-w-0">
-              <div className="flex items-center space-x-1.5 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-nowrap">
                 <span
-                  className="font-serif-sacred text-sm sm:text-base font-bold tracking-tight truncate"
+                  className="font-serif-sacred text-sm sm:text-base font-bold tracking-tight whitespace-nowrap"
                   style={{ color: isLight ? "#2B1A08" : "#FFF7ED" }}
                 >
                   Brahma Muhūrta
                 </span>
                 <span
-                  className="font-sanskrit text-xs px-1.5 py-0.2 rounded"
+                  className="font-sanskrit text-[11px] sm:text-xs px-1.5 py-0.5 rounded whitespace-nowrap"
                   style={{
                     backgroundColor: isLight ? "rgba(185,104,13,0.12)" : "rgba(232,146,26,0.15)",
                     color: goldAccent,
@@ -164,8 +164,8 @@ export const BrahmaMuhurtaTimer: React.FC<BrahmaMuhurtaTimerProps> = ({
                   ब्रह्म मुहूर्त
                 </span>
               </div>
-              <div className={`text-[11px] leading-tight mt-0.5 ${subTextColor}`}>
-                Dawn Window: <span className="font-semibold">04:30 AM – 05:18 AM</span> (48 Mins)
+              <div className={`text-[11px] leading-tight mt-0.5 ${subTextColor} whitespace-nowrap truncate`}>
+                Dawn Window: <span className="font-semibold">04:30 – 05:18 AM</span> <span className="text-[10px] opacity-80">(48 Mins)</span>
               </div>
             </div>
           </div>
@@ -282,11 +282,11 @@ export const BrahmaMuhurtaTimer: React.FC<BrahmaMuhurtaTimerProps> = ({
         </div>
 
         {/* Interactive Controls Bar */}
-        <div className="flex items-center gap-2 pt-1 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center gap-1.5 sm:gap-2 pt-1 flex-nowrap w-full">
           {/* Reminder Toggle Button */}
           <button
             onClick={handleToggleReminder}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer border ${
+            className={`flex-1 min-w-0 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer border overflow-hidden ${
               reminderEnabled
                 ? isLight
                   ? "bg-amber-100/90 text-amber-950 border-amber-300 shadow-xs hover:bg-amber-200"
@@ -298,13 +298,19 @@ export const BrahmaMuhurtaTimer: React.FC<BrahmaMuhurtaTimerProps> = ({
           >
             {reminderEnabled ? (
               <>
-                <BellRing className="w-3.5 h-3.5 text-amber-500" />
-                <span className="truncate">04:30 AM Alarm Active</span>
+                <BellRing className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                <span className="truncate whitespace-nowrap text-[11.5px] sm:text-xs">
+                  <span className="inline sm:hidden">04:30 AM Active</span>
+                  <span className="hidden sm:inline">04:30 AM Alarm Active</span>
+                </span>
               </>
             ) : (
               <>
-                <Bell className="w-3.5 h-3.5" />
-                <span className="truncate">Enable 04:30 AM Alarm</span>
+                <Bell className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate whitespace-nowrap text-[11.5px] sm:text-xs">
+                  <span className="inline sm:hidden">04:30 AM Alarm</span>
+                  <span className="hidden sm:inline">Enable 04:30 AM Alarm</span>
+                </span>
               </>
             )}
           </button>
@@ -313,21 +319,21 @@ export const BrahmaMuhurtaTimer: React.FC<BrahmaMuhurtaTimerProps> = ({
           <button
             onClick={handlePlayChime}
             title="Test 432Hz Sacred Chime"
-            className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all flex items-center justify-center space-x-1 cursor-pointer border flex-shrink-0 ${
+            className={`h-8.5 sm:h-auto py-2 px-2.5 sm:px-3 rounded-xl text-xs font-semibold transition-all flex items-center justify-center space-x-1 cursor-pointer border flex-shrink-0 ${
               isLight
                 ? "bg-white text-stone-800 border-stone-300 hover:bg-stone-100 shadow-xs"
                 : "bg-white/5 text-stone-200 border-white/10 hover:bg-white/10"
             }`}
           >
-            <Volume2 className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">Chime</span>
+            <Volume2 className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+            <span className="hidden sm:inline text-xs">Chime</span>
           </button>
 
           {/* Accordion Wisdom Toggle */}
           <button
             type="button"
             onClick={() => setShowWisdom(!showWisdom)}
-            className={`p-2 rounded-xl transition-all flex items-center justify-center cursor-pointer border flex-shrink-0 ${
+            className={`h-8.5 w-8.5 sm:h-auto sm:w-auto p-2 rounded-xl transition-all flex items-center justify-center cursor-pointer border flex-shrink-0 ${
               isLight
                 ? "bg-white text-stone-800 border-stone-300 hover:bg-stone-100 shadow-xs"
                 : "bg-white/5 text-stone-200 border-white/10 hover:bg-white/10"
@@ -336,7 +342,7 @@ export const BrahmaMuhurtaTimer: React.FC<BrahmaMuhurtaTimerProps> = ({
             aria-label={showWisdom ? "Collapse Vedic Significance" : "Expand Vedic Significance"}
             aria-expanded={showWisdom}
           >
-            {showWisdom ? <ChevronUp className="w-4 h-4 text-amber-400" /> : <ChevronDown className="w-4 h-4 text-amber-400" />}
+            {showWisdom ? <ChevronUp className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
           </button>
         </div>
 

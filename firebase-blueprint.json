@@ -48,6 +48,21 @@
       },
       "required": ["id", "userId", "verseId"]
     },
+    "JournalEntry": {
+      "title": "JournalEntry",
+      "description": "User spiritual reflections, contemplative notes, and sadhana insights.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "verseId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "verseTitle": { "type": "string", "maxLength": 300 },
+        "note": { "type": "string", "maxLength": 10000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "verseId", "note", "createdAt"]
+    },
     "HistoryEntry": {
       "title": "HistoryEntry",
       "description": "Reading progress and study session activity log.",
@@ -120,6 +135,10 @@
     "/users/{userId}/bookmarks/{bookmarkId}": {
       "schema": { "$ref": "#/entities/Bookmark" },
       "description": "Private collection of bookmarked sacred sutras."
+    },
+    "/users/{userId}/journals/{journalId}": {
+      "schema": { "$ref": "#/entities/JournalEntry" },
+      "description": "Private collection of user journal reflections and contemplation notes."
     },
     "/users/{userId}/history/{historyId}": {
       "schema": { "$ref": "#/entities/HistoryEntry" },

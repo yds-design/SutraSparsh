@@ -23,6 +23,7 @@ import { soundEngine } from "../utils/audio";
 import { progressService, type StreakData } from "../services/progress.service";
 import { authService, type SeekerUser } from "../services/auth.service";
 import { useFeatureFlags } from "../services/feature-flags.service";
+import { CloudSyncStatusBadge } from "./CloudSyncStatusBadge";
 
 interface SadhakaProfileModalProps {
   isOpen: boolean;
@@ -371,6 +372,14 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
               </div>
             </div>
           )}
+
+          {/* Multi-Device Cloud Sync Status */}
+          <div className="space-y-1.5">
+            <div className="text-[11px] font-bold uppercase tracking-wider flex items-center space-x-1.5" style={{ color: isLight ? "#6B5844" : "#D88916" }}>
+              <span>MULTI-DEVICE CLOUD SYNC (FIRESTORE)</span>
+            </div>
+            <CloudSyncStatusBadge />
+          </div>
 
           {/* Quick Atmosphere Selector (Dark, Light, Festival) */}
           {onSelectTheme && (

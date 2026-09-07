@@ -6,6 +6,8 @@ import {
   registerShutdownHandlers,
 } from "./lifecycle/shutdown.js";
 
+export * as Audio from "./audio/index.js";
+
 export interface ImporterCliOptions {
   resumeJobId?: string;
 }

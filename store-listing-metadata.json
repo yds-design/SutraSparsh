@@ -1,7 +1,7 @@
 {
   "app_name": "SutraSparsh",
   "subtitle": "Touch the Sacred Sanskrit Sutras",
-  "bundle_id": "com.sutrasparsh.app",
+  "bundle_id": "com.yds.sutrasparsh",
   "primary_language": "en-US",
   "additional_languages": ["hi-IN", "sa-IN"],
   "primary_category": "Books & Reference / Education",
