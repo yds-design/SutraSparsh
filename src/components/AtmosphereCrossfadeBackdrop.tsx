@@ -6,6 +6,7 @@ interface AtmosphereThemeConfig {
   id: AppTheme;
   name: string;
   sanskrit: string;
+  about: string;
   icon: string;
   bgBase: string;
   bgGradient: string;
@@ -23,6 +24,7 @@ export const ATMOSPHERE_CONFIGS: Record<AppTheme, AtmosphereThemeConfig> = {
     id: "sandstone",
     name: "Sandstone Temple",
     sanskrit: "बलुआ पत्थर • Temple Sanctum",
+    about: "Contemplative sanctum with raw sandstone and warm amber gold",
     icon: "🏛️",
     bgBase: "#0A0502",
     bgGradient:
@@ -40,6 +42,7 @@ export const ATMOSPHERE_CONFIGS: Record<AppTheme, AtmosphereThemeConfig> = {
     id: "amethyst",
     name: "Amethyst Twilight",
     sanskrit: "जाम्बूनद एवं मणिरत्न • Mystic Violet",
+    about: "Midnight violet, sacred amethyst and tranquil lilac mist",
     icon: "🔮",
     bgBase: "#080410",
     bgGradient:
@@ -56,7 +59,8 @@ export const ATMOSPHERE_CONFIGS: Record<AppTheme, AtmosphereThemeConfig> = {
   light: {
     id: "light",
     name: "Parchment Dawn",
-    sanskrit: "चन्दन एवं पत्र • Sandalwood",
+    sanskrit: "चन्दन एवं पत्र • Sandalwood Dawn",
+    about: "Calm morning light with off-white parchment and deep ochre",
     icon: "☀️",
     bgBase: "#FDFBF7",
     bgGradient:
@@ -74,6 +78,7 @@ export const ATMOSPHERE_CONFIGS: Record<AppTheme, AtmosphereThemeConfig> = {
     id: "festival",
     name: "Festival Maroon",
     sanskrit: "उत्सव एवं मङ्गल • Royal Maroon",
+    about: "Vibrant celebration with royal maroon, vermilion and saffron",
     icon: "🪔",
     bgBase: "#280509",
     bgGradient:
@@ -90,7 +95,8 @@ export const ATMOSPHERE_CONFIGS: Record<AppTheme, AtmosphereThemeConfig> = {
   "golden-hour": {
     id: "golden-hour",
     name: "Golden Hour",
-    sanskrit: "गोधूलि वेला • Dusk Glow",
+    sanskrit: "गोधूलि वेला • Sacred Dusk",
+    about: "Sacred sunset glow with burnt honey and radiant dusk warmth",
     icon: "🌅",
     bgBase: "#140E08",
     bgGradient:
@@ -119,12 +125,14 @@ export const AtmosphereCrossfadeBackdrop: React.FC<AtmosphereCrossfadeBackdropPr
   const [incomingTheme, setIncomingTheme] = useState<AppTheme | null>(null);
   const [isCrossfading, setIsCrossfading] = useState(false);
   const [indicatorTheme, setIndicatorTheme] = useState<AppTheme | null>(null);
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
 
   const initialRender = useRef(true);
+  const prevThemeRef = useRef<AppTheme>(theme);
   const indicatorTimer = useRef<NodeJS.Timeout | null>(null);
 
+  // 1. Dedicated Atmospheric Canvas Cross-Fade Effect
   useEffect(() => {
-    // Avoid crossfade flash on initial page mount
     if (initialRender.current) {
       initialRender.current = false;
       setBaseTheme(theme);
@@ -133,22 +141,40 @@ export const AtmosphereCrossfadeBackdrop: React.FC<AtmosphereCrossfadeBackdropPr
 
     if (theme === baseTheme) return;
 
-    // Start crossfade: set incoming theme layer and trigger aura
+    // Trigger crossfade between outgoing canvas and incoming theme
     setIncomingTheme(theme);
     setIsCrossfading(true);
-    setIndicatorTheme(theme);
+  }, [theme, baseTheme]);
 
+  // 2. Dedicated Theme Detail Popup Lifecycle (Guaranteed 2-Second Automatic Dismissal & Graceful Exit)
+  useEffect(() => {
+    // Only trigger popup when theme actually changes from a previous theme
+    if (prevThemeRef.current === theme) {
+      return;
+    }
+    prevThemeRef.current = theme;
+
+    // Set active popup theme and make visible
+    setIndicatorTheme(theme);
+    setIsPopupVisible(true);
+
+    // Clear any previous timer
     if (indicatorTimer.current) {
       clearTimeout(indicatorTimer.current);
+      indicatorTimer.current = null;
     }
+
+    // Automatically dismiss in exactly 2 seconds (2000ms) with graceful exit animation
     indicatorTimer.current = setTimeout(() => {
-      setIndicatorTheme(null);
-    }, 2200);
+      setIsPopupVisible(false);
+    }, 2000);
 
     return () => {
-      if (indicatorTimer.current) clearTimeout(indicatorTimer.current);
+      if (indicatorTimer.current) {
+        clearTimeout(indicatorTimer.current);
+      }
     };
-  }, [theme, baseTheme]);
+  }, [theme]);
 
   const baseConfig = ATMOSPHERE_CONFIGS[baseTheme] || ATMOSPHERE_CONFIGS.sandstone;
   const incomingConfig = incomingTheme
@@ -225,46 +251,66 @@ export const AtmosphereCrossfadeBackdrop: React.FC<AtmosphereCrossfadeBackdropPr
         </AnimatePresence>
       </div>
 
-      {/* ── Floating Sacred Atmosphere Switch Indicator (Cross-fade pill) ── */}
+      {/* ── Floating Sacred Atmosphere Switch Indicator (Theme Detail Popup) ── */}
       {showIndicator && (
-        <div className="fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+        <div
+          id="atmosphere-popup-container"
+          className="fixed top-14 sm:top-16 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none"
+        >
           <AnimatePresence>
-            {activeIndicatorConfig && (
+            {isPopupVisible && activeIndicatorConfig && (
               <motion.div
                 key={`indicator-${activeIndicatorConfig.id}`}
-                initial={{ opacity: 0, y: -16, scale: 0.94 }}
+                id="atmosphere-detail-popup"
+                initial={{ opacity: 0, y: -22, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.96 }}
-                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                className="flex items-center space-x-2.5 px-4 py-2 rounded-full shadow-2xl backdrop-blur-md border"
+                exit={{ opacity: 0, y: -18, scale: 0.94 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                onClick={() => setIsPopupVisible(false)}
+                className="flex flex-col items-center justify-center px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl border pointer-events-auto cursor-pointer max-w-[94vw] sm:max-w-md w-auto text-center"
                 style={{
                   backgroundColor: activeIndicatorConfig.pillBg,
                   borderColor: activeIndicatorConfig.pillBorder,
-                  boxShadow: `0 12px 36px -8px ${activeIndicatorConfig.pillBorder}`,
+                  boxShadow: `0 16px 40px -10px ${activeIndicatorConfig.pillBorder}`,
                 }}
+                title="Click to dismiss"
               >
-                <span className="text-base sm:text-lg animate-pulse">
-                  {activeIndicatorConfig.icon}
-                </span>
-                <div className="flex flex-col">
-                  <div className="flex items-center space-x-1.5">
-                    <span
-                      className="text-xs font-bold tracking-wide"
-                      style={{ color: activeIndicatorConfig.textColor }}
-                    >
-                      {activeIndicatorConfig.name}
-                    </span>
-                    <span
-                      className="w-1.5 h-1.5 rounded-full animate-ping"
-                      style={{ backgroundColor: activeIndicatorConfig.accentColor }}
-                    />
-                  </div>
-                  <span
-                    className="text-[10px] font-sanskrit"
-                    style={{ color: activeIndicatorConfig.subtextColor }}
-                  >
-                    {activeIndicatorConfig.sanskrit}
+                {/* Line 1: Icon + Theme Name + Active Status Badge (Strictly 1 Line) */}
+                <div className="w-full flex items-center justify-center space-x-2 whitespace-nowrap overflow-hidden leading-tight">
+                  <span className="text-base sm:text-lg shrink-0">
+                    {activeIndicatorConfig.icon}
                   </span>
+                  <span
+                    className="text-xs sm:text-sm font-bold tracking-wide shrink-0"
+                    style={{ color: activeIndicatorConfig.textColor }}
+                  >
+                    {activeIndicatorConfig.name}
+                  </span>
+                  <span
+                    className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold shadow-sm shrink-0"
+                    style={{
+                      backgroundColor: activeIndicatorConfig.accentColor,
+                      color: activeIndicatorConfig.id === "light" ? "#1C1917" : "#0A0502",
+                    }}
+                  >
+                    Active
+                  </span>
+                </div>
+
+                {/* Line 2: Sacred Sanskrit Tradition Subtitle (Strictly 1 Line) */}
+                <div
+                  className="w-full text-[11px] font-sanskrit whitespace-nowrap overflow-hidden text-ellipsis block mt-1 leading-tight font-medium"
+                  style={{ color: activeIndicatorConfig.subtextColor }}
+                >
+                  {activeIndicatorConfig.sanskrit}
+                </div>
+
+                {/* Line 3: About Theme Description (Strictly 1 Line) */}
+                <div
+                  className="w-full text-[10px] sm:text-[11px] whitespace-nowrap overflow-hidden text-ellipsis block mt-1 font-medium leading-tight opacity-90"
+                  style={{ color: activeIndicatorConfig.textColor }}
+                >
+                  {activeIndicatorConfig.about}
                 </div>
               </motion.div>
             )}

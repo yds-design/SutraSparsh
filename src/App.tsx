@@ -26,6 +26,12 @@ import { soundEngine } from "./utils/audio";
 import type { SubscriptionPlanId } from "./types/monetization";
 import type { AppTheme } from "./types";
 import { useFeatureFlags } from "./services/feature-flags.service";
+import {
+  WordExplorer,
+  LookCloserModal,
+  LookCloserBanner,
+  useWordExplorer,
+} from "./features/wordExplorer";
 
 const TRADITIONS = ["All", "Bhagavad Gita", "Patanjali", "Upanishads", "Vedas"];
 const CATEGORIES = ["All", "Karma Yoga", "Raja Yoga", "Mind & Meditation", "Jnana / Vedanta", "Vedic Chants"];
@@ -59,6 +65,10 @@ export default function App() {
   const [selectedVerse, setSelectedVerse] = useState<ContentItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [backendOnline, setBackendOnline] = useState(true);
+
+  // SutraSparsh Word Explorer & Look Closer Discovery State
+  const wordExplorer = useWordExplorer();
+  const [isLookCloserOpen, setIsLookCloserOpen] = useState(false);
 
   // Profile Modal State (Restored for user profile & sacred streak tracking)
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -409,6 +419,8 @@ export default function App() {
         onOpenDonation={() => setIsDonationOpen(true)}
         onOpenAdminConsole={isScreenDevice ? handleOpenAdminConsole : undefined}
         onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenLookCloser={() => setIsLookCloserOpen(true)}
+        onOpenWordExplorer={() => wordExplorer.openWord("कर्मण्येवाधिकारस्ते")}
       />
 
       {/* Main Content Area */}
@@ -462,6 +474,13 @@ export default function App() {
                 </div>
               </div>
             </div>
+
+            {/* SutraSparsh Discovery: Look Closer Feature Banner */}
+            <LookCloserBanner
+              onOpenLookCloser={() => setIsLookCloserOpen(true)}
+              onOpenExplorer={() => wordExplorer.openWord("कर्मण्येवाधिकारस्ते")}
+              theme={theme}
+            />
 
             {/* Filter Bar */}
             <div className="space-y-4 bg-stone-900/60 border border-stone-800 rounded-3xl p-6 shadow-lg">
@@ -726,6 +745,33 @@ export default function App() {
         onClose={() => setIsModalOpen(false)}
         onToggleBookmark={toggleBookmark}
         onSaveJournalNote={handleSaveJournalNote}
+        onOpenWord={(surface) => wordExplorer.openWord(surface)}
+        wordExplorer={wordExplorer}
+      />
+
+      {/* SutraSparsh Word Explorer Modal / Drawer */}
+      <WordExplorer
+        isOpen={wordExplorer.isOpen}
+        word={wordExplorer.currentWord}
+        selectedComponentId={wordExplorer.selectedComponentId}
+        activeTab={wordExplorer.activeTab}
+        isLoading={wordExplorer.isLoading}
+        searchResults={wordExplorer.searchResults}
+        onClose={wordExplorer.closeWord}
+        onSelectComponent={wordExplorer.selectComponent}
+        onSelectWord={wordExplorer.selectWord}
+        onTabChange={wordExplorer.setActiveTab}
+        onSearch={wordExplorer.search}
+      />
+
+      {/* SutraSparsh 'Look Closer' Interactive Discovery Experience */}
+      <LookCloserModal
+        isOpen={isLookCloserOpen}
+        onClose={() => setIsLookCloserOpen(false)}
+        onOpenWordExplorer={(word) => {
+          setIsLookCloserOpen(false);
+          wordExplorer.selectWord(word);
+        }}
       />
 
       {/* Global Monetization & Billing Modals (Phase 2 Features: Gated by Feature Flags) */}

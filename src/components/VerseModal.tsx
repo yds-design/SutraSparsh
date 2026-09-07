@@ -1,7 +1,32 @@
-import React, { useState } from "react";
-import { X, Volume2, Bookmark, BookmarkCheck, Feather, Sparkles, Share2, Check, BookOpen } from "lucide-react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import {
+  X,
+  Volume2,
+  Bookmark,
+  BookmarkCheck,
+  Feather,
+  Sparkles,
+  Share2,
+  Check,
+  BookOpen,
+  Layers,
+  Info,
+  ChevronRight,
+} from "lucide-react";
 import type { ContentItem } from "../types";
 import { soundEngine } from "../utils/audio";
+import {
+  InteractiveVerseText,
+  WordBreakdown,
+  WordMeaning,
+  WordGrammar,
+  WordSandhi,
+  WordSources,
+  WordExplorerService,
+  useWordExplorer,
+  type UseWordExplorerReturn,
+  type SanskritWord,
+} from "../features/wordExplorer";
 
 interface VerseModalProps {
   item: ContentItem | null;
@@ -10,6 +35,8 @@ interface VerseModalProps {
   onClose: () => void;
   onToggleBookmark: (id: string) => void;
   onSaveJournalNote: (verseId: string, verseTitle: string, note: string) => void;
+  onOpenWord?: (surface: string) => void;
+  wordExplorer?: UseWordExplorerReturn;
 }
 
 export const VerseModal: React.FC<VerseModalProps> = ({
@@ -19,12 +46,69 @@ export const VerseModal: React.FC<VerseModalProps> = ({
   onClose,
   onToggleBookmark,
   onSaveJournalNote,
+  onOpenWord,
+  wordExplorer: passedWordExplorer,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<"verse" | "commentary" | "journal">("verse");
+  const internalWordExplorer = useWordExplorer();
+  const wordExplorer = passedWordExplorer || internalWordExplorer;
+
+  const [activeSubTab, setActiveSubTab] = useState<"verse" | "commentary" | "journal" | "words">("verse");
   const [journalNote, setJournalNote] = useState("");
   const [copied, setCopied] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [chantingRepetitions, setChantingRepetitions] = useState(0);
+
+  // Word-Level Interaction Layer State
+  const [selectedWordSurface, setSelectedWordSurface] = useState<string | null>(null);
+  const [activeVerseWord, setActiveVerseWord] = useState<SanskritWord | null>(null);
+
+  // Identify all individual Sanskrit words in this verse
+  const identifiedWords = useMemo(() => {
+    if (!item?.body) return [];
+    return WordExplorerService.tokenizeVerse(item.body).filter((t) => t.isWord);
+  }, [item?.body]);
+
+  // Reset word selection when changing verse
+  useEffect(() => {
+    setSelectedWordSurface(null);
+    setActiveVerseWord(null);
+  }, [item?.id]);
+
+  // Word-level interaction handler: highlights on click and triggers Word Explorer hook
+  const handleSelectWord = useCallback(
+    async (surface: string, autoOpenDrawer = false) => {
+      const cleaned = surface.replace(/[।॥,\.!\?;:\"\'\-–—\s]/g, "").trim();
+      if (!cleaned) return;
+
+      // 1. Highlight clicked word
+      setSelectedWordSurface(cleaned);
+
+      // 2. Resolve word details from verified lexicon / morphology
+      const found = WordExplorerService.getWordBySurfaceSync(cleaned, item?.title);
+      setActiveVerseWord(found);
+
+      // 3. Play sacred acoustic harmonic bell
+      soundEngine.playTempleBell(329.63);
+
+      // 4. Trigger Word Explorer hook
+      if (autoOpenDrawer) {
+        await wordExplorer.openWord(cleaned);
+        if (onOpenWord) {
+          onOpenWord(cleaned);
+        }
+      } else {
+        await wordExplorer.selectWord(cleaned);
+      }
+
+      // 5. Track word discovery event
+      WordExplorerService.trackEvent("word_selected", {
+        surfaceForm: cleaned,
+        verseId: item?.id,
+        isVerified: found?.isVerified ?? false,
+      });
+    },
+    [item?.id, item?.title, wordExplorer, onOpenWord]
+  );
 
   if (!isOpen || !item) return null;
 
@@ -131,6 +215,23 @@ export const VerseModal: React.FC<VerseModalProps> = ({
             <Feather className="w-3.5 h-3.5" />
             <span>Reflect & Journal</span>
           </button>
+          <button
+            onClick={() => {
+              if (!activeVerseWord && identifiedWords.length > 0) {
+                const firstWord = identifiedWords[0].cleaned;
+                handleSelectWord(firstWord, false);
+              }
+              setActiveSubTab("words");
+            }}
+            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-colors flex items-center space-x-2 ${
+              activeSubTab === "words"
+                ? "border-amber-400 text-amber-300"
+                : "border-transparent text-stone-400 hover:text-stone-200"
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Word Explorer • पद-बोध</span>
+          </button>
         </div>
 
         {/* Content Section */}
@@ -148,15 +249,217 @@ export const VerseModal: React.FC<VerseModalProps> = ({
                 )}
               </div>
 
-              {/* Devanagari Sanskrit Body */}
-              <div className="bg-stone-950/80 rounded-2xl p-6 border border-stone-800 text-center relative overflow-hidden">
+              {/* Word-Level Sanskrit Interaction Header */}
+              <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-300">
+                    Sanskrit Word-Level Layer • पद-विभाग
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/25">
+                    {identifiedWords.length} Words Identified
+                  </span>
+                  {selectedWordSurface && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedWordSurface(null);
+                        setActiveVerseWord(null);
+                      }}
+                      className="text-[11px] text-stone-400 hover:text-stone-200 underline transition-colors"
+                    >
+                      Clear selection
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Devanagari Sanskrit Body with Interactive Words */}
+              <div className="bg-stone-950/80 rounded-2xl p-6 border border-amber-900/30 text-center relative overflow-hidden shadow-inner">
                 <div className="absolute top-2 right-2 text-stone-800 font-sanskrit text-6xl pointer-events-none select-none opacity-40">
                   ॐ
                 </div>
-                <p className="font-sanskrit text-xl sm:text-2xl text-amber-200 leading-loose whitespace-pre-line">
-                  {item.body}
+                <InteractiveVerseText
+                  verseText={item.body}
+                  selectedSurface={selectedWordSurface || undefined}
+                  onSelectWord={(surface) => handleSelectWord(surface, false)}
+                />
+                <p className="text-[11px] text-stone-500 mt-4 italic font-sans">
+                  Tap any word above to highlight it and view Paninian decomposition & Sandhi rules.
                 </p>
               </div>
+
+              {/* Identified Words Strip (Quick Selector Row) */}
+              <div className="bg-stone-950/50 rounded-2xl p-3.5 border border-stone-800/80 space-y-2">
+                <div className="flex items-center justify-between text-xs text-stone-400 px-1">
+                  <span className="font-medium">Identified Sanskrit Words:</span>
+                  <span className="text-[11px] text-amber-400/80">Tap to select & highlight</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+                  {identifiedWords.map((t) => {
+                    const clean = t.cleaned;
+                    const isSelected = selectedWordSurface === clean;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => handleSelectWord(clean, false)}
+                        className={`px-2.5 py-1 rounded-xl border text-xs font-sanskrit font-medium transition-all ${
+                          isSelected
+                            ? "bg-amber-500/25 border-amber-400 text-amber-100 shadow-md ring-1 ring-amber-400/50 scale-[1.03]"
+                            : "bg-stone-900/90 border-stone-800 text-stone-300 hover:border-amber-500/40 hover:text-amber-200"
+                        }`}
+                      >
+                        {clean}
+                        {t.hasAnalysis && (
+                          <span className="ml-1 text-[9px] text-amber-400 font-sans">•</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Word-Level Interaction Inspector Card (appears when a word is highlighted) */}
+              {selectedWordSurface && activeVerseWord ? (
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-950/40 via-stone-900 to-stone-950 border border-amber-500/35 space-y-3 shadow-xl">
+                  <div className="flex items-start justify-between gap-3 border-b border-amber-500/20 pb-3">
+                    <div>
+                      <div className="flex items-baseline space-x-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                          Highlighted Word:
+                        </span>
+                        <span className="font-sanskrit text-2xl font-bold text-amber-100">
+                          {activeVerseWord.surfaceForm}
+                        </span>
+                        <span className="font-serif italic text-xs text-amber-300/80">
+                          ({activeVerseWord.transliteration})
+                        </span>
+                      </div>
+                      <p className="text-xs text-stone-200 mt-1 font-sans">
+                        {activeVerseWord.contextMeaning || activeVerseWord.generalMeaning}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center space-x-1.5 shrink-0">
+                      {activeVerseWord.isVerified ? (
+                        <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
+                          Paninian Verified
+                        </span>
+                      ) : (
+                        <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/25">
+                          Lexicon
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedWordSurface(null);
+                          setActiveVerseWord(null);
+                        }}
+                        className="p-1 text-stone-400 hover:text-stone-200 rounded-lg hover:bg-stone-800 transition-colors"
+                        title="Clear highlight"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Morphological Quick Details */}
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {activeVerseWord.root && (
+                      <div className="px-2.5 py-1 rounded-lg bg-stone-900/90 border border-stone-700/60 text-stone-300">
+                        <span className="text-stone-400 mr-1 font-semibold">Root (धातु):</span>
+                        <span className="font-sanskrit text-amber-200 font-bold">{activeVerseWord.root.form}</span>
+                        <span className="text-[11px] text-stone-400 ml-1">({activeVerseWord.root.meaning})</span>
+                      </div>
+                    )}
+
+                    {activeVerseWord.grammar?.case && (
+                      <div className="px-2.5 py-1 rounded-lg bg-stone-900/90 border border-stone-700/60 text-stone-300">
+                        <span className="text-stone-400 mr-1 font-semibold">Vibhakti:</span>
+                        <span className="text-amber-200 font-medium">{activeVerseWord.grammar.case}</span>
+                      </div>
+                    )}
+
+                    {activeVerseWord.sandhi?.isSandhi && (
+                      <div className="px-2.5 py-1 rounded-lg bg-stone-900/90 border border-stone-700/60 text-stone-300">
+                        <span className="text-stone-400 mr-1 font-semibold">Sandhi:</span>
+                        <span className="text-amber-200 font-mono text-[11px]">{activeVerseWord.sandhi.formula || "Compound"}</span>
+                      </div>
+                    )}
+
+                    {activeVerseWord.components && activeVerseWord.components.length > 0 && (
+                      <div className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-200">
+                        <span className="font-semibold">{activeVerseWord.components.length} Decomposed Units: </span>
+                        <span className="font-sanskrit font-bold">
+                          {activeVerseWord.components.map((c) => c.surfaceForm).join(" + ")}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Bar */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => soundEngine.playTempleBell(440)}
+                      className="px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-medium transition-colors flex items-center space-x-1.5"
+                    >
+                      <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Sound Chime</span>
+                    </button>
+
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => setActiveSubTab("words")}
+                        className="px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-200 border border-stone-700 text-xs font-semibold transition-colors flex items-center space-x-1.5"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" />
+                        <span>Inspect Morphology Tab</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          wordExplorer.openWord(activeVerseWord.surfaceForm);
+                          if (onOpenWord) {
+                            onOpenWord(activeVerseWord.surfaceForm);
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 text-xs font-bold transition-all shadow-md flex items-center space-x-1.5"
+                      >
+                        <Layers className="w-3.5 h-3.5" />
+                        <span>Open Word Explorer Drawer</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Look Closer Discovery Strip when no word is highlighted */
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-amber-950/30 via-stone-900 to-stone-950 border border-amber-500/25 gap-3">
+                  <div className="flex items-center space-x-2 text-xs text-amber-200">
+                    <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>
+                      <strong>Look Closer:</strong> Tap any Sanskrit word above to highlight and explore roots, Sandhi, and grammatical cases.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const firstWord = identifiedWords[0]?.cleaned || "कर्मण्येवाधिकारस्ते";
+                      handleSelectWord(firstWord, false);
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 text-xs font-bold transition-all flex items-center space-x-1.5 shrink-0"
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>Select First Word</span>
+                  </button>
+                </div>
+              )}
 
               {/* Transliteration */}
               {item.transliteration && (
@@ -280,6 +583,137 @@ export const VerseModal: React.FC<VerseModalProps> = ({
                   </div>
                 )}
               </form>
+            </div>
+          )}
+
+          {activeSubTab === "words" && (
+            <div className="space-y-6">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400">
+                  Sanskrit Word Explorer • पद-ज्ञान
+                </span>
+                <h3 className="font-serif-sacred text-xl font-bold text-amber-100 mt-0.5">
+                  Deconstruct Words from this Verse
+                </h3>
+                <p className="text-xs text-stone-400 mt-1">
+                  Explore components, root (धातु), grammatical cases, and Sandhi for individual terms.
+                </p>
+              </div>
+
+              {/* Quick word selector pills from this verse */}
+              <div className="space-y-1.5">
+                <span className="text-xs font-semibold text-stone-400">Select word from verse:</span>
+                <div className="flex flex-wrap gap-2">
+                  {identifiedWords.map((t) => {
+                    const isSelected =
+                      selectedWordSurface === t.cleaned ||
+                      activeVerseWord?.surfaceForm === t.cleaned;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => handleSelectWord(t.cleaned, false)}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-sanskrit font-bold transition-all ${
+                          isSelected
+                            ? "bg-amber-500/25 border-amber-400 text-amber-100 shadow ring-1 ring-amber-400/40"
+                            : "bg-stone-900 border-stone-800 text-stone-300 hover:border-amber-500/40"
+                        }`}
+                      >
+                        {t.cleaned}
+                        {t.hasAnalysis && (
+                          <span className="ml-1 text-[9px] text-amber-400 font-sans">•</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {activeVerseWord ? (
+                <div className="space-y-6 pt-2">
+                  {/* Word Header */}
+                  <div className="bg-stone-950/80 border border-amber-500/30 rounded-2xl p-5 space-y-3">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <div className="flex items-baseline space-x-3">
+                        <span className="font-sanskrit text-3xl font-bold text-amber-200">
+                          {activeVerseWord.surfaceForm}
+                        </span>
+                        <span className="font-serif italic text-base text-amber-300/80">
+                          ({activeVerseWord.transliteration})
+                        </span>
+                      </div>
+                      {activeVerseWord.isVerified ? (
+                        <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                          Verified Paninian Analysis
+                        </span>
+                      ) : (
+                        <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                          Lexicon Entry
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Decomposition */}
+                  {activeVerseWord.components && activeVerseWord.components.length > 0 && (
+                    <WordBreakdown
+                      components={activeVerseWord.components}
+                      selectedComponentId={null}
+                      onSelectComponent={(id) => {
+                        const comp = activeVerseWord.components?.find((c) => c.id === id);
+                        if (comp) {
+                          handleSelectWord(comp.surfaceForm, false);
+                        } else if (onOpenWord) {
+                          onOpenWord(activeVerseWord.surfaceForm);
+                        }
+                      }}
+                      fullWordSurface={activeVerseWord.surfaceForm}
+                    />
+                  )}
+
+                  {/* Meaning */}
+                  <WordMeaning word={activeVerseWord} />
+
+                  {/* Grammar */}
+                  <WordGrammar grammar={activeVerseWord.grammar} root={activeVerseWord.root} />
+
+                  {/* Sandhi if applicable */}
+                  {activeVerseWord.sandhi?.isSandhi && (
+                    <WordSandhi
+                      sandhi={activeVerseWord.sandhi}
+                      surfaceForm={activeVerseWord.surfaceForm}
+                    />
+                  )}
+
+                  {/* Source transparency */}
+                  <WordSources
+                    sources={activeVerseWord.sources}
+                    isVerified={activeVerseWord.isVerified}
+                    unavailableReason={activeVerseWord.unavailableReason}
+                  />
+
+                  {/* Full screen Explorer trigger */}
+                  <div className="pt-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        wordExplorer.openWord(activeVerseWord.surfaceForm);
+                        if (onOpenWord) {
+                          onOpenWord(activeVerseWord.surfaceForm);
+                        }
+                      }}
+                      className="px-5 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 text-xs font-bold transition-all inline-flex items-center space-x-2"
+                    >
+                      <Layers className="w-4 h-4" />
+                      <span>Launch Full Word Explorer Drawer</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-stone-400 italic">
+                  Tap any word above to inspect its deep morphological breakdown.
+                </p>
+              )}
             </div>
           )}
         </div>

@@ -448,17 +448,6 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
       onSelectTheme(newTheme);
     }
     soundEngine.playTempleBell(newTheme === "sandstone" ? 220 : newTheme === "golden-hour" ? 256 : 330);
-    const themeNames: Record<AppTheme, string> = {
-      sandstone: "Sandstone Temple",
-      amethyst: "Amethyst Twilight",
-      light: "Parchment Dawn (Light)",
-      festival: "Festival Maroon",
-      "golden-hour": "Golden Hour (गोधूलि वेला)",
-    };
-    setThemeToast(`Atmosphere switched to ${themeNames[newTheme] || newTheme}`);
-    setTimeout(() => {
-      setThemeToast(null);
-    }, 2800);
   };
 
   const handleResetPreferences = () => {

@@ -15,6 +15,7 @@ import {
   User,
   LogIn,
   LogOut,
+  Sparkles,
 } from "lucide-react";
 import { soundEngine } from "../utils/audio";
 import { authService, type SeekerUser } from "../services/auth.service";
@@ -45,6 +46,8 @@ interface HeaderProps {
   onOpenAdminConsole?: () => void;
   onOpenAuth?: () => void;
   onOpenAssets?: () => void;
+  onOpenLookCloser?: () => void;
+  onOpenWordExplorer?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -60,6 +63,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAdminConsole,
   onOpenAuth,
   onOpenAssets,
+  onOpenLookCloser,
+  onOpenWordExplorer,
 }) => {
   const { isSadhakaEnabled, isGurudakshinaEnabled } = useFeatureFlags();
   const [currentUser, setCurrentUser] = React.useState<SeekerUser | null>(() =>
@@ -254,6 +259,30 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               )}
             </button>
+
+            {/* WORD EXPLORER / LOOK CLOSER */}
+            {(onOpenLookCloser || onOpenWordExplorer) && (
+              <button
+                id="btn-nav-look-closer"
+                type="button"
+                onClick={() => {
+                  if (onOpenLookCloser) onOpenLookCloser();
+                  else if (onOpenWordExplorer) onOpenWordExplorer();
+                }}
+                title="Look Closer: Explore Sanskrit Word Components, Roots & Grammar"
+                className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer ${
+                  isLight
+                    ? "bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-300/80 shadow-xs"
+                    : "bg-amber-500/15 text-amber-200 hover:bg-amber-500/25 border border-amber-500/30"
+                }`}
+              >
+                <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+                <span>Look Closer</span>
+                <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-amber-800" : "text-amber-400/80"}`}>
+                  पद-बोध
+                </span>
+              </button>
+            )}
 
             {/* 5. PREFERENCES / SETTINGS (Icon-only, accessible label) */}
             <button

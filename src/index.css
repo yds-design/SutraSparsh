@@ -77,3 +77,9 @@
   transition: color 450ms ease;
 }
 
+/* Exempt the floating atmosphere indicator popup from global CSS transition overrides */
+#atmosphere-popup-container,
+#atmosphere-detail-popup {
+  transition: none;
+}
+
