@@ -228,21 +228,62 @@ If hosting via **Google Cloud Run** (where your applet runs):
 
 ---
 
-#### Step 3: Authorizing the Custom Domain in Firebase Console
-For Google Sign-In popups and Firestore sessions to work from your custom domain:
+#### Step 3: Authorizing the Custom Domain in Firebase Console & Google SSO Setup
+For Google Sign-In popups and Firestore sessions to work seamlessly across Web and Android:
 1. Open [Firebase Console](https://console.firebase.google.com/) and select project **`sutrasparsh-17a55`**.
-2. In the left navigation, click **Build** > **Authentication**.
-3. Click the **Settings** tab at the top.
-4. Select **Authorized domains** in the secondary menu.
-5. Click **Add domain**:
-   - Add: `sutrasparsh.com`
-   - Add: `www.sutrasparsh.com`
-   - Add: `app.sutrasparsh.com` (if applicable)
-   - Confirm existing pre-authorized domains:
-     - `sutrasparsh-17a55.firebaseapp.com`
-     - `sutrasparsh-17a55.web.app`
-     - `localhost`
-     - `ais-dev-z2uvcnewtnoiucjecebq6f-246687965285.asia-southeast1.run.app`
+2. **Enable Google Sign-In Provider**:
+   - Go to **Build** > **Authentication** > **Sign-in method**.
+   - Click on **Google** under Additional providers.
+   - Toggle **Enable**.
+   - Set project support email to: `your.daily.shloka@gmail.com`.
+   - Web SDK configuration will automatically bind to Client ID:
+     `805535850231-tlainhshod83bkpakigt3qj46p3ohpvc.apps.googleusercontent.com`.
+   - Click **Save**.
+
+3. **Configure Authorized Domains**:
+   - Click the **Settings** tab at the top of Authentication.
+   - Select **Authorized domains** in the secondary menu.
+   - Click **Add domain**:
+     - Add: `sutrasparsh.com`
+     - Add: `www.sutrasparsh.com`
+     - Add: `app.sutrasparsh.com` (if applicable)
+     - Confirm default authorized domains:
+       - `sutrasparsh-17a55.firebaseapp.com`
+       - `sutrasparsh-17a55.web.app`
+       - `localhost`
+       - Preview container hostname (e.g. `*.asia-southeast1.run.app`)
+
+4. **Android App Registration & SHA-1 / SHA-256 Fingerprints**:
+   - In Firebase Console, go to **Project settings** (gear icon) > **General**.
+   - Under **Your apps**, select Android app `com.yds.sutrasparsh` (App ID: `1:805535850231:android:dd002bc488298a2fea3df2`).
+   - Click **Add fingerprint**.
+   - Generate release SHA-1 and SHA-256 fingerprints from your EAS / Android keystore:
+     ```bash
+     eas credentials -p android
+     # OR via keytool:
+     keytool -list -v -keystore your-release-key.keystore -alias your-key-alias
+     ```
+   - Paste the SHA-1 fingerprint (required for Google SSO on Android) and SHA-256 fingerprint (for App Links).
+   - Re-download the updated `google-services.json` if new OAuth clients are provisioned.
+
+---
+
+#### Step 3A: Google Cloud Text-to-Speech (hi-IN-Neural2) Setup
+SutraSparsh utilizes Google Cloud TTS `hi-IN-Neural2` voices with custom Devanagari SSML prosody:
+1. **Cloud Project Quota & Free Tier**:
+   - Google provides 1,000,000 characters free every single month for Neural2 voices.
+   - At ~150 characters per Sanskrit verse with English translation, this accommodates ~6,600 verse recitations/month at ₹0/$0 cost.
+2. **Voice Selection Strategy**:
+   - **Sage Vyāsa (`hi-IN-Neural2-B`)**: Male, deep resonant timbre, authoritative cadence for Upanishads and Bhagavad Gita.
+   - **Devī Saraswatī (`hi-IN-Neural2-A`)**: Female, pristine articulation, melodic cadence for daily prayers and stotras.
+3. **SSML Structure**:
+   - All chants are synthesized with `<prosody rate="85%">` and inter-pāda `<break time="500ms"/>` for traditional Vedic metric virāma.
+4. **Environment Variables**:
+   ```env
+   GOOGLE_CLOUD_PROJECT_ID=sutrasparsh-17a55
+   TTS_PROVIDER=google
+   TTS_DEFAULT_VOICE=hi-IN-Neural2-B
+   ```
 
 ---
 

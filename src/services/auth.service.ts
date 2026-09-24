@@ -152,8 +152,8 @@ export class AuthService {
       const fbUser = result.user;
       const user: SeekerUser = {
         uid: fbUser.uid,
-        email: fbUser.email || "your.daily.shloka@gmail.com",
-        displayName: fbUser.displayName || "Sanskrit Seeker",
+        email: fbUser.email || _customEmail || "seeker@sutrasparsh.com",
+        displayName: fbUser.displayName || fbUser.email?.split("@")[0] || "Sanskrit Seeker",
         photoURL: fbUser.photoURL || undefined,
         provider: "google",
         spiritualTitle: "Sādhaka (साधक)",
@@ -168,10 +168,20 @@ export class AuthService {
       return user;
     } catch (err: any) {
       if (err?.code === "auth/popup-closed-by-user") {
-        throw new Error("Google sign-in popup was closed before completing.");
+        throw new Error("Google sign-in popup was closed before completing. In embedded preview frames or certain browser privacy modes, cross-origin popups may be blocked. Please open the app in a new tab or use Instant Email Sign-In.");
       }
       if (err?.code === "auth/cancelled-popup-request") {
-        throw new Error("Sign-in request was cancelled.");
+        throw new Error("Sign-in request was cancelled or superseded by another window.");
+      }
+      if (err?.code === "auth/popup-blocked") {
+        throw new Error("Pop-up window was blocked by your browser. Please allow pop-ups for this site or open in a separate browser window.");
+      }
+      if (err?.code === "auth/unauthorized-domain") {
+        const host = typeof window !== "undefined" ? window.location.hostname : "current host";
+        throw new Error(`Domain '${host}' is not yet authorized in Firebase Console (Authentication > Settings > Authorized Domains). Please add '${host}' to authorized domains.`);
+      }
+      if (err?.code === "auth/operation-not-allowed") {
+        throw new Error("Google Sign-In is not enabled yet in your Firebase Console. Go to Firebase Console > Authentication > Sign-in method > Google and enable it.");
       }
       console.warn("Firebase Google sign-in note:", err);
       throw err;

@@ -22,6 +22,7 @@ import { WordSandhi } from "./WordSandhi";
 import { WordOccurrences } from "./WordOccurrences";
 import { WordSources } from "./WordSources";
 import { soundEngine } from "../../../utils/audio";
+import { ModalPortal } from "../../../components/ModalPortal";
 
 interface WordExplorerProps {
   isOpen: boolean;
@@ -65,14 +66,15 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-stone-950/80 backdrop-blur-md transition-opacity">
-      {/* ── Main Container: Responsive Mobile Bottom-Sheet & Tablet/Desktop Elevated Panel ── */}
-      <div
-        id="word-explorer-drawer"
-        role="dialog"
-        aria-label="SutraSparsh Word Explorer"
-        className="relative w-full sm:max-w-3xl lg:max-w-4xl max-h-[92vh] sm:max-h-[85vh] bg-stone-900 border-t sm:border border-amber-900/40 dark:border-stone-800 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slideUp sm:animate-fadeIn"
-      >
+    <ModalPortal>
+      <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-stone-950/80 backdrop-blur-md transition-opacity">
+        {/* ── Main Container: Responsive Mobile Bottom-Sheet & Tablet/Desktop Elevated Panel ── */}
+        <div
+          id="word-explorer-drawer"
+          role="dialog"
+          aria-label="SutraSparsh Word Explorer"
+          className="relative w-full sm:max-w-3xl lg:max-w-4xl max-h-[92vh] sm:max-h-[85vh] bg-stone-900 border-t sm:border border-amber-900/40 dark:border-stone-800 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slideUp sm:animate-fadeIn"
+        >
         {/* Mobile Swipe / Drag Handle */}
         <div className="sm:hidden flex justify-center pt-2.5 pb-1 cursor-grab">
           <div className="w-12 h-1.5 rounded-full bg-stone-700/80" />
@@ -331,5 +333,6 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 };

@@ -1,6 +1,5 @@
 import React from "react";
 import { Sparkles, Layers, ArrowRight, BookOpen, Compass } from "lucide-react";
-import { soundEngine } from "../../../utils/audio";
 
 interface LookCloserBannerProps {
   onOpenLookCloser: () => void;
@@ -74,7 +73,6 @@ export const LookCloserBanner: React.FC<LookCloserBannerProps> = ({
         <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 w-full md:w-auto shrink-0">
           <button
             onClick={() => {
-              soundEngine.playTempleBell(261.63);
               onOpenLookCloser();
             }}
             className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold text-xs sm:text-sm shadow-xl flex items-center justify-center space-x-2 transition-all hover:scale-105 active:scale-95"
@@ -85,7 +83,6 @@ export const LookCloserBanner: React.FC<LookCloserBannerProps> = ({
 
           <button
             onClick={() => {
-              soundEngine.playTempleBell(329.63);
               onOpenExplorer();
             }}
             className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-stone-900/90 hover:bg-stone-800 border border-stone-700/80 text-stone-200 font-semibold text-xs flex items-center justify-center space-x-2 transition-colors"

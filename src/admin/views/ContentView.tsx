@@ -11,6 +11,7 @@ import {
 import type { ContentItem } from "../../types";
 import { adminApiClient } from "../../services/admin-api.client";
 import { adminAuthService } from "../../services/admin-auth.service";
+import { ModalPortal } from "../../components/ModalPortal";
 
 interface ExtendedVerseForm {
   id?: string;
@@ -369,19 +370,20 @@ export const ContentView: React.FC = () => {
 
       {/* Edit / Create Verse Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-stone-900 border border-stone-800 rounded-3xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl animate-fadeIn">
-            <div className="flex items-center justify-between border-b border-stone-800 pb-3">
-              <h3 className="font-serif-sacred text-lg font-bold text-amber-100">
-                {editingVerse?.id ? `Edit Verse: ${editingVerse.title}` : "Add New Scripture Verse"}
-              </h3>
-              <button
-                onClick={() => setIsEditModalOpen(false)}
-                className="text-stone-500 hover:text-stone-300 text-xs"
-              >
-                ✕ Close
-              </button>
-            </div>
+        <ModalPortal>
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-stone-900 border border-stone-800 rounded-3xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                <h3 className="font-serif-sacred text-lg font-bold text-amber-100">
+                  {editingVerse?.id ? `Edit Verse: ${editingVerse.title}` : "Add New Scripture Verse"}
+                </h3>
+                <button
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="text-stone-500 hover:text-stone-300 text-xs"
+                >
+                  ✕ Close
+                </button>
+              </div>
 
             <form onSubmit={handleSaveVerse} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -470,6 +472,7 @@ export const ContentView: React.FC = () => {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

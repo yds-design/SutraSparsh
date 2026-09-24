@@ -1,12 +1,13 @@
 import React from "react";
 import { Sun, BookOpen, Search, Compass, Sliders } from "lucide-react";
 import type { NavTab } from "./Header";
+import type { AppTheme } from "../types";
 
 interface MobileBottomNavProps {
   activeTab: NavTab;
   setActiveTab: (tab: NavTab) => void;
   savedCount: number;
-  theme?: "sandstone" | "amethyst" | "light" | "festival" | "golden-hour";
+  theme?: AppTheme;
 }
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
@@ -21,7 +22,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
   const isGoldenHour = theme === "golden-hour";
-  const isSandstone = theme === "sandstone" || (!isLight && !isFestival && !isAmethyst && !isGoldenHour);
+  const isPrismPulse = theme === "prism-pulse";
+  const isSandstone = theme === "sandstone" || (!isLight && !isFestival && !isAmethyst && !isGoldenHour && !isPrismPulse);
 
   const isTodayActive = activeTab === "today" || activeTab === "daily-app" || activeTab === "daily";
   const isExploreActive = activeTab === "explore" || activeTab === "explorer";
@@ -31,6 +33,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
   const navBg = isLight
     ? "rgba(255, 251, 245, 0.96)"
+    : isPrismPulse
+    ? "rgba(255, 255, 255, 0.98)"
     : isFestival
     ? "rgba(75, 14, 23, 0.96)"
     : isAmethyst
@@ -41,6 +45,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
   const navBorder = isLight
     ? "#E6D7C3"
+    : isPrismPulse
+    ? "#E5E7EB"
     : isFestival
     ? "rgba(255, 138, 0, 0.3)"
     : isAmethyst
@@ -51,6 +57,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
   const activeColor = isLight
     ? "#B9680D"
+    : isPrismPulse
+    ? "#936BFA"
     : isFestival
     ? "#FFD54A"
     : isAmethyst
@@ -61,6 +69,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
   const inactiveColor = isLight
     ? "#6B5844"
+    : isPrismPulse
+    ? "#6B7280"
     : isFestival
     ? "#E6B17E"
     : isAmethyst
@@ -71,6 +81,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
   const activePillBg = isLight
     ? "rgba(216, 137, 22, 0.15)"
+    : isPrismPulse
+    ? "rgba(147, 107, 250, 0.15)"
     : isFestival
     ? "rgba(255, 138, 0, 0.2)"
     : isAmethyst

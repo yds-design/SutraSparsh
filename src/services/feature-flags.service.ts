@@ -23,6 +23,14 @@ export const DEFAULT_FEATURE_FLAGS: PlatformFeatureFlag[] = [
     targetTiers: ["FREE", "SADHAKA", "RISHI"],
   },
   {
+    id: "flag-export-mp3-phase2",
+    name: "Clean MP3 Audio Export (Phase 2)",
+    description: "Controls the download and export of clean high-fidelity MP3 recitation audio files across verse study and mini player. Disabled for Phase 1; to be enabled in Phase 2.",
+    enabled: false, // Default: DISABLED from all devices (Phase 1)
+    environment: "ALL",
+    targetTiers: ["FREE", "SADHAKA", "RISHI"],
+  },
+  {
     id: "flag-sanskrit-tts",
     name: "Native Speech Synthesis (TTS Safety Engine)",
     description: "Enables fallback client-side Sanskrit chant pronunciation engine for all users.",
@@ -146,6 +154,14 @@ class FeatureFlagsService {
     return this.isFeatureEnabled("flag-gurudakshina");
   }
 
+  /**
+   * Clean MP3 Audio Export: Phase 2 Feature
+   * Disabled by default on all devices. Can be toggled on/off in Admin Console.
+   */
+  public isExportMp3Enabled(): boolean {
+    return this.isFeatureEnabled("flag-export-mp3-phase2");
+  }
+
   public setFlag(flagId: string, enabled: boolean): void {
     this.flags = this.flags.map((f) => (f.id === flagId ? { ...f, enabled } : f));
     this.saveFlags();
@@ -166,7 +182,11 @@ class FeatureFlagsService {
 
   public resetToPhase1Defaults(): void {
     this.flags = this.flags.map((f) => {
-      if (f.id === "flag-sadhaka-access" || f.id === "flag-gurudakshina") {
+      if (
+        f.id === "flag-sadhaka-access" ||
+        f.id === "flag-gurudakshina" ||
+        f.id === "flag-export-mp3-phase2"
+      ) {
         return { ...f, enabled: false };
       }
       return f;
@@ -178,7 +198,7 @@ class FeatureFlagsService {
       adminAuthService.logAudit(
         "settings",
         "RESET_FEATURE_FLAGS",
-        "Reset Sādhaka and Gurudakshina to Phase 1 disabled defaults"
+        "Reset Sādhaka, Gurudakshina, and MP3 Export to Phase 1 disabled defaults"
       );
     } catch {
       // Ignore
@@ -187,7 +207,11 @@ class FeatureFlagsService {
 
   public activatePhase2Monetization(): void {
     this.flags = this.flags.map((f) => {
-      if (f.id === "flag-sadhaka-access" || f.id === "flag-gurudakshina") {
+      if (
+        f.id === "flag-sadhaka-access" ||
+        f.id === "flag-gurudakshina" ||
+        f.id === "flag-export-mp3-phase2"
+      ) {
         return { ...f, enabled: true };
       }
       return f;
@@ -199,7 +223,7 @@ class FeatureFlagsService {
       adminAuthService.logAudit(
         "settings",
         "ACTIVATE_PHASE_2",
-        "Activated Sādhaka Access and Gurudakshina for Phase 2"
+        "Activated Sādhaka Access, Gurudakshina, and MP3 Export for Phase 2"
       );
     } catch {
       // Ignore
@@ -232,6 +256,7 @@ export function useFeatureFlags() {
     flags,
     isSadhakaEnabled: featureFlagsService.isSadhakaEnabled(),
     isGurudakshinaEnabled: featureFlagsService.isGurudakshinaEnabled(),
+    isExportMp3Enabled: featureFlagsService.isExportMp3Enabled(),
     isFeatureEnabled: (id: string) => featureFlagsService.isFeatureEnabled(id),
     setFlag: (id: string, enabled: boolean) => featureFlagsService.setFlag(id, enabled),
     resetToPhase1Defaults: () => featureFlagsService.resetToPhase1Defaults(),

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { X, Sparkles } from "lucide-react";
+import { ModalPortal } from "./ModalPortal";
 
 interface DailyPromoPopupProps {
   isOpen: boolean;
@@ -85,19 +86,20 @@ export const DailyPromoPopup: React.FC<DailyPromoPopupProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div
-      id="sutrasparsh-daily-promo-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Daily verse promo"
-      onClick={triggerClose}
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 transition-all duration-500 backdrop-blur-xs select-none ${
-        isClosing ? "opacity-0 pointer-events-none" : "opacity-100"
-      }`}
-      style={{
-        backgroundColor: "rgba(30, 20, 12, 0.62)",
-      }}
-    >
+    <ModalPortal>
+      <div
+        id="sutrasparsh-daily-promo-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Daily verse promo"
+        onClick={triggerClose}
+        className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 transition-all duration-500 backdrop-blur-xs select-none ${
+          isClosing ? "opacity-0 pointer-events-none" : "opacity-100"
+        }`}
+        style={{
+          backgroundColor: "rgba(30, 20, 12, 0.62)",
+        }}
+      >
       {/* Centered Popup Card */}
       <div
         id="sutrasparsh-daily-promo-card"
@@ -132,7 +134,7 @@ export const DailyPromoPopup: React.FC<DailyPromoPopupProps> = ({
         </button>
 
         {/* Logo Chip */}
-        <div className="w-28 sm:w-[120px] mx-auto mt-1 mb-4 rounded-xl overflow-hidden shadow-[0_8px_20px_rgba(198,70,31,0.28)] border border-[#C6461F]/20 bg-[#171717]">
+        <div className="w-28 sm:w-[120px] mx-auto mt-1 mb-4 rounded-2xl overflow-hidden shadow-[0_8px_24px_rgba(255,110,20,0.18)] border border-[#FF6E14]/25 bg-[#ECECEC]">
           <img
             src="/icon.png"
             alt="SutraSparsh Logo"
@@ -210,5 +212,6 @@ export const DailyPromoPopup: React.FC<DailyPromoPopupProps> = ({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 };

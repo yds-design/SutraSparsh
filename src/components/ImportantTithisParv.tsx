@@ -437,7 +437,7 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
                     ({item.nameHi})
                   </span>
                 </div>
-                <p className={`text-xs leading-relaxed mt-1 ${isLight ? "text-stone-700" : "text-stone-300"}`}>
+                <p className={`text-xs sm:text-sm leading-relaxed w-full mt-1 ${isLight ? "text-stone-700" : "text-stone-300"}`}>
                   {item.significance}
                 </p>
               </div>

@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <!-- 1. Home / Daily Shloka Sanctuary -->
+  <url>
+    <loc>https://sutrasparsh.com/</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sutrasparsh.com/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sutrasparsh.com/" />
+    <xhtml:link rel="alternate" hreflang="sa" href="https://sutrasparsh.com/?lang=sa" />
+    <xhtml:link rel="alternate" hreflang="hi" href="https://sutrasparsh.com/?lang=hi" />
+    <image:image>
+      <image:loc>https://sutrasparsh.com/icon-1024.png</image:loc>
+      <image:title>SutraSparsh - Sacred Vedic Wisdom Platform</image:title>
+      <image:caption>Daily Sanskrit Shloka recitation, 432Hz meditative audio, and Paninian grammar dissection.</image:caption>
+    </image:image>
+  </url>
+
+  <!-- 2. Sacred Scriptures Library / Corpus Explorer -->
+  <url>
+    <loc>https://sutrasparsh.com/?tab=explore</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sutrasparsh.com/?tab=explore" />
+    <xhtml:link rel="alternate" hreflang="sa" href="https://sutrasparsh.com/?tab=explore&amp;lang=sa" />
+    <image:image>
+      <image:loc>https://sutrasparsh.com/icon-1024.png</image:loc>
+      <image:title>Sacred Sanskrit Scriptures Library</image:title>
+      <image:caption>Bhagavad Gita, Patanjali Yoga Sutras, Principal Upanishads, and Vedic Chants.</image:caption>
+    </image:image>
+  </url>
+
+  <!-- 3. Srimad Bhagavad Gita Canonical Text -->
+  <url>
+    <loc>https://sutrasparsh.com/?scripture=gita</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sutrasparsh.com/?scripture=gita" />
+    <xhtml:link rel="alternate" hreflang="sa" href="https://sutrasparsh.com/?scripture=gita&amp;lang=sa" />
+    <xhtml:link rel="alternate" hreflang="hi" href="https://sutrasparsh.com/?scripture=gita&amp;lang=hi" />
+    <image:image>
+      <image:loc>https://sutrasparsh.com/icon-1024.png</image:loc>
+      <image:title>Bhagavad Gita - Complete 18 Chapters with Sanskrit Shlokas &amp; Commentary</image:title>
+      <image:caption>Authentic Devanagari verse recitation, word-by-word meaning, and comparative Advaita/Vishishtadvaita commentaries.</image:caption>
+    </image:image>
+  </url>
+
+  <!-- 4. Patanjali Yoga Sutras -->
+  <url>
+    <loc>https://sutrasparsh.com/?scripture=yoga-sutras</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sutrasparsh.com/?scripture=yoga-sutras" />
+    <xhtml:link rel="alternate" hreflang="sa" href="https://sutrasparsh.com/?scripture=yoga-sutras&amp;lang=sa" />
+    <image:image>
+      <image:loc>https://sutrasparsh.com/icon-1024.png</image:loc>
+      <image:title>Patanjali Yoga Sutras - 4 Padas of Classical Raja Yoga</image:title>
+      <image:caption>Samadhi, Sadhana, Vibhuti, and Kaivalya Padas with classical Vyasa Bhashya insights.</image:caption>
+    </image:image>
+  </url>
+
+  <!-- 5. Principal Upanishads (Mukhya Upanishads) -->
+  <url>
+    <loc>https://sutrasparsh.com/?scripture=upanishads</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sutrasparsh.com/?scripture=upanishads" />
+    <xhtml:link rel="alternate" hreflang="sa" href="https://sutrasparsh.com/?scripture=upanishads&amp;lang=sa" />
+    <image:image>
+      <image:loc>https://sutrasparsh.com/icon-1024.png</image:loc>
+      <image:title>Principal Upanishads - Vedanta Foundations</image:title>
+      <image:caption>Isha, Kena, Katha, Prashna, Mundaka, Mandukya, and Chandogya Upanishads with Adi Shankara commentary.</image:caption>
+    </image:image>
+  </url>
+
+  <!-- 6. Vedic Chants & Sacred Suktas -->
+  <url>
+    <loc>https://sutrasparsh.com/?scripture=vedic-chants</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sutrasparsh.com/?scripture=vedic-chants" />
+    <xhtml:link rel="alternate" hreflang="sa" href="https://sutrasparsh.com/?scripture=vedic-chants&amp;lang=sa" />
+    <image:image>
+      <image:loc>https://sutrasparsh.com/icon-1024.png</image:loc>
+      <image:title>Vedic Chants and Suktas - Sacred Resonance</image:title>
+      <image:caption>Rigvedic hymns, Gayatri Mantra, Purusha Sukta, Sri Sukta, and Shanti Mantras.</image:caption>
+    </image:image>
+  </url>
+
+  <!-- 7. Ashtavakra Gita -->
+  <url>
+    <loc>https://sutrasparsh.com/?scripture=ashtavakra</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sutrasparsh.com/?scripture=ashtavakra" />
+    <xhtml:link rel="alternate" hreflang="sa" href="https://sutrasparsh.com/?scripture=ashtavakra&amp;lang=sa" />
+  </url>
+
+  <!-- 8. Sanskrit Sacred Glossary & Dhatu Root Explorer -->
+  <url>
+    <loc>https://sutrasparsh.com/?view=glossary</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sutrasparsh.com/?view=glossary" />
+    <xhtml:link rel="alternate" hreflang="sa" href="https://sutrasparsh.com/?view=glossary&amp;lang=sa" />
+  </url>
+
+  <!-- 9. Guided Sādhana Paths & Recitation Routines -->
+  <url>
+    <loc>https://sutrasparsh.com/?view=paths</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sutrasparsh.com/?view=paths" />
+  </url>
+
+  <!-- 10. Multi-Script Sanskrit Search Engine -->
+  <url>
+    <loc>https://sutrasparsh.com/?tab=search</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sutrasparsh.com/?tab=search" />
+  </url>
+
+  <!-- 11. Seeker Sādhana Journey, Daily Study Goals & Brahma Muhurta -->
+  <url>
+    <loc>https://sutrasparsh.com/?tab=my-journey</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sutrasparsh.com/?tab=my-journey" />
+    <image:image>
+      <image:loc>https://sutrasparsh.com/icon-1024.png</image:loc>
+      <image:title>Sādhana Journey &amp; 15-Minute Daily Study Goals</image:title>
+      <image:caption>Daily study goals, visual progress bar, milestone celebrations, and Brahma Muhurta sadhana streaks.</image:caption>
+    </image:image>
+  </url>
+
+  <!-- 12. Temple Atmosphere & 432Hz Sound Sanctuary Preferences -->
+  <url>
+    <loc>https://sutrasparsh.com/?tab=preferences</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 13. About SutraSparsh & Sanskrit Digital Sanctuary Philosophy -->
+  <url>
+    <loc>https://sutrasparsh.com/?view=about</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 14. Privacy Policy & Sādhaka Data Safety Declaration -->
+  <url>
+    <loc>https://sutrasparsh.com/privacy.html</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- 15. Terms of Service & Open Wisdom Charter -->
+  <url>
+    <loc>https://sutrasparsh.com/terms.html</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+</urlset>

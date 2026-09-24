@@ -20,6 +20,7 @@ import {
 import { soundEngine } from "../utils/audio";
 import { authService, type SeekerUser } from "../services/auth.service";
 import { useFeatureFlags } from "../services/feature-flags.service";
+import { type AppTheme } from "../types";
 
 export type NavTab =
   | "today"
@@ -38,7 +39,7 @@ interface HeaderProps {
   setActiveTab: (tab: NavTab) => void;
   savedCount: number;
   backendOnline: boolean;
-  theme?: "sandstone" | "amethyst" | "light" | "festival" | "golden-hour";
+  theme?: AppTheme;
   onToggleTheme?: () => void;
   onOpenProfile?: () => void;
   onOpenPricing?: () => void;
@@ -82,7 +83,8 @@ export const Header: React.FC<HeaderProps> = ({
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
   const isGoldenHour = theme === "golden-hour";
-  const isSandstone = theme === "sandstone" || (!isLight && !isFestival && !isAmethyst && !isGoldenHour);
+  const isPrismPulse = theme === "prism-pulse";
+  const isSandstone = theme === "sandstone" || (!isLight && !isFestival && !isAmethyst && !isGoldenHour && !isPrismPulse);
 
   const toggleSoundscape = () => {
     const active = soundEngine.toggleTanpuraDrone();
@@ -135,7 +137,7 @@ export const Header: React.FC<HeaderProps> = ({
             role="button"
             aria-label="SutraSparsh Home"
           >
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-md transition-transform duration-200 group-hover:scale-105 border border-amber-500/30 flex-shrink-0 bg-stone-900">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-sm transition-transform duration-200 group-hover:scale-105 border border-amber-500/20 flex-shrink-0 bg-[#ECECEC]">
               <img
                 src="/icon.png"
                 alt="SutraSparsh Logo"
@@ -319,6 +321,8 @@ export const Header: React.FC<HeaderProps> = ({
                 style={{
                   backgroundColor: isLight
                     ? "rgba(216,137,22,0.15)"
+                    : isPrismPulse
+                    ? "rgba(147,107,250,0.15)"
                     : isFestival
                     ? "rgba(255,138,0,0.2)"
                     : isAmethyst
@@ -328,6 +332,8 @@ export const Header: React.FC<HeaderProps> = ({
                     : "rgba(232,146,26,0.18)",
                   borderColor: isLight
                     ? "#D88916"
+                    : isPrismPulse
+                    ? "#936BFA"
                     : isFestival
                     ? "#FF8A00"
                     : isAmethyst
@@ -337,6 +343,8 @@ export const Header: React.FC<HeaderProps> = ({
                     : "rgba(232,146,26,0.45)",
                   color: isLight
                     ? "#3A2818"
+                    : isPrismPulse
+                    ? "#936BFA"
                     : isFestival
                     ? "#FDE68A"
                     : isAmethyst
@@ -347,7 +355,7 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
               >
                 <span className="text-sm">
-                  {isLight ? "☀️" : isFestival ? "🪔" : isAmethyst ? "🔮" : isGoldenHour ? "🌅" : "🏛️"}
+                  {isLight ? "☀️" : isFestival ? "🪔" : isAmethyst ? "🔮" : isGoldenHour ? "🌅" : isPrismPulse ? "⚡" : "🏛️"}
                 </span>
               </button>
             )}

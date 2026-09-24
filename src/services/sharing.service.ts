@@ -253,12 +253,12 @@ export class SharingService {
   public generateCardDataUrl(
     content: ShareableContent,
     template: ShareCardTemplate = "traditional_gold",
-    dimension: ShareCardDimension = "square"
+    dimension: ShareCardDimension = "story"
   ): string {
     if (typeof document === "undefined") return "";
 
-    const dim = CARD_DIMENSIONS[dimension];
-    const style = TEMPLATE_STYLES[template];
+    const dim = CARD_DIMENSIONS[dimension] || CARD_DIMENSIONS.story;
+    const style = TEMPLATE_STYLES[template] || TEMPLATE_STYLES.traditional_gold;
     const canvas = document.createElement("canvas");
     canvas.width = dim.width;
     canvas.height = dim.height;
@@ -276,35 +276,47 @@ export class SharingService {
     // 2. Subtle Radial Aura
     const aura = ctx.createRadialGradient(
       dim.width / 2,
-      dim.height * 0.35,
+      dim.height * 0.38,
       10,
       dim.width / 2,
-      dim.height * 0.35,
-      dim.width * 0.6
+      dim.height * 0.38,
+      dim.width * 0.65
     );
     aura.addColorStop(0, style.borderColor + "25");
     aura.addColorStop(1, "transparent");
     ctx.fillStyle = aura;
     ctx.fillRect(0, 0, dim.width, dim.height);
 
+    // Responsive scaling based on width and height
+    const baseW = dim.width;
+    const baseH = dim.height;
+    const inset = Math.max(24, Math.round(baseW * 0.04));
+    const borderWidth = Math.max(1.5, Math.round(baseW * 0.0025));
+
     // 3. Ornate Double Border & Corner Accents
-    const inset = 40;
     ctx.strokeStyle = style.borderColor + "50";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(inset, inset, dim.width - inset * 2, dim.height - inset * 2);
+    ctx.lineWidth = borderWidth;
+    ctx.strokeRect(inset, inset, baseW - inset * 2, baseH - inset * 2);
 
+    const innerGap = Math.max(8, Math.round(baseW * 0.012));
     ctx.strokeStyle = style.borderColor + "30";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(inset + 12, inset + 12, dim.width - (inset + 12) * 2, dim.height - (inset + 12) * 2);
+    ctx.lineWidth = Math.max(1, Math.round(borderWidth * 0.7));
+    ctx.strokeRect(
+      inset + innerGap,
+      inset + innerGap,
+      baseW - (inset + innerGap) * 2,
+      baseH - (inset + innerGap) * 2
+    );
 
-    // Corner Dots
+    // Corner Accents / Dots
     ctx.fillStyle = style.goldAccent;
-    const dotRad = 4;
+    const dotRad = Math.max(3, Math.round(baseW * 0.005));
+    const dotOffset = Math.round(innerGap * 0.5);
     [
-      [inset + 6, inset + 6],
-      [dim.width - inset - 6, inset + 6],
-      [inset + 6, dim.height - inset - 6],
-      [dim.width - inset - 6, dim.height - inset - 6],
+      [inset + dotOffset, inset + dotOffset],
+      [baseW - inset - dotOffset, inset + dotOffset],
+      [inset + dotOffset, baseH - inset - dotOffset],
+      [baseW - inset - dotOffset, baseH - inset - dotOffset],
     ].forEach(([cx, cy]) => {
       ctx.beginPath();
       ctx.arc(cx, cy, dotRad, 0, Math.PI * 2);
@@ -314,76 +326,117 @@ export class SharingService {
     // 4. Header: Logo & Om
     ctx.textAlign = "center";
     ctx.fillStyle = style.goldAccent;
-    ctx.font = "bold 38px 'Tiro Devanagari Sanskrit', serif";
-    ctx.fillText("ॐ", dim.width / 2, inset + 65);
+    const omFontSize = Math.round(baseW * 0.06);
+    ctx.font = `bold ${omFontSize}px 'Tiro Devanagari Sanskrit', serif`;
+    const omY = inset + Math.round(baseH * 0.048);
+    ctx.fillText("ॐ", baseW / 2, omY);
 
-    ctx.font = "bold 26px 'Fraunces', 'Cinzel', serif";
+    const brandFontSize = Math.round(baseW * 0.038);
+    ctx.font = `bold ${brandFontSize}px 'Fraunces', 'Cinzel', serif`;
     ctx.fillStyle = style.textColor;
-    ctx.fillText("SutraSparsh", dim.width / 2, inset + 105);
+    const brandY = omY + Math.round(baseH * 0.032);
+    ctx.fillText("SutraSparsh", baseW / 2, brandY);
 
-    ctx.font = "14px 'Manrope', sans-serif";
+    const subTitleFontSize = Math.round(baseW * 0.02);
+    ctx.font = `${subTitleFontSize}px 'Manrope', sans-serif`;
     ctx.fillStyle = style.meaningColor;
-    ctx.fillText("TIMELINESS WISDOM • सूत्रस्पर्श", dim.width / 2, inset + 130);
+    const subTitleY = brandY + Math.round(baseH * 0.02);
+    ctx.fillText("TIMELINESS WISDOM • सूत्रस्पर्श", baseW / 2, subTitleY);
 
     // Sacred Lotus Rule Line
-    const ruleY = inset + 155;
+    const ruleY = subTitleY + Math.round(baseH * 0.02);
+    const ruleHalfWidth = Math.round(baseW * 0.22);
+    const ruleGap = Math.round(baseW * 0.025);
     ctx.strokeStyle = style.borderColor + "40";
+    ctx.lineWidth = Math.max(1, Math.round(borderWidth * 0.6));
     ctx.beginPath();
-    ctx.moveTo(dim.width / 2 - 140, ruleY);
-    ctx.lineTo(dim.width / 2 - 20, ruleY);
-    ctx.moveTo(dim.width / 2 + 20, ruleY);
-    ctx.lineTo(dim.width / 2 + 140, ruleY);
+    ctx.moveTo(baseW / 2 - ruleHalfWidth, ruleY);
+    ctx.lineTo(baseW / 2 - ruleGap, ruleY);
+    ctx.moveTo(baseW / 2 + ruleGap, ruleY);
+    ctx.lineTo(baseW / 2 + ruleHalfWidth, ruleY);
     ctx.stroke();
 
     ctx.fillStyle = style.goldAccent;
     ctx.beginPath();
-    ctx.arc(dim.width / 2, ruleY, 5, 0, Math.PI * 2);
+    ctx.arc(baseW / 2, ruleY, Math.max(3, Math.round(baseW * 0.005)), 0, Math.PI * 2);
     ctx.fill();
 
     // 5. Sanskrit Shloka Block
-    const verseLines = content.sanskritText.split("\n").filter(Boolean).slice(0, 4);
+    const verseLines = content.sanskritText.split("\n").filter(Boolean).slice(0, 6);
     ctx.fillStyle = style.sanskritColor;
-    ctx.font = "bold 34px 'Tiro Devanagari Sanskrit', serif";
-    let textY = dim.height * 0.35;
+    
+    // Calculate shloka font size dynamically based on line count and canvas dimensions
+    const isStory = dimension === "story";
+    const isLandscape = dimension === "landscape";
+    const minDim = Math.min(baseW, baseH);
+
+    const rawSanskritSize = Math.round(
+      minDim * (verseLines.length > 3 ? (isStory ? 0.046 : isLandscape ? 0.052 : 0.042) : (isStory ? 0.054 : isLandscape ? 0.06 : 0.048))
+    );
+    const sanskritFontSize = Math.min(Math.max(rawSanskritSize, isLandscape ? 20 : 24), 62);
+    ctx.font = `bold ${sanskritFontSize}px 'Tiro Devanagari Sanskrit', serif`;
+
+    const sanskritLineHeight = Math.round(sanskritFontSize * (isLandscape ? 1.45 : 1.6));
+    
+    // In Story mode (9:16), distribute vertical space so the card feels comfortably filled
+    let textY = isStory 
+      ? Math.max(ruleY + Math.round(baseH * 0.06) + sanskritFontSize, baseH * 0.26)
+      : isLandscape
+      ? Math.max(ruleY + Math.round(baseH * 0.035) + sanskritFontSize, baseH * 0.22)
+      : Math.max(ruleY + Math.round(baseH * 0.04) + sanskritFontSize, baseH * 0.27);
+
     verseLines.forEach((line) => {
-      ctx.fillText(line.trim(), dim.width / 2, textY);
-      textY += 56;
+      ctx.fillText(line.trim(), baseW / 2, textY);
+      textY += sanskritLineHeight;
     });
 
-    // 6. Transliteration & English Meaning
-    textY += 20;
+    // 6. Decorative separator between Sanskrit and Meaning
+    const sepY = textY + Math.round(baseH * (isStory ? 0.024 : isLandscape ? 0.012 : 0.016));
+    ctx.strokeStyle = style.borderColor + "40";
+    ctx.lineWidth = Math.max(1, Math.round(borderWidth * 0.7));
+    ctx.beginPath();
+    ctx.moveTo(baseW / 2 - Math.round(baseW * 0.16), sepY);
+    ctx.lineTo(baseW / 2 + Math.round(baseW * 0.16), sepY);
+    ctx.stroke();
+
+    // 7. English Meaning with Word Wrapping
+    textY = sepY + Math.round(baseH * (isStory ? 0.045 : isLandscape ? 0.028 : 0.035));
     if (content.meaning) {
       ctx.fillStyle = style.meaningColor;
-      ctx.font = "italic 22px 'Manrope', sans-serif";
+      const rawMeaningSize = Math.round(minDim * (isStory ? 0.034 : isLandscape ? 0.036 : 0.03));
+      const meaningFontSize = Math.min(Math.max(rawMeaningSize, isLandscape ? 16 : 20), 40);
+      ctx.font = `italic ${meaningFontSize}px 'Manrope', sans-serif`;
 
-      // Word wrapping helper
+      const meaningLineHeight = Math.round(meaningFontSize * (isLandscape ? 1.45 : 1.6));
       const words = `"${content.meaning}"`.split(" ");
       let currentLine = "";
-      const maxLineWidth = dim.width - 240;
+      const maxLineWidth = baseW - inset * 2 - Math.round(baseW * 0.12);
 
       for (let i = 0; i < words.length; i++) {
         const testLine = currentLine + words[i] + " ";
         const metrics = ctx.measureText(testLine);
         if (metrics.width > maxLineWidth && i > 0) {
-          ctx.fillText(currentLine.trim(), dim.width / 2, textY);
+          ctx.fillText(currentLine.trim(), baseW / 2, textY);
           currentLine = words[i] + " ";
-          textY += 34;
+          textY += meaningLineHeight;
         } else {
           currentLine = testLine;
         }
       }
-      ctx.fillText(currentLine.trim(), dim.width / 2, textY);
+      ctx.fillText(currentLine.trim(), baseW / 2, textY);
     }
 
-    // 7. Footer: Scripture Reference & URL
-    const footerY = dim.height - inset - 65;
+    // 8. Footer: Scripture Reference & URL
+    const footerY = baseH - inset - Math.round(baseH * 0.045);
     ctx.fillStyle = style.goldAccent;
-    ctx.font = "bold 18px 'Manrope', sans-serif";
-    ctx.fillText(`${content.title} · ${content.source}`, dim.width / 2, footerY);
+    const titleFontSize = Math.min(Math.max(Math.round(baseW * 0.026), 16), 28);
+    ctx.font = `bold ${titleFontSize}px 'Manrope', sans-serif`;
+    ctx.fillText(`${content.title} · ${content.source}`, baseW / 2, footerY);
 
     ctx.fillStyle = style.textColor + "90";
-    ctx.font = "14px 'Manrope', sans-serif";
-    ctx.fillText("sutrasparsh.com", dim.width / 2, footerY + 28);
+    const urlFontSize = Math.min(Math.max(Math.round(baseW * 0.019), 13), 22);
+    ctx.font = `${urlFontSize}px 'Manrope', sans-serif`;
+    ctx.fillText("sutrasparsh.com", baseW / 2, footerY + Math.round(titleFontSize * 1.5));
 
     return canvas.toDataURL("image/png");
   }

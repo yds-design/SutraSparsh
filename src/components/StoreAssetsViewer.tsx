@@ -14,6 +14,7 @@ import {
   Flame,
   Volume2,
 } from "lucide-react";
+import { ModalPortal } from "./ModalPortal";
 import type { AppTheme } from "../types";
 
 interface StoreAssetsViewerProps {
@@ -59,14 +60,26 @@ export const StoreAssetsViewer: React.FC<StoreAssetsViewerProps> = ({
   // Mockup store screenshot preview definitions
   const storeScreenshots = [
     {
-      title: "Daily Sādhana & Shloka",
-      headline: "Sacred Daily Contemplation",
-      subtitle: "Brahma Muhurta notifications, streak tracking, and tap-to-chant recitation",
+      title: "Temple Atmosphere Themes",
+      headline: "5 Immersive Temple Atmosphere Themes",
+      subtitle: "Sandstone Sanctuary, Amethyst Nocturnal, Parchment Daylight, Festival Deepam, and Golden Hour with glowing brass diyas",
       accent: "from-amber-500 to-orange-500",
       icon: "🪔",
-      screenTag: "6.7\" Display • Screen 1",
+      screenTag: "Play Store 1080×1920 • Marketing Asset 1",
+      image: "/assets/screenshots/screenshot-1-temple-atmosphere.png",
       previewText: "कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।\nमा कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि॥",
-      meta: "Bhagavad Gita 2.47 • Sankhya Yoga",
+      meta: "Authentic Vedic Contemplation • 432Hz Tanpura Drone",
+    },
+    {
+      title: "Sādhana Streak Dashboard",
+      headline: "Sādhana Streak & Habit Dashboard",
+      subtitle: "Brahma Muhurta dawn alignment timer (04:24 AM), 7-day flame streak counter, and 15m study radial goal ring",
+      accent: "from-orange-600 to-amber-500",
+      icon: "🔥",
+      screenTag: "Play Store 1080×1920 • Marketing Asset 2",
+      image: "/assets/screenshots/screenshot-2-sadhana-streak.png",
+      previewText: "🔥 7-Day Continuous Sādhana Active\n15 Min Daily Contemplation Goal • 80% Achieved",
+      meta: "Progress Service • Brahma Muhurta Dawn Timer",
     },
     {
       title: "Sacred Scripture Corpus",
@@ -74,7 +87,7 @@ export const StoreAssetsViewer: React.FC<StoreAssetsViewerProps> = ({
       subtitle: "All 18 Chapters of Gita, 196 Yoga Sutras, and classical Vedic Mandukya & Isha",
       accent: "from-amber-600 to-yellow-500",
       icon: "📚",
-      screenTag: "6.7\" Display • Screen 2",
+      screenTag: "6.7\" Display • Screen 3",
       previewText: "योगश्चित्तवृत्तिनिरोधः॥\nतदा द्रष्टुः स्वरूपेऽवस्थानम्॥",
       meta: "Patanjali Yoga Sutras 1.2–1.3 • Samadhi Pada",
     },
@@ -84,7 +97,7 @@ export const StoreAssetsViewer: React.FC<StoreAssetsViewerProps> = ({
       subtitle: "Devanagari, IAST Roman transliteration, grammatical roots & dual commentary",
       accent: "from-emerald-600 to-teal-500",
       icon: "🔍",
-      screenTag: "6.7\" Display • Screen 3",
+      screenTag: "6.7\" Display • Screen 4",
       previewText: "कर्मणि एव अधिकारः ते | मा फलेषु कदाचन",
       meta: "Grammatical Root √kṛ (to act) • Dual English & Hindi Analysis",
     },
@@ -94,42 +107,33 @@ export const StoreAssetsViewer: React.FC<StoreAssetsViewerProps> = ({
       subtitle: "Microtonal 136.1Hz Om / 432Hz harmonic drone synthesizer and bronze temple bells",
       accent: "from-purple-600 to-indigo-500",
       icon: "🎵",
-      screenTag: "6.7\" Display • Screen 4",
+      screenTag: "6.7\" Display • Screen 5",
       previewText: "Continuous Acoustic Tanpura Drone\nPa-Sa-Sa-Sa Pure Sine Resonance",
       meta: "Acoustic Web Audio Synthesizer • Zero Lag",
-    },
-    {
-      title: "Sādhana Habits & Radial Goal",
-      headline: "Daily Study Time Progress",
-      subtitle: "Interactive radial progress meter, daily streak logs, and encrypted journal notes",
-      accent: "from-rose-600 to-orange-500",
-      icon: "🔥",
-      screenTag: "6.7\" Display • Screen 5",
-      previewText: "15 Min Daily Goal • 80% Achieved\n7-Day Consecutive Sādhana Active",
-      meta: "Progress Service • Local & Cloud Sync",
     },
   ];
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="store-assets-title"
-      className="fixed inset-0 z-50 overflow-y-auto backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn"
-      style={{
-        backgroundColor: isLight ? "rgba(58, 40, 24, 0.45)" : "rgba(0, 0, 0, 0.8)",
-      }}
-      onClick={onClose}
-    >
+    <ModalPortal>
       <div
-        className="w-full max-w-3xl rounded-3xl shadow-2xl border overflow-hidden relative transition-all max-h-[92vh] flex flex-col"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="store-assets-title"
+        className="fixed inset-0 z-50 flex items-start sm:items-center justify-center overflow-y-auto overscroll-contain animate-fadeIn backdrop-blur-xl bg-stone-950/80 p-0 sm:p-4 md:p-6 lg:p-8 xl:p-10 pt-0 sm:pt-4 md:pt-6 lg:pt-8 xl:pt-10 pb-24 sm:pb-6 md:pb-8 lg:pb-12"
         style={{
-          backgroundColor: modalBg,
-          borderColor: modalBorder,
-          color: textColor,
+          backgroundColor: isLight ? "rgba(58, 40, 24, 0.45)" : "rgba(0, 0, 0, 0.8)",
         }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={onClose}
       >
+        <div
+          className="w-full max-w-full sm:max-w-3xl min-h-dvh sm:min-h-0 sm:my-auto rounded-none sm:rounded-3xl shadow-2xl border overflow-hidden relative transition-all flex flex-col"
+          style={{
+            backgroundColor: modalBg,
+            borderColor: modalBorder,
+            color: textColor,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Header */}
         <div
           className="p-6 border-b flex items-center justify-between"
@@ -191,7 +195,7 @@ export const StoreAssetsViewer: React.FC<StoreAssetsViewerProps> = ({
                 </span>
               </div>
               <p className="text-xs opacity-75 leading-relaxed">
-                Rendered with the official SutraSparsh logo, warm saffron-vermilion gradient, bold geometric display typography, and script branding.
+                Rendered with the official SutraSparsh brand logo featuring the radiant saffron-orange sunrise emblem (#FF6E14) and bold geometric typography on neutral canvas.
               </p>
               <div className="pt-2 flex flex-wrap gap-2 justify-center sm:justify-start">
                 <a
@@ -250,9 +254,22 @@ export const StoreAssetsViewer: React.FC<StoreAssetsViewerProps> = ({
                     <div className="flex items-center space-x-2 text-amber-500 text-xs font-mono font-bold">
                       <span>{activeSc.screenTag}</span>
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-mono">
-                      1290 × 2796 px Retina
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-mono">
+                        1080 × 1920 Google Play
+                      </span>
+                      {activeSc.image && (
+                        <a
+                          href={activeSc.image}
+                          download={`sutrasparsh-${activeSc.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`}
+                          className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 text-[11px] font-bold flex items-center space-x-1 transition-all"
+                          title="Download high-resolution Play Store asset"
+                        >
+                          <Download className="w-3 h-3" />
+                          <span>Download PNG</span>
+                        </a>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-1">
@@ -262,26 +279,65 @@ export const StoreAssetsViewer: React.FC<StoreAssetsViewerProps> = ({
                     <p className="text-xs opacity-75">{activeSc.subtitle}</p>
                   </div>
 
-                  {/* Simulated Mobile Mockup Screen View */}
-                  <div
-                    className="p-5 rounded-2xl border space-y-3"
-                    style={{
-                      backgroundColor: isLight ? "#FFFFFF" : "#1A130D",
-                      borderColor: isLight ? "#E6D7C3" : "rgba(255,255,255,0.06)",
-                    }}
-                  >
-                    <div className="flex justify-between items-center text-[11px] text-amber-500 font-mono">
-                      <span>{activeSc.meta}</span>
-                      <span className="text-emerald-400 flex items-center space-x-1">
-                        <CheckCircle2 className="w-3 h-3" />
-                        <span>HD Retina</span>
-                      </span>
+                  {/* High-Resolution Graphic or Simulated Screen */}
+                  {activeSc.image ? (
+                    <div className="flex flex-col md:flex-row gap-5 items-center">
+                      <div className="w-full md:w-56 flex-shrink-0 bg-stone-950 rounded-2xl p-2 border border-amber-500/30 shadow-2xl">
+                        <img
+                          src={activeSc.image}
+                          alt={activeSc.title}
+                          className="w-full h-auto rounded-xl object-contain shadow-lg"
+                        />
+                      </div>
+                      <div className="flex-1 space-y-3 text-xs opacity-90">
+                        <div className="p-4 rounded-xl border space-y-2" style={{ backgroundColor: isLight ? "#FFFFFF" : "#1A130D", borderColor: isLight ? "#E6D7C3" : "rgba(255,255,255,0.06)" }}>
+                          <div className="text-amber-500 font-mono font-bold flex items-center justify-between">
+                            <span>{activeSc.meta}</span>
+                            <span className="text-emerald-400 flex items-center space-x-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>Ready for Play Console</span>
+                            </span>
+                          </div>
+                          <div className="font-sanskrit text-sm text-amber-200/95 whitespace-pre-line leading-relaxed">
+                            {activeSc.previewText}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          <a
+                            href={activeSc.image}
+                            download={`sutrasparsh-${activeSc.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`}
+                            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs flex items-center space-x-1.5 shadow"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Download 1080×1920 Phone Asset (PNG)</span>
+                          </a>
+                          <span className="text-[11px] font-mono opacity-60 self-center">
+                            Path: {activeSc.image}
+                          </span>
+                        </div>
+                      </div>
                     </div>
+                  ) : (
+                    <div
+                      className="p-5 rounded-2xl border space-y-3"
+                      style={{
+                        backgroundColor: isLight ? "#FFFFFF" : "#1A130D",
+                        borderColor: isLight ? "#E6D7C3" : "rgba(255,255,255,0.06)",
+                      }}
+                    >
+                      <div className="flex justify-between items-center text-[11px] text-amber-500 font-mono">
+                        <span>{activeSc.meta}</span>
+                        <span className="text-emerald-400 flex items-center space-x-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>HD Retina</span>
+                        </span>
+                      </div>
 
-                    <div className="font-sanskrit text-base text-amber-200/95 whitespace-pre-line leading-relaxed">
-                      {activeSc.previewText}
+                      <div className="font-sanskrit text-base text-amber-200/95 whitespace-pre-line leading-relaxed">
+                        {activeSc.previewText}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })()}
@@ -307,5 +363,6 @@ export const StoreAssetsViewer: React.FC<StoreAssetsViewerProps> = ({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 };

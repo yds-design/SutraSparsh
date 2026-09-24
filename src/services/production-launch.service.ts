@@ -34,7 +34,7 @@ export class ProductionLaunchService {
     commit: APP_VERSION_METADATA.commitHash,
     pipelineStage: "DEPLOYMENT_COMPLETED",
     artifact: {
-      containerImage: "gcr.io/sutrasparsh/sutrasparsh-app:v1.0.0-1bed6d6",
+      containerImage: `gcr.io/sutrasparsh/sutrasparsh-app:v1.0.0-${APP_VERSION_METADATA.commitHash}`,
       sha256: "sha256:4b9a3e2c1d8f7e6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a",
       buildTimestamp: new Date().toISOString(),
     },

@@ -33,7 +33,6 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     transliteration: "karmaṇy-evādhikāras te mā phaleṣu kadācana |\nmā karma-phala-hetur bhūr mā te saṅgo 'stvakarmaṇi ||",
     meaning: "You have a right only to perform your prescribed duties, but you are never entitled to the fruits of your actions. Never consider yourself the cause of the results of your activities, and never be attached to inaction.",
     commentary: "Lord Krishna counsels Arjuna that true freedom and peace of mind arise from dedicating oneself wholeheartedly to righteous duty without anxiety or craving for outcomes.",
-    audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
       source: "Bhagavad Gita",
@@ -52,7 +51,6 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     transliteration: "yoga-sthaḥ kuru karmāṇi saṅgaṁ tyaktvā dhanañjaya |\nsiddhy-asiddhyoḥ samo bhūtvā samatvaṁ yoga ucyate ||",
     meaning: "Perform your duty with an even mind, O Arjuna, abandoning all attachment to success or failure. Such equanimity of mind is called Yoga.",
     commentary: "Yoga is not merely physical posture; it is an unshakeable poise in the midst of life's dualities — joy and sorrow, triumph and defeat.",
-    audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
       source: "Bhagavad Gita",
@@ -107,7 +105,6 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     transliteration: "atha yogānuśāsanam ||",
     meaning: "Now, the sacred exposition and discipline of Yoga commences.",
     commentary: "Patanjali begins the monumental Yoga Sutras with the word 'Atha' (Now), signaling readiness for supreme inner transformation.",
-    audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
       source: "Patanjali Yoga Sutras",
@@ -126,7 +123,6 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     transliteration: "yogaś citta-vṛtti-nirodhaḥ ||",
     meaning: "Yoga is the intentional stilling and mastery of the whirlpools of the mind (fluctuations of consciousness).",
     commentary: "The ultimate purpose of Yoga is not mere physical exercise, but cultivating the profound stillness wherein the true Self (Purusha) shines undisturbed.",
-    audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
       source: "Patanjali Yoga Sutras",
@@ -145,7 +141,6 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     transliteration: "īśā vāsyam idaṁ sarvaṁ yat kiñca jagatyāṁ jagat |\ntena tyaktena bhuñjīthā mā gṛdhaḥ kasya svid dhanam ||",
     meaning: "All this — whatsoever exists in this transient universe — is enveloped by the Divine. Enjoy life through renunciation and detachment; do not covet anyone's wealth.",
     commentary: "The foundational verse of the Isha Upanishad teaches that everything belongs to Brahman; live in gratitude without greed or possessiveness.",
-    audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
       source: "Isha Upanishad",
@@ -164,7 +159,6 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     transliteration: "om ity etad akṣaram idaṁ sarvaṁ tasyopavyākhyānaṁ bhūtaṁ bhavad bhaviṣyad iti sarvam oṅkāra eva |\nyac cānyat trikālātītaṁ tad apy oṅkāra eva ||",
     meaning: "OM, this eternal syllable, is all that exists. All that was, all that is, and all that shall be is indeed OM. Whatever transcends the three divisions of time is also OM.",
     commentary: "The Mandukya Upanishad explores the four states of consciousness (Waking, Dreaming, Deep Sleep, and Turiya - Pure Awareness) through the vibration of Pranava OM.",
-    audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
       source: "Mandukya Upanishad",
@@ -181,7 +175,6 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     transliteration: "oṁ bhūr bhuvaḥ svaḥ tat savitur vareṇyaṁ\nbhargo devasya dhīmahi dhiyo yo naḥ pracodayāt ||",
     meaning: "We meditate upon the supreme, radiant splendor of the Divine Solar Illuminator (Savitur). May that Divine Light awaken and inspire our intellect and inner vision.",
     commentary: "The supreme Vedic mantra invoking illumination, wisdom, and spiritual awakening across the three planes of existence.",
-    audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
       source: "Rigveda",
@@ -198,7 +191,6 @@ const DEFAULT_SPIRITUAL_CONTENT: DocumentData[] = [
     transliteration: "oṁ tryambakaṁ yajāmahe sugandhiṁ puṣṭi-vardhanam |\nurvārukam iva bandhanān mṛtyor mukṣīya māmṛtāt ||",
     meaning: "We worship the Three-Eyed Lord (Shiva), the fragrant nourisher of all beings. As a ripe cucumber is severed from its stalk effortlessly, so may we be liberated from the bondage of death and mortality into Immortality.",
     commentary: "A profound healing chant for inner rejuvenation, liberation from fear, and transcendence of mortal limitations.",
-    audioUrl: "https://actions.google.com/sounds/v1/ambiences/temple_bell.ogg",
     metadata: {
       language: "sa",
       source: "Rigveda / Yajurveda",

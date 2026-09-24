@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { UserSubscription, BillingTransaction } from "../types/monetization";
 import { SUBSCRIPTION_PLANS } from "../config/monetization.config";
+import { ModalPortal } from "./ModalPortal";
 
 interface SubscriptionManagementPanelProps {
   onOpenPricing: () => void;
@@ -257,48 +258,52 @@ export function SubscriptionManagementPanel({ onOpenPricing, lang = "en" }: Subs
 
       {/* Cancel Confirmation Dialog Modal */}
       {cancelModalOpen && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-md bg-stone-900 border border-stone-700 rounded-2xl p-6 text-stone-100 space-y-4">
-            <div className="flex items-center space-x-3 text-amber-400">
-              <AlertCircle className="w-6 h-6" />
-              <h3 className="text-lg font-bold font-serif">Cancel Sacred Membership?</h3>
-            </div>
-            <p className="text-xs text-stone-300 leading-relaxed">
-              We respect your decision. If you cancel, your premium features will remain active until{" "}
-              <span className="text-amber-300 font-semibold">
-                {subscription ? new Date(subscription.currentPeriodEndsAt).toLocaleDateString() : "the period ends"}
-              </span>
-              , and no future charges will occur.
-            </p>
+        <ModalPortal>
+          <div className="fixed inset-0 z-[120] flex items-start sm:items-center justify-center overflow-y-auto overscroll-contain animate-fadeIn backdrop-blur-xl bg-stone-950/80 p-0 sm:p-4 md:p-6 lg:p-8 xl:p-10 pt-0 sm:pt-4 md:pt-6 lg:pt-8 xl:pt-10 pb-24 sm:pb-6 md:pb-8 lg:pb-12">
+            <div className="w-full max-w-full sm:max-w-md min-h-dvh sm:min-h-0 sm:my-auto bg-stone-900 border border-stone-700 rounded-none sm:rounded-2xl p-6 text-stone-100 space-y-4 flex flex-col justify-between sm:justify-start">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 text-amber-400">
+                  <AlertCircle className="w-6 h-6" />
+                  <h3 className="text-lg font-bold font-serif">Cancel Sacred Membership?</h3>
+                </div>
+                <p className="text-xs text-stone-300 leading-relaxed">
+                  We respect your decision. If you cancel, your premium features will remain active until{" "}
+                  <span className="text-amber-300 font-semibold">
+                    {subscription ? new Date(subscription.currentPeriodEndsAt).toLocaleDateString() : "the period ends"}
+                  </span>
+                  , and no future charges will occur.
+                </p>
 
-            <div className="space-y-1">
-              <label className="text-[11px] text-stone-400">Please share your reason (optional):</label>
-              <textarea
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-                placeholder="e.g. Taking a spiritual break / Financial reasons"
-                rows={2}
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-xs text-stone-100 focus:outline-none focus:border-amber-500"
-              />
-            </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] text-stone-400">Please share your reason (optional):</label>
+                  <textarea
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="e.g. Taking a spiritual break / Financial reasons"
+                    rows={2}
+                    className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-xs text-stone-100 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
 
-            <div className="flex items-center space-x-3 pt-2">
-              <button
-                onClick={() => setCancelModalOpen(false)}
-                className="w-1/2 py-2.5 rounded-xl text-xs font-semibold bg-stone-800 hover:bg-stone-700 text-stone-200 transition-colors"
-              >
-                Keep Membership
-              </button>
-              <button
-                onClick={handleCancelSubscription}
-                disabled={cancelling}
-                className="w-1/2 py-2.5 rounded-xl text-xs font-bold bg-rose-900/40 border border-rose-500/40 text-rose-200 hover:bg-rose-900/60 transition-colors disabled:opacity-50"
-              >
-                {cancelling ? "Cancelling..." : "Confirm Cancellation"}
-              </button>
+              <div className="flex items-center space-x-3 pt-2">
+                <button
+                  onClick={() => setCancelModalOpen(false)}
+                  className="w-1/2 py-2.5 rounded-xl text-xs font-semibold bg-stone-800 hover:bg-stone-700 text-stone-200 transition-colors"
+                >
+                  Keep Membership
+                </button>
+                <button
+                  onClick={handleCancelSubscription}
+                  disabled={cancelling}
+                  className="w-1/2 py-2.5 rounded-xl text-xs font-bold bg-rose-900/40 border border-rose-500/40 text-rose-200 hover:bg-rose-900/60 transition-colors disabled:opacity-50"
+                >
+                  {cancelling ? "Cancelling..." : "Confirm Cancellation"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );

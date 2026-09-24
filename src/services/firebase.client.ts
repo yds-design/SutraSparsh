@@ -3,20 +3,40 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut } fr
 import { getFirestore, doc, getDocFromServer } from "firebase/firestore";
 import firebaseConfig from "../../firebase-applet-config.json";
 
+// Environment variable overrides for dynamic deployment environments
+const env = (import.meta as any).env || {};
+
+export const resolvedFirebaseConfig = {
+  projectId: env.VITE_FIREBASE_PROJECT_ID || firebaseConfig.projectId || "sutrasparsh-17a55",
+  appId: env.VITE_FIREBASE_APP_ID || firebaseConfig.appId || "1:805535850231:android:dd002bc488298a2fea3df2",
+  apiKey: env.VITE_FIREBASE_API_KEY || firebaseConfig.apiKey || "AIzaSyD9uoTvdu5ghfzMlfemdCCUrcG-Kn_mRkc",
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfig.authDomain || "sutrasparsh-17a55.firebaseapp.com",
+  firestoreDatabaseId: env.VITE_FIREBASE_DATABASE_ID || firebaseConfig.firestoreDatabaseId || "(default)",
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfig.storageBucket || "sutrasparsh-17a55.firebasestorage.app",
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfig.messagingSenderId || "805535850231",
+  measurementId: env.VITE_FIREBASE_MEASUREMENT_ID || firebaseConfig.measurementId || "",
+  oAuthClientId: env.VITE_FIREBASE_OAUTH_CLIENT_ID || firebaseConfig.oAuthClientId || "805535850231-tlainhshod83bkpakigt3qj46p3ohpvc.apps.googleusercontent.com",
+};
+
 // Initialize Firebase App
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const app = getApps().length === 0 ? initializeApp(resolvedFirebaseConfig) : getApps()[0];
 
 // Initialize Firestore Database
 export const db =
-  firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== "(default)"
-    ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
+  resolvedFirebaseConfig.firestoreDatabaseId && resolvedFirebaseConfig.firestoreDatabaseId !== "(default)"
+    ? getFirestore(app, resolvedFirebaseConfig.firestoreDatabaseId)
     : getFirestore(app);
 
 // Initialize Authentication
 export const auth = getAuth(app);
 
-// Provider definition
+// Google SSO Provider configuration
 export const googleAuthProvider = new GoogleAuthProvider();
+googleAuthProvider.setCustomParameters({
+  prompt: "select_account",
+});
+googleAuthProvider.addScope("email");
+googleAuthProvider.addScope("profile");
 
 export enum OperationType {
   CREATE = "create",

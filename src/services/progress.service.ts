@@ -100,8 +100,10 @@ export class ProgressService {
 
   private constructor() {
     this.deviceId = this.getOrCreateDeviceId();
-    this.loadFromLocalStorage();
-    this.recordDailyCheckin();
+    if (typeof localStorage !== "undefined") {
+      this.loadFromLocalStorage();
+      this.recordDailyCheckin();
+    }
   }
 
   public static getInstance(): ProgressService {

@@ -50,6 +50,7 @@ backend/importer/config/firebase-service-account.json
 # Logs
 # =====================================
 
+logs/
 backend/importer/logs/
 *.log
 

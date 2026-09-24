@@ -24,6 +24,7 @@ export type AudioPublishStatus =
 
 export type TtsProviderId =
   | "google-cloud-tts"
+  | "bhashini"
   | "aws-polly"
   | "azure-tts"
   | "elevenlabs"
@@ -33,7 +34,8 @@ export type VoiceModelFamily =
   | "chirp-3-hd"
   | "neural2"
   | "journey"
-  | "standard";
+  | "standard"
+  | "indic-tts";
 
 export interface TtsVoiceMetadata {
   id: string;

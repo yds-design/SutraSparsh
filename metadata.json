@@ -1,6 +1,6 @@
 {
   "name": "SutraSparsh",
-  "description": "Spiritual Wisdom Platform - Explore sacred verses, commentaries, audios, categories, and spiritual insights",
+  "description": "Explore sacred Sanskrit verses, commentaries, 432Hz audio chants, and track daily study goals on SutraSparsh – Spiritual Wisdom Platform.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

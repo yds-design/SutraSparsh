@@ -14,6 +14,21 @@ async function startServer() {
   // Mount API backend app (handles /api/*)
   app.use(apiApp);
 
+  // Dedicated SEO Endpoints: robots.txt and sitemap.xml
+  app.get("/robots.txt", (_req, res) => {
+    const robotsPath = path.join(process.cwd(), "public", "robots.txt");
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400");
+    res.sendFile(robotsPath);
+  });
+
+  app.get("/sitemap.xml", (_req, res) => {
+    const sitemapPath = path.join(process.cwd(), "public", "sitemap.xml");
+    res.setHeader("Content-Type", "application/xml; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400");
+    res.sendFile(sitemapPath);
+  });
+
   // Vite middleware for development or static serving for production
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

@@ -15,41 +15,11 @@ class MeditativeSoundEngine {
     }
   }
 
-  // Play Tibetan singing bowl / temple bell sound
-  public playTempleBell(pitch = 220) {
-    this.initContext();
-    if (!this.ctx) return;
-
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(pitch, now);
-    // Slight vibrato / harmonic shimmer
-    osc.frequency.exponentialRampToValueAtTime(pitch * 0.998, now + 3.5);
-
-    // Overtone harmonic
-    const harmonicOsc = this.ctx.createOscillator();
-    const harmonicGain = this.ctx.createGain();
-    harmonicOsc.type = "sine";
-    harmonicOsc.frequency.setValueAtTime(pitch * 2.76, now);
-
-    gain.gain.setValueAtTime(0.35, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 4.0);
-
-    harmonicGain.gain.setValueAtTime(0.1, now);
-    harmonicGain.gain.exponentialRampToValueAtTime(0.0001, now + 2.5);
-
-    osc.connect(gain);
-    harmonicOsc.connect(harmonicGain);
-    gain.connect(this.ctx.destination);
-    harmonicGain.connect(this.ctx.destination);
-
-    osc.start(now);
-    harmonicOsc.start(now);
-    osc.stop(now + 4.0);
-    harmonicOsc.stop(now + 2.5);
+  // Play Tibetan singing bowl / temple bell sound - SILENCED
+  // All chime sound effects ("ding-dong" / bell tones) have been globally eliminated per requirements.
+  public playTempleBell(_pitch = 220) {
+    // Zero audio output - no-op to completely eliminate all chime and ding-dong sound effects globally
+    return;
   }
 
   // Start or toggle peaceful Tanpura / Om resonant drone (136.1 Hz - OM frequency)

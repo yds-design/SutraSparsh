@@ -19,7 +19,8 @@ import { adminAuthMiddleware } from "../middleware/admin-auth.middleware.js";
 const router = Router();
 
 // Protect all testing and benchmark endpoints with admin authorization
-router.use(adminAuthMiddleware);
+router.use("/tests", adminAuthMiddleware);
+router.use("/stabilization", adminAuthMiddleware);
 
 /**
  * POST /api/tests/security

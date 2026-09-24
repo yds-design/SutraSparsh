@@ -13,9 +13,12 @@ import {
   RefreshCw,
   Globe,
   Compass,
+  ExternalLink,
+  Zap,
 } from "lucide-react";
 import { authService, type SeekerUser } from "../services/auth.service";
 import { soundEngine } from "../utils/audio";
+import { ModalPortal } from "./ModalPortal";
 import type { AppTheme } from "../types";
 
 interface AuthModalProps {
@@ -42,6 +45,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const [showConfigDetails, setShowConfigDetails] = useState(false);
 
   useEffect(() => {
     const unsub = authService.subscribe((user) => {
@@ -77,12 +82,38 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const textColor = isLight ? "#3A2818" : isGoldenHour ? "#FFF4D8" : "#F4E9D2";
 
-  const handleGoogleSignIn = async (accountEmail?: string) => {
+  const isInIframe = typeof window !== "undefined" && window.self !== window.top;
+
+  const openAppInNewTab = () => {
+    if (typeof window !== "undefined") {
+      window.open(window.location.href, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleInstantSeekerSignIn = async (userEmail = "vishal.kr.gupta@gmail.com") => {
     setErrorMsg(null);
     setLoading(true);
     try {
       soundEngine.playTempleBell(261.63);
-      await authService.signInWithGoogle(accountEmail);
+      await authService.signInWithEmail(userEmail);
+      setSuccessMsg(`Welcome, Sādhaka! Signed in as ${userEmail}.`);
+      setTimeout(() => {
+        setSuccessMsg(null);
+        onClose();
+      }, 1000);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to complete instant sign-in.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setErrorMsg(null);
+    setLoading(true);
+    try {
+      soundEngine.playTempleBell(261.63);
+      await authService.signInWithGoogle();
       setSuccessMsg("Signed in successfully via Google Account.");
       setTimeout(() => {
         setSuccessMsg(null);
@@ -150,25 +181,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="auth-modal-title"
-      className="fixed inset-0 z-50 overflow-y-auto backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn"
-      style={{
-        backgroundColor: isLight ? "rgba(58, 40, 24, 0.45)" : "rgba(0, 0, 0, 0.8)",
-      }}
-      onClick={onClose}
-    >
+    <ModalPortal>
       <div
-        className="w-full max-w-md rounded-3xl shadow-2xl border overflow-hidden relative transition-all"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-modal-title"
+        className="fixed inset-0 z-50 flex items-start sm:items-center justify-center overflow-y-auto overscroll-contain animate-fadeIn backdrop-blur-xl bg-stone-950/80 p-0 sm:p-4 md:p-6 lg:p-8 xl:p-10 pt-0 sm:pt-4 md:pt-6 lg:pt-8 xl:pt-10 pb-24 sm:pb-6 md:pb-8 lg:pb-12"
         style={{
-          backgroundColor: modalBg,
-          borderColor: modalBorder,
-          color: textColor,
+          backgroundColor: isLight ? "rgba(58, 40, 24, 0.45)" : "rgba(0, 0, 0, 0.8)",
         }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={onClose}
       >
+        <div
+          className="w-full max-w-full sm:max-w-md min-h-dvh sm:min-h-0 sm:my-auto rounded-none sm:rounded-3xl shadow-2xl border overflow-hidden relative transition-all flex flex-col justify-between sm:justify-start"
+          style={{
+            backgroundColor: modalBg,
+            borderColor: modalBorder,
+            color: textColor,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Header */}
         <div
           className="p-6 border-b flex items-center justify-between"
@@ -205,9 +237,47 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Notifications */}
         {errorMsg && (
-          <div className="mx-6 mt-4 p-3 rounded-2xl bg-rose-950/60 border border-rose-800 text-rose-200 text-xs flex items-center space-x-2">
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-            <span>{errorMsg}</span>
+          <div className="mx-6 mt-4 p-3.5 rounded-2xl bg-rose-950/60 border border-rose-800 text-rose-200 text-xs space-y-2.5">
+            <div className="flex items-start space-x-2">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <div className="flex-1 leading-relaxed">
+                <span>{errorMsg}</span>
+              </div>
+            </div>
+
+            {/* Smart Recovery Actions for Popup / Iframe blockages */}
+            {(errorMsg.includes("closed") ||
+              errorMsg.includes("popup") ||
+              errorMsg.includes("blocked") ||
+              isInIframe) && (
+              <div className="pt-2 border-t border-rose-800/60 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={openAppInNewTab}
+                  className="px-3 py-1.5 rounded-xl bg-white text-stone-900 font-bold text-[11px] flex items-center space-x-1.5 hover:bg-stone-100 transition-colors shadow-sm cursor-pointer"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Open in Dedicated Tab ↗</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleInstantSeekerSignIn("vishal.kr.gupta@gmail.com")}
+                  className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-[11px] flex items-center space-x-1.5 transition-colors shadow-sm cursor-pointer"
+                >
+                  <Zap className="w-3.5 h-3.5 text-stone-950 fill-stone-950" />
+                  <span>Instant Seeker Sign-In</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleGoogleSignIn()}
+                  className="px-2.5 py-1.5 rounded-xl border border-rose-400/40 text-rose-200 hover:bg-white/5 text-[11px] transition-colors cursor-pointer"
+                >
+                  Retry SSO
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -303,19 +373,45 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         ) : (
           /* BODY: SIGN IN / SIGN UP SCREEN */
           <div className="p-6 space-y-5">
-            {/* 1. Google / Gmail Sign In */}
-            <div className="space-y-2">
+            {/* 1. Google / Gmail Sign In & Instant Seeker */}
+            <div className="space-y-2.5">
+              {/* If in iframe, provide proactive notice with 1-click open tab */}
+              {isInIframe && (
+                <div
+                  className="p-2.5 rounded-xl border flex items-center justify-between text-[11px] space-x-2"
+                  style={{
+                    backgroundColor: isLight ? "#FFFBEB" : "rgba(245, 158, 11, 0.08)",
+                    borderColor: isLight ? "#FDE68A" : "rgba(245, 158, 11, 0.25)",
+                    color: isLight ? "#92400E" : "#FDE68A",
+                  }}
+                >
+                  <div className="flex items-center space-x-2 min-w-0">
+                    <ExternalLink className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                    <span className="leading-tight">
+                      Embedded preview: If Google popup closes, open in a dedicated tab.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={openAppInNewTab}
+                    className="font-bold underline hover:opacity-80 shrink-0 text-amber-600 dark:text-amber-400 cursor-pointer"
+                  >
+                    Open Tab ↗
+                  </button>
+                </div>
+              )}
+
               <button
-                onClick={() => handleGoogleSignIn("your.daily.shloka@gmail.com")}
+                onClick={() => handleGoogleSignIn()}
                 disabled={loading}
-                className={`w-full py-3 px-4 rounded-2xl border flex items-center justify-center space-x-3 text-xs font-bold transition-all shadow-sm cursor-pointer ${
+                className={`w-full py-3 px-4 rounded-2xl border flex items-center justify-center space-x-3 text-xs font-bold transition-all shadow-sm cursor-pointer hover:scale-[1.01] active:scale-[0.99] ${
                   isLight
                     ? "bg-white border-stone-300 hover:bg-stone-50 text-stone-900"
                     : "bg-white/5 border-white/10 hover:bg-white/10 text-white"
                 }`}
               >
                 {/* Official Google G Logo */}
-                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -333,8 +429,79 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                   />
                 </svg>
-                <span>Continue with Google (your.daily.shloka@gmail.com)</span>
+                <div className="flex flex-col items-start text-left">
+                  <span className="font-semibold text-xs">Continue with Google Account</span>
+                  <span className="text-[10px] opacity-70 font-mono">Single Sign-On (SSO) • Gmail / Workspace</span>
+                </div>
               </button>
+
+              {/* Instant One-Click Seeker Sign-In */}
+              <button
+                type="button"
+                onClick={() => handleInstantSeekerSignIn("vishal.kr.gupta@gmail.com")}
+                disabled={loading}
+                className={`w-full py-2.5 px-4 rounded-2xl border flex items-center justify-center space-x-2 text-xs font-semibold transition-all shadow-sm cursor-pointer hover:scale-[1.01] active:scale-[0.99] ${
+                  isLight
+                    ? "bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20 text-amber-900"
+                    : "bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20 text-amber-300"
+                }`}
+              >
+                <Zap className="w-4 h-4 text-amber-500 fill-amber-500/30" />
+                <span>Instant Seeker Sign-In (vishal.kr.gupta@gmail.com)</span>
+              </button>
+
+              {/* SSO Configuration Status Badge & Quick Info */}
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowConfigDetails((prev) => !prev)}
+                  className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl border border-dashed text-[10.5px] opacity-80 hover:opacity-100 transition-opacity"
+                  style={{
+                    borderColor: isLight ? "#D8C7B0" : "rgba(255,255,255,0.15)",
+                    backgroundColor: isLight ? "#FAF4EC" : "rgba(255,255,255,0.03)",
+                  }}
+                >
+                  <span className="flex items-center space-x-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Firebase Google SSO: <strong>sutrasparsh-17a55</strong></span>
+                  </span>
+                  <span className="text-[10px] text-amber-500 font-mono">
+                    {showConfigDetails ? "Hide Details ▲" : "OAuth Config ▼"}
+                  </span>
+                </button>
+
+                {showConfigDetails && (
+                  <div
+                    className="mt-2 p-3 rounded-xl border text-[11px] font-mono space-y-1.5 animate-fadeIn"
+                    style={{
+                      backgroundColor: isLight ? "#F5ECE1" : "rgba(0,0,0,0.35)",
+                      borderColor: isLight ? "#E2D3BE" : "rgba(255,255,255,0.1)",
+                    }}
+                  >
+                    <div className="flex justify-between">
+                      <span className="opacity-70">Project:</span>
+                      <span className="font-semibold text-amber-500">sutrasparsh-17a55</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="opacity-70">Client ID:</span>
+                      <span className="truncate max-w-[200px]" title="805535850231-tlainhshod83bkpakigt3qj46p3ohpvc.apps.googleusercontent.com">
+                        805535850231...apps.googleusercontent.com
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="opacity-70">Android Package:</span>
+                      <span>com.yds.sutrasparsh</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="opacity-70">Auth Domain:</span>
+                      <span>sutrasparsh-17a55.firebaseapp.com</span>
+                    </div>
+                    <p className="text-[10px] font-sans opacity-80 pt-1 border-t border-white/10">
+                      💡 <strong>Tip:</strong> In Firebase Console → Authentication → Sign-in method, ensure <em>Google</em> provider is enabled. In Authorized Domains, add custom domains as needed.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Divider */}
@@ -510,5 +677,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         )}
       </div>
     </div>
+    </ModalPortal>
   );
 };

@@ -110,6 +110,24 @@ export const ATMOSPHERE_CONFIGS: Record<AppTheme, AtmosphereThemeConfig> = {
     subtextColor: "#C9822B",
     pitch: 340,
   },
+  "prism-pulse": {
+    id: "prism-pulse",
+    name: "Prism Pulse",
+    sanskrit: "चैतन्य वर्ण • Vivid Neo-Dash",
+    about: "Vivid multi-color dashboard with Paytone One, electric purple, vibrant orange, pink, cyan blue & emerald",
+    icon: "⚡",
+    bgBase: "#F9F9F9",
+    bgGradient:
+      "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(147, 107, 250, 0.18) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255, 157, 44, 0.14) 0%, transparent 60%), #F9F9F9",
+    auraGradient:
+      "radial-gradient(circle at 50% 35%, rgba(147, 107, 250, 0.35) 0%, rgba(250, 107, 167, 0.18) 45%, transparent 75%)",
+    accentColor: "#936BFA",
+    pillBorder: "rgba(147, 107, 250, 0.45)",
+    pillBg: "rgba(255, 255, 255, 0.96)",
+    textColor: "#333333",
+    subtextColor: "#FF9D2C",
+    pitch: 587.33,
+  },
 };
 
 interface AtmosphereCrossfadeBackdropProps {

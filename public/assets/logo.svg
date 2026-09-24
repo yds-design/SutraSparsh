@@ -1,50 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF2F28"/>
-      <stop offset="25%" stop-color="#FF4B29"/>
-      <stop offset="50%" stop-color="#FF6E2F"/>
-      <stop offset="75%" stop-color="#FF8E37"/>
-      <stop offset="100%" stop-color="#FFAA42"/>
-    </linearGradient>
-  </defs>
-
-  <rect width="1024" height="1024" fill="url(#bgGrad)"/>
-
-  <g id="logo-text">
-    <text 
-      x="512" 
-      y="525" 
-      text-anchor="middle" 
-      font-family="Fredoka" 
-      font-weight="700" 
-      font-size="205" 
-      fill="#FFFFFF" 
-      letter-spacing="-2px"
-    >Sutra</text>
-
-    <g transform="translate(512, 615) rotate(-2)">
-      <text 
-        x="0" 
-        y="0" 
-        text-anchor="middle" 
-        font-family="Pacifico" 
-        font-size="160" 
-        fill="#FFFFFF"
-        stroke="#FFFFFF" 
-        stroke-width="26" 
-        stroke-linejoin="round" 
-        stroke-linecap="round"
-      >Sparsh</text>
-      
-      <text 
-        x="0" 
-        y="0" 
-        text-anchor="middle" 
-        font-family="Pacifico" 
-        font-size="160" 
-        fill="#FFD54F"
-      >Sparsh</text>
+    <rect width="1024" height="1024" fill="#ECECEC"/>
+    <g id="brand-emblem">
+      <path d="M 333 512 L 333 446 L 460 469 L 353 397 L 420 332 L 488 440 L 467 313 L 557 313 L 536 440 L 604 332 L 671 397 L 564 469 L 691 446 L 691 512 Z" fill="#FF6E14"/>
     </g>
-  </g>
-</svg>
+    <g id="brand-text" fill="#1F242D" font-family="Archivo Black" font-weight="900" text-anchor="middle">
+      <text x="512" y="616" font-size="108" letter-spacing="6px">SUTRA</text>
+      <text x="512" y="722" font-size="108" letter-spacing="-1.5px">SPARSH</text>
+    </g>
+  </svg>

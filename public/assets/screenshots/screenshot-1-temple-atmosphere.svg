@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0A0604"/>
+      <stop offset="40%" stop-color="#160D08"/>
+      <stop offset="75%" stop-color="#241409"/>
+      <stop offset="100%" stop-color="#0F0804"/>
+    </linearGradient>
+
+    <radialGradient id="diyaGlow" cx="50%" cy="35%" r="45%">
+      <stop offset="0%" stop-color="#FF9E1B" stop-opacity="0.25"/>
+      <stop offset="50%" stop-color="#D97706" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="phoneBorder" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#78350F" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#D97706" stop-opacity="0.5"/>
+    </linearGradient>
+
+    <linearGradient id="goldText" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#FBBF24"/>
+    </linearGradient>
+
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="24" stdDeviation="32" flood-color="#000000" flood-opacity="0.8"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1080" height="1920" fill="url(#bgGrad)"/>
+  <circle cx="540" cy="700" r="600" fill="url(#diyaGlow)"/>
+
+  <!-- Top Marketing Headers -->
+  <g text-anchor="middle">
+    <rect x="360" y="100" width="360" height="46" rx="23" fill="#F59E0B" fill-opacity="0.12" stroke="#F59E0B" stroke-opacity="0.3"/>
+    <text x="540" y="130" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="#FBBF24" letter-spacing="3">TEMPLE ATMOSPHERE</text>
+
+    <text x="540" y="225" font-family="'Cinzel', Georgia, serif" font-size="52" font-weight="800" fill="url(#goldText)" letter-spacing="1">Immersive Sacred Themes</text>
+    <text x="540" y="275" font-family="system-ui, sans-serif" font-size="24" fill="#D6C4B0" fill-opacity="0.85">Sandstone • Amethyst Nocturnal • Parchment • Festival Deepam</text>
+  </g>
+
+  <!-- Smartphone Mockup Container -->
+  <g transform="translate(120, 340)" filter="url(#shadow)">
+    <!-- Phone Outer Shell -->
+    <rect width="840" height="1460" rx="64" fill="#120A06" stroke="url(#phoneBorder)" stroke-width="4"/>
+    
+    <!-- Phone Speaker & Camera Notch -->
+    <rect x="340" y="24" width="160" height="24" rx="12" fill="#000000" fill-opacity="0.8"/>
+    <circle cx="450" cy="36" r="5" fill="#1F2937"/>
+
+    <!-- Screen Content: Sandstone Temple Sanctuary -->
+    <g transform="translate(30, 70)">
+      <rect width="780" height="1340" rx="40" fill="#1E130B"/>
+
+      <!-- App Header inside phone -->
+      <text x="50" y="70" font-family="'Cinzel', Georgia, serif" font-size="28" font-weight="700" fill="#FDE68A">SutraSparsh</text>
+      <text x="730" y="70" text-anchor="end" font-family="system-ui, sans-serif" font-size="18" fill="#F59E0B">🪔 432Hz Drone</text>
+
+      <!-- Theme Switcher Pills -->
+      <g transform="translate(50, 110)">
+        <rect x="0" y="0" width="130" height="38" rx="19" fill="#D97706" fill-opacity="0.25" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="65" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#FDE68A">Sandstone</text>
+
+        <rect x="145" y="0" width="130" height="38" rx="19" fill="#3B1254" fill-opacity="0.4" stroke="#8B5CF6" stroke-width="1"/>
+        <text x="210" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#C4B5FD">Amethyst</text>
+
+        <rect x="290" y="0" width="130" height="38" rx="19" fill="#F5EBE0" fill-opacity="0.15" stroke="#E6D7C3" stroke-width="1"/>
+        <text x="355" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#E6D7C3">Parchment</text>
+
+        <rect x="435" y="0" width="130" height="38" rx="19" fill="#7C1D24" fill-opacity="0.35" stroke="#EF4444" stroke-width="1"/>
+        <text x="500" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#FCA5A5">Festival</text>
+
+        <rect x="580" y="0" width="100" height="38" rx="19" fill="#B45309" fill-opacity="0.3" stroke="#F59E0B" stroke-width="1"/>
+        <text x="630" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#FCD34D">Golden</text>
+      </g>
+
+      <!-- Sacred Shloka Card in Temple Frame -->
+      <g transform="translate(50, 180)">
+        <rect width="680" height="680" rx="32" fill="#291A0E" stroke="#D97706" stroke-opacity="0.3" stroke-width="2"/>
+        
+        <text x="50" y="70" font-family="system-ui, sans-serif" font-size="16" font-weight="700" fill="#F59E0B" letter-spacing="2">BHAGAVAD GITA 2.47</text>
+        <text x="630" y="70" text-anchor="end" font-family="system-ui, sans-serif" font-size="15" fill="#9CA3AF">Karma Yoga</text>
+
+        <!-- Sacred Sanskrit Calligraphy -->
+        <text x="340" y="190" text-anchor="middle" font-family="'Noto Sans Devanagari', 'Shree Devanagari 714', serif" font-size="34" font-weight="600" fill="#FEF3C7" line-height="1.6">कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।</text>
+        <text x="340" y="260" text-anchor="middle" font-family="'Noto Sans Devanagari', 'Shree Devanagari 714', serif" font-size="34" font-weight="600" fill="#FEF3C7" line-height="1.6">मा कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि॥</text>
+
+        <!-- Divider with sacred emblem -->
+        <line x1="80" y1="330" x2="600" y2="330" stroke="#F59E0B" stroke-opacity="0.3" stroke-width="1.5"/>
+        <circle cx="340" cy="330" r="14" fill="#291A0E" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="340" y="335" text-anchor="middle" font-size="12" fill="#F59E0B">ॐ</text>
+
+        <!-- IAST Roman Transliteration -->
+        <text x="340" y="390" text-anchor="middle" font-family="Georgia, serif" font-size="20" font-style="italic" fill="#E5D3B8">karmaṇy-evādhikāras te mā phaleṣu kadācana</text>
+        <text x="340" y="425" text-anchor="middle" font-family="Georgia, serif" font-size="20" font-style="italic" fill="#E5D3B8">mā karma-phala-hetur bhūr mā te saṅgo 'stvakarmaṇi</text>
+
+        <!-- English Meaning -->
+        <text x="340" y="495" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" fill="#F3E8D6" fill-opacity="0.9">"You have a right only to perform your duties,"</text>
+        <text x="340" y="525" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" fill="#F3E8D6" fill-opacity="0.9">"never to the fruits of action."</text>
+
+        <!-- Listen / Chant Button -->
+        <g transform="translate(190, 580)">
+          <rect width="300" height="60" rx="30" fill="url(#goldText)"/>
+          <text x="150" y="37" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" font-weight="800" fill="#1C1008">▶ Clean Recitation Voice</text>
+        </g>
+      </g>
+
+      <!-- Temple Ambience & Sound Control Tray -->
+      <g transform="translate(50, 890)">
+        <rect width="680" height="220" rx="24" fill="#190F08" stroke="#78350F" stroke-opacity="0.4"/>
+        <text x="40" y="50" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="#FBBF24">Temple Sound Sanctuary</text>
+        <text x="40" y="80" font-family="system-ui, sans-serif" font-size="15" fill="#9CA3AF">Acoustic Tanpura 432Hz Drone • Natural Vedic Meter Pauses</text>
+
+        <!-- Sound Sliders -->
+        <text x="40" y="130" font-family="system-ui, sans-serif" font-size="14" fill="#D1D5DB">Tanpura Drone</text>
+        <line x1="180" y1="125" x2="520" y2="125" stroke="#F59E0B" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="440" cy="125" r="10" fill="#FBBF24"/>
+        <text x="620" y="130" text-anchor="end" font-family="system-ui, sans-serif" font-size="14" fill="#F59E0B">75%</text>
+
+        <text x="40" y="180" font-family="system-ui, sans-serif" font-size="14" fill="#D1D5DB">Brahma Bell</text>
+        <line x1="180" y1="175" x2="520" y2="175" stroke="#4B5563" stroke-width="6" stroke-linecap="round"/>
+        <line x1="180" y1="175" x2="380" y2="175" stroke="#F59E0B" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="380" cy="175" r="10" fill="#FBBF24"/>
+        <text x="620" y="180" text-anchor="end" font-family="system-ui, sans-serif" font-size="14" fill="#F59E0B">50%</text>
+      </g>
+    </g>
+  </g>
+</svg>

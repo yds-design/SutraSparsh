@@ -1,0 +1,82 @@
+# SutraSparsh (सूत्रस्पर्श) - Robots.txt
+# Sacred Sanskrit Scriptures & Classical Vedic Wisdom Platform
+# Website: https://sutrasparsh.com
+
+User-agent: *
+Allow: /
+Allow: /assets/
+Allow: /icon*.png
+Allow: /logo.svg
+Allow: /favicon.*
+Allow: /golden-hour.css
+Allow: /manifest.webmanifest
+Allow: /privacy.html
+Allow: /terms.html
+
+# Disallow administrative, private, and internal API routes
+Disallow: /api/
+Disallow: /admin
+Disallow: /*admin*
+Disallow: /*mode=admin*
+Disallow: /login
+
+# Specific Search Engine Crawlers
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+Disallow: /admin
+
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+Disallow: /admin
+
+User-agent: Slurp
+Allow: /
+Disallow: /api/
+Disallow: /admin
+
+User-agent: DuckDuckBot
+Allow: /
+Disallow: /api/
+Disallow: /admin
+
+User-agent: Baiduspider
+Allow: /
+Disallow: /api/
+Disallow: /admin
+
+User-agent: Yandex
+Allow: /
+Disallow: /api/
+Disallow: /admin
+
+User-agent: Applebot
+Allow: /
+Disallow: /api/
+Disallow: /admin
+
+# Social Media Link Preview Crawlers
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+User-agent: TelegramBot
+Allow: /
+
+User-agent: Discordbot
+Allow: /
+
+# Preferred Host
+Host: https://sutrasparsh.com
+
+# Canonical XML Sitemap
+Sitemap: https://sutrasparsh.com/sitemap.xml

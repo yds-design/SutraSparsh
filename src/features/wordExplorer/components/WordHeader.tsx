@@ -1,7 +1,7 @@
 import React from "react";
 import { Volume2, CheckCheck, Sparkles, ShieldCheck, HelpCircle } from "lucide-react";
 import type { SanskritWord } from "../types/wordExplorer.types";
-import { soundEngine } from "../../../utils/audio";
+import { speechSafetyEngine } from "../../../utils/speech";
 
 interface WordHeaderProps {
   word: SanskritWord;
@@ -11,7 +11,8 @@ export const WordHeader: React.FC<WordHeaderProps> = ({ word }) => {
   const [copied, setCopied] = React.useState(false);
 
   const handlePronounce = () => {
-    soundEngine.playTempleBell(293.66); // Harmonic D4
+    // Speak word with authentic voice pronunciation, zero chimes
+    speechSafetyEngine.speak(word.surfaceForm, { lang: "sa", rate: 0.85 });
   };
 
   const handleCopy = () => {

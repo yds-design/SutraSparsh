@@ -12,6 +12,7 @@ import {
   Info,
 } from "lucide-react";
 import { DONATION_PRESETS } from "../config/monetization.config";
+import { ModalPortal } from "./ModalPortal";
 
 interface DonationModalProps {
   isOpen: boolean;
@@ -90,11 +91,12 @@ export function DonationModal({ isOpen, onClose, lang = "en" }: DonationModalPro
   };
 
   return (
-    <div className="fixed inset-0 z-[115] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-      <div
-        className="relative w-full max-w-2xl bg-stone-900 border border-amber-500/30 rounded-2xl shadow-2xl overflow-hidden text-stone-100 my-8 animate-fadeIn"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalPortal>
+      <div className="fixed inset-0 z-[115] flex items-start sm:items-center justify-center overflow-y-auto overscroll-contain animate-fadeIn backdrop-blur-xl bg-stone-950/80 p-0 sm:p-4 md:p-6 lg:p-8 xl:p-10 pt-0 sm:pt-4 md:pt-6 lg:pt-8 xl:pt-10 pb-24 sm:pb-6 md:pb-8 lg:pb-12">
+        <div
+          className="relative w-full max-w-full sm:max-w-2xl min-h-dvh sm:min-h-0 sm:my-auto bg-stone-900 border border-amber-500/30 rounded-none sm:rounded-2xl shadow-2xl overflow-hidden text-stone-100 flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Header Ribbon */}
         <div className="bg-gradient-to-r from-amber-950 via-stone-900 to-amber-950 p-6 border-b border-amber-500/20 flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -362,5 +364,6 @@ export function DonationModal({ isOpen, onClose, lang = "en" }: DonationModalPro
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

@@ -4,7 +4,7 @@ import type {
   WordExplorerViewMode,
 } from "../types/wordExplorer.types";
 import { WordExplorerService } from "../services/wordExplorer.service";
-import { soundEngine } from "../../../utils/audio";
+import type { VerseContext } from "../services/paninianEngine";
 
 export interface UseWordExplorerReturn {
   isOpen: boolean;
@@ -15,8 +15,8 @@ export interface UseWordExplorerReturn {
   isLoading: boolean;
   searchQuery: string;
   searchResults: SanskritWord[];
-  openWord: (wordOrSurface: string | SanskritWord) => Promise<void>;
-  selectWord: (wordOrSurface: string | SanskritWord) => Promise<void>;
+  openWord: (wordOrSurface: string | SanskritWord, contextVerse?: VerseContext | null) => Promise<void>;
+  selectWord: (wordOrSurface: string | SanskritWord, contextVerse?: VerseContext | null) => Promise<void>;
   close: () => void;
   closeWord: () => void;
   selectComponent: (componentId: string | null) => void;
@@ -36,16 +36,14 @@ export function useWordExplorer(): UseWordExplorerReturn {
     WordExplorerService.getAllCuratedWords()
   );
 
-  const openWord = useCallback(async (wordOrSurface: string | SanskritWord) => {
+  const openWord = useCallback(async (wordOrSurface: string | SanskritWord, contextVerse?: VerseContext | null) => {
     setIsLoading(true);
     setIsOpen(true);
-    // Temple bell harmonic feedback upon selecting word
-    soundEngine.playTempleBell(329.63); // High harmonic E4
 
     try {
       let resolvedWord: SanskritWord | null = null;
       if (typeof wordOrSurface === "string") {
-        resolvedWord = await WordExplorerService.getWordBySurface(wordOrSurface);
+        resolvedWord = await WordExplorerService.getWordBySurface(wordOrSurface, contextVerse);
         setSelectedWord(resolvedWord);
         setSelectedComponentId(resolvedWord?.components?.[0]?.id || null);
       } else {
@@ -75,7 +73,6 @@ export function useWordExplorer(): UseWordExplorerReturn {
   const selectComponent = useCallback((componentId: string | null) => {
     setSelectedComponentId(componentId);
     if (componentId) {
-      soundEngine.playTempleBell(440); // Pure A4 chime for component selection
       WordExplorerService.trackEvent("word_component_selected", {
         componentId,
       });

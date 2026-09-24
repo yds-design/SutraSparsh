@@ -1,0 +1,503 @@
+/* ══════════════════════════════════════════════════════════════
+   Prism Pulse Theme (चैतन्य वर्ण • Vivid Neo-Dashboard)
+   prism-pulse.css
+   ══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Paytone+One&display=swap');
+
+:root {
+  --dash-purple: #936BFA;
+  --dash-orange: #FF9D2C;
+  --dash-pink:   #FA6BA7;
+  --dash-blue:   #2CA6FF;
+  --dash-green:  #2BBF7D;
+  --font-main: 'Paytone One', sans-serif;
+}
+
+/* Base Body Styles for Prism Pulse Theme */
+body.theme-prism-pulse,
+[data-theme="prism-pulse"] body,
+.theme-prism-pulse {
+  font-family: var(--font-main);
+  background-color: #f9f9f9;
+  color: #222226;
+  margin: 0;
+  padding: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Prism Pulse High-Contrast Typography & Shloka Rules
+   Ensures deep readability on white/light cards
+   ══════════════════════════════════════════════════════════════ */
+
+.theme-prism-pulse h1,
+.theme-prism-pulse h2,
+.theme-prism-pulse h3,
+[data-theme="prism-pulse"] h1,
+[data-theme="prism-pulse"] h2,
+[data-theme="prism-pulse"] h3 {
+  color: #1e1b2e;
+}
+
+/* Sanskrit Sacred Text in Prism Pulse */
+.theme-prism-pulse .font-sanskrit,
+[data-theme="prism-pulse"] .font-sanskrit {
+  color: #181326 !important;
+  font-weight: 600;
+}
+
+/* Roman Transliteration in Prism Pulse */
+.theme-prism-pulse .font-serif.italic,
+[data-theme="prism-pulse"] .font-serif.italic {
+  color: #6b46c1 !important;
+  font-weight: 500;
+}
+
+/* Shloka Meaning (English & Commentary) */
+.theme-prism-pulse .shloka-meaning-en,
+[data-theme="prism-pulse"] .shloka-meaning-en {
+  color: #2d3748 !important;
+}
+
+/* Shloka Meaning (Hindi Commentary) */
+.theme-prism-pulse .shloka-meaning-hi,
+[data-theme="prism-pulse"] .shloka-meaning-hi {
+  color: #9a3412 !important;
+}
+
+/* Default Dark-Theme Text Class Overrides when in Prism Pulse (only on light surfaces) */
+.theme-prism-pulse :not([class*="bg-stone-9"]):not([class*="bg-stone-8"]):not([class*="bg-black"]):not([class*="bg-neutral-9"]):not([class*="bg-amber-9"]):not([class*="bg-rose-9"]):not([class*="bg-gradient-to"]) > .text-stone-100,
+.theme-prism-pulse :not([class*="bg-stone-9"]):not([class*="bg-stone-8"]):not([class*="bg-black"]):not([class*="bg-neutral-9"]):not([class*="bg-amber-9"]):not([class*="bg-rose-9"]):not([class*="bg-gradient-to"]) > .text-stone-200,
+[data-theme="prism-pulse"] :not([class*="bg-stone-9"]):not([class*="bg-stone-8"]):not([class*="bg-black"]):not([class*="bg-neutral-9"]):not([class*="bg-amber-9"]):not([class*="bg-rose-9"]):not([class*="bg-gradient-to"]) > .text-stone-100,
+[data-theme="prism-pulse"] :not([class*="bg-stone-9"]):not([class*="bg-stone-8"]):not([class*="bg-black"]):not([class*="bg-neutral-9"]):not([class*="bg-amber-9"]):not([class*="bg-rose-9"]):not([class*="bg-gradient-to"]) > .text-stone-200 {
+  color: #1e1b2e;
+}
+
+/* Fallback general overrides */
+.theme-prism-pulse .text-stone-100,
+.theme-prism-pulse .text-stone-200,
+[data-theme="prism-pulse"] .text-stone-100,
+[data-theme="prism-pulse"] .text-stone-200 {
+  color: #1e1b2e;
+}
+
+.theme-prism-pulse .text-stone-300,
+.theme-prism-pulse .text-stone-400,
+[data-theme="prism-pulse"] .text-stone-300,
+[data-theme="prism-pulse"] .text-stone-400 {
+  color: #4b5563;
+}
+
+.theme-prism-pulse .text-amber-200,
+.theme-prism-pulse .text-amber-200\/90,
+.theme-prism-pulse .text-amber-200\/80,
+[data-theme="prism-pulse"] .text-amber-200,
+[data-theme="prism-pulse"] .text-amber-200\/90,
+[data-theme="prism-pulse"] .text-amber-200\/80 {
+  color: #6b46c1;
+}
+
+.theme-prism-pulse .text-amber-300,
+.theme-prism-pulse .text-amber-300\/80,
+.theme-prism-pulse .text-amber-400,
+[data-theme="prism-pulse"] .text-amber-300,
+[data-theme="prism-pulse"] .text-amber-300\/80,
+[data-theme="prism-pulse"] .text-amber-400 {
+  color: #9a3412;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HIGH-SPECIFICITY CONTRAST GUARDS
+   Ensure dark containers, cards, modals, and buttons ALWAYS have
+   crisp, highly legible light text, preventing black-on-black text
+   ══════════════════════════════════════════════════════════════ */
+.theme-prism-pulse .bg-stone-950,
+.theme-prism-pulse .bg-stone-900,
+.theme-prism-pulse .bg-stone-850,
+.theme-prism-pulse .bg-stone-800,
+.theme-prism-pulse .bg-black,
+.theme-prism-pulse .bg-neutral-900,
+.theme-prism-pulse .bg-amber-950,
+.theme-prism-pulse .bg-rose-950,
+[data-theme="prism-pulse"] .bg-stone-950,
+[data-theme="prism-pulse"] .bg-stone-900,
+[data-theme="prism-pulse"] .bg-stone-850,
+[data-theme="prism-pulse"] .bg-stone-800,
+[data-theme="prism-pulse"] .bg-black,
+[data-theme="prism-pulse"] .bg-neutral-900,
+[data-theme="prism-pulse"] .bg-amber-950,
+[data-theme="prism-pulse"] .bg-rose-950 {
+  color: #f5f5f4;
+}
+
+/* Sanskrit Sacred Text & Transliteration inside dark containers in Prism Pulse */
+.theme-prism-pulse .bg-stone-950 .font-sanskrit,
+.theme-prism-pulse .bg-stone-900 .font-sanskrit,
+.theme-prism-pulse .bg-stone-850 .font-sanskrit,
+.theme-prism-pulse .bg-stone-800 .font-sanskrit,
+.theme-prism-pulse .bg-black .font-sanskrit,
+.theme-prism-pulse [class*="bg-stone-9"] .font-sanskrit,
+.theme-prism-pulse [class*="bg-stone-8"] .font-sanskrit,
+.theme-prism-pulse [class*="from-stone-9"] .font-sanskrit,
+.theme-prism-pulse [role="dialog"] .font-sanskrit,
+.theme-prism-pulse #verse-detail-modal .font-sanskrit,
+.theme-prism-pulse #look-closer-experience .font-sanskrit,
+.theme-prism-pulse #word-explorer-drawer .font-sanskrit,
+[data-theme="prism-pulse"] .bg-stone-950 .font-sanskrit,
+[data-theme="prism-pulse"] .bg-stone-900 .font-sanskrit,
+[data-theme="prism-pulse"] .bg-stone-850 .font-sanskrit,
+[data-theme="prism-pulse"] .bg-stone-800 .font-sanskrit,
+[data-theme="prism-pulse"] .bg-black .font-sanskrit,
+[data-theme="prism-pulse"] [class*="bg-stone-9"] .font-sanskrit,
+[data-theme="prism-pulse"] [class*="bg-stone-8"] .font-sanskrit,
+[data-theme="prism-pulse"] [class*="from-stone-9"] .font-sanskrit,
+[data-theme="prism-pulse"] [role="dialog"] .font-sanskrit,
+[data-theme="prism-pulse"] #verse-detail-modal .font-sanskrit,
+[data-theme="prism-pulse"] #look-closer-experience .font-sanskrit,
+[data-theme="prism-pulse"] #word-explorer-drawer .font-sanskrit {
+  color: #fde68a !important;
+  font-weight: 600;
+}
+
+.theme-prism-pulse .bg-stone-950 .font-serif.italic,
+.theme-prism-pulse .bg-stone-900 .font-serif.italic,
+.theme-prism-pulse .bg-stone-800 .font-serif.italic,
+.theme-prism-pulse [class*="bg-stone-9"] .font-serif.italic,
+.theme-prism-pulse [class*="bg-stone-8"] .font-serif.italic,
+.theme-prism-pulse [role="dialog"] .font-serif.italic,
+.theme-prism-pulse #verse-detail-modal .font-serif.italic,
+.theme-prism-pulse #look-closer-experience .font-serif.italic,
+.theme-prism-pulse #word-explorer-drawer .font-serif.italic,
+[data-theme="prism-pulse"] .bg-stone-950 .font-serif.italic,
+[data-theme="prism-pulse"] .bg-stone-900 .font-serif.italic,
+[data-theme="prism-pulse"] .bg-stone-800 .font-serif.italic,
+[data-theme="prism-pulse"] [class*="bg-stone-9"] .font-serif.italic,
+[data-theme="prism-pulse"] [class*="bg-stone-8"] .font-serif.italic,
+[data-theme="prism-pulse"] [role="dialog"] .font-serif.italic,
+[data-theme="prism-pulse"] #verse-detail-modal .font-serif.italic,
+[data-theme="prism-pulse"] #look-closer-experience .font-serif.italic,
+[data-theme="prism-pulse"] #word-explorer-drawer .font-serif.italic {
+  color: #e9d5ff !important;
+  font-weight: 500;
+}
+
+.theme-prism-pulse .bg-stone-950 .shloka-meaning-en,
+.theme-prism-pulse .bg-stone-900 .shloka-meaning-en,
+.theme-prism-pulse .bg-stone-800 .shloka-meaning-en,
+.theme-prism-pulse [class*="bg-stone-9"] .shloka-meaning-en,
+.theme-prism-pulse [class*="bg-stone-8"] .shloka-meaning-en,
+.theme-prism-pulse [role="dialog"] .shloka-meaning-en,
+.theme-prism-pulse #verse-detail-modal .shloka-meaning-en,
+.theme-prism-pulse #look-closer-experience .shloka-meaning-en,
+.theme-prism-pulse #word-explorer-drawer .shloka-meaning-en,
+[data-theme="prism-pulse"] .bg-stone-950 .shloka-meaning-en,
+[data-theme="prism-pulse"] .bg-stone-900 .shloka-meaning-en,
+[data-theme="prism-pulse"] .bg-stone-800 .shloka-meaning-en,
+[data-theme="prism-pulse"] [class*="bg-stone-9"] .shloka-meaning-en,
+[data-theme="prism-pulse"] [class*="bg-stone-8"] .shloka-meaning-en,
+[data-theme="prism-pulse"] [role="dialog"] .shloka-meaning-en,
+[data-theme="prism-pulse"] #verse-detail-modal .shloka-meaning-en,
+[data-theme="prism-pulse"] #look-closer-experience .shloka-meaning-en,
+[data-theme="prism-pulse"] #word-explorer-drawer .shloka-meaning-en {
+  color: #f5f5f4 !important;
+}
+
+.theme-prism-pulse .bg-stone-950 .shloka-meaning-hi,
+.theme-prism-pulse .bg-stone-900 .shloka-meaning-hi,
+.theme-prism-pulse .bg-stone-800 .shloka-meaning-hi,
+.theme-prism-pulse [class*="bg-stone-9"] .shloka-meaning-hi,
+.theme-prism-pulse [class*="bg-stone-8"] .shloka-meaning-hi,
+.theme-prism-pulse [role="dialog"] .shloka-meaning-hi,
+.theme-prism-pulse #verse-detail-modal .shloka-meaning-hi,
+.theme-prism-pulse #look-closer-experience .shloka-meaning-hi,
+.theme-prism-pulse #word-explorer-drawer .shloka-meaning-hi,
+[data-theme="prism-pulse"] .bg-stone-950 .shloka-meaning-hi,
+[data-theme="prism-pulse"] .bg-stone-900 .shloka-meaning-hi,
+[data-theme="prism-pulse"] .bg-stone-800 .shloka-meaning-hi,
+[data-theme="prism-pulse"] [class*="bg-stone-9"] .shloka-meaning-hi,
+[data-theme="prism-pulse"] [class*="bg-stone-8"] .shloka-meaning-hi,
+[data-theme="prism-pulse"] [role="dialog"] .shloka-meaning-hi,
+[data-theme="prism-pulse"] #verse-detail-modal .shloka-meaning-hi,
+[data-theme="prism-pulse"] #look-closer-experience .shloka-meaning-hi,
+[data-theme="prism-pulse"] #word-explorer-drawer .shloka-meaning-hi {
+  color: #fed7aa !important;
+}
+
+/* Modal and Drawer Dialog Headers in Prism Pulse */
+.theme-prism-pulse #verse-detail-modal h2,
+.theme-prism-pulse #verse-detail-modal h3,
+.theme-prism-pulse #verse-detail-modal h4,
+.theme-prism-pulse #look-closer-experience h2,
+.theme-prism-pulse #look-closer-experience h3,
+.theme-prism-pulse #look-closer-experience h4,
+.theme-prism-pulse #word-explorer-drawer h2,
+.theme-prism-pulse #word-explorer-drawer h3,
+.theme-prism-pulse #word-explorer-drawer h4,
+[data-theme="prism-pulse"] #verse-detail-modal h2,
+[data-theme="prism-pulse"] #verse-detail-modal h3,
+[data-theme="prism-pulse"] #verse-detail-modal h4,
+[data-theme="prism-pulse"] #look-closer-experience h2,
+[data-theme="prism-pulse"] #look-closer-experience h3,
+[data-theme="prism-pulse"] #look-closer-experience h4,
+[data-theme="prism-pulse"] #word-explorer-drawer h2,
+[data-theme="prism-pulse"] #word-explorer-drawer h3,
+[data-theme="prism-pulse"] #word-explorer-drawer h4 {
+  color: #fef3c7 !important;
+}
+
+.theme-prism-pulse .bg-stone-950 .text-stone-100,
+.theme-prism-pulse .bg-stone-900 .text-stone-100,
+.theme-prism-pulse .bg-stone-800 .text-stone-100,
+.theme-prism-pulse .bg-stone-950 .text-stone-200,
+.theme-prism-pulse .bg-stone-900 .text-stone-200,
+.theme-prism-pulse .bg-stone-800 .text-stone-200,
+.theme-prism-pulse .bg-black .text-stone-100,
+.theme-prism-pulse .bg-black .text-stone-200,
+.theme-prism-pulse [class*="bg-stone-9"] .text-stone-100,
+.theme-prism-pulse [class*="bg-stone-9"] .text-stone-200,
+.theme-prism-pulse [class*="bg-stone-8"] .text-stone-100,
+.theme-prism-pulse [class*="bg-stone-8"] .text-stone-200,
+.theme-prism-pulse [class*="from-stone-9"] .text-stone-100,
+.theme-prism-pulse [class*="from-stone-9"] .text-stone-200,
+.theme-prism-pulse [role="dialog"] .text-stone-100,
+.theme-prism-pulse [role="dialog"] .text-stone-200,
+[data-theme="prism-pulse"] .bg-stone-950 .text-stone-100,
+[data-theme="prism-pulse"] .bg-stone-900 .text-stone-100,
+[data-theme="prism-pulse"] .bg-stone-800 .text-stone-100,
+[data-theme="prism-pulse"] .bg-stone-950 .text-stone-200,
+[data-theme="prism-pulse"] .bg-stone-900 .text-stone-200,
+[data-theme="prism-pulse"] .bg-stone-800 .text-stone-200,
+[data-theme="prism-pulse"] .bg-black .text-stone-100,
+[data-theme="prism-pulse"] .bg-black .text-stone-200,
+[data-theme="prism-pulse"] [class*="bg-stone-9"] .text-stone-100,
+[data-theme="prism-pulse"] [class*="bg-stone-9"] .text-stone-200,
+[data-theme="prism-pulse"] [class*="bg-stone-8"] .text-stone-100,
+[data-theme="prism-pulse"] [class*="bg-stone-8"] .text-stone-200,
+[data-theme="prism-pulse"] [class*="from-stone-9"] .text-stone-100,
+[data-theme="prism-pulse"] [class*="from-stone-9"] .text-stone-200,
+[data-theme="prism-pulse"] [role="dialog"] .text-stone-100,
+[data-theme="prism-pulse"] [role="dialog"] .text-stone-200 {
+  color: #f5f5f4 !important;
+}
+
+.theme-prism-pulse .bg-stone-950 .text-stone-300,
+.theme-prism-pulse .bg-stone-900 .text-stone-300,
+.theme-prism-pulse .bg-stone-800 .text-stone-300,
+.theme-prism-pulse .bg-stone-950 .text-stone-400,
+.theme-prism-pulse .bg-stone-900 .text-stone-400,
+.theme-prism-pulse .bg-stone-800 .text-stone-400,
+.theme-prism-pulse .bg-black .text-stone-300,
+.theme-prism-pulse .bg-black .text-stone-400,
+.theme-prism-pulse [class*="bg-stone-9"] .text-stone-300,
+.theme-prism-pulse [class*="bg-stone-9"] .text-stone-400,
+.theme-prism-pulse [class*="bg-stone-8"] .text-stone-300,
+.theme-prism-pulse [class*="bg-stone-8"] .text-stone-400,
+.theme-prism-pulse [class*="from-stone-9"] .text-stone-300,
+.theme-prism-pulse [class*="from-stone-9"] .text-stone-400,
+.theme-prism-pulse [role="dialog"] .text-stone-300,
+.theme-prism-pulse [role="dialog"] .text-stone-400,
+.theme-prism-pulse #verse-detail-modal .text-stone-300,
+.theme-prism-pulse #verse-detail-modal .text-stone-400,
+.theme-prism-pulse #look-closer-experience .text-stone-300,
+.theme-prism-pulse #look-closer-experience .text-stone-400,
+.theme-prism-pulse #word-explorer-drawer .text-stone-300,
+.theme-prism-pulse #word-explorer-drawer .text-stone-400,
+[data-theme="prism-pulse"] .bg-stone-950 .text-stone-300,
+[data-theme="prism-pulse"] .bg-stone-900 .text-stone-300,
+[data-theme="prism-pulse"] .bg-stone-800 .text-stone-300,
+[data-theme="prism-pulse"] .bg-stone-950 .text-stone-400,
+[data-theme="prism-pulse"] .bg-stone-900 .text-stone-400,
+[data-theme="prism-pulse"] .bg-stone-800 .text-stone-400,
+[data-theme="prism-pulse"] .bg-black .text-stone-300,
+[data-theme="prism-pulse"] .bg-black .text-stone-400,
+[data-theme="prism-pulse"] [class*="bg-stone-9"] .text-stone-300,
+[data-theme="prism-pulse"] [class*="bg-stone-9"] .text-stone-400,
+[data-theme="prism-pulse"] [class*="bg-stone-8"] .text-stone-300,
+[data-theme="prism-pulse"] [class*="bg-stone-8"] .text-stone-400,
+[data-theme="prism-pulse"] [class*="from-stone-9"] .text-stone-300,
+[data-theme="prism-pulse"] [class*="from-stone-9"] .text-stone-400,
+[data-theme="prism-pulse"] [role="dialog"] .text-stone-300,
+[data-theme="prism-pulse"] [role="dialog"] .text-stone-400,
+[data-theme="prism-pulse"] #verse-detail-modal .text-stone-300,
+[data-theme="prism-pulse"] #verse-detail-modal .text-stone-400,
+[data-theme="prism-pulse"] #look-closer-experience .text-stone-300,
+[data-theme="prism-pulse"] #look-closer-experience .text-stone-400,
+[data-theme="prism-pulse"] #word-explorer-drawer .text-stone-300,
+[data-theme="prism-pulse"] #word-explorer-drawer .text-stone-400 {
+  color: #d6d3d1 !important;
+}
+
+.theme-prism-pulse .bg-stone-950 .text-amber-100,
+.theme-prism-pulse .bg-stone-900 .text-amber-100,
+.theme-prism-pulse .bg-stone-950 .text-amber-200,
+.theme-prism-pulse .bg-stone-900 .text-amber-200,
+.theme-prism-pulse .bg-stone-950 .text-amber-300,
+.theme-prism-pulse .bg-stone-900 .text-amber-300,
+.theme-prism-pulse [class*="bg-stone-9"] .text-amber-100,
+.theme-prism-pulse [class*="bg-stone-9"] .text-amber-200,
+.theme-prism-pulse [class*="bg-stone-9"] .text-amber-300,
+.theme-prism-pulse [class*="from-stone-9"] .text-amber-100,
+.theme-prism-pulse [class*="from-stone-9"] .text-amber-200,
+.theme-prism-pulse [class*="from-stone-9"] .text-amber-300,
+.theme-prism-pulse [role="dialog"] .text-amber-100,
+.theme-prism-pulse [role="dialog"] .text-amber-200,
+.theme-prism-pulse [role="dialog"] .text-amber-300,
+.theme-prism-pulse #verse-detail-modal .text-amber-100,
+.theme-prism-pulse #verse-detail-modal .text-amber-200,
+.theme-prism-pulse #verse-detail-modal .text-amber-300,
+.theme-prism-pulse #look-closer-experience .text-amber-100,
+.theme-prism-pulse #look-closer-experience .text-amber-200,
+.theme-prism-pulse #look-closer-experience .text-amber-300,
+.theme-prism-pulse #word-explorer-drawer .text-amber-100,
+.theme-prism-pulse #word-explorer-drawer .text-amber-200,
+.theme-prism-pulse #word-explorer-drawer .text-amber-300,
+[data-theme="prism-pulse"] .bg-stone-950 .text-amber-100,
+[data-theme="prism-pulse"] .bg-stone-900 .text-amber-100,
+[data-theme="prism-pulse"] .bg-stone-950 .text-amber-200,
+[data-theme="prism-pulse"] .bg-stone-900 .text-amber-200,
+[data-theme="prism-pulse"] .bg-stone-950 .text-amber-300,
+[data-theme="prism-pulse"] .bg-stone-900 .text-amber-300,
+[data-theme="prism-pulse"] [class*="bg-stone-9"] .text-amber-100,
+[data-theme="prism-pulse"] [class*="bg-stone-9"] .text-amber-200,
+[data-theme="prism-pulse"] [class*="bg-stone-9"] .text-amber-300,
+[data-theme="prism-pulse"] [class*="from-stone-9"] .text-amber-100,
+[data-theme="prism-pulse"] [class*="from-stone-9"] .text-amber-200,
+[data-theme="prism-pulse"] [class*="from-stone-9"] .text-amber-300,
+[data-theme="prism-pulse"] [role="dialog"] .text-amber-100,
+[data-theme="prism-pulse"] [role="dialog"] .text-amber-200,
+[data-theme="prism-pulse"] [role="dialog"] .text-amber-300,
+[data-theme="prism-pulse"] #verse-detail-modal .text-amber-100,
+[data-theme="prism-pulse"] #verse-detail-modal .text-amber-200,
+[data-theme="prism-pulse"] #verse-detail-modal .text-amber-300,
+[data-theme="prism-pulse"] #look-closer-experience .text-amber-100,
+[data-theme="prism-pulse"] #look-closer-experience .text-amber-200,
+[data-theme="prism-pulse"] #look-closer-experience .text-amber-300,
+[data-theme="prism-pulse"] #word-explorer-drawer .text-amber-100,
+[data-theme="prism-pulse"] #word-explorer-drawer .text-amber-200,
+[data-theme="prism-pulse"] #word-explorer-drawer .text-amber-300 {
+  color: #fde68a !important;
+}
+
+.theme-prism-pulse .bg-stone-950 .text-amber-400,
+.theme-prism-pulse .bg-stone-900 .text-amber-400,
+.theme-prism-pulse [class*="bg-stone-9"] .text-amber-400,
+.theme-prism-pulse [class*="from-stone-9"] .text-amber-400,
+.theme-prism-pulse [role="dialog"] .text-amber-400,
+.theme-prism-pulse #verse-detail-modal .text-amber-400,
+.theme-prism-pulse #look-closer-experience .text-amber-400,
+.theme-prism-pulse #word-explorer-drawer .text-amber-400,
+[data-theme="prism-pulse"] .bg-stone-950 .text-amber-400,
+[data-theme="prism-pulse"] .bg-stone-900 .text-amber-400,
+[data-theme="prism-pulse"] [class*="bg-stone-9"] .text-amber-400,
+[data-theme="prism-pulse"] [class*="from-stone-9"] .text-amber-400,
+[data-theme="prism-pulse"] [role="dialog"] .text-amber-400,
+[data-theme="prism-pulse"] #verse-detail-modal .text-amber-400,
+[data-theme="prism-pulse"] #look-closer-experience .text-amber-400,
+[data-theme="prism-pulse"] #word-explorer-drawer .text-amber-400 {
+  color: #fbbf24 !important;
+}
+
+/* Guard text on saturated buttons */
+.theme-prism-pulse .from-amber-500,
+.theme-prism-pulse .bg-amber-500,
+[data-theme="prism-pulse"] .from-amber-500,
+[data-theme="prism-pulse"] .bg-amber-500 {
+  color: #1c1917 !important;
+}
+
+/* Action button overrides inside Prism Pulse */
+.theme-prism-pulse .bg-white\/10,
+.theme-prism-pulse .bg-white\/5,
+[data-theme="prism-pulse"] .bg-white\/10,
+[data-theme="prism-pulse"] .bg-white\/5 {
+  background-color: #f3f4f6 !important;
+  border-color: #e5e7eb !important;
+  color: #1f2937 !important;
+}
+
+.theme-prism-pulse .bg-white\/10:hover,
+.theme-prism-pulse .bg-white\/5:hover,
+[data-theme="prism-pulse"] .bg-white\/10:hover,
+[data-theme="prism-pulse"] .bg-white\/5:hover {
+  background-color: #e5e7eb !important;
+}
+
+/* Global / Component Dashboard Grid */
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+/* Card Container */
+.card {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  padding: 1.5rem;
+}
+
+.card h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: var(--dash-purple);
+}
+
+/* Primary Action Button */
+.btn-primary {
+  background-color: var(--dash-orange);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--dash-pink);
+}
+
+/* Progress Bar */
+.progress-bar {
+  height: 12px;
+  border-radius: 6px;
+  background-color: #eee;
+  overflow: hidden;
+}
+
+.progress-bar span {
+  display: block;
+  height: 100%;
+  background-color: var(--dash-green);
+  width: 60%; /* adjust dynamically */
+}
+
+/* Chart & Indicator Color Utilities */
+.chart-color-purple { color: var(--dash-purple); }
+.chart-color-orange { color: var(--dash-orange); }
+.chart-color-pink   { color: var(--dash-pink); }
+.chart-color-blue   { color: var(--dash-blue); }
+.chart-color-green  { color: var(--dash-green); }
+
+/* Background Fill Utilities */
+.bg-dash-purple { background-color: var(--dash-purple); }
+.bg-dash-orange { background-color: var(--dash-orange); }
+.bg-dash-pink   { background-color: var(--dash-pink); }
+.bg-dash-blue   { background-color: var(--dash-blue); }
+.bg-dash-green  { background-color: var(--dash-green); }
+
+/* Border Utilities */
+.border-dash-purple { border-color: var(--dash-purple); }
+.border-dash-orange { border-color: var(--dash-orange); }
+.border-dash-pink   { border-color: var(--dash-pink); }
+.border-dash-blue   { border-color: var(--dash-blue); }
+.border-dash-green  { border-color: var(--dash-green); }
+
+/* High-contrast selection for Prism Pulse */
+[data-theme="prism-pulse"] ::selection,
+.theme-prism-pulse ::selection {
+  background-color: var(--dash-purple) !important;
+  color: #ffffff !important;
+}

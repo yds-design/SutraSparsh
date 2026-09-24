@@ -1,5 +1,6 @@
 import React from "react";
 import { X, ShieldCheck, Lock, EyeOff, Database, Globe, CheckCircle2, ExternalLink } from "lucide-react";
+import { ModalPortal } from "./ModalPortal";
 import type { AppTheme } from "../types";
 
 interface PrivacyPolicyModalProps {
@@ -41,25 +42,26 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({
   const textColor = isLight ? "#3A2818" : isGoldenHour ? "#FFF4D8" : "#F4E9D2";
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="privacy-policy-title"
-      className="fixed inset-0 z-50 overflow-y-auto backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn"
-      style={{
-        backgroundColor: isLight ? "rgba(58, 40, 24, 0.45)" : "rgba(0, 0, 0, 0.8)",
-      }}
-      onClick={onClose}
-    >
+    <ModalPortal>
       <div
-        className="w-full max-w-2xl rounded-3xl shadow-2xl border overflow-hidden relative transition-all max-h-[90vh] flex flex-col"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="privacy-policy-title"
+        className="fixed inset-0 z-50 flex items-start sm:items-center justify-center overflow-y-auto overscroll-contain animate-fadeIn backdrop-blur-xl bg-stone-950/80 p-0 sm:p-4 md:p-6 lg:p-8 xl:p-10 pt-0 sm:pt-4 md:pt-6 lg:pt-8 xl:pt-10 pb-24 sm:pb-6 md:pb-8 lg:pb-12"
         style={{
-          backgroundColor: modalBg,
-          borderColor: modalBorder,
-          color: textColor,
+          backgroundColor: isLight ? "rgba(58, 40, 24, 0.45)" : "rgba(0, 0, 0, 0.8)",
         }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={onClose}
       >
+        <div
+          className="w-full max-w-full sm:max-w-2xl min-h-dvh sm:min-h-0 sm:my-auto rounded-none sm:rounded-3xl shadow-2xl border overflow-hidden relative transition-all flex flex-col"
+          style={{
+            backgroundColor: modalBg,
+            borderColor: modalBorder,
+            color: textColor,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Header */}
         <div
           className="p-6 border-b flex items-center justify-between"
@@ -224,5 +226,6 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 };

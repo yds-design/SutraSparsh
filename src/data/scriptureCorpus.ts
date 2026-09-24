@@ -18,6 +18,7 @@ export interface ScriptureData {
   totalChapters: number;
   totalVerses: number;
   description: string;
+  expandedOverview?: string[];
   tags: string[];
   chapters: ScriptureChapter[];
   defaultVerseId: string;
@@ -53,6 +54,11 @@ export const SCRIPTURES_CORPUS: Record<string, ScriptureData> = {
     totalVerses: 700,
     description:
       "The eternal dialogue between Krishna and Arjuna on the battlefield of Kurukshetra — a 700-verse synthesis of duty, devotion, knowledge, and spiritual liberation.",
+    expandedOverview: [
+      "The eternal dialogue between Krishna and Arjuna on the battlefield of Kurukshetra — a 700-verse synthesis of duty, devotion, knowledge, and spiritual liberation.",
+      "Spoken on the precipice of the Mahabharata war, the Gita transcends historical context to address the internal Kurukshetra of the human heart — the timeless conflict between duty and doubt, divine virtues and binding attachments. Bhagavan Krishna reveals the supreme art of living: performing action with total dedication while remaining untouched by anxious craving for outcomes.",
+      "Through its 18 Adhyāyas, the text harmonizes the four classical spiritual paths: Karma Yoga (selfless action as divine offering), Jnana Yoga (discriminative discernment of the imperishable Atman), Bhakti Yoga (unwavering devotional surrender to the Supreme), and Dhyana Yoga (meditative stillness and mental mastery)."
+    ],
     tags: ["Itihasa", "Karma Yoga", "Bhakti Yoga", "Jnana Yoga", "Dharma", "Advaita"],
     defaultVerseId: "bg_2_47",
     chapters: [
@@ -88,6 +94,11 @@ export const SCRIPTURES_CORPUS: Record<string, ScriptureData> = {
     totalVerses: 196,
     description:
       "The foundational psychology and spiritual blueprint of classical Raja Yoga — detailing the eight limbs (Ashtanga) to quiet mental turbulence and abide in pure consciousness.",
+    expandedOverview: [
+      "The foundational psychology and spiritual blueprint of classical Raja Yoga — detailing the eight limbs (Ashtanga) to quiet mental turbulence and abide in pure consciousness.",
+      "Compiled by Maharshi Patanjali across 196 terse aphorisms, the Yoga Sūtras establish a definitive psycho-spiritual science of inner mastery. Beginning with the famous aphorism 'Yogaś citta-vṛtti-nirodhaḥ' (Yoga is the intentional stilling of mental fluctuations), the treatise maps how steady contemplative practice (Abhyāsa) and dispassion (Vairāgya) dissolve subconscious conditioning.",
+      "The eightfold path (Aṣṭāṅga) systematically harmonizes ethical conduct (Yama & Niyama), physical alignment (Āsana), life-force cultivation (Prāṇāyāma), sense inwardness (Pratyāhāra), laser focus (Dhāraṇā), unbroken meditation (Dhyāna), and transcendental absorption (Samādhi) leading to Kaivalya — absolute spiritual liberation."
+    ],
     tags: ["Darshana", "Raja Yoga", "Meditation", "Samadhi", "Mind Control", "Ashtanga"],
     defaultVerseId: "ys_1_2",
     chapters: [
@@ -109,6 +120,11 @@ export const SCRIPTURES_CORPUS: Record<string, ScriptureData> = {
     totalVerses: 18,
     description:
       "The pivotal opening Upanishad proclaiming that all existence is enveloped by the Divine. Teaches renunciation of possessiveness, selfless action, and the harmony of Vidyā and Avidyā.",
+    expandedOverview: [
+      "The pivotal opening Upanishad proclaiming that all existence is enveloped by the Divine. Teaches renunciation of possessiveness, selfless action, and the harmony of Vidyā and Avidyā.",
+      "Embedded in the final chapter of the Shukla Yajurveda Samhita, this seminal scripture opens with 'Īśāvāsyam idaṁ sarvam' — announcing that the entire moving cosmos is soaked in Supreme Divinity. Rather than urging flight from worldly duties, it teaches seekers to enjoy life with detachment ('tena tyaktena bhuñjīthā') and live a vibrant, dedicated life for a hundred years.",
+      "The Upanishad reveals that seeing the unity of all beings in the Self and the Self in all beings instantly dissolves all delusion and sorrow, bridging the apparent divide between worldly science (Avidyā) and spiritual wisdom (Vidyā)."
+    ],
     tags: ["Upanishads", "Vedanta", "Non-duality", "Renunciation", "Atman"],
     defaultVerseId: "isha_1",
     chapters: [
@@ -129,6 +145,11 @@ export const SCRIPTURES_CORPUS: Record<string, ScriptureData> = {
     totalVerses: 12,
     description:
       "The shortest yet most philosophically profound Upanishad — unpacking the cosmic syllable OM (A-U-M) and mapping the 4 states of consciousness culminating in Turiya.",
+    expandedOverview: [
+      "The shortest yet most philosophically profound Upanishad — unpacking the cosmic syllable OM (A-U-M) and mapping the 4 states of consciousness culminating in Turiya.",
+      "Consisting of only 12 concise Vedic mantras from the Atharva Veda, the Muktika Upanishad proclaims that Mandukya alone is sufficient for the liberation of an earnest seeker. It equates the primordial sound OM with all of time — past, present, future — and that which transcends time itself.",
+      "The text systematically dissects human consciousness through its four quarters (Pādas): the outward waking state (Vaiśvānara / 'A'), the inward dream state (Taijasa / 'U'), the unified deep-sleep state (Prājña / 'M'), and the transcendent fourth (Turīya) — the unconditioned, tranquil, non-dual witness that is the true Atman."
+    ],
     tags: ["Upanishads", "OM", "Consciousness", "Turiya", "Advaita"],
     defaultVerseId: "mandukya_1",
     chapters: [
@@ -150,6 +171,11 @@ export const SCRIPTURES_CORPUS: Record<string, ScriptureData> = {
     totalVerses: 580,
     description:
       "The 'Crest-Jewel of Discrimination' — a masterwork by Adi Shankara guiding the earnest seeker from spiritual dispassion (Vairagya) to direct non-dual absorption (Brahman).",
+    expandedOverview: [
+      "The 'Crest-Jewel of Discrimination' — a masterwork by Adi Shankara guiding the earnest seeker from spiritual dispassion (Vairagya) to direct non-dual absorption (Brahman).",
+      "Composed in 580 lyrical Sanskrit verses, this foundational Prakarana Grantha takes the form of an intimate, compassionate dialogue between a realized Guru and a sincere disciple longing for liberation. It emphasizes the priceless rarity of human birth and expounds the fourfold qualifications of an aspirant (Sādhana Catuṣṭaya).",
+      "Through systematic Viveka (discrimination between the eternal and the ephemeral), Shankara peels back the five illusory coverings (Pañca Kośas) of physical body, vital breath, mind, intellect, and bliss-sheath, revealing the self-luminous Atman and demonstrating how contemplation on 'Tat Tvam Asi' leads to unbroken Jīvanmukti (liberation in this very life)."
+    ],
     tags: ["Vedanta", "Advaita", "Adi Shankara", "Self-Realization", "Maya"],
     defaultVerseId: "vc_1",
     chapters: [
@@ -172,6 +198,11 @@ export const SCRIPTURES_CORPUS: Record<string, ScriptureData> = {
     totalVerses: 298,
     description:
       "Radical, uncompromising non-dual realization spoken by Sage Ashtavakra to King Janaka — affirming that you are already free, pure, and unbounded consciousness right now.",
+    expandedOverview: [
+      "Radical, uncompromising non-dual realization spoken by Sage Ashtavakra to King Janaka — affirming that you are already free, pure, and unbounded consciousness right now.",
+      "Unburdened by ritualistic preliminaries, graduated techniques, or moral dogmas, the Ashtavakra Gita is the direct path of Avadhūta realization. When King Janaka inquires how wisdom and liberation are attained, Sage Ashtavakra immediately cuts to the root: 'You are not the body, nor is the body yours. You are pure awareness — abide in this conviction and be free.'",
+      "Across 20 luminous chapters, the dialogue dissolves the notions of bondage, effort, and seekership itself, demonstrating that peace is not an attainment in the future, but the ever-present ground of one's own natural, unconditioned state."
+    ],
     tags: ["Vedanta", "Advaita", "Freedom", "Consciousness", "Direct Path"],
     defaultVerseId: "ag_1_1",
     chapters: [

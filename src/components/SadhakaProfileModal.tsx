@@ -24,14 +24,16 @@ import { progressService, type StreakData } from "../services/progress.service";
 import { authService, type SeekerUser } from "../services/auth.service";
 import { useFeatureFlags } from "../services/feature-flags.service";
 import { CloudSyncStatusBadge } from "./CloudSyncStatusBadge";
+import { ModalPortal } from "./ModalPortal";
+import type { AppTheme } from "../types";
 
 interface SadhakaProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   savedCount: number;
   journalCount: number;
-  theme?: "sandstone" | "amethyst" | "light" | "festival" | "golden-hour";
-  onSelectTheme?: (theme: "sandstone" | "amethyst" | "light" | "festival" | "golden-hour") => void;
+  theme?: AppTheme;
+  onSelectTheme?: (theme: AppTheme) => void;
   onNavigateTab: (tab: string) => void;
   onOpenPricing: () => void;
   onOpenDonation: () => void;
@@ -95,18 +97,19 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="profile-modal-title"
-      className="fixed inset-0 z-50 overflow-y-auto backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn"
-      style={{
-        backgroundColor: isLight ? "rgba(58, 40, 24, 0.45)" : "rgba(0, 0, 0, 0.78)",
-      }}
-      onClick={onClose}
-    >
+    <ModalPortal>
       <div
-        className="w-full max-w-lg rounded-3xl shadow-2xl border overflow-hidden relative transition-all max-h-[92vh] flex flex-col"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="profile-modal-title"
+        className="fixed inset-0 z-50 flex items-start sm:items-center justify-center overflow-y-auto overscroll-contain animate-fadeIn backdrop-blur-xl bg-stone-950/80 p-0 sm:p-4 md:p-6 lg:p-8 xl:p-10 pt-0 sm:pt-4 md:pt-6 lg:pt-8 xl:pt-10 pb-24 sm:pb-6 md:pb-8 lg:pb-12"
+        style={{
+          backgroundColor: isLight ? "rgba(58, 40, 24, 0.45)" : "rgba(0, 0, 0, 0.78)",
+        }}
+        onClick={onClose}
+      >
+        <div
+          className="w-full max-w-full sm:max-w-lg min-h-dvh sm:min-h-0 sm:my-auto rounded-none sm:rounded-3xl shadow-2xl border overflow-hidden relative transition-all flex flex-col"
         style={{
           backgroundColor: isLight
             ? "#FFFBF5"
@@ -388,7 +391,7 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
                 <Palette className="w-3.5 h-3.5" />
                 <span>SACRED ATMOSPHERE (DESIGN SYSTEM)</span>
               </div>
-              <div className="grid grid-cols-5 gap-1 p-1 rounded-2xl border" style={{ backgroundColor: isLight ? "#FFFFFF" : "rgba(0,0,0,0.3)", borderColor: isLight ? "#E6D7C3" : "rgba(255,255,255,0.08)" }}>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 p-1 rounded-2xl border" style={{ backgroundColor: isLight ? "#FFFFFF" : "rgba(0,0,0,0.3)", borderColor: isLight ? "#E6D7C3" : "rgba(255,255,255,0.08)" }}>
                 <button
                   type="button"
                   onClick={() => onSelectTheme("sandstone")}
@@ -448,6 +451,18 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
                 >
                   <span>🌅</span>
                   <span>Golden</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSelectTheme("prism-pulse")}
+                  className={`py-2 px-1 rounded-xl text-[10.5px] font-bold flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer ${
+                    theme === "prism-pulse"
+                      ? "bg-gradient-to-r from-[#936BFA] to-[#FA6BA7] text-white shadow"
+                      : "text-stone-400 hover:text-stone-200"
+                  }`}
+                >
+                  <span>⚡</span>
+                  <span>Prism</span>
                 </button>
               </div>
             </div>
@@ -547,5 +562,6 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 };

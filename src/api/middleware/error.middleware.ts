@@ -27,7 +27,11 @@ export const errorMiddleware: ErrorRequestHandler = (
   // ----------------------------------------------------------
 
   if (err instanceof ApiError) {
-    console.error(err);
+    if (err.statusCode >= 500) {
+      console.error(err);
+    } else {
+      console.warn(`[HTTP ${err.statusCode}] ${err.code}: ${err.message}`);
+    }
 
     res.status(err.statusCode).json({
       success: false,

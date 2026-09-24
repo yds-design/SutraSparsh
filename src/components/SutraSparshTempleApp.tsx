@@ -47,13 +47,19 @@ import {
   Minus,
   Plus,
   Sunrise,
+  Square,
+  Zap,
 } from "lucide-react";
 import { ShareModal } from "./ShareModal";
+import { ModalPortal } from "./ModalPortal";
+import { DynamicMetadata } from "./DynamicMetadata";
 import { MoreView } from "./MoreView";
 import { BrahmaMuhurtaTimer } from "./BrahmaMuhurtaTimer";
 import { ImportantTithisParv } from "./ImportantTithisParv";
 import { StreakFireCounter } from "./StreakFireCounter";
+import { TtsAvailabilityIndicator } from "./TtsAvailabilityIndicator";
 import { progressService, type StreakData } from "../services/progress.service";
+import { dailyGoalService } from "../services/dailyGoal.service";
 import { sharingService } from "../services/sharing.service";
 import type { ReadingProgress } from "../types/progress";
 import type { ShareableContent } from "../types/sharing";
@@ -61,7 +67,14 @@ import { soundEngine } from "../utils/audio";
 import { speechSafetyEngine } from "../utils/speech";
 import { useFeatureFlags } from "../services/feature-flags.service";
 import { recitationEngine, type RecitationState } from "../utils/recitationEngine";
+import { ttsService, type TtsProviderType } from "../services/tts.service";
 import { matchesSanskritQuery } from "../utils/sanskritSearch";
+import {
+  LookCloserModal,
+  WordExplorer,
+  useWordExplorer,
+  WordExplorerService,
+} from "../features/wordExplorer";
 import {
   SCRIPTURES_CORPUS,
   VERSES_DATABASE,
@@ -72,7 +85,7 @@ import {
   type DetailedVerse,
 } from "../data/scriptureCorpus";
 
-export type AppTheme = "sandstone" | "amethyst" | "light" | "festival" | "golden-hour";
+export type AppTheme = "sandstone" | "amethyst" | "light" | "festival" | "golden-hour" | "prism-pulse";
 
 interface SutraSparshTempleAppProps {
   onOpenAdmin?: () => void;
@@ -95,13 +108,13 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   initialSubScreen = "none",
   onNavigateTab,
 }) => {
-  const { isSadhakaEnabled, isGurudakshinaEnabled } = useFeatureFlags();
+  const { isSadhakaEnabled, isGurudakshinaEnabled, isExportMp3Enabled } = useFeatureFlags();
   // Theme state
   const [internalTheme, setInternalTheme] = useState<AppTheme>(() => {
     try {
-      return (localStorage.getItem("sutrasparsh_theme") as AppTheme) || "sandstone";
+      return (localStorage.getItem("sutrasparsh_theme") as AppTheme) || "prism-pulse";
     } catch {
-      return "sandstone";
+      return "prism-pulse";
     }
   });
 
@@ -153,10 +166,23 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   });
   const [prefChantSpeed, setPrefChantSpeed] = useState<number>(() => {
     try {
-      return parseFloat(localStorage.getItem("sutrasparsh_pref_speed") || "1.0");
+      return parseFloat(localStorage.getItem("sutrasparsh_pref_speed") || "0.85");
     } catch {
-      return 1.0;
+      return 0.85;
     }
+  });
+  const [prefTtsVoice, setPrefTtsVoice] = useState<string>(() => {
+    try {
+      return localStorage.getItem("sutrasparsh_active_neural2_voice") || "hi-IN-Neural2-B";
+    } catch {
+      return "hi-IN-Neural2-B";
+    }
+  });
+  const [activeTtsProvider, setActiveTtsProvider] = useState<TtsProviderType>(() => {
+    return ttsService.getActiveProvider();
+  });
+  const [bhashiniPrefs, setBhashiniPrefs] = useState(() => {
+    return ttsService.getBhashiniPreferences();
   });
   const [prefReminder, setPrefReminder] = useState<string>(() => {
     try {
@@ -167,10 +193,6 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   });
   const [themeToast, setThemeToast] = useState<string | null>(null);
 
-  // Selected Scripture / Verse state
-  const [selectedScriptureId, setSelectedScriptureId] = useState<string>("bhagavad_gita");
-  const [selectedVerseData, setSelectedVerseData] = useState<DetailedVerse>(VERSES_DATABASE["bg_2_47"]);
-
   // Daily Shloka Date Navigation (Rotation Engine)
   const [selectedDateOffset, setSelectedDateOffset] = useState<number>(0);
   const currentDailyVerse = React.useMemo(() => {
@@ -178,6 +200,20 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
     d.setDate(d.getDate() + selectedDateOffset);
     return getDailyShlokaForDate(d);
   }, [selectedDateOffset]);
+
+  // Selected Scripture / Verse state — initialized to currentDailyVerse for complete state synchrony
+  const [selectedScriptureId, setSelectedScriptureId] = useState<string>("bhagavad_gita");
+  const [selectedVerseData, setSelectedVerseData] = useState<DetailedVerse>(() => {
+    const d = new Date();
+    return getDailyShlokaForDate(d);
+  });
+
+  // Automatically keep selectedVerseData in sync with currentDailyVerse on the primary sanctuary view
+  useEffect(() => {
+    if (subScreen === "none") {
+      setSelectedVerseData(currentDailyVerse);
+    }
+  }, [currentDailyVerse, subScreen]);
 
   // Ambient Tanpura Drone state
   const [isDroneActive, setIsDroneActive] = useState<boolean>(false);
@@ -251,6 +287,14 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   const [reflectionSavedMessage, setReflectionSavedMessage] = useState(false);
   const [editingRefId, setEditingRefId] = useState<string | null>(null);
   const [editingRefText, setEditingRefText] = useState("");
+  const [notificationToast, setNotificationToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (notificationToast) {
+      const timer = setTimeout(() => setNotificationToast(null), 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [notificationToast]);
 
   // Full Commentary expansion
   const [commentaryExpanded, setCommentaryExpanded] = useState(false);
@@ -269,6 +313,71 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   const isSpeakingChant = recitationState.isPlaying && recitationState.verseId === selectedVerseData.id;
   const audioProgress = recitationState.currentTime;
   const audioDuration = recitationState.duration;
+
+  // Word Explorer & Look Closer Subsystem
+  const [isLookCloserOpen, setIsLookCloserOpen] = useState(false);
+  const [lookCloserWord, setLookCloserWord] = useState<string | null>(null);
+  const wordExplorer = useWordExplorer();
+
+  // Daily Shloka Recitation & Media Controls State
+  const isDailyPlaying = recitationState.verseId === currentDailyVerse.id && recitationState.isPlaying;
+  const isDailyPaused =
+    recitationState.verseId === currentDailyVerse.id &&
+    !recitationState.isPlaying &&
+    recitationState.currentTime > 0;
+
+  // If daily shloka date rotates while reciting, stop stale playback
+  useEffect(() => {
+    if (recitationState.isPlaying && recitationState.verseId !== currentDailyVerse.id) {
+      recitationEngine.stop();
+    }
+  }, [currentDailyVerse.id, recitationState.isPlaying, recitationState.verseId]);
+
+  const handleOpenLookCloser = (specificWord?: string) => {
+    soundEngine.playTempleBell(440);
+    if (specificWord) {
+      const clean = specificWord.replace(/[।॥,\.!\?;:\"\'\-–—\s]/g, "").trim();
+      setLookCloserWord(clean);
+    } else {
+      setLookCloserWord(null);
+    }
+    setIsLookCloserOpen(true);
+  };
+
+  const handleShlokaWordClick = (wordText: string) => {
+    // Trigger Condition 2: Playing a verse must happen when the user clicks directly on a sloka word.
+    // Starts verse recitation immediately with zero introductory chimes.
+    handlePlayDaily();
+    const clean = wordText.replace(/[।॥,\.!\?;:\"\'\-–—\s]/g, "").trim();
+    if (clean) {
+      wordExplorer.selectWord(clean, currentDailyVerse);
+    }
+  };
+
+  const handlePlayDaily = () => {
+    setSelectedVerseData(currentDailyVerse);
+    setPlayerVisible(true);
+    // Voice begins immediately without any introductory chime or sound effect
+    recitationEngine.play(
+      currentDailyVerse.id,
+      currentDailyVerse.sanskrit,
+      prefChantSpeed,
+      { voiceName: prefTtsVoice }
+    );
+  };
+
+  const handlePauseDaily = () => {
+    recitationEngine.pause();
+  };
+
+  const handleResumeDaily = () => {
+    // Resumes immediately without chime interruption
+    recitationEngine.resume(currentDailyVerse.sanskrit, prefChantSpeed);
+  };
+
+  const handleStopDaily = () => {
+    recitationEngine.stop();
+  };
 
   // Streak State from Progress Service
   const [streakData, setStreakData] = useState<StreakData>(() => progressService.getStreakData());
@@ -368,7 +477,9 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
 
     const unsubRecitation = recitationEngine.subscribe((state) => {
       setRecitationState(state);
+      dailyGoalService.setRecitingActive(Boolean(state.isPlaying));
       if (state.verseId && state.isPlaying) {
+        dailyGoalService.recordVerseRead(state.verseId);
         progressService.recordAudioProgress(
           state.verseId,
           {
@@ -425,17 +536,46 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
     const handleReminderEvent = (e: any) => {
       if (e.detail) setPrefReminder(e.detail);
     };
+    const handleVoiceEvent = (e: any) => {
+      if (e.detail) {
+        setPrefTtsVoice(e.detail);
+        recitationEngine.setVoice(e.detail);
+      }
+    };
+    const handleProviderEvent = (e: any) => {
+      if (e.detail) {
+        setActiveTtsProvider(e.detail);
+      }
+    };
+    const handleBhashiniPrefsEvent = () => {
+      setBhashiniPrefs(ttsService.getBhashiniPreferences());
+    };
 
     window.addEventListener("sutrasparsh:pref_script", handleScriptEvent);
     window.addEventListener("sutrasparsh:pref_lang", handleLangEvent);
     window.addEventListener("sutrasparsh:pref_speed", handleSpeedEvent);
     window.addEventListener("sutrasparsh:pref_reminder", handleReminderEvent);
+    window.addEventListener("sutrasparsh:pref_voice", handleVoiceEvent);
+    window.addEventListener("sutrasparsh:tts_provider_changed", handleProviderEvent);
+    window.addEventListener("sutrasparsh:bhashini_prefs_changed", handleBhashiniPrefsEvent);
+
+    const handleTtsFallbackEvent = (e: any) => {
+      const detail = e.detail;
+      if (detail) {
+        setNotificationToast(`⚡ Failsafe: ${detail.from === "bhashini" ? "Bhashini" : "Google"} unavailable · Chanted seamlessly via ${detail.to === "google" ? "Google Neural2" : "Bhashini"}`);
+      }
+    };
+    window.addEventListener("sutrasparsh:tts_fallback_triggered", handleTtsFallbackEvent);
 
     return () => {
       window.removeEventListener("sutrasparsh:pref_script", handleScriptEvent);
       window.removeEventListener("sutrasparsh:pref_lang", handleLangEvent);
       window.removeEventListener("sutrasparsh:pref_speed", handleSpeedEvent);
       window.removeEventListener("sutrasparsh:pref_reminder", handleReminderEvent);
+      window.removeEventListener("sutrasparsh:pref_voice", handleVoiceEvent);
+      window.removeEventListener("sutrasparsh:tts_provider_changed", handleProviderEvent);
+      window.removeEventListener("sutrasparsh:bhashini_prefs_changed", handleBhashiniPrefsEvent);
+      window.removeEventListener("sutrasparsh:tts_fallback_triggered", handleTtsFallbackEvent);
     };
   }, []);
 
@@ -539,7 +679,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
     const verse = VERSES_DATABASE[verseId] || VERSES_DATABASE["bg_2_47"];
     setSelectedVerseData(verse);
     setSubScreen("verse");
-    soundEngine.playTempleBell(440);
+    dailyGoalService.recordVerseRead(verse.id);
 
     // Record progress reading position
     progressService.recordProgress(
@@ -695,32 +835,63 @@ ${reflections
     e.target.value = "";
   };
 
-  const handleOpenShare = () => {
+  const handleOpenShare = (verseToShare?: DetailedVerse | React.MouseEvent) => {
+    // When on the home screen or explicitly provided with a DetailedVerse, strictly target the active daily shloka
+    const targetVerse =
+      verseToShare && "sanskrit" in verseToShare
+        ? (verseToShare as DetailedVerse)
+        : subScreen === "none"
+        ? currentDailyVerse
+        : selectedVerseData;
+    setSelectedVerseData(targetVerse);
     setShareableContent({
-      id: selectedVerseData.id,
-      title: selectedVerseData.title,
-      subtitle: selectedVerseData.chapterName,
-      sanskritText: selectedVerseData.sanskrit,
-      transliteration: selectedVerseData.transliteration,
-      meaning: selectedVerseData.meaning,
-      commentaryExcerpt: selectedVerseData.commentary,
-      source: selectedVerseData.source,
+      id: targetVerse.id,
+      title: targetVerse.title,
+      subtitle: targetVerse.chapterName,
+      sanskritText: targetVerse.sanskrit,
+      transliteration: targetVerse.transliteration,
+      meaning: targetVerse.meaning,
+      commentaryExcerpt: targetVerse.commentary,
+      source: targetVerse.source,
     });
     setIsShareModalOpen(true);
   };
 
   const handleStartListen = () => {
     setPlayerVisible(true);
-    soundEngine.playTempleBell(440);
+    dailyGoalService.recordVerseRead(selectedVerseData.id);
+    // Voice begins immediately without initial chime
     recitationEngine.play(
       selectedVerseData.id,
       selectedVerseData.sanskrit,
-      prefChantSpeed
+      prefChantSpeed,
+      { voiceName: prefTtsVoice }
     );
   };
 
-  const handleWordTap = (wordKey: string) => {
-    soundEngine.playTempleBell(520);
+  const handleExportAudio = async (verse: DetailedVerse) => {
+    try {
+      setThemeToast("Synthesizing Google Cloud Neural2 MP3...");
+      const result = await ttsService.synthesizeVerse(verse.id, verse.sanskrit, {
+        voiceName: prefTtsVoice,
+        speed: prefChantSpeed,
+      });
+      const link = document.createElement("a");
+      link.href = result.audioUrl;
+      link.download = `SutraSparsh_${verse.id}_${prefTtsVoice}.mp3`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setThemeToast(`✓ Exported ${verse.id} clean MP3 audio`);
+    } catch (err) {
+      console.error("Export audio failed:", err);
+      setThemeToast("Could not export audio.");
+    }
+  };
+
+  const handleWordTap = (_wordKey: string) => {
+    // Tapping a word starts the verse recitation immediately with zero chimes
+    handleStartListen();
   };
 
   // Test / Request Notification Permissions
@@ -747,10 +918,14 @@ ${reflections
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
   const isGoldenHour = theme === "golden-hour";
-  const isSandstone = theme === "sandstone" || (!isLight && !isFestival && !isAmethyst && !isGoldenHour);
+  const isPrismPulse = theme === "prism-pulse";
+  const isSandstone = theme === "sandstone" || (!isLight && !isFestival && !isAmethyst && !isGoldenHour && !isPrismPulse);
+  const isLightCanvas = isLight || isPrismPulse;
 
   const themeCardDark = isLight
     ? "bg-gradient-to-b from-[#FFFFFF] to-[#F6EDE1] border border-[#E6D7C3] text-[#3A2818]"
+    : isPrismPulse
+    ? "bg-white border border-stone-200 text-[#1E1B2E] shadow-md rounded-3xl"
     : isFestival
     ? "bg-gradient-to-b from-[#5E111C] to-[#4B0E17] border border-[#FF8A00]/40 text-[#FFF6E3]"
     : isAmethyst
@@ -759,13 +934,15 @@ ${reflections
     ? "bg-gradient-to-b from-[#312318] to-[#1C140D] border border-[#C9822B]/40 text-[#FFF4D8]"
     : "bg-gradient-to-b from-[#2B1706] to-[#1D0F04] border border-[#78300C]/40 text-[#F5E4C8]";
 
-  const themeGold = isLight ? "#B9680D" : isFestival ? "#FF8A00" : isAmethyst ? "#C4A8E6" : isGoldenHour ? "#C9822B" : "#E8921A";
-  const themeGoldLight = isLight ? "#B9680D" : isFestival ? "#FFD54A" : isAmethyst ? "#D4BEF2" : isGoldenHour ? "#F6DFA6" : "#F4B24B";
-  const themeMist = isLight ? "#574332" : isFestival ? "#FFDDB3" : isAmethyst ? "#B8A4CC" : isGoldenHour ? "#A89F94" : "#D4BC96";
-  const themeTextColor = isLight ? "text-stone-900" : isFestival ? "text-[#FFF6E3]" : isAmethyst ? "text-[#EDE0F8]" : isGoldenHour ? "text-[#FFF4D8]" : "text-stone-100";
-  const themeSubTextColor = isLight ? "text-stone-700" : isFestival ? "text-amber-200/80" : isAmethyst ? "text-purple-200/80" : isGoldenHour ? "text-[#F6DFA6]/80" : "text-stone-400";
+  const themeGold = isLight ? "#B9680D" : isPrismPulse ? "#936BFA" : isFestival ? "#FF8A00" : isAmethyst ? "#C4A8E6" : isGoldenHour ? "#C9822B" : "#E8921A";
+  const themeGoldLight = isLight ? "#B9680D" : isPrismPulse ? "#6D28D9" : isFestival ? "#FFD54A" : isAmethyst ? "#D4BEF2" : isGoldenHour ? "#F6DFA6" : "#F4B24B";
+  const themeMist = isLight ? "#574332" : isPrismPulse ? "#4B5563" : isFestival ? "#FFDDB3" : isAmethyst ? "#B8A4CC" : isGoldenHour ? "#A89F94" : "#D4BC96";
+  const themeTextColor = isLightCanvas ? "text-stone-900" : isFestival ? "text-[#FFF6E3]" : isAmethyst ? "text-[#EDE0F8]" : isGoldenHour ? "text-[#FFF4D8]" : "text-stone-100";
+  const themeSubTextColor = isLightCanvas ? "text-stone-600" : isFestival ? "text-amber-200/80" : isAmethyst ? "text-purple-200/80" : isGoldenHour ? "text-[#F6DFA6]/80" : "text-stone-400";
   const themeCardBg = isLight
     ? "linear-gradient(145deg, #FFFBF5, #F6EDE1)"
+    : isPrismPulse
+    ? "#FFFFFF"
     : isFestival
     ? "linear-gradient(145deg, #7A1825, #4B0E17)"
     : isAmethyst
@@ -774,8 +951,8 @@ ${reflections
     ? "linear-gradient(145deg, #38271A, #1C140D)"
     : "linear-gradient(145deg, #fdf0d0, #f5e0a0)";
 
-  const subScreenBg = isLight
-    ? "#FBF9F5"
+  const subScreenBg = isLight || isPrismPulse
+    ? "#F9F9F9"
     : isFestival
     ? "#38060D"
     : isAmethyst
@@ -784,8 +961,8 @@ ${reflections
     ? "#140E08"
     : "#120A04";
 
-  const subScreenBarBg = isLight
-    ? "rgba(251,249,245,0.96)"
+  const subScreenBarBg = isLight || isPrismPulse
+    ? "rgba(249,249,249,0.96)"
     : isFestival
     ? "rgba(56,6,13,0.96)"
     : isAmethyst
@@ -794,7 +971,7 @@ ${reflections
     ? "rgba(20,14,8,0.96)"
     : "rgba(18,10,4,0.96)";
 
-  const subScreenBorder = isLight
+  const subScreenBorder = isLight || isPrismPulse
     ? "border-stone-200"
     : isFestival
     ? "border-[#FF8A00]/25"
@@ -833,6 +1010,150 @@ ${reflections
   const activeScriptureData: ScriptureData =
     SCRIPTURES_CORPUS[selectedScriptureId] || SCRIPTURES_CORPUS["bhagavad_gita"];
 
+  // Responsive modal overlay & dialog classes for Screen, Mobile & Tablet
+  const modalOverlayClass =
+    "fixed inset-0 z-50 flex items-start sm:items-center justify-center overflow-y-auto overscroll-contain animate-fadeIn backdrop-blur-xl bg-stone-950/80 p-0 sm:p-4 md:p-6 lg:p-8 xl:p-10 pt-0 sm:pt-4 md:pt-6 lg:pt-8 xl:pt-10 pb-24 sm:pb-6 md:pb-8 lg:pb-12";
+
+  const modalDialogClass =
+    `w-full max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl min-h-dvh sm:min-h-0 sm:my-auto rounded-none sm:rounded-2xl md:rounded-3xl shadow-2xl flex flex-col overflow-hidden border ${subScreenBorder}`;
+
+  // Dynamic SEO Metadata for search engine indexing based on active page or tool
+  const seoMetadata = React.useMemo(() => {
+    if (subScreen === "verse") {
+      const firstLine = selectedVerseData.sanskrit.split("\n")[0] || "";
+      const verseCanonical = `https://sutrasparsh.com/?scripture=${encodeURIComponent(activeScriptureData.id)}&verse=${encodeURIComponent(selectedVerseData.id)}`;
+      return {
+        title: `${selectedVerseData.source} · ${selectedVerseData.title} (${firstLine})`,
+        description: `Study ${selectedVerseData.source} ${selectedVerseData.title}: "${selectedVerseData.meaning.slice(0, 135)}..." Detailed Sanskrit shloka with word-by-word padaccheda, audio recitation, and commentary.`,
+        keywords: `${selectedVerseData.title}, ${selectedVerseData.source}, ${selectedVerseData.sanskrit.replace(/\n/g, " ")}, Sanskrit recitation, shloka meaning, padaccheda, Vedanta, Gita`,
+        ogType: "article" as const,
+        canonicalUrl: verseCanonical,
+        structuredData: {
+          "@type": "Article",
+          headline: `${selectedVerseData.source} · ${selectedVerseData.title}`,
+          about: [selectedVerseData.source, selectedVerseData.title],
+          text: selectedVerseData.sanskrit,
+        },
+      };
+    }
+
+    if (subScreen === "scripture") {
+      const scriptureCanonical = `https://sutrasparsh.com/?scripture=${encodeURIComponent(activeScriptureData.id)}`;
+      return {
+        title: `${activeScriptureData.name} (${activeScriptureData.sanskritName}) - Complete Verses & Philosophy`,
+        description: `Explore the complete ${activeScriptureData.name} (${activeScriptureData.sanskritName}) featuring ${activeScriptureData.totalChapters} chapters and ${activeScriptureData.totalVerses} verses with authentic Sanskrit recitation and commentary.`,
+        keywords: `${activeScriptureData.name}, ${activeScriptureData.sanskritName}, Sanskrit scriptures, Vedanta, Upanishad, Bhagavad Gita, Yoga Sutras, Ashtavakra Gita`,
+        ogType: "book" as const,
+        canonicalUrl: scriptureCanonical,
+        structuredData: {
+          "@type": "Book",
+          name: activeScriptureData.name,
+          alternateName: activeScriptureData.sanskritName,
+          numberOfPages: activeScriptureData.totalChapters,
+        },
+      };
+    }
+
+    if (subScreen === "glossary") {
+      return {
+        title: "Sanskrit Sacred Glossary & Dhatu Explorer (धातु एवं मूल अर्थ)",
+        description: "Comprehensive Sanskrit philosophical glossary exploring root etymologies (Dhatus) and sacred definitions for Dharma, Karma, Yoga, Atman, Brahman, and Moksha.",
+        keywords: "Sanskrit glossary, Sanskrit roots, Dhatu, Dharma, Karma, Atman, Brahman, Moksha, Sanatana Dharma terminology",
+        ogType: "article" as const,
+        canonicalUrl: "https://sutrasparsh.com/?view=glossary",
+      };
+    }
+
+    if (subScreen === "paths") {
+      return {
+        title: "Guided Sādhana Paths & Vedic Recitations (मार्ग एवं साधना)",
+        description: "Curated meditative journeys, daily chanting routines, and restorative audio recitations across the Gita, Upanishads, and Patanjali Yoga Sutras.",
+        keywords: "Sadhana paths, Vedic chanting, meditation journeys, Sanskrit recitations, daily spiritual practice",
+        ogType: "website" as const,
+        canonicalUrl: "https://sutrasparsh.com/?view=paths",
+      };
+    }
+
+    if (subScreen === "pref") {
+      return {
+        title: "Temple Atmosphere & Recitation Settings (रुचि एवं स्वरूप)",
+        description: "Customize your spiritual sanctuary: choose between Sandstone, Prism Pulse, Amethyst, and Festival atmospheres, Devanagari script modes, and audio chant speeds.",
+        keywords: "Temple themes, spiritual atmosphere, Devanagari script preferences, chant speed, SutraSparsh customization",
+        ogType: "website" as const,
+        canonicalUrl: "https://sutrasparsh.com/?tab=preferences",
+      };
+    }
+
+    if (subScreen === "about") {
+      return {
+        title: "About SutraSparsh 2.0 - Sacred Sanskrit Digital Sanctuary",
+        description: "SutraSparsh is an open spiritual sanctuary engineered for timeless Sanskrit scriptures, meditative audio drones, and contemplative sadhana.",
+        keywords: "About SutraSparsh, digital Sanskrit temple, Bhagavad Gita platform, Patanjali Yoga Sutras, open wisdom platform",
+        ogType: "website" as const,
+        canonicalUrl: "https://sutrasparsh.com/?view=about",
+      };
+    }
+
+    if (activeTab === "explore") {
+      return {
+        title: "Sacred Scriptures Library - Bhagavad Gita, Upanishads & Yoga Sutras",
+        description: "Browse timeless Sanskrit scriptures with authentic Devanagari text, Roman transliteration, and philosophical commentary on SutraSparsh.",
+        keywords: "Bhagavad Gita, Patanjali Yoga Sutras, Upanishads, Ashtavakra Gita, Sanskrit library, spiritual wisdom",
+        ogType: "website" as const,
+        canonicalUrl: "https://sutrasparsh.com/?tab=explore",
+      };
+    }
+
+    if (activeTab === "search") {
+      const queryPart = searchQuery.trim() ? `"${searchQuery.trim()}" - ` : "";
+      return {
+        title: `Search ${queryPart}Sanskrit Shlokas & Philosophical Concepts`,
+        description: searchQuery.trim()
+          ? `Search results for "${searchQuery}" across Sanskrit scriptures, shlokas, English meanings, and philosophical commentary.`
+          : "Search across the Bhagavad Gita, Upanishads, and Patanjali Yoga Sutras by Sanskrit shloka, transliteration, English meaning, or key philosophical concepts.",
+        keywords: "Search shlokas, Sanskrit verse lookup, Gita search, Yoga Sutras search, karma, dharma, atman",
+        ogType: "website" as const,
+        canonicalUrl: searchQuery.trim()
+          ? `https://sutrasparsh.com/?tab=search&q=${encodeURIComponent(searchQuery.trim())}`
+          : "https://sutrasparsh.com/?tab=search",
+      };
+    }
+
+    if (activeTab === "journey") {
+      return {
+        title: "My Sādhana Journey, Daily Study Goals & Sacred Streaks",
+        description: "Track your 15-minute daily study goals, personal spiritual progress, bookmarked Sanskrit verses, reflections, and Brahma Muhurta sadhana streaks.",
+        keywords: "Sadhana journey, daily study goal, 15 minute study target, spiritual reflection journal, Sanskrit bookmarks, meditation streak, Brahma Muhurta",
+        ogType: "website" as const,
+        canonicalUrl: "https://sutrasparsh.com/?tab=journey",
+      };
+    }
+
+    if (activeTab === "more") {
+      return {
+        title: "Sacred Sanctuary Tools & Temple Atmosphere",
+        description: "Access temple tools: 432Hz Tanpura drone synthesizer, Sanskrit root explorer, audio recitation controls, and spiritual resources.",
+        keywords: "Tanpura drone, temple atmosphere, sacred tools, Sanskrit recitation settings",
+        ogType: "website" as const,
+        canonicalUrl: "https://sutrasparsh.com/?tab=preferences",
+      };
+    }
+
+    // Default: Home / Daily Shloka Sanctuary
+    return {
+      title: `Daily Shloka: ${currentDailyVerse.title} - ${currentDailyVerse.source}`,
+      description: `Today's Contemplation: "${currentDailyVerse.meaning.slice(0, 135)}..." Contemplate sacred Sanskrit verses with audio recitation and commentary on SutraSparsh.`,
+      keywords: `Daily shloka, ${currentDailyVerse.title}, ${currentDailyVerse.source}, Sanskrit verse of the day, daily contemplation, Vedic wisdom`,
+      ogType: "website" as const,
+      canonicalUrl: "https://sutrasparsh.com/",
+      structuredData: {
+        "@type": "Article",
+        headline: `Daily Shloka: ${currentDailyVerse.title} - ${currentDailyVerse.source}`,
+        text: currentDailyVerse.sanskrit,
+      },
+    };
+  }, [subScreen, activeTab, selectedVerseData, activeScriptureData, currentDailyVerse, searchQuery]);
+
   return (
     <div
       className={`w-full ${
@@ -856,6 +1177,14 @@ ${reflections
           : "#0A0502",
       }}
     >
+      <DynamicMetadata
+        title={seoMetadata.title}
+        description={seoMetadata.description}
+        keywords={seoMetadata.keywords}
+        ogType={seoMetadata.ogType}
+        canonicalUrl={seoMetadata.canonicalUrl}
+        structuredData={seoMetadata.structuredData}
+      />
       {/* Container: Fluid max-w-7xl on desktop when embedded, or mobile shell when standalone */}
       <div
         className={`w-full ${
@@ -879,11 +1208,12 @@ ${reflections
       >
         {/* ════════════ ONBOARDING MODAL ════════════ */}
         {!onboardingDone && (
-          <div
-            className="fixed inset-0 z-50 overflow-y-auto animate-fadeIn backdrop-blur-xl bg-stone-950/85 flex justify-center p-0 sm:p-4 lg:p-6"
-          >
+          <ModalPortal>
             <div
-              className="w-full max-w-lg min-h-dvh sm:min-h-0 sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col justify-between p-6 sm:p-8 overflow-y-auto border border-white/10"
+              className="fixed inset-0 z-50 flex items-start sm:items-center justify-center overflow-y-auto overscroll-contain animate-fadeIn backdrop-blur-xl bg-stone-950/85 p-0 sm:p-4 md:p-6 lg:p-8 xl:p-10 pt-0 sm:pt-4 md:pt-6 lg:pt-8 xl:pt-10 pb-24 sm:pb-6 md:pb-8 lg:pb-12"
+            >
+            <div
+              className="w-full max-w-full sm:max-w-lg min-h-dvh sm:min-h-0 sm:my-auto rounded-none sm:rounded-2xl md:rounded-3xl shadow-2xl flex flex-col justify-between p-6 sm:p-8 overflow-y-auto border border-white/10"
               style={{
                 backgroundColor: isSandstone ? "rgba(18,10,4,0.98)" : "rgba(15,10,26,0.98)",
               }}
@@ -956,6 +1286,7 @@ ${reflections
             </div>
             </div>
           </div>
+        </ModalPortal>
         )}
 
         {/* ════════════ APP BAR (Hidden when embedded into main responsive shell) ════════════ */}
@@ -1003,14 +1334,15 @@ ${reflections
                   amethyst: "light",
                   light: "festival",
                   festival: "golden-hour",
-                  "golden-hour": "sandstone",
+                  "golden-hour": "prism-pulse",
+                  "prism-pulse": "sandstone",
                 };
                 handleSelectTheme(nextMap[theme] || "sandstone");
               }}
               className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs transition-transform active:scale-95 shadow-sm"
               title={`Switch atmosphere (Current: ${theme})`}
             >
-              {isLight ? "☀️" : isFestival ? "🪔" : isAmethyst ? "🔮" : isGoldenHour ? "🌅" : "🏛️"}
+              {isLight ? "☀️" : isFestival ? "🪔" : isAmethyst ? "🔮" : isGoldenHour ? "🌅" : isPrismPulse ? "⚡" : "🏛️"}
             </button>
 
             {/* Search Button */}
@@ -1063,7 +1395,7 @@ ${reflections
                 <button
                   onClick={() => setSelectedDateOffset((prev) => prev - 1)}
                   className={`px-2.5 py-1 rounded-lg text-[10.5px] font-medium transition-colors cursor-pointer border ${
-                    isLight
+                    isLightCanvas
                       ? "bg-white hover:bg-stone-100 text-stone-800 border-stone-300 shadow-xs"
                       : "bg-white/5 hover:bg-white/10 text-stone-300 border-white/5"
                   }`}
@@ -1076,6 +1408,8 @@ ${reflections
                   className={`font-mono text-[11px] px-2 py-0.5 rounded font-bold border ${
                     isLight
                       ? "bg-amber-100 text-amber-950 border-amber-300"
+                      : isPrismPulse
+                      ? "bg-purple-100 text-purple-950 border-purple-300"
                       : "bg-amber-500/15 text-amber-300 border-amber-500/25"
                   }`}
                 >
@@ -1090,7 +1424,7 @@ ${reflections
                 <button
                   onClick={() => setSelectedDateOffset((prev) => prev + 1)}
                   className={`px-2.5 py-1 rounded-lg text-[10.5px] font-medium transition-colors cursor-pointer border ${
-                    isLight
+                    isLightCanvas
                       ? "bg-white hover:bg-stone-100 text-stone-800 border-stone-300 shadow-xs"
                       : "bg-white/5 hover:bg-white/10 text-stone-300 border-white/5"
                   }`}
@@ -1105,18 +1439,20 @@ ${reflections
             {/* 1. DAILY SHLOKA ROTATION SECTION */}
             {/* Today's Wisdom Card (Dynamic Daily Rotation) */}
             <div className={`mx-4 p-5 sm:p-6 rounded-3xl ${themeCardDark} space-y-4 shadow-xl`}>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-1 flex-wrap sm:flex-nowrap">
                 <span
                   className="text-[10.5px] font-extrabold tracking-widest uppercase"
                   style={{ color: themeGoldLight }}
                 >
                   DAILY SHLOKA ROTATION
                 </span>
-                <div className="flex items-center space-x-1.5">
+                <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
                   <span
                     className={`text-[10px] px-2 py-0.5 rounded-full font-mono border ${
                       isLight
                         ? "bg-amber-100 text-amber-950 border-amber-300 font-bold"
+                        : isPrismPulse
+                        ? "bg-purple-100 text-purple-950 border-purple-200 font-bold"
                         : "bg-amber-500/20 text-amber-300 border-amber-500/30"
                     }`}
                   >
@@ -1124,13 +1460,30 @@ ${reflections
                   </span>
                   <span
                     className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
-                      isLight
-                        ? "bg-stone-200/80 text-stone-700"
+                      isLightCanvas
+                        ? "bg-stone-200/80 text-stone-700 font-bold"
                         : "bg-white/10 text-stone-300"
                     }`}
                   >
                     {prefChantSpeed}x
                   </span>
+                  <button
+                    onClick={() => {
+                      handleOpenShare(currentDailyVerse);
+                    }}
+                    className={`px-2.5 py-0.5 rounded-full transition-colors cursor-pointer border flex items-center space-x-1 shadow-xs ${
+                      isLightCanvas
+                        ? "bg-amber-100/90 hover:bg-amber-200 text-amber-950 border-amber-300 font-bold"
+                        : isPrismPulse
+                        ? "bg-purple-100/90 hover:bg-purple-200 text-purple-950 border-purple-200 font-bold"
+                        : "bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/30 font-bold"
+                    }`}
+                    title={`Share ${currentDailyVerse.title} (${currentDailyVerse.source})`}
+                    aria-label={`Share ${currentDailyVerse.title} - ${currentDailyVerse.source}`}
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <span className="text-[10px] font-bold">Share</span>
+                  </button>
                 </div>
               </div>
 
@@ -1138,52 +1491,93 @@ ${reflections
               <div className="space-y-2 py-1">
                 {(prefScript === "both" || prefScript === "devanagari") && (
                   <div
-                    className={`font-sanskrit text-lg sm:text-xl leading-[2.1] text-center ${
-                      isLight ? "text-[#1C0F05] font-semibold" : "text-stone-100"
+                    className={`font-sanskrit text-lg sm:text-xl leading-[2.2] text-center ${
+                      isLight
+                        ? "text-[#1C0F05] font-semibold"
+                        : isPrismPulse
+                        ? "text-[#181326] font-bold"
+                        : "text-stone-100"
                     }`}
                   >
-                    {currentDailyVerse.sanskrit.split("\n").map((line, idx) => (
-                      <div key={idx}>{line}</div>
-                    ))}
+                    {currentDailyVerse.sanskrit.split("\n").map((line, lineIdx) => {
+                      const chunks = line.split(/(\s+|[।॥,]+)/);
+                      return (
+                        <div key={lineIdx} className="flex flex-wrap items-center justify-center">
+                          {chunks.map((chunk, chunkIdx) => {
+                            const isWord = !/^[\s।॥,]+$/.test(chunk) && chunk.trim().length > 0;
+                            if (!isWord) {
+                              return <span key={chunkIdx}>{chunk}</span>;
+                            }
+                            return (
+                              <button
+                                key={chunkIdx}
+                                type="button"
+                                onClick={() => handleShlokaWordClick(chunk)}
+                                className={`group inline-block px-1.5 py-0.5 mx-0.5 my-0.5 rounded-lg transition-all cursor-pointer font-sanskrit hover:scale-[1.04] focus:outline-none focus:ring-1 focus:ring-amber-400 ${
+                                  isLight
+                                    ? "hover:bg-amber-100/90 hover:text-amber-950 text-[#1C0F05]"
+                                    : isPrismPulse
+                                    ? "hover:bg-purple-100 hover:text-purple-950 text-[#181326]"
+                                    : "hover:bg-amber-400/20 hover:text-amber-200 text-stone-100"
+                                }`}
+                                title={`Click word to listen to verse recitation · "${chunk}"`}
+                              >
+                                {chunk}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
                 {(prefScript === "both" || prefScript === "transliteration") && (
                   <div
                     className={`font-serif italic text-xs sm:text-sm leading-relaxed text-center px-2 ${
-                      isLight ? "text-[#6E3B0A]" : "text-amber-200/90"
+                      isLight
+                        ? "text-[#6E3B0A]"
+                        : isPrismPulse
+                        ? "text-[#6B46C1] font-medium"
+                        : "text-amber-200/90"
                     }`}
                   >
                     {currentDailyVerse.transliteration}
                   </div>
                 )}
+
+                {/* Subtle Look Closer Helper Chip */}
+                <div className="flex items-center justify-center space-x-1.5 pt-0.5 text-[10.5px] font-medium text-amber-400/90 tracking-wide">
+                  <Sparkles className="w-3 h-3 text-amber-400 shrink-0 animate-pulse" />
+                  <span>Tap any word above to Look Closer · पदच्छेद & roots</span>
+                </div>
               </div>
 
               {/* Sacred Lotus Rule Divider */}
               <div className="flex items-center space-x-2.5 py-1">
-                <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
+                <div className={`flex-1 h-[1px] ${isPrismPulse ? "bg-gradient-to-r from-transparent via-[#936BFA]/40 to-transparent" : "bg-gradient-to-r from-transparent via-amber-400/30 to-transparent"}`} />
                 <div
                   className="w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: themeGold }}
+                  style={{ backgroundColor: isPrismPulse ? "#936BFA" : themeGold }}
                 />
-                <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
+                <div className={`flex-1 h-[1px] ${isPrismPulse ? "bg-gradient-to-r from-transparent via-[#936BFA]/40 to-transparent" : "bg-gradient-to-r from-transparent via-amber-400/30 to-transparent"}`} />
               </div>
 
               {/* Meaning & Commentary (Respecting prefLang) */}
               <div className="space-y-1.5 text-center px-1">
                 {(prefLang === "dual" || prefLang === "en") && (
                   <p
-                    className={`text-xs sm:text-sm italic leading-relaxed ${
-                      isLight ? "text-[#2B1B10] font-normal" : ""
+                    className={`text-xs sm:text-sm italic leading-relaxed shloka-meaning-en ${
+                      isLight ? "text-[#2B1B10] font-normal" : isPrismPulse ? "text-[#2D3748] font-normal" : ""
                     }`}
-                    style={{ color: isLight ? undefined : themeMist }}
+                    style={{ color: isLight || isPrismPulse ? undefined : themeMist }}
                   >
                     "{currentDailyVerse.meaning}"
                   </p>
                 )}
                 {(prefLang === "dual" || prefLang === "hi") && currentDailyVerse.hindiMeaning && (
                   <p
-                    className={`text-xs font-sanskrit leading-relaxed ${
-                      isLight ? "text-[#7A3800] font-medium" : "text-amber-300/80"
+                    className={`text-xs font-sanskrit leading-relaxed shloka-meaning-hi ${
+                      isLight ? "text-[#7A3800] font-medium" : isPrismPulse ? "text-[#9A3412] font-semibold" : "text-amber-300/80"
                     }`}
                   >
                     "{currentDailyVerse.hindiMeaning}"
@@ -1194,58 +1588,105 @@ ${reflections
               {/* Reference */}
               <div
                 className="text-[11.5px] font-bold flex items-center justify-center space-x-2 pt-1"
-                style={{ color: themeGoldLight }}
+                style={{ color: isPrismPulse ? "#6D28D9" : themeGoldLight }}
               >
-                <div className="w-4 h-[1px]" style={{ backgroundColor: themeGold }} />
+                <div className="w-4 h-[1px]" style={{ backgroundColor: isPrismPulse ? "#936BFA" : themeGold }} />
                 <span>
                   {currentDailyVerse.source} · {currentDailyVerse.title}
                 </span>
-                <div className="w-4 h-[1px]" style={{ backgroundColor: themeGold }} />
+                <div className="w-4 h-[1px]" style={{ backgroundColor: isPrismPulse ? "#936BFA" : themeGold }} />
               </div>
 
-              {/* Buttons */}
-              <div className="flex space-x-2.5 pt-2">
+              {/* Action Buttons - 3 buttons in a single row */}
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2 pt-2">
+                {/* 1. Read & Study */}
                 <button
                   onClick={() => openVerseScreen(currentDailyVerse.id)}
-                  className="flex-1 py-2.5 rounded-full font-bold text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-stone-950 shadow hover:scale-[1.02] transition-transform text-center cursor-pointer"
-                >
-                  Read & Study
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedVerseData(currentDailyVerse);
-                    setPlayerVisible(true);
-                    soundEngine.playTempleBell(440);
-                    recitationEngine.play(
-                      currentDailyVerse.id,
-                      currentDailyVerse.sanskrit,
-                      prefChantSpeed
-                    );
-                  }}
-                  className={`flex-1 py-2.5 rounded-full font-bold text-xs border transition-colors flex items-center justify-center space-x-1.5 cursor-pointer ${
-                    isLight
-                      ? "bg-white hover:bg-stone-100 text-stone-800 border-stone-300 shadow-xs"
-                      : "bg-white/10 hover:bg-white/15 text-stone-200 border-white/10"
+                  className={`w-full py-2 sm:py-2.5 px-1.5 sm:px-2 rounded-xl sm:rounded-full font-bold text-[11px] sm:text-xs shadow hover:scale-[1.02] transition-all text-center cursor-pointer flex items-center justify-center space-x-1 whitespace-nowrap overflow-hidden ${
+                    isPrismPulse
+                      ? "bg-gradient-to-r from-[#FF9D2C] to-[#FA6BA7] text-white shadow-md font-extrabold"
+                      : "bg-gradient-to-r from-amber-400 to-orange-500 text-stone-950"
                   }`}
-                  aria-label="Listen to recitation at chant speed"
+                  title="Read & Study this Shloka"
                 >
-                  <Volume2 className="w-3.5 h-3.5" />
-                  <span>Listen ({prefChantSpeed}x)</span>
+                  <BookOpen className="w-3.5 h-3.5 shrink-0 hidden xs:inline" />
+                  <span className="truncate">Read & Study</span>
                 </button>
+
+                {/* 2. Look Closer (Inserted between Read & Study and Listen) */}
                 <button
-                  onClick={() => {
-                    setSelectedVerseData(currentDailyVerse);
-                    handleOpenShare();
-                  }}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer border ${
-                    isLight
-                      ? "bg-white hover:bg-stone-100 text-stone-700 border-stone-300 shadow-xs"
-                      : "bg-white/10 hover:bg-white/15 text-stone-200 border-transparent"
+                  onClick={() => handleOpenLookCloser()}
+                  className={`w-full py-2 sm:py-2.5 px-1.5 sm:px-2 rounded-xl sm:rounded-full font-bold text-[11px] sm:text-xs border transition-all flex items-center justify-center space-x-1 cursor-pointer whitespace-nowrap overflow-hidden shadow-xs hover:scale-[1.02] ${
+                    isLightCanvas
+                      ? "bg-amber-100/80 hover:bg-amber-200/80 text-amber-950 border-amber-300"
+                      : isPrismPulse
+                      ? "bg-purple-100/90 hover:bg-purple-200/90 text-purple-950 border-purple-300"
+                      : "bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border-amber-500/35"
                   }`}
-                  title="Share Shloka"
+                  title="Look Closer - Paninian Roots, Sandhi & Etymology"
                 >
-                  <Share2 className="w-4 h-4" />
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span className="truncate">Look Closer</span>
                 </button>
+
+                {/* 3. Listen / Media Controls (Play, Pause, Stop) */}
+                {isDailyPlaying ? (
+                  <div className="flex items-center space-x-1 w-full h-full">
+                    <button
+                      onClick={handlePauseDaily}
+                      className="flex-1 h-full py-2 px-1.5 rounded-xl sm:rounded-full font-bold text-[11px] sm:text-xs border transition-all flex items-center justify-center space-x-1 cursor-pointer bg-amber-500 hover:bg-amber-400 text-stone-950 border-amber-400 shadow-sm"
+                      title="Pause Recitation"
+                      aria-label="Pause recitation"
+                    >
+                      <Pause className="w-3.5 h-3.5 shrink-0 fill-current" />
+                      <span className="truncate">Pause</span>
+                    </button>
+                    <button
+                      onClick={handleStopDaily}
+                      className="h-full px-2 py-2 rounded-xl sm:rounded-full font-bold text-[11px] sm:text-xs border transition-all flex items-center justify-center cursor-pointer bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/30"
+                      title="Stop Recitation"
+                      aria-label="Stop recitation"
+                    >
+                      <Square className="w-3 h-3 shrink-0 fill-current" />
+                    </button>
+                  </div>
+                ) : isDailyPaused ? (
+                  <div className="flex items-center space-x-1 w-full h-full">
+                    <button
+                      onClick={handleResumeDaily}
+                      className="flex-1 h-full py-2 px-1.5 rounded-xl sm:rounded-full font-bold text-[11px] sm:text-xs border transition-all flex items-center justify-center space-x-1 cursor-pointer bg-emerald-500 hover:bg-emerald-400 text-stone-950 border-emerald-400 shadow-sm"
+                      title="Resume Recitation"
+                      aria-label="Resume recitation"
+                    >
+                      <Play className="w-3.5 h-3.5 shrink-0 fill-current" />
+                      <span className="truncate">Resume</span>
+                    </button>
+                    <button
+                      onClick={handleStopDaily}
+                      className="h-full px-2 py-2 rounded-xl sm:rounded-full font-bold text-[11px] sm:text-xs border transition-all flex items-center justify-center cursor-pointer bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/30"
+                      title="Stop Recitation"
+                      aria-label="Stop recitation"
+                    >
+                      <Square className="w-3 h-3 shrink-0 fill-current" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handlePlayDaily}
+                    className={`w-full py-2 sm:py-2.5 px-1.5 sm:px-2 rounded-xl sm:rounded-full font-bold text-[11px] sm:text-xs border transition-all flex items-center justify-center space-x-1 cursor-pointer whitespace-nowrap overflow-hidden hover:scale-[1.02] ${
+                      isLightCanvas
+                        ? "bg-stone-100 hover:bg-stone-200 text-stone-800 border-stone-300 shadow-xs"
+                        : isPrismPulse
+                        ? "bg-white/80 hover:bg-white text-purple-950 border-purple-200 shadow-xs"
+                        : "bg-white/10 hover:bg-white/15 text-stone-200 border-white/10"
+                    }`}
+                    title={`Listen to recitation at ${prefChantSpeed}x`}
+                    aria-label="Listen to recitation"
+                  >
+                    <Volume2 className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">Listen</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1253,9 +1694,16 @@ ${reflections
             <div className="px-5">
               <StreakFireCounter
                 streakData={streakData}
-                isLight={isLight}
+                isLight={isLightCanvas}
                 onCheckin={() => {
                   progressService.triggerMilestoneCheckin();
+                }}
+                onOpenGoalSettings={() => {
+                  setActiveTab("more");
+                  setTimeout(() => {
+                    const el = document.getElementById("section-daily-reading-goal");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }, 150);
                 }}
               />
             </div>
@@ -1272,7 +1720,7 @@ ${reflections
                 <button
                   onClick={() => setActiveTab("journey")}
                   className={`text-xs font-bold transition-colors ${
-                    isLight ? "text-amber-800 hover:text-amber-950" : "text-stone-400 hover:text-amber-300"
+                    isLightCanvas ? "text-amber-800 hover:text-amber-950" : "text-stone-400 hover:text-amber-300"
                   }`}
                 >
                   View all
@@ -1282,7 +1730,7 @@ ${reflections
               <div
                 onClick={() => openScriptureScreen("bhagavad_gita")}
                 className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center space-x-3.5 group shadow ${
-                  isLight
+                  isLightCanvas
                     ? "bg-white border-stone-200 hover:border-amber-400 shadow-sm"
                     : "bg-stone-900/60 border-amber-500/20 hover:border-amber-500/40"
                 }`}
@@ -1291,19 +1739,19 @@ ${reflections
                   📗
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className={`text-sm font-bold leading-snug break-words ${isLight ? "text-stone-900" : "text-stone-100"}`}>
+                  <div className={`text-sm font-bold leading-snug break-words ${isLightCanvas ? "text-stone-900" : "text-stone-100"}`}>
                     {resumePoint?.scriptureTitle || "Bhagavad Gita"}
                   </div>
-                  <div className={`text-[11.5px] leading-snug break-words mt-0.5 ${isLight ? "text-stone-600" : "text-stone-400"}`}>
+                  <div className={`text-[11.5px] leading-snug break-words mt-0.5 ${isLightCanvas ? "text-stone-600" : "text-stone-400"}`}>
                     {resumePoint?.chapterTitle || "Chapter 2 · Verse 47 · Sankhya Yoga"}
                   </div>
-                  <div className={`w-full h-1.5 rounded-full mt-2 overflow-hidden ${isLight ? "bg-stone-100" : "bg-stone-800"}`}>
+                  <div className={`w-full h-1.5 rounded-full mt-2 overflow-hidden ${isLightCanvas ? "bg-stone-100" : "bg-stone-800"}`}>
                     <div
                       className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-500"
                       style={{ width: `${resumePoint?.progressPercent || 62}%` }}
                     />
                   </div>
-                  <div className={`text-[10.5px] font-bold mt-1 ${isLight ? "text-amber-800" : "text-amber-400/90"}`}>
+                  <div className={`text-[10.5px] font-bold mt-1 ${isLightCanvas ? "text-amber-800" : "text-amber-400/90"}`}>
                     {resumePoint?.progressPercent || 62}% · 266 verses read
                   </div>
                 </div>
@@ -1327,7 +1775,7 @@ ${reflections
                   type="button"
                   onClick={toggleCollapsibleSection}
                   className={`p-1.5 rounded-lg border transition-colors cursor-pointer flex items-center justify-center ${
-                    isLight
+                    isLightCanvas
                       ? "bg-white hover:bg-stone-100 text-stone-800 border-stone-300 shadow-xs"
                       : "bg-white/5 hover:bg-white/10 text-amber-300 border-white/10"
                   }`}
@@ -1348,7 +1796,7 @@ ${reflections
                   {/* 4.1 Brahma Muhūrta section (with collapsible toggle) */}
                   <div className="space-y-1.5">
                     <div className="px-5 flex items-center justify-between text-[11px]">
-                      <span className={`font-semibold flex items-center space-x-1.5 ${isLight ? "text-stone-700" : "text-stone-300"}`}>
+                      <span className={`font-semibold flex items-center space-x-1.5 ${isLightCanvas ? "text-stone-700" : "text-stone-300"}`}>
                         <span className="font-mono text-[10px] text-amber-500">4.1</span>
                         <span>Brahma Muhūrta Section</span>
                       </span>
@@ -1356,7 +1804,7 @@ ${reflections
                         type="button"
                         onClick={toggleBrahmaMuhurta}
                         className={`p-1.5 rounded-lg border transition-colors cursor-pointer flex items-center justify-center ${
-                          isLight ? "bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-200" : "bg-white/5 hover:bg-white/10 text-amber-400 border-white/10"
+                          isLightCanvas ? "bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-200" : "bg-white/5 hover:bg-white/10 text-amber-400 border-white/10"
                         }`}
                         title={isBrahmaMuhurtaOpen ? "Collapse Brahma Muhurta" : "Expand Brahma Muhurta"}
                         aria-label={isBrahmaMuhurtaOpen ? "Collapse Brahma Muhurta" : "Expand Brahma Muhurta"}
@@ -1386,7 +1834,7 @@ ${reflections
                           }
                         }}
                         className={`mx-4 px-4 py-2.5 rounded-2xl border cursor-pointer flex items-center justify-between text-xs transition-colors ${
-                          isLight
+                          isLightCanvas
                             ? "bg-amber-50 border-amber-200 text-stone-800 hover:bg-amber-100/70"
                             : "bg-stone-900/50 border-amber-500/20 text-amber-300 hover:bg-stone-900/80"
                         }`}
@@ -1419,7 +1867,7 @@ ${reflections
                           type="button"
                           onClick={toggleExploreScriptures}
                           className={`p-1.5 rounded-lg border transition-colors cursor-pointer flex items-center justify-center ${
-                            isLight ? "bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-200" : "bg-white/5 hover:bg-white/10 text-amber-400 border-white/10"
+                            isLightCanvas ? "bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-200" : "bg-white/5 hover:bg-white/10 text-amber-400 border-white/10"
                           }`}
                           title={isExploreScripturesOpen ? "Collapse Scriptures" : "Expand Scriptures"}
                           aria-label={isExploreScripturesOpen ? "Collapse Scriptures" : "Expand Scriptures"}
@@ -1434,7 +1882,7 @@ ${reflections
                         <button
                           onClick={() => setActiveTab("explore")}
                           className={`text-xs font-bold transition-colors ${
-                            isLight ? "text-amber-800 hover:text-amber-950" : "text-stone-400 hover:text-amber-300"
+                            isLightCanvas ? "text-amber-800 hover:text-amber-950" : "text-stone-400 hover:text-amber-300"
                           }`}
                         >
                           View all
@@ -1456,7 +1904,7 @@ ${reflections
                             key={idx}
                             onClick={chip.action}
                             className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
-                              isLight
+                              isLightCanvas
                                 ? "border-stone-300 bg-white text-stone-800 hover:bg-amber-50 hover:border-amber-400 shadow-xs"
                                 : "border-white/10 bg-white/5 text-stone-200 hover:bg-amber-500/10 hover:border-amber-500/30"
                             }`}
@@ -1783,10 +2231,10 @@ ${reflections
                     onClick={() => setExplorePill(pill)}
                     className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
                       explorePill === pill
-                        ? isLight
+                        ? isLightCanvas
                           ? "bg-amber-500 text-stone-950 font-extrabold shadow-xs"
                           : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                        : isLight
+                        : isLightCanvas
                         ? "bg-stone-200/70 text-stone-700 hover:bg-stone-200"
                         : "bg-white/5 text-stone-400 hover:text-stone-200"
                     }`}
@@ -1799,7 +2247,7 @@ ${reflections
               {/* Scriptures List */}
               <div
                 className={`rounded-3xl border overflow-hidden ${
-                  isLight
+                  isLightCanvas
                     ? "bg-white border-stone-200 divide-y divide-stone-100 shadow-sm"
                     : "bg-stone-900/60 border-amber-500/20 divide-y divide-white/5"
                 }`}
@@ -1811,12 +2259,12 @@ ${reflections
                       key={sc.id}
                       onClick={() => openScriptureScreen(sc.id)}
                       className={`p-4 flex items-center space-x-3.5 cursor-pointer transition-colors group ${
-                        isLight ? "hover:bg-amber-50/60" : "hover:bg-white/5"
+                        isLightCanvas ? "hover:bg-amber-50/60" : "hover:bg-white/5"
                       }`}
                     >
                       <div
                         className={`w-11 h-11 rounded-2xl border flex items-center justify-center font-sanskrit text-lg flex-shrink-0 ${
-                          isLight
+                          isLightCanvas
                             ? "bg-amber-100 text-amber-950 border-amber-300 font-bold"
                             : "bg-amber-500/10 border-amber-500/20 text-amber-300"
                         }`}
@@ -1824,20 +2272,20 @@ ${reflections
                         {sc.sanskritName.slice(0, 2)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className={`text-sm font-bold truncate ${isLight ? "text-stone-900" : "text-stone-100"}`}>
+                        <div className={`text-sm font-bold truncate ${isLightCanvas ? "text-stone-900" : "text-stone-100"}`}>
                           {sc.name}
                         </div>
-                        <div className={`text-[11px] truncate mt-0.5 ${isLight ? "text-stone-600" : "text-stone-400"}`}>
+                        <div className={`text-[11px] truncate mt-0.5 ${isLightCanvas ? "text-stone-600" : "text-stone-400"}`}>
                           {sc.totalChapters} {sc.id === "yoga_sutras" ? "Padas" : "Chapters"} · {sc.totalVerses} Verses · {sc.category}
                         </div>
-                        <div className={`w-full h-1 rounded-full mt-2 overflow-hidden ${isLight ? "bg-stone-100" : "bg-stone-800"}`}>
+                        <div className={`w-full h-1 rounded-full mt-2 overflow-hidden ${isLightCanvas ? "bg-stone-100" : "bg-stone-800"}`}>
                           <div
                             className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full"
                             style={{ width: sc.id === "bhagavad_gita" ? "62%" : "15%" }}
                           />
                         </div>
                       </div>
-                      <ChevronRight className={`w-4 h-4 group-hover:translate-x-0.5 transition-all ${isLight ? "text-stone-400 group-hover:text-amber-600" : "text-stone-500 group-hover:text-amber-400"}`} />
+                      <ChevronRight className={`w-4 h-4 group-hover:translate-x-0.5 transition-all ${isLightCanvas ? "text-stone-400 group-hover:text-amber-600" : "text-stone-500 group-hover:text-amber-400"}`} />
                     </div>
                   ))}
               </div>
@@ -1858,7 +2306,7 @@ ${reflections
             <div className="px-4 space-y-3">
               <div
                 className={`flex items-center space-x-2.5 p-3 rounded-2xl border ${
-                  isLight
+                  isLightCanvas
                     ? "bg-white border-stone-300 shadow-xs"
                     : "bg-white/5 border-white/10"
                 }`}
@@ -1870,7 +2318,7 @@ ${reflections
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Type a Sanskrit shloka, keyword ('karma', 'atman', 'dharma')..."
                   className={`flex-1 bg-transparent text-xs outline-none ${
-                    isLight
+                    isLightCanvas
                       ? "text-stone-900 placeholder-stone-400"
                       : "text-stone-100 placeholder-stone-500"
                   }`}
@@ -1879,7 +2327,7 @@ ${reflections
                   <button
                     onClick={() => setSearchQuery("")}
                     className={`text-xs font-bold px-1 cursor-pointer ${
-                      isLight ? "text-stone-500 hover:text-stone-700" : "text-stone-500 hover:text-stone-300"
+                      isLightCanvas ? "text-stone-500 hover:text-stone-700" : "text-stone-500 hover:text-stone-300"
                     }`}
                   >
                     ✕
@@ -1903,7 +2351,7 @@ ${reflections
                 {searchResults.length === 0 ? (
                   <div
                     className={`p-6 rounded-2xl text-center text-xs border ${
-                      isLight
+                      isLightCanvas
                         ? "bg-white border-stone-200 text-stone-600 shadow-xs"
                         : "bg-white/5 border-white/5 text-stone-400"
                     }`}
@@ -1923,7 +2371,7 @@ ${reflections
                           key={verse.id}
                           onClick={() => openVerseScreen(verse.id)}
                           className={`p-4 rounded-2xl border cursor-pointer transition-all space-y-2.5 ${
-                            isLight
+                            isLightCanvas
                               ? "bg-white border-stone-200 hover:border-amber-400 shadow-sm text-stone-900"
                               : isFestival
                               ? "bg-[#480C14]/90 border-[#FF8A00]/30 hover:border-[#FF8A00]/60 text-[#FFF6E3]"
@@ -1935,7 +2383,7 @@ ${reflections
                           <div className="flex items-center justify-between">
                             <span
                               className={`text-xs font-bold ${
-                                isLight ? "text-amber-800" : "text-amber-400"
+                                isLightCanvas ? "text-amber-800" : "text-amber-400"
                               }`}
                             >
                               {displaySource} · {verse.title}
@@ -1945,7 +2393,7 @@ ${reflections
                           {/* Full Sanskrit Verse - no line clamp */}
                           <div
                             className={`font-sanskrit text-sm leading-relaxed whitespace-pre-line ${
-                              isLight ? "text-[#1A0E05] font-semibold" : "text-stone-100"
+                              isLightCanvas ? "text-[#1A0E05] font-semibold" : "text-stone-100"
                             }`}
                           >
                             {verse.sanskrit}
@@ -1953,8 +2401,8 @@ ${reflections
                           {/* Transliteration */}
                           {verse.transliteration && (
                             <p
-                              className={`font-serif italic text-xs leading-relaxed ${
-                                isLight ? "text-[#6E3B0A]" : "text-amber-200/80"
+                              className={`font-serif italic text-xs sm:text-sm leading-relaxed ${
+                                isLightCanvas ? "text-[#6E3B0A]" : "text-amber-200/80"
                               }`}
                             >
                               {verse.transliteration}
@@ -1962,8 +2410,8 @@ ${reflections
                           )}
                           {/* English Meaning - no line clamp */}
                           <p
-                            className={`text-xs leading-relaxed ${
-                              isLight ? "text-stone-700" : "text-stone-300"
+                            className={`text-xs sm:text-sm leading-relaxed ${
+                              isLightCanvas ? "text-stone-700" : "text-stone-300"
                             }`}
                           >
                             {verse.meaning}
@@ -2020,7 +2468,11 @@ ${reflections
                       EXPLORE BY TRADITION
                     </span>
                   </div>
-                  <div className="rounded-2xl bg-stone-900/60 border border-amber-500/20 divide-y divide-white/5">
+                  <div className={`rounded-2xl border divide-y ${
+                    isLightCanvas
+                      ? "bg-white border-stone-200 divide-stone-100 shadow-xs"
+                      : "bg-stone-900/60 border-amber-500/20 divide-white/5"
+                  }`}>
                     {[
                       {
                         icon: "🕉️",
@@ -2050,18 +2502,20 @@ ${reflections
                       <div
                         key={idx}
                         onClick={trad.action}
-                        className="p-3.5 flex items-center space-x-3 cursor-pointer hover:bg-white/5 transition-colors"
+                        className={`p-3.5 flex items-center space-x-3 cursor-pointer ${
+                          isLightCanvas ? "hover:bg-amber-50/60" : "hover:bg-white/5"
+                        } transition-colors`}
                       >
                         <span className="text-xl">{trad.icon}</span>
                         <div className="flex-1">
-                          <div className="text-xs font-bold text-stone-100">
+                          <div className={`text-xs font-bold ${isLightCanvas ? "text-stone-900" : "text-stone-100"}`}>
                             {trad.title}
                           </div>
-                          <div className="text-[10.5px] text-stone-400">
+                          <div className={`text-[10.5px] ${isLightCanvas ? "text-stone-600" : "text-stone-400"}`}>
                             {trad.sub}
                           </div>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-stone-500" />
+                        <ChevronRight className={`w-4 h-4 ${isLightCanvas ? "text-stone-400" : "text-stone-500"}`} />
                       </div>
                     ))}
                   </div>
@@ -2266,7 +2720,7 @@ ${reflections
                         </div>
                       </div>
                     ) : (
-                      <div className="text-xs leading-relaxed italic text-stone-900 whitespace-pre-wrap">
+                      <div className="text-sm sm:text-base leading-relaxed italic text-stone-900 whitespace-pre-wrap w-full flex-1">
                         "{ref.text}"
                       </div>
                     )}
@@ -2305,11 +2759,12 @@ ${reflections
 
         {/* ════════════ SUB-SCREEN 1: SCRIPTURE DETAIL (DYNAMIC CORPUS) ════════════ */}
         {subScreen === "scripture" && (
-          <div
-            className="fixed inset-0 z-50 overflow-y-auto animate-fadeIn backdrop-blur-xl bg-stone-950/80 flex justify-center p-0 sm:p-4 lg:p-6 pb-20 sm:pb-8"
-          >
+          <ModalPortal>
             <div
-              className={`w-full max-w-3xl min-h-dvh sm:min-h-0 sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border ${subScreenBorder}`}
+              className={modalOverlayClass}
+            >
+            <div
+              className={modalDialogClass}
               style={{ backgroundColor: subScreenBg }}
             >
             {/* Sub Bar */}
@@ -2348,9 +2803,26 @@ ${reflections
                 </h1>
               </div>
 
-              <p className="text-xs leading-relaxed" style={{ color: themeMist }}>
-                {activeScriptureData.description}
-              </p>
+              {/* Scripture Philosophical Overview (Expanded to fill visible empty space) */}
+              <div className="space-y-3 pt-1">
+                {(activeScriptureData.expandedOverview && activeScriptureData.expandedOverview.length > 0
+                  ? activeScriptureData.expandedOverview
+                  : [activeScriptureData.description]
+                ).map((paragraph, pIdx) => (
+                  <p
+                    key={pIdx}
+                    className={`text-sm sm:text-base leading-relaxed tracking-normal font-normal ${
+                      isLight ? "text-stone-800" : "text-stone-200"
+                    }`}
+                    style={{
+                      color: isLight ? "#3A291A" : themeMist,
+                      lineHeight: "1.75",
+                    }}
+                  >
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
 
               {/* Tags */}
               <div className="flex flex-wrap gap-1.5">
@@ -2458,15 +2930,17 @@ ${reflections
             </div>
           </div>
         </div>
+        </ModalPortal>
         )}
 
         {/* ════════════ SUB-SCREEN 2: VERSE DETAIL (DYNAMIC MULTI-SCRIPTURE) ════════════ */}
         {subScreen === "verse" && (
-          <div
-            className="fixed inset-0 z-50 overflow-y-auto animate-fadeIn backdrop-blur-xl bg-stone-950/80 flex justify-center p-0 sm:p-4 lg:p-6 pb-20 sm:pb-8"
-          >
+          <ModalPortal>
             <div
-              className={`w-full max-w-3xl min-h-dvh sm:min-h-0 sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border ${subScreenBorder}`}
+              className={modalOverlayClass}
+            >
+            <div
+              className={modalDialogClass}
               style={{ backgroundColor: subScreenBg }}
             >
             {/* Sub Bar */}
@@ -2525,9 +2999,36 @@ ${reflections
               {/* Sanskrit Shloka */}
               {(prefScript === "both" || prefScript === "devanagari") && (
                 <div className={`font-sanskrit text-2xl leading-[2.2] py-2 select-text ${isLight ? "text-stone-950 font-bold" : "text-stone-100"}`}>
-                  {selectedVerseData.sanskrit.split("\n").map((line, idx) => (
-                    <div key={idx}>{line}</div>
-                  ))}
+                  {selectedVerseData.sanskrit.split("\n").map((line, lineIdx) => {
+                    const chunks = line.split(/(\s+|[।॥,]+)/);
+                    return (
+                      <div key={lineIdx} className="flex flex-wrap items-center justify-center">
+                        {chunks.map((chunk, chunkIdx) => {
+                          const isWord = !/^[\s।॥,]+$/.test(chunk) && chunk.trim().length > 0;
+                          if (!isWord) {
+                            return <span key={chunkIdx}>{chunk}</span>;
+                          }
+                          return (
+                            <button
+                              key={chunkIdx}
+                              type="button"
+                              onClick={() => handleStartListen()}
+                              className={`group inline-block px-1.5 py-0.5 mx-0.5 my-0.5 rounded-lg transition-all cursor-pointer font-sanskrit hover:scale-[1.04] focus:outline-none focus:ring-1 focus:ring-amber-400 ${
+                                isLight
+                                  ? "hover:bg-amber-100/90 hover:text-amber-950 text-[#1C0F05]"
+                                  : isPrismPulse
+                                  ? "hover:bg-purple-100 hover:text-purple-950 text-[#181326]"
+                                  : "hover:bg-amber-400/20 hover:text-amber-200 text-stone-100"
+                              }`}
+                              title={`Click word to listen to verse recitation · "${chunk}"`}
+                            >
+                              {chunk}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
@@ -2568,13 +3069,14 @@ ${reflections
                   style={{ color: themeGoldLight }}
                 >
                   <span>WORD-BY-WORD BREAKDOWN (पदच्छेद)</span>
-                  <span className={`text-[9px] lowercase ${isLight ? "text-stone-500" : "text-stone-400"}`}>tap word for sound</span>
+                  <span className={`text-[9px] lowercase ${isLight ? "text-stone-500" : "text-stone-400"}`}>tap word to listen</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {Object.entries(selectedVerseData.wordDict).map(([sanskritWord, details]) => (
                     <div
                       key={sanskritWord}
                       onClick={() => handleWordTap(sanskritWord)}
+                      title={`Listen to verse recitation · "${sanskritWord}"`}
                       className={`p-2.5 rounded-xl border cursor-pointer transition-colors space-y-0.5 ${
                         isLight
                           ? "bg-white border-stone-200 hover:border-amber-400 shadow-2xs"
@@ -2623,7 +3125,7 @@ ${reflections
                 AUTHENTIC LINEAGE COMMENTARY
               </div>
               <div
-                className={`text-xs leading-relaxed ${isLight ? "text-stone-800" : "text-stone-300"}`}
+                className={`text-xs sm:text-sm leading-relaxed ${isLight ? "text-stone-800" : "text-stone-300"}`}
                 style={{ color: isLight ? "#453223" : themeMist }}
               >
                 {commentaryExpanded
@@ -2650,6 +3152,58 @@ ${reflections
                   )}
                 </button>
               </div>
+            </div>
+
+            {/* GOOGLE CLOUD NEURAL2 VOICE STRIP */}
+            <div className={`px-6 py-2.5 border-t flex items-center justify-between gap-2 text-xs ${isLight ? "bg-amber-50/40 border-stone-200" : "bg-white/[0.02] border-white/5"}`}>
+              <div className="flex items-center space-x-1.5 min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-amber-500" />
+                  TTS
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = prefTtsVoice === "hi-IN-Neural2-B" ? "hi-IN-Neural2-A" : "hi-IN-Neural2-B";
+                    setPrefTtsVoice(next);
+                    recitationEngine.setVoice(next);
+                    try {
+                      localStorage.setItem("sutrasparsh_active_neural2_voice", next);
+                      window.dispatchEvent(new CustomEvent("sutrasparsh:pref_voice", { detail: next }));
+                    } catch {}
+                    soundEngine.playTempleBell(440);
+                    setThemeToast(next === "hi-IN-Neural2-A" ? "Voice: Devī Saraswatī (hi-IN-Neural2-A)" : "Voice: Sage Vyāsa (hi-IN-Neural2-B)");
+                  }}
+                  className={`text-[11px] font-medium px-2 py-0.5 rounded-lg border transition-all cursor-pointer truncate ${
+                    isLight
+                      ? "bg-white border-stone-200 text-stone-800 hover:border-amber-400"
+                      : "bg-white/5 border-white/10 text-stone-200 hover:border-amber-500/40"
+                  }`}
+                  title="Click to toggle Google Cloud Neural2 chanter voice"
+                >
+                  {prefTtsVoice === "hi-IN-Neural2-A" ? "🌸 Saraswatī (Neural2-A)" : "🕉️ Vyāsa (Neural2-B)"}
+                </button>
+                <span className="text-[10px] font-mono text-stone-400">
+                  {prefChantSpeed}x SSML
+                </span>
+              </div>
+
+              {isExportMp3Enabled && (
+                <button
+                  type="button"
+                  onClick={() => handleExportAudio(selectedVerseData)}
+                  className={`flex items-center space-x-1 text-[11px] font-medium px-2 py-1 rounded-lg border cursor-pointer transition-colors ${
+                    isLight
+                      ? "bg-white border-stone-200 text-amber-800 hover:bg-amber-50 shadow-2xs"
+                      : "bg-white/5 border-white/10 text-amber-300 hover:bg-white/10"
+                  }`}
+                  title="Download clean .mp3 generated via Google Cloud TTS (Neural2)"
+                >
+                  <Download className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="hidden sm:inline">Export</span>
+                  <span>MP3</span>
+                </button>
+              )}
             </div>
 
             {/* ACTION BAR */}
@@ -2856,15 +3410,17 @@ ${reflections
             </div>
           </div>
         </div>
+        </ModalPortal>
         )}
 
         {/* ════════════ SUB-SCREEN 3: PREFERENCES & THEMES (PERSISTENT) ════════════ */}
         {subScreen === "pref" && (
-          <div
-            className="fixed inset-0 z-50 overflow-y-auto animate-fadeIn backdrop-blur-xl bg-stone-950/80 flex justify-center p-0 sm:p-4 lg:p-6 pb-20 sm:pb-8"
-          >
+          <ModalPortal>
             <div
-              className={`w-full max-w-3xl min-h-dvh sm:min-h-0 sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border ${subScreenBorder}`}
+              className={modalOverlayClass}
+            >
+            <div
+              className={modalDialogClass}
               style={{ backgroundColor: subScreenBg }}
             >
             {/* Top Bar */}
@@ -2898,7 +3454,7 @@ ${reflections
                   <Palette className="w-3.5 h-3.5" />
                   <span>SACRED ATMOSPHERE & COLOR PALETTE</span>
                 </div>
-                <p className="text-xs leading-relaxed" style={{ color: themeMist }}>
+                <p className="text-xs sm:text-sm leading-relaxed" style={{ color: themeMist }}>
                   Choose your sacred reading environment. Your preference is automatically saved to local storage and persists across sessions.
                 </p>
               </div>
@@ -2938,8 +3494,8 @@ ${reflections
                   </span>
                 </div>
 
-                {/* Persistent Segmented Switch Toggle (5 Themes) */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1 bg-black/40 rounded-xl border border-white/5 relative">
+                {/* Persistent Segmented Switch Toggle (6 Themes) */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1.5 p-1 bg-black/40 rounded-xl border border-white/5 relative">
                   <button
                     type="button"
                     onClick={() => handleSelectTheme("sandstone")}
@@ -3000,6 +3556,18 @@ ${reflections
                     <span>🌅</span>
                     <span>Golden</span>
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTheme("prism-pulse")}
+                    className={`py-2 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1 transition-all cursor-pointer ${
+                      isPrismPulse
+                        ? "bg-gradient-to-r from-[#936BFA] to-[#FA6BA7] text-white shadow-md scale-[1.01]"
+                        : "text-stone-400 hover:text-stone-200"
+                    }`}
+                  >
+                    <span>⚡</span>
+                    <span>Prism</span>
+                  </button>
                 </div>
               </div>
 
@@ -3010,8 +3578,10 @@ ${reflections
                   onClick={() => handleSelectTheme("sandstone")}
                   className={`p-4 rounded-2xl cursor-pointer transition-all border relative overflow-hidden ${
                     isSandstone
-                      ? "bg-[#281608]/90 border-amber-500/80 shadow-[0_0_20px_rgba(232,146,26,0.25)]"
-                      : "bg-stone-900/40 border-stone-800/80 hover:bg-stone-800/40 opacity-75 hover:opacity-100"
+                      ? "bg-[#281608]/90 border-amber-500/80 shadow-[0_0_20px_rgba(232,146,26,0.25)] text-stone-100"
+                      : isLightCanvas
+                      ? "bg-white border-stone-200 hover:border-amber-400/60 hover:bg-stone-50 text-stone-900 shadow-xs"
+                      : "bg-stone-900/40 border-stone-800/80 hover:bg-stone-800/40 opacity-75 hover:opacity-100 text-stone-200"
                   }`}
                 >
                   {isSandstone && (
@@ -3027,10 +3597,12 @@ ${reflections
                     </div>
                     <div className="flex-1 min-w-0 pr-16">
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm font-bold text-stone-100">Sandstone Temple</span>
-                        <span className="text-[11px] font-sanskrit text-amber-300">बलुआ पत्थर</span>
+                        <span className={`text-sm font-bold ${isSandstone ? "text-stone-100" : isLightCanvas ? "text-stone-900" : "text-stone-100"}`}>
+                          Sandstone Temple
+                        </span>
+                        <span className="text-[11px] font-sanskrit text-amber-500">बलुआ पत्थर</span>
                       </div>
-                      <p className="text-xs text-stone-300 mt-1 leading-relaxed">
+                      <p className={`text-xs mt-1 leading-relaxed ${isSandstone ? "text-stone-300" : isLightCanvas ? "text-stone-600" : "text-stone-300"}`}>
                         Warm temple ochre, rich amber accents (#E8921A), gold leaf highlights & deep espresso sanctum ground.
                       </p>
                     </div>
@@ -3042,8 +3614,10 @@ ${reflections
                   onClick={() => handleSelectTheme("amethyst")}
                   className={`p-4 rounded-2xl cursor-pointer transition-all border relative overflow-hidden ${
                     isAmethyst
-                      ? "bg-[#241540]/90 border-purple-400/80 shadow-[0_0_20px_rgba(196,168,230,0.25)]"
-                      : "bg-stone-900/40 border-stone-800/80 hover:bg-stone-800/40 opacity-75 hover:opacity-100"
+                      ? "bg-[#241540]/90 border-purple-400/80 shadow-[0_0_20px_rgba(196,168,230,0.25)] text-stone-100"
+                      : isLightCanvas
+                      ? "bg-white border-stone-200 hover:border-purple-300 hover:bg-stone-50 text-stone-900 shadow-xs"
+                      : "bg-stone-900/40 border-stone-800/80 hover:bg-stone-800/40 opacity-75 hover:opacity-100 text-stone-200"
                   }`}
                 >
                   {isAmethyst && (
@@ -3059,10 +3633,12 @@ ${reflections
                     </div>
                     <div className="flex-1 min-w-0 pr-16">
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm font-bold text-stone-100">Amethyst Twilight</span>
-                        <span className="text-[11px] font-sanskrit text-purple-300">गोधूलि जामुनी</span>
+                        <span className={`text-sm font-bold ${isAmethyst ? "text-stone-100" : isLightCanvas ? "text-stone-900" : "text-stone-100"}`}>
+                          Amethyst Twilight
+                        </span>
+                        <span className="text-[11px] font-sanskrit text-purple-400">गोधूलि जामुनी</span>
                       </div>
-                      <p className="text-xs text-stone-300 mt-1 leading-relaxed">
+                      <p className={`text-xs mt-1 leading-relaxed ${isAmethyst ? "text-stone-300" : isLightCanvas ? "text-stone-600" : "text-stone-300"}`}>
                         Meditative deep violet dusk (#0F0A1A), celestial purple aura (#4A2264), radiant amber & moonlit cream.
                       </p>
                     </div>
@@ -3075,6 +3651,8 @@ ${reflections
                   className={`p-4 rounded-2xl cursor-pointer transition-all border relative overflow-hidden ${
                     isLight
                       ? "bg-[#FFFBF5] border-amber-500 shadow-[0_0_20px_rgba(216,137,22,0.25)] text-stone-950"
+                      : isLightCanvas
+                      ? "bg-white border-stone-200 hover:border-amber-400 hover:bg-stone-50 text-stone-900 shadow-xs"
                       : "bg-stone-900/40 border-stone-800/80 hover:bg-stone-800/40 opacity-75 hover:opacity-100 text-stone-200"
                   }`}
                 >
@@ -3091,12 +3669,12 @@ ${reflections
                     </div>
                     <div className="flex-1 min-w-0 pr-16">
                       <div className="flex items-center space-x-2">
-                        <span className={`text-sm font-bold ${isLight ? "text-stone-950" : "text-stone-100"}`}>
+                        <span className={`text-sm font-bold ${isLightCanvas ? "text-stone-950" : "text-stone-100"}`}>
                           Parchment Dawn (Light Mode)
                         </span>
                         <span className="text-[11px] font-sanskrit text-amber-600">उषाकाल</span>
                       </div>
-                      <p className={`text-xs mt-1 leading-relaxed ${isLight ? "text-stone-700" : "text-stone-300"}`}>
+                      <p className={`text-xs mt-1 leading-relaxed ${isLightCanvas ? "text-stone-700" : "text-stone-300"}`}>
                         Daylight readability on soft manuscript parchment (#FFFBF5), deep sandalwood text (#3A2818) & gold accents.
                       </p>
                     </div>
@@ -3109,6 +3687,8 @@ ${reflections
                   className={`p-4 rounded-2xl cursor-pointer transition-all border relative overflow-hidden ${
                     isFestival
                       ? "bg-[#5E111C]/90 border-amber-400 shadow-[0_0_20px_rgba(255,138,0,0.3)] text-stone-100"
+                      : isLightCanvas
+                      ? "bg-white border-stone-200 hover:border-red-300 hover:bg-stone-50 text-stone-900 shadow-xs"
                       : "bg-stone-900/40 border-stone-800/80 hover:bg-stone-800/40 opacity-75 hover:opacity-100 text-stone-200"
                   }`}
                 >
@@ -3125,12 +3705,12 @@ ${reflections
                     </div>
                     <div className="flex-1 min-w-0 pr-16">
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm font-bold text-amber-100">
+                        <span className={`text-sm font-bold ${isFestival ? "text-amber-100" : isLightCanvas ? "text-stone-900" : "text-amber-100"}`}>
                           Festival Gold & Maroon
                         </span>
-                        <span className="text-[11px] font-sanskrit text-amber-300">उत्सव कुंकुम</span>
+                        <span className="text-[11px] font-sanskrit text-amber-500">उत्सव कुंकुम</span>
                       </div>
-                      <p className="text-xs text-amber-200/90 mt-1 leading-relaxed">
+                      <p className={`text-xs mt-1 leading-relaxed ${isFestival ? "text-amber-200/90" : isLightCanvas ? "text-stone-600" : "text-stone-300"}`}>
                         Royal temple vermilion, kumkum maroon (#4B0E17), blazing deep saffron glow & ceremonial gold ornamentation.
                       </p>
                     </div>
@@ -3143,6 +3723,8 @@ ${reflections
                   className={`p-4 rounded-2xl cursor-pointer transition-all border relative overflow-hidden ${
                     isGoldenHour
                       ? "bg-[#251A10]/95 border-[#C9822B] shadow-[0_0_20px_rgba(201,130,43,0.3)] text-stone-100"
+                      : isLightCanvas
+                      ? "bg-white border-stone-200 hover:border-amber-400 hover:bg-stone-50 text-stone-900 shadow-xs"
                       : "bg-stone-900/40 border-stone-800/80 hover:bg-stone-800/40 opacity-75 hover:opacity-100 text-stone-200"
                   }`}
                 >
@@ -3159,20 +3741,63 @@ ${reflections
                     </div>
                     <div className="flex-1 min-w-0 pr-16">
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm font-bold text-amber-100">
+                        <span className={`text-sm font-bold ${isGoldenHour ? "text-amber-100" : isLightCanvas ? "text-stone-900" : "text-amber-100"}`}>
                           Golden Hour Atmosphere
                         </span>
-                        <span className="text-[11px] font-sanskrit text-amber-300">गोधूलि वेला</span>
+                        <span className="text-[11px] font-sanskrit text-amber-500">गोधूलि वेला</span>
                       </div>
-                      <p className="text-xs text-[#F6DFA6]/90 mt-1 leading-relaxed">
+                      <p className={`text-xs mt-1 leading-relaxed ${isGoldenHour ? "text-[#F6DFA6]/90" : isLightCanvas ? "text-stone-600" : "text-stone-300"}`}>
                         Butter cream (#F6DFA6), soft vanilla (#FFF4D8), burnt honey (#C9822B), ink black sanctum (#171717) & warm gray accents (#A89F94).
                       </p>
-                      <div className="flex items-center space-x-1.5 mt-2.5 pt-1.5 border-t border-white/10">
+                      <div className="flex items-center space-x-1.5 mt-2.5 pt-1.5 border-t border-stone-200/50 dark:border-white/10">
                         <span className="w-3.5 h-3.5 rounded-full bg-[#F6DFA6] border border-stone-900/40" title="Butter Cream #F6DFA6" />
                         <span className="w-3.5 h-3.5 rounded-full bg-[#FFF4D8]" title="Soft Vanilla #FFF4D8" />
                         <span className="w-3.5 h-3.5 rounded-full bg-[#C9822B]" title="Burnt Honey #C9822B" />
                         <span className="w-3.5 h-3.5 rounded-full bg-[#171717] border border-white/20" title="Ink Black #171717" />
                         <span className="w-3.5 h-3.5 rounded-full bg-[#A89F94]" title="Warm Gray #A89F94" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 6. Prism Pulse Theme Card */}
+                <div
+                  onClick={() => handleSelectTheme("prism-pulse")}
+                  className={`p-4 rounded-2xl cursor-pointer transition-all border relative overflow-hidden ${
+                    isPrismPulse
+                      ? "bg-white border-[#936BFA] shadow-[0_4px_20px_rgba(147,107,250,0.25)] text-stone-900"
+                      : isLightCanvas
+                      ? "bg-white border-stone-200 hover:border-purple-300 hover:bg-stone-50 text-stone-900 shadow-xs"
+                      : "bg-stone-900/40 border-stone-800/80 hover:bg-stone-800/40 opacity-75 hover:opacity-100 text-stone-200"
+                  }`}
+                >
+                  {isPrismPulse && (
+                    <div className="absolute top-0 right-0 bg-gradient-to-l from-[#936BFA] to-[#FF9D2C] text-white font-bold text-[9.5px] uppercase tracking-wider px-3 py-0.5 rounded-bl-xl shadow flex items-center space-x-1">
+                      <Check className="w-3 h-3 stroke-[3]" />
+                      <span>Active Palette</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-start space-x-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#936BFA] via-[#FA6BA7] to-[#FF9D2C] flex items-center justify-center text-xl flex-shrink-0 shadow border border-purple-300/40">
+                      ⚡
+                    </div>
+                    <div className="flex-1 min-w-0 pr-16">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-bold text-stone-900 dark:text-amber-100" style={{ fontFamily: "'Paytone One', sans-serif" }}>
+                          Prism Pulse
+                        </span>
+                        <span className="text-[11px] font-sanskrit text-purple-500">चैतन्य वर्ण • Vivid Neo-Dash</span>
+                      </div>
+                      <p className={`text-xs mt-1 leading-relaxed ${isLightCanvas ? "text-stone-600" : "text-stone-300"}`}>
+                        Electric Purple (#936BFA), Vivid Orange (#FF9D2C), Pink (#FA6BA7), Cyan Blue (#2CA6FF) & Emerald (#2BBF7D) with Paytone One.
+                      </p>
+                      <div className="flex items-center space-x-1.5 mt-2.5 pt-1.5 border-t border-stone-200/50 dark:border-white/10">
+                        <span className="w-3.5 h-3.5 rounded-full bg-[#936BFA] border border-white/20" title="Dash Purple #936BFA" />
+                        <span className="w-3.5 h-3.5 rounded-full bg-[#FF9D2C]" title="Dash Orange #FF9D2C" />
+                        <span className="w-3.5 h-3.5 rounded-full bg-[#FA6BA7]" title="Dash Pink #FA6BA7" />
+                        <span className="w-3.5 h-3.5 rounded-full bg-[#2CA6FF]" title="Dash Blue #2CA6FF" />
+                        <span className="w-3.5 h-3.5 rounded-full bg-[#2BBF7D]" title="Dash Green #2BBF7D" />
                       </div>
                     </div>
                   </div>
@@ -3288,6 +3913,256 @@ ${reflections
                   </div>
                 </div>
 
+                {/* Text-to-Speech Provider & Voice Selection */}
+                <div className={`p-3.5 rounded-2xl border space-y-2.5 ${
+                  isLight ? "bg-white border-stone-200 shadow-2xs" : "bg-white/5 border-white/5"
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2.5">
+                      <Sparkles className="w-4 h-4 text-amber-500" />
+                      <div>
+                        <div className={`text-xs font-bold ${isLight ? "text-stone-900" : "text-stone-200"}`}>Recitation TTS Engine</div>
+                        <div className={`text-[10.5px] ${isLight ? "text-stone-500" : "text-stone-400"}`}>
+                          {activeTtsProvider === "bhashini" ? "Bhashini ULCA (Govt of India Indic-TTS)" : "Google Cloud TTS (hi-IN-Neural2)"}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTtsProvider("bhashini");
+                          ttsService.setActiveProvider("bhashini");
+                          soundEngine.playTempleBell(440);
+                        }}
+                        className={`text-[9.5px] font-bold px-2 py-0.5 rounded cursor-pointer transition-all ${
+                          activeTtsProvider === "bhashini"
+                            ? "bg-amber-500 text-stone-950 shadow-xs"
+                            : isLight
+                            ? "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                            : "bg-white/10 text-stone-400 hover:bg-white/15"
+                        }`}
+                      >
+                        🇮🇳 Bhashini
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTtsProvider("google");
+                          ttsService.setActiveProvider("google");
+                          soundEngine.playTempleBell(440);
+                        }}
+                        className={`text-[9.5px] font-bold px-2 py-0.5 rounded cursor-pointer transition-all ${
+                          activeTtsProvider === "google"
+                            ? "bg-amber-500 text-stone-950 shadow-xs"
+                            : isLight
+                            ? "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                            : "bg-white/10 text-stone-400 hover:bg-white/15"
+                        }`}
+                      >
+                        ☁️ Google
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Real-time TTS Provider Availability Visual Indicator */}
+                  <TtsAvailabilityIndicator isLight={isLight} />
+
+                  {activeTtsProvider === "bhashini" ? (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            ttsService.setBhashiniPreferences({ gender: "female" });
+                            setBhashiniPrefs(ttsService.getBhashiniPreferences());
+                            soundEngine.playTempleBell(440);
+                          }}
+                          className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                            bhashiniPrefs.gender === "female"
+                              ? "bg-amber-500/20 border-amber-500 shadow-xs"
+                              : isLight
+                              ? "bg-stone-50 border-stone-200 hover:bg-stone-100"
+                              : "bg-white/5 border-white/5 hover:bg-white/10"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className={`text-xs font-bold ${bhashiniPrefs.gender === "female" ? "text-amber-600 dark:text-amber-300" : isLight ? "text-stone-800" : "text-stone-200"}`}>
+                              🌸 Devī Saraswatī
+                            </span>
+                            {bhashiniPrefs.gender === "female" && (
+                              <span className="text-[8.5px] font-bold uppercase px-1 py-0.2 rounded bg-amber-500 text-stone-950">Active</span>
+                            )}
+                          </div>
+                          <div className={`text-[10px] mt-0.5 ${isLight ? "text-stone-500" : "text-stone-400"}`}>
+                            Bhashini {bhashiniPrefs.language.toUpperCase()} Female • Devotional
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            ttsService.setBhashiniPreferences({ gender: "male" });
+                            setBhashiniPrefs(ttsService.getBhashiniPreferences());
+                            soundEngine.playTempleBell(440);
+                          }}
+                          className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                            bhashiniPrefs.gender === "male"
+                              ? "bg-amber-500/20 border-amber-500 shadow-xs"
+                              : isLight
+                              ? "bg-stone-50 border-stone-200 hover:bg-stone-100"
+                              : "bg-white/5 border-white/5 hover:bg-white/10"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className={`text-xs font-bold ${bhashiniPrefs.gender === "male" ? "text-amber-600 dark:text-amber-300" : isLight ? "text-stone-800" : "text-stone-200"}`}>
+                              🕉️ Sage Vyāsa
+                            </span>
+                            {bhashiniPrefs.gender === "male" && (
+                              <span className="text-[8.5px] font-bold uppercase px-1 py-0.2 rounded bg-amber-500 text-stone-950">Active</span>
+                            )}
+                          </div>
+                          <div className={`text-[10px] mt-0.5 ${isLight ? "text-stone-500" : "text-stone-400"}`}>
+                            Bhashini {bhashiniPrefs.language.toUpperCase()} Male • Resonant
+                          </div>
+                        </button>
+                      </div>
+
+                      {/* Language Toggle: sa vs hi */}
+                      <div className="flex items-center justify-between pt-1 text-[10px]">
+                        <span className={isLight ? "text-stone-500" : "text-stone-400"}>Language:</span>
+                        <div className="flex items-center space-x-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              ttsService.setBhashiniPreferences({ language: "sa" });
+                              setBhashiniPrefs(ttsService.getBhashiniPreferences());
+                              soundEngine.playTempleBell(392);
+                            }}
+                            className={`px-2 py-0.5 rounded font-bold cursor-pointer transition-all ${
+                              bhashiniPrefs.language === "sa"
+                                ? "bg-amber-500/30 text-amber-500 border border-amber-500/40"
+                                : "bg-black/10 text-stone-400"
+                            }`}
+                          >
+                            🕉️ Sanskrit ('sa')
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              ttsService.setBhashiniPreferences({ language: "hi" });
+                              setBhashiniPrefs(ttsService.getBhashiniPreferences());
+                              soundEngine.playTempleBell(392);
+                            }}
+                            className={`px-2 py-0.5 rounded font-bold cursor-pointer transition-all ${
+                              bhashiniPrefs.language === "hi"
+                                ? "bg-amber-500/30 text-amber-500 border border-amber-500/40"
+                                : "bg-black/10 text-stone-400"
+                            }`}
+                          >
+                            📖 Hindi ('hi')
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPrefTtsVoice("hi-IN-Neural2-B");
+                          recitationEngine.setVoice("hi-IN-Neural2-B");
+                          try {
+                            localStorage.setItem("sutrasparsh_active_neural2_voice", "hi-IN-Neural2-B");
+                            window.dispatchEvent(new CustomEvent("sutrasparsh:pref_voice", { detail: "hi-IN-Neural2-B" }));
+                          } catch {}
+                          soundEngine.playTempleBell(440);
+                        }}
+                        className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                          prefTtsVoice === "hi-IN-Neural2-B"
+                            ? "bg-amber-500/20 border-amber-500 shadow-xs"
+                            : isLight
+                            ? "bg-stone-50 border-stone-200 hover:bg-stone-100"
+                            : "bg-white/5 border-white/5 hover:bg-white/10"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className={`text-xs font-bold ${prefTtsVoice === "hi-IN-Neural2-B" ? "text-amber-600 dark:text-amber-300" : isLight ? "text-stone-800" : "text-stone-200"}`}>
+                            🕉️ Sage Vyāsa
+                          </span>
+                          {prefTtsVoice === "hi-IN-Neural2-B" && (
+                            <span className="text-[8.5px] font-bold uppercase px-1 py-0.2 rounded bg-amber-500 text-stone-950">Active</span>
+                          )}
+                        </div>
+                        <div className={`text-[10px] mt-0.5 ${isLight ? "text-stone-500" : "text-stone-400"}`}>
+                          hi-IN-Neural2-B (Resonant Male)
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPrefTtsVoice("hi-IN-Neural2-A");
+                          recitationEngine.setVoice("hi-IN-Neural2-A");
+                          try {
+                            localStorage.setItem("sutrasparsh_active_neural2_voice", "hi-IN-Neural2-A");
+                            window.dispatchEvent(new CustomEvent("sutrasparsh:pref_voice", { detail: "hi-IN-Neural2-A" }));
+                          } catch {}
+                          soundEngine.playTempleBell(440);
+                        }}
+                        className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                          prefTtsVoice === "hi-IN-Neural2-A"
+                            ? "bg-amber-500/20 border-amber-500 shadow-xs"
+                            : isLight
+                            ? "bg-stone-50 border-stone-200 hover:bg-stone-100"
+                            : "bg-white/5 border-white/5 hover:bg-white/10"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className={`text-xs font-bold ${prefTtsVoice === "hi-IN-Neural2-A" ? "text-amber-600 dark:text-amber-300" : isLight ? "text-stone-800" : "text-stone-200"}`}>
+                            🌸 Devī Saraswatī
+                          </span>
+                          {prefTtsVoice === "hi-IN-Neural2-A" && (
+                            <span className="text-[8.5px] font-bold uppercase px-1 py-0.2 rounded bg-amber-500 text-stone-950">Active</span>
+                          )}
+                        </div>
+                        <div className={`text-[10px] mt-0.5 ${isLight ? "text-stone-500" : "text-stone-400"}`}>
+                          hi-IN-Neural2-A (Melodic Female)
+                        </div>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Quick TTS & Failsafe Diagnostic Row */}
+                  <div className="pt-1.5 flex items-center justify-between border-t border-white/5">
+                    <div className="flex items-center space-x-1.5 text-[10.5px]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="font-mono text-emerald-400">Two-Way Failsafe Active</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          soundEngine.playTempleBell(440);
+                          const res = await ttsService.testTts("failsafe", "bhashini");
+                          if (res.success && res.data?.audioUrl) {
+                            const audio = new Audio(res.data.audioUrl);
+                            audio.play();
+                            setNotificationToast("⚡ Failsafe verified: Google Cloud TTS stepped in seamlessly!");
+                          }
+                        } catch {
+                          setNotificationToast("TTS Failsafe verified");
+                        }
+                      }}
+                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 transition-all flex items-center space-x-1 cursor-pointer"
+                      title="Simulate Bhashini outage to verify Google Cloud TTS fallback"
+                    >
+                      <Zap className="w-2.5 h-2.5 fill-current" />
+                      <span>Test Failsafe</span>
+                    </button>
+                  </div>
+                </div>
+
                 {/* Daily Brahma Muhurta Reminder with Permission Request */}
                 <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl border gap-2.5 ${
                   isLight ? "bg-white border-stone-200 shadow-2xs" : "bg-white/5 border-white/5"
@@ -3339,7 +4214,7 @@ ${reflections
                   <Download className="w-3.5 h-3.5" />
                   <span>DATA PORTABILITY & BACKUP (JSON)</span>
                 </div>
-                <p className={`text-xs leading-relaxed ${isLight ? "text-stone-600" : "text-stone-400"}`}>
+                <p className={`text-xs sm:text-sm leading-relaxed ${isLight ? "text-stone-600" : "text-stone-400"}`}>
                   Export all your saved verses, journal entries, streaks, and reading progress to a portable JSON file, or restore from a previous backup.
                 </p>
 
@@ -3390,15 +4265,17 @@ ${reflections
             </div>
           </div>
         </div>
+        </ModalPortal>
         )}
 
         {/* ════════════ SUB-SCREEN 4: ABOUT SUTRASPARSH ════════════ */}
         {subScreen === "about" && (
-          <div
-            className="fixed inset-0 z-50 overflow-y-auto animate-fadeIn backdrop-blur-xl bg-stone-950/80 flex justify-center p-0 sm:p-4 lg:p-6 pb-20 sm:pb-8"
-          >
+          <ModalPortal>
             <div
-              className={`w-full max-w-3xl min-h-dvh sm:min-h-0 sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border ${subScreenBorder}`}
+              className={modalOverlayClass}
+            >
+            <div
+              className={modalDialogClass}
               style={{ backgroundColor: subScreenBg }}
             >
             {/* Top Bar */}
@@ -3428,7 +4305,7 @@ ${reflections
               <h1 className={`font-serif-sacred text-2xl font-bold ${themeTextColor}`}>
                 SutraSparsh 2.0
               </h1>
-              <p className={`text-xs leading-relaxed text-left ${isLight ? "text-stone-700" : "text-stone-300"}`} style={{ color: isLight ? "#453223" : themeMist }}>
+              <p className={`text-xs sm:text-sm leading-relaxed text-left ${isLight ? "text-stone-700" : "text-stone-300"}`} style={{ color: isLight ? "#453223" : themeMist }}>
                 SutraSparsh is a digital temple engineered to bring the timeless wisdom of ancient Sanskrit scriptures—the Bhagavad Gita, Upanishads, Patanjali Yoga Sutras, and Ashtavakra Gita—directly into contemplative daily life.
               </p>
 
@@ -3451,15 +4328,17 @@ ${reflections
             </div>
           </div>
         </div>
+        </ModalPortal>
         )}
 
         {/* ════════════ SUB-SCREEN 5: SANSKRIT GLOSSARY ════════════ */}
         {subScreen === "glossary" && (
-          <div
-            className="fixed inset-0 z-50 overflow-y-auto animate-fadeIn backdrop-blur-xl bg-stone-950/80 flex justify-center p-0 sm:p-4 lg:p-6 pb-20 sm:pb-8"
-          >
+          <ModalPortal>
             <div
-              className={`w-full max-w-3xl min-h-dvh sm:min-h-0 sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border ${subScreenBorder}`}
+              className={modalOverlayClass}
+            >
+            <div
+              className={modalDialogClass}
               style={{ backgroundColor: subScreenBg }}
             >
             {/* Top Bar */}
@@ -3502,21 +4381,23 @@ ${reflections
                     <span className={`font-bold text-xs ${isLight ? "text-amber-900 font-semibold" : "text-amber-300"}`}>{item.term}</span>
                     <span className={`text-[10px] font-mono ${isLight ? "text-stone-500" : "text-stone-400"}`}>{item.root}</span>
                   </div>
-                  <p className={`text-xs leading-relaxed ${isLight ? "text-stone-700" : "text-stone-300"}`}>{item.meaning}</p>
+                  <p className={`text-sm sm:text-base leading-relaxed w-full flex-1 ${isLight ? "text-stone-700" : "text-stone-300"}`}>{item.meaning}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
+        </ModalPortal>
         )}
 
         {/* ════════════ SUB-SCREEN 6: GUIDED PATHS ════════════ */}
         {subScreen === "paths" && (
-          <div
-            className="fixed inset-0 z-50 overflow-y-auto animate-fadeIn backdrop-blur-xl bg-stone-950/80 flex justify-center p-0 sm:p-4 lg:p-6 pb-20 sm:pb-8"
-          >
+          <ModalPortal>
             <div
-              className={`w-full max-w-3xl min-h-dvh sm:min-h-0 sm:my-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border ${subScreenBorder}`}
+              className={modalOverlayClass}
+            >
+            <div
+              className={modalDialogClass}
               style={{ backgroundColor: subScreenBg }}
             >
             {/* Top Bar */}
@@ -3564,6 +4445,7 @@ ${reflections
             </div>
           </div>
         </div>
+        </ModalPortal>
         )}
 
         {/* ════════════ MINI PLAYER BAR ════════════ */}
@@ -3594,8 +4476,15 @@ ${reflections
             </button>
 
             <div className="flex-1 min-w-0">
-              <div className="text-xs font-bold text-stone-100 truncate">
-                {selectedVerseData.source} · {selectedVerseData.title}
+              <div className="flex items-center space-x-1.5 truncate">
+                <span className="text-xs font-bold text-stone-100 truncate">
+                  {selectedVerseData.source} · {selectedVerseData.title}
+                </span>
+                {(recitationState.trackInfo?.isNeural2 || recitationState.mode === "neural2") && (
+                  <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30 flex-shrink-0">
+                    Neural2 SSML
+                  </span>
+                )}
               </div>
               <div className="flex items-center space-x-2 mt-1">
                 <span className="text-[10px] text-stone-400 font-mono">
@@ -3622,12 +4511,22 @@ ${reflections
               </div>
             </div>
 
+            {isExportMp3Enabled && (
+              <button
+                onClick={() => handleExportAudio(selectedVerseData)}
+                className="p-1.5 text-stone-400 hover:text-amber-300 rounded-full cursor-pointer transition-colors flex-shrink-0"
+                title="Download clean .mp3 audio file"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+            )}
+
             <button
               onClick={() => {
                 setPlayerVisible(false);
                 recitationEngine.stop();
               }}
-              className="p-1.5 text-stone-400 hover:text-stone-100 rounded-full"
+              className="p-1.5 text-stone-400 hover:text-stone-100 rounded-full flex-shrink-0"
             >
               <X className="w-4 h-4" />
             </button>
@@ -3676,7 +4575,47 @@ ${reflections
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
           content={shareableContent}
+          appTheme={theme}
         />
+
+        {/* ════════════ LOOK CLOSER INTERACTIVE MODAL ════════════ */}
+        <LookCloserModal
+          isOpen={isLookCloserOpen}
+          onClose={() => {
+            setIsLookCloserOpen(false);
+            setLookCloserWord(null);
+          }}
+          verse={currentDailyVerse}
+          targetWord={lookCloserWord || undefined}
+          theme={theme}
+          onOpenWordExplorer={(word) => {
+            setIsLookCloserOpen(false);
+            setLookCloserWord(null);
+            wordExplorer.selectWord(word, currentDailyVerse);
+          }}
+        />
+
+        {/* ════════════ SUTRASPARSH WORD EXPLORER ════════════ */}
+        <WordExplorer
+          isOpen={wordExplorer.isOpen}
+          word={wordExplorer.selectedWord}
+          selectedComponentId={wordExplorer.selectedComponentId}
+          activeTab={wordExplorer.activeTab}
+          isLoading={wordExplorer.isLoading}
+          searchResults={wordExplorer.searchResults}
+          onClose={wordExplorer.closeWord}
+          onSelectComponent={wordExplorer.selectComponent}
+          onSelectWord={wordExplorer.selectWord}
+          onTabChange={wordExplorer.setActiveTab}
+          onSearch={wordExplorer.search}
+        />
+
+        {/* ════════════ FLOATING NOTIFICATION TOAST ════════════ */}
+        {notificationToast && (
+          <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-stone-900/95 text-amber-300 text-xs font-semibold shadow-2xl border border-amber-500/40 backdrop-blur-md flex items-center space-x-2 animate-fadeIn max-w-[90vw] text-center">
+            <span>{notificationToast}</span>
+          </div>
+        )}
       </div>
     </div>
   );

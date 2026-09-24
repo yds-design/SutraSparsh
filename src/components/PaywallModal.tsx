@@ -1,5 +1,6 @@
 import React from "react";
 import { Lock, Sparkles, Zap, ArrowRight, ShieldCheck } from "lucide-react";
+import { ModalPortal } from "./ModalPortal";
 
 interface PaywallModalProps {
   isOpen: boolean;
@@ -21,11 +22,12 @@ export function PaywallModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-      <div
-        className="w-full max-w-md bg-stone-900 border border-amber-500/40 rounded-2xl shadow-2xl p-6 text-stone-100 relative overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalPortal>
+      <div className="fixed inset-0 z-[110] flex items-start sm:items-center justify-center overflow-y-auto overscroll-contain animate-fadeIn backdrop-blur-xl bg-stone-950/80 p-0 sm:p-4 md:p-6 lg:p-8 xl:p-10 pt-0 sm:pt-4 md:pt-6 lg:pt-8 xl:pt-10 pb-24 sm:pb-6 md:pb-8 lg:pb-12">
+        <div
+          className="w-full max-w-full sm:max-w-md min-h-dvh sm:min-h-0 sm:my-auto bg-stone-900 border border-amber-500/40 rounded-none sm:rounded-2xl shadow-2xl p-6 text-stone-100 relative overflow-hidden flex flex-col justify-between sm:justify-start"
+          onClick={(e) => e.stopPropagation()}
+        >
         <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500" />
 
         <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300 mx-auto mb-4">
@@ -72,6 +74,7 @@ export function PaywallModal({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }
 

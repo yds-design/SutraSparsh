@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Filter, Sparkles, BookOpen, Sun, Activity, Bookmark, Flame, RefreshCw, Smartphone, Crown, Heart, Zap, ShieldCheck, Compass } from "lucide-react";
+import { Search, Filter, Sparkles, BookOpen, Sun, Activity, Bookmark, Flame, RefreshCw, Smartphone, Crown, Heart, Zap, ShieldCheck, Compass, Play } from "lucide-react";
 import type { ContentItem, ContentResponse, JournalEntry } from "./types";
 import { Header, type NavTab } from "./components/Header";
 import { VerseCard } from "./components/VerseCard";
@@ -28,6 +28,8 @@ import type { AppTheme } from "./types";
 import { useFeatureFlags } from "./services/feature-flags.service";
 import { firestoreSyncService } from "./services/firestore-sync.service";
 import { authService, type SeekerUser } from "./services/auth.service";
+import { DynamicMetadata } from "./components/DynamicMetadata";
+import { getDailyShlokaForDate } from "./data/scriptureCorpus";
 import {
   WordExplorer,
   LookCloserModal,
@@ -58,7 +60,25 @@ export default function App() {
     return "user";
   });
   const { isSadhakaEnabled, isGurudakshinaEnabled } = useFeatureFlags();
-  const [activeTab, setActiveTab] = useState<NavTab>("today");
+  const [activeTab, setActiveTab] = useState<NavTab>(() => {
+    if (typeof window !== "undefined") {
+      const search = new URLSearchParams(window.location.search);
+      const tabParam = search.get("tab") as NavTab;
+      if (
+        tabParam &&
+        ["today", "explore", "explorer", "search", "my-journey", "journal", "preferences", "membership"].includes(
+          tabParam
+        )
+      ) {
+        return tabParam === "explorer"
+          ? "explore"
+          : tabParam === "journal"
+          ? "my-journey"
+          : tabParam;
+      }
+    }
+    return "today";
+  });
   const [verses, setVerses] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -78,9 +98,9 @@ export default function App() {
   // Persistent Theme Atmosphere ('sandstone' | 'amethyst' | 'light' | 'festival' | 'golden-hour')
   const [theme, setTheme] = useState<AppTheme>(() => {
     try {
-      return (localStorage.getItem("sutrasparsh_theme") as AppTheme) || "sandstone";
+      return (localStorage.getItem("sutrasparsh_theme") as AppTheme) || "prism-pulse";
     } catch {
-      return "sandstone";
+      return "prism-pulse";
     }
   });
 
@@ -117,7 +137,8 @@ export default function App() {
       amethyst: "light",
       light: "festival",
       festival: "golden-hour",
-      "golden-hour": "sandstone",
+      "golden-hour": "prism-pulse",
+      "prism-pulse": "sandstone",
     };
     const next = cycle[theme] || "sandstone";
     triggerThemeTransition(next);
@@ -126,6 +147,24 @@ export default function App() {
   const handleSelectTheme = (newTheme: AppTheme) => {
     triggerThemeTransition(newTheme);
   };
+
+  // Synchronize documentElement and body attributes and theme classes across all themes and portals
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.setAttribute("data-theme", theme);
+    document.body.setAttribute("data-theme", theme);
+    const themeClass = `theme-${theme} ${
+      theme === "light"
+        ? "light-mode"
+        : theme === "golden-hour"
+        ? "golden-hour-mode"
+        : theme === "prism-pulse"
+        ? "theme-prism-pulse"
+        : ""
+    }`;
+    document.documentElement.className = themeClass;
+    document.body.className = themeClass;
+  }, [theme]);
 
   // Daily Promo Popup ("First load of the day" across all devices)
   const [isDailyPromoOpen, setIsDailyPromoOpen] = useState(false);
@@ -274,6 +313,13 @@ export default function App() {
       }
 
       const res = await fetch(url);
+      if (res.status === 429) {
+        // Spiritual pace rate limit active: gracefully fallback to current/cached corpus
+        console.warn("Spiritual pace rate limit active; using current scripture corpus.");
+        setBackendOnline(true);
+        return;
+      }
+
       if (res.ok) {
         const json: ContentResponse = await res.json();
         setVerses(json.data || []);
@@ -290,7 +336,12 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchContent();
+    // 300ms debounce to prevent rapid keystrokes from spamming the backend
+    const timer = setTimeout(() => {
+      fetchContent();
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [selectedCategory, searchTerm]);
 
   const toggleBookmark = (id: string, verseTitle?: string) => {
@@ -513,8 +564,88 @@ export default function App() {
         </div>
       );
     }
-    return <SutraSparshAdminApp onSwitchToUserApp={handleSwitchToUserApp} />;
+    return (
+      <>
+        <DynamicMetadata
+          title="Admin Operations Console | SutraSparsh"
+          description="SutraSparsh Temple Operations, Sanskrit Corpus Management, and Analytics Console."
+          robots="noindex, nofollow"
+        />
+        <SutraSparshAdminApp onSwitchToUserApp={handleSwitchToUserApp} />
+      </>
+    );
   }
+
+  // Sync activeTab with URL query parameter for clean, shareable & indexable URLs
+  useEffect(() => {
+    if (typeof window !== "undefined" && appMode === "user") {
+      const search = new URLSearchParams(window.location.search);
+      if (activeTab === "today") {
+        if (search.has("tab")) {
+          search.delete("tab");
+          const query = search.toString();
+          const newUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+          window.history.replaceState(null, "", newUrl);
+        }
+      } else {
+        if (search.get("tab") !== activeTab) {
+          search.set("tab", activeTab);
+          const newUrl = `${window.location.pathname}?${search.toString()}${window.location.hash}`;
+          window.history.replaceState(null, "", newUrl);
+        }
+      }
+    }
+  }, [activeTab, appMode]);
+
+  // Dynamic SEO Metadata for top-level non-today tabs
+  const tabMetadata = React.useMemo(() => {
+    if (activeTab === "explore" || activeTab === "explorer") {
+      return {
+        title: "Sacred Scriptures Library - Bhagavad Gita, Upanishads & Yoga Sutras | SutraSparsh",
+        description: "Explore the comprehensive Sanskrit corpus: Bhagavad Gita, Patanjali Yoga Sutras, and principal Upanishads with English translations, transliterations, and commentary.",
+        keywords: "Bhagavad Gita, Yoga Sutras, Upanishads, Sanskrit library, Vedic scriptures, sacred texts",
+        canonicalUrl: "https://sutrasparsh.com/?tab=explore",
+        ogType: "website" as const,
+      };
+    }
+    if (activeTab === "search") {
+      return {
+        title: "Search Sanskrit Shlokas & Sacred Corpus | SutraSparsh",
+        description: "Search across the entire Sanskrit corpus by Sanskrit keywords, English terms, and philosophical concepts. Discover relevant shlokas, meanings, and audio recitations.",
+        keywords: "search shloka, Sanskrit search, Gita search, Yoga Sutras search, dharma, karma, moksha",
+        canonicalUrl: searchTerm.trim() ? `https://sutrasparsh.com/?tab=search&q=${encodeURIComponent(searchTerm.trim())}` : "https://sutrasparsh.com/?tab=search",
+        ogType: "website" as const,
+      };
+    }
+    if (activeTab === "my-journey" || activeTab === "journal") {
+      return {
+        title: "My Sādhana Journey, Daily Study Goals & Streaks | SutraSparsh",
+        description: "Track your 15-minute daily study goals, Brahma Muhurta sadhana streaks, reading milestones, and contemplative spiritual evolution.",
+        keywords: "sadhana tracker, daily study goal, 15 minute study target, spiritual journey, meditation streak, Brahma Muhurta",
+        canonicalUrl: "https://sutrasparsh.com/?tab=my-journey",
+        ogType: "website" as const,
+      };
+    }
+    if (activeTab === "preferences") {
+      return {
+        title: "Atmosphere & Audio Preferences | SutraSparsh",
+        description: "Customize your temple sanctuary atmosphere, sound frequencies, font sizes, and theme preferences.",
+        keywords: "temple preferences, audio settings, sanctuary theme, Sanskrit chanting options",
+        canonicalUrl: "https://sutrasparsh.com/?tab=preferences",
+        ogType: "website" as const,
+      };
+    }
+    if (activeTab === "membership") {
+      return {
+        title: "Temple Seeker Patronage & Membership | SutraSparsh",
+        description: "Support open Sanskrit heritage preservation and unlock advanced contemplative sadhana tools.",
+        keywords: "SutraSparsh membership, patron support, Sanskrit preservation, Vedic wisdom donation",
+        canonicalUrl: "https://sutrasparsh.com/?tab=membership",
+        ogType: "website" as const,
+      };
+    }
+    return null;
+  }, [activeTab, searchTerm]);
 
   return (
     <div
@@ -525,6 +656,8 @@ export default function App() {
       } ${
         theme === "light"
           ? "text-stone-900 selection:bg-amber-300 selection:text-stone-950 light-mode"
+          : theme === "prism-pulse"
+          ? "text-[#333333] selection:bg-[#936BFA] selection:text-white theme-prism-pulse"
           : theme === "festival"
           ? "text-stone-100 selection:bg-amber-500/40 selection:text-amber-100"
           : theme === "amethyst"
@@ -534,6 +667,15 @@ export default function App() {
           : "text-stone-100 selection:bg-amber-500/40 selection:text-amber-100"
       }`}
     >
+      {tabMetadata && (
+        <DynamicMetadata
+          title={tabMetadata.title}
+          description={tabMetadata.description}
+          keywords={tabMetadata.keywords}
+          canonicalUrl={tabMetadata.canonicalUrl}
+          ogType={tabMetadata.ogType}
+        />
+      )}
       {/* Ambient Dual-Layer Cross-Fade Backdrop */}
       <AtmosphereCrossfadeBackdrop theme={theme} />
 
@@ -818,15 +960,14 @@ export default function App() {
           setIsDailyPromoOpen(false);
           setActiveTab("daily-app");
         }}
-        todayVerse={
-          dailyVerse
-            ? {
-                devanagari: dailyVerse.title,
-                translation: dailyVerse.meaning || dailyVerse.subtitle || "Excellence and harmony in action is Yoga.",
-                source: `${dailyVerse.metadata?.source || "Bhagavad Gita"}${dailyVerse.metadata?.chapter ? ` ${dailyVerse.metadata.chapter}.${dailyVerse.metadata.verse || ""}` : ""} • प्रातः स्मरण`,
-              }
-            : undefined
-        }
+        todayVerse={(() => {
+          const currentDayShloka = getDailyShlokaForDate();
+          return {
+            devanagari: currentDayShloka.sanskrit.split("\n")[0] || currentDayShloka.title,
+            translation: currentDayShloka.meaning,
+            source: `${currentDayShloka.source} · ${currentDayShloka.chapterName} • प्रातः स्मरण`,
+          };
+        })()}
       />
 
       {/* Sādhaka Seeker Profile Modal */}
@@ -879,6 +1020,7 @@ export default function App() {
         onSaveJournalNote={handleSaveJournalNote}
         onOpenWord={(surface) => wordExplorer.openWord(surface)}
         wordExplorer={wordExplorer}
+        theme={theme}
       />
 
       {/* SutraSparsh Word Explorer Modal / Drawer */}
@@ -900,9 +1042,11 @@ export default function App() {
       <LookCloserModal
         isOpen={isLookCloserOpen}
         onClose={() => setIsLookCloserOpen(false)}
+        verse={selectedVerse || undefined}
+        theme={theme}
         onOpenWordExplorer={(word) => {
           setIsLookCloserOpen(false);
-          wordExplorer.selectWord(word);
+          wordExplorer.selectWord(word, selectedVerse || undefined);
         }}
       />
 
@@ -942,6 +1086,32 @@ export default function App() {
         <p className="text-[11px] max-w-lg mx-auto px-4 text-stone-400">
           Dedicated to the preservation, exploration, and meditative study of sacred spiritual wisdom.
         </p>
+
+        {/* Get it on Google Play Badge */}
+        <div className="py-2 flex justify-center">
+          <a
+            id="footer-google-play-btn"
+            href="https://play.google.com/store/apps/details?id=com.yds.sutrasparsh"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-stone-900 hover:bg-stone-850 text-stone-200 border border-stone-800 hover:border-amber-500/50 shadow-lg hover:shadow-amber-500/10 transition-all duration-200 group active:scale-[0.98] cursor-pointer"
+            title="Get SutraSparsh on Google Play"
+          >
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 via-amber-400 to-blue-500 flex items-center justify-center p-0.5 shadow-sm">
+              <div className="w-full h-full bg-stone-950 rounded-[9px] flex items-center justify-center">
+                <Play className="w-3.5 h-3.5 fill-amber-400 text-amber-400 ml-0.5" />
+              </div>
+            </div>
+            <div className="text-left leading-tight">
+              <span className="block text-[9px] uppercase tracking-wider text-stone-400 font-medium">
+                Get it on
+              </span>
+              <span className="block text-sm font-semibold text-stone-100 group-hover:text-amber-200 transition-colors">
+                Google Play
+              </span>
+            </div>
+          </a>
+        </div>
 
         {/* Store Listing, Legal, and Seeker Navigation Links */}
         <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] pt-1 text-stone-400">
