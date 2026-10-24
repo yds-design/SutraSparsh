@@ -367,7 +367,27 @@ M48 — Phase 2 Activation & Dynamic Admin Controls [COMPLETED ✅]
 Gate: pure, distraction-free Phase 1 sanctuary experience on all client devices, with full administrative readiness for Phase 2 launch. [PASSED ✅]
 ________________
 
+Phase 24 — Purohit Directory & Click-to-WhatsApp Integration [COMPLETED ✅]
+M49 — Pandit Services & Trust Signals [COMPLETED ✅]
+* M49.1 Visual Trust Badges (Verified & Peer Endorsed) with interactive tooltips, saffron/gold & temple-blue sacred accents, and ARIA accessibility ✅
+* M49.2 Dynamic Click-to-WhatsApp deep-linking utility with phone normalization (E.164), Sanskrit Unicode URI encoding, and desktop/mobile routing ✅
+* M49.3 Seed Vedic Purohit Corpus (PANDIT_CORPUS) with traditional lineage, Pathashala credentials, and authentic peer endorsements ✅
+* M49.4 Semantic Pandit Profile Card (<article>, <header>, <footer>) and comprehensive modal view with ritual selection and direct WhatsApp connect ✅
+* M49.5 Schema.org ProfessionalService structured data and seamless navigation integration via Header, MoreView, and App routes ✅
+Gate: zero-fee facilitator communication and verification trust signals operational with 100% test coverage. [PASSED ✅]
+________________
+
+Phase 25 — Sanctuary Journey Relocation & Hook Lifecycle Hardening [COMPLETED ✅]
+M50 — Journey Architecture & React Stability [COMPLETED ✅]
+* M50.1 Navigation refactoring: deprecation and removal of top nav 'My Journey' button to eliminate header visual bloat ✅
+* M50.2 Card component insertion: integrated 'My Journey' bridge into Daily Shloka Rotation card (DailySutra.tsx) and Scripture Verses Explore area (VerseCard.tsx) ✅
+* M50.3 Contextual personal tracking: seamless routing from daily study shlokas into personalized sadhana milestones ✅
+* M50.4 React lifecycle audit: eliminated conditional hook execution and reordered early returns to strictly comply with React Rules of Hooks ✅
+Gate: 100% test pass rate across all 79 assertions with zero console errors or hook warnings. [PASSED ✅]
+________________
+
 CURRENT ACTIVE POSITION:
-All Phases 1 through 23 (Milestones M0.1 through M48.5) are fully [COMPLETED & CERTIFIED ✅].
-Phase 1 Production Release Gate is Certified Green with Phase 1 Lockdown Active (Sādhaka Access and Gurudakshina disabled across all client devices by default).
-Phase 2 monetization features are architected, tested, and can be dynamically unlocked via the Admin Operations Console.
+All Phases 1 through 25 (Milestones M0.1 through M50.4) are fully [COMPLETED & CERTIFIED ✅].
+Release Label: v1.0.0-phase25-certified (Tags: v1.0.0, release/v1.0.0-services-journey)
+Phase 1 Production Release Gate is Certified Green with Phase 1 Lockdown Active.
+Zero-Fee Vedic Purohit Directory and contextual My Journey integration verified.

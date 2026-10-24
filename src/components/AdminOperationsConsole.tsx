@@ -30,6 +30,7 @@ import {
   Lock,
   Zap,
   TrendingUp,
+  Palette,
 } from "lucide-react";
 import type {
   ContentItem,
@@ -39,9 +40,11 @@ import type {
   SystemMetrics,
   AuditLogEntry,
   DetailedHealthStatus,
+  AppTheme,
 } from "../types";
 import { ProductionHardeningPanel } from "./ProductionHardeningPanel";
 import { MonetizationAdminConsole } from "./MonetizationAdminConsole";
+import { themeConfigService } from "../services/theme-config.service";
 
 const DEFAULT_ADMIN_KEY = "sutrasparsh-admin-secret";
 
@@ -63,7 +66,11 @@ export const AdminOperationsConsole: React.FC<AdminOperationsConsoleProps> = ({ 
   const [authError, setAuthError] = useState<string | null>(null);
 
   // Active Admin Sub-tab
-  const [adminTab, setAdminTab] = useState<"publisher" | "pipeline" | "telemetry" | "audit" | "hardening" | "monetization">("publisher");
+  const [adminTab, setAdminTab] = useState<
+    "publisher" | "pipeline" | "telemetry" | "audit" | "hardening" | "monetization" | "themes"
+  >("publisher");
+  const [currentAdminTheme, setCurrentAdminTheme] = useState<AppTheme>(() => themeConfigService.getActiveTheme());
+  const [themeAdminFeedback, setThemeAdminFeedback] = useState<string | null>(null);
 
   // Telemetry & Health States
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
@@ -558,6 +565,18 @@ export const AdminOperationsConsole: React.FC<AdminOperationsConsoleProps> = ({ 
           >
             <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
             <span>Monetization, Billing & Seva (Phases 16–21)</span>
+          </button>
+
+          <button
+            onClick={() => setAdminTab("themes")}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-medium transition-all ${
+              adminTab === "themes"
+                ? "bg-amber-500/20 text-amber-200 border border-amber-500/40"
+                : "bg-stone-950/60 text-stone-400 border border-stone-800/60 hover:text-stone-200"
+            }`}
+          >
+            <Palette className="w-3.5 h-3.5 text-amber-400" />
+            <span>Sacred Atmosphere & Whitelist Management</span>
           </button>
         </div>
       </div>
@@ -1318,6 +1337,126 @@ export const AdminOperationsConsole: React.FC<AdminOperationsConsoleProps> = ({ 
       {/* TAB 6: MONETIZATION, BILLING & SEVA ANALYTICS (PHASES 16–21) */}
       {adminTab === "monetization" && (
         <MonetizationAdminConsole />
+      )}
+
+      {/* TAB 7: SACRED ATMOSPHERE & THEME WHITELIST MANAGEMENT */}
+      {adminTab === "themes" && (
+        <div className="space-y-6">
+          <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-800 pb-5">
+              <div>
+                <div className="flex items-center space-x-2 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-1">
+                  <Palette className="w-4 h-4" />
+                  <span>Theme Whitelist & Admin Role Override Policy</span>
+                </div>
+                <h3 className="text-xl font-bold font-serif-sacred text-amber-100">
+                  Application Theme Restrictions
+                </h3>
+              </div>
+              <span className="text-xs font-mono px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold self-start sm:self-auto">
+                Whitelist Enforced (config.json)
+              </span>
+            </div>
+
+            {themeAdminFeedback && (
+              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-center justify-between">
+                <span>{themeAdminFeedback}</span>
+                <button
+                  onClick={() => setThemeAdminFeedback(null)}
+                  className="text-stone-400 hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
+              In accordance with product architecture standards, theme choices are strictly limited to two canonical atmospheres: 
+              <strong className="text-amber-300"> Parchment Dawn</strong> and <strong className="text-amber-300">Golden Hour</strong>. 
+              All other themes are hidden and disabled across the application. Any legacy or invalid theme supplied will securely fallback to Parchment Dawn.
+            </p>
+
+            {/* Permitted Themes Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {themeConfigService.getPermittedThemes().map((item) => {
+                const isActive = currentAdminTheme === item.id;
+                return (
+                  <div
+                    key={item.id}
+                    className={`p-5 rounded-2xl border transition-all ${
+                      isActive
+                        ? "bg-stone-800/80 border-amber-400 ring-2 ring-amber-400/40 shadow-lg"
+                        : "bg-stone-950/60 border-stone-800"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-2.5">
+                        <span className="text-2xl">{item.icon}</span>
+                        <div>
+                          <div className="font-bold text-sm text-stone-100">{item.name}</div>
+                          <div className="text-xs font-sanskrit text-amber-400">{item.sanskrit}</div>
+                        </div>
+                      </div>
+                      {isActive ? (
+                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500 text-stone-950">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-mono text-stone-400">ID: {item.id}</span>
+                      )}
+                    </div>
+
+                    <p className="text-xs text-stone-400 mb-4">{item.description}</p>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const res = themeConfigService.adminOverrideTheme(item.id);
+                        if (res.success) {
+                          setCurrentAdminTheme(res.activeTheme);
+                          setThemeAdminFeedback(res.message);
+                        } else {
+                          setThemeAdminFeedback(res.message);
+                        }
+                      }}
+                      className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center space-x-1.5 ${
+                        isActive
+                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                          : "bg-stone-800 text-stone-300 hover:bg-stone-700 hover:text-white"
+                      }`}
+                    >
+                      <Palette className="w-3.5 h-3.5" />
+                      <span>{isActive ? "Currently Applied" : `Switch to ${item.name}`}</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Whitelist Configuration Spec Box */}
+            <div className="p-4 rounded-2xl bg-stone-950/80 border border-stone-800 space-y-2">
+              <div className="flex items-center justify-between text-xs text-stone-400 font-mono">
+                <span>Config Source: /config.json</span>
+                <span className="text-emerald-400">Fallback Protection: ON (light)</span>
+              </div>
+              <pre className="text-[11px] font-mono text-stone-300 bg-black/40 p-3 rounded-xl overflow-x-auto">
+{JSON.stringify(
+  {
+    themeSettings: {
+      defaultTheme: "light",
+      fallbackTheme: "light",
+      permittedThemes: ["light (Parchment Dawn)", "golden-hour (Golden Hour)"],
+      adminOverrideEnabled: true,
+      activeTheme: currentAdminTheme,
+    },
+  },
+  null,
+  2
+)}
+              </pre>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

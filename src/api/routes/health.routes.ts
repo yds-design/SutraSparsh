@@ -108,6 +108,25 @@ router.get(
 );
 
 /**
+ * Telemetry and process metrics probe (M21.8)
+ * GET /api/metrics
+ */
+router.get(
+  "/metrics",
+  (_req: Request, res: Response): void => {
+    const metrics = observabilityService.getMetrics();
+    res.status(200).json({
+      success: true,
+      service: "sutrasparsh-backend",
+      version: APP_VERSION_METADATA.version,
+      timestamp: new Date().toISOString(),
+      uptime: Math.floor(process.uptime()),
+      metrics,
+    });
+  },
+);
+
+/**
  * Detailed health diagnostics and telemetry alerts
  * GET /api/health/detailed
  */

@@ -92,6 +92,69 @@ router.get(
 );
 
 /**
+ * GET /api/content/all
+ * Returns complete scripture repository
+ */
+router.get(
+  "/content/all",
+  async (_req: Request, res: Response): Promise<void> => {
+    const result = await contentRepository.list({ limit: 100 });
+    res.setHeader("Cache-Control", "public, max-age=60, s-maxage=300");
+    res.status(200).json({
+      success: true,
+      data: result.items,
+      total: result.total,
+    });
+  },
+);
+
+/**
+ * GET /api/content/categories
+ * Returns list of distinct scripture categories
+ */
+router.get(
+  "/content/categories",
+  async (_req: Request, res: Response): Promise<void> => {
+    const result = await contentRepository.list({ limit: 100 });
+    const categoriesSet = new Set<string>();
+    for (const item of result.items) {
+      if (item.metadata?.category) {
+        categoriesSet.add(item.metadata.category);
+      }
+    }
+    const categories = Array.from(categoriesSet).map((cat) => ({
+      id: cat.toLowerCase().replace(/\s+/g, "-"),
+      name: cat,
+    }));
+    res.setHeader("Cache-Control", "public, max-age=300, s-maxage=600");
+    res.status(200).json({
+      success: true,
+      data: categories,
+      total: categories.length,
+    });
+  },
+);
+
+/**
+ * GET /api/content/search
+ * Search endpoint supporting ?q=...
+ */
+router.get(
+  "/content/search",
+  async (req: Request, res: Response): Promise<void> => {
+    const search = getQueryString(req.query.q);
+    const result = await contentRepository.list({ search, limit: 50 });
+    res.setHeader("Cache-Control", "public, max-age=30, s-maxage=120");
+    res.status(200).json({
+      success: true,
+      query: search || "",
+      data: result.items,
+      total: result.total,
+    });
+  },
+);
+
+/**
  * GET /api/content/:id
  */
 router.get(

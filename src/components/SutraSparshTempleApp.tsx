@@ -49,6 +49,7 @@ import {
   Sunrise,
   Square,
   Zap,
+  ArrowRight,
 } from "lucide-react";
 import { ShareModal } from "./ShareModal";
 import { ModalPortal } from "./ModalPortal";
@@ -68,6 +69,7 @@ import { speechSafetyEngine } from "../utils/speech";
 import { useFeatureFlags } from "../services/feature-flags.service";
 import { recitationEngine, type RecitationState } from "../utils/recitationEngine";
 import { ttsService, type TtsProviderType } from "../services/tts.service";
+import { themeConfigService } from "../services/theme-config.service";
 import { matchesSanskritQuery } from "../utils/sanskritSearch";
 import {
   LookCloserModal,
@@ -109,20 +111,19 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   onNavigateTab,
 }) => {
   const { isSadhakaEnabled, isGurudakshinaEnabled, isExportMp3Enabled } = useFeatureFlags();
-  // Theme state
+  // Theme state strictly restricted to 'light' (Parchment Dawn) & 'golden-hour' (Golden Hour)
   const [internalTheme, setInternalTheme] = useState<AppTheme>(() => {
-    try {
-      return (localStorage.getItem("sutrasparsh_theme") as AppTheme) || "prism-pulse";
-    } catch {
-      return "prism-pulse";
-    }
+    return themeConfigService.getActiveTheme();
   });
 
-  const theme = propTheme || internalTheme;
+  const theme = themeConfigService.sanitizeTheme(propTheme || internalTheme);
 
   useEffect(() => {
-    if (propTheme && propTheme !== internalTheme) {
-      setInternalTheme(propTheme);
+    if (propTheme) {
+      const sanitized = themeConfigService.sanitizeTheme(propTheme);
+      if (sanitized !== internalTheme) {
+        setInternalTheme(sanitized);
+      }
     }
   }, [propTheme]);
 
@@ -580,14 +581,13 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   }, []);
 
   const handleSelectTheme = (newTheme: AppTheme) => {
-    setInternalTheme(newTheme);
-    try {
-      localStorage.setItem("sutrasparsh_theme", newTheme);
-    } catch {}
+    const sanitized = themeConfigService.sanitizeTheme(newTheme);
+    setInternalTheme(sanitized);
+    themeConfigService.setActiveTheme(sanitized);
     if (onSelectTheme) {
-      onSelectTheme(newTheme);
+      onSelectTheme(sanitized);
     }
-    soundEngine.playTempleBell(newTheme === "sandstone" ? 220 : newTheme === "golden-hour" ? 256 : 330);
+    soundEngine.playTempleBell(sanitized === "golden-hour" ? 340 : 528);
   };
 
   const handleResetPreferences = () => {
@@ -1326,23 +1326,15 @@ ${reflections
               <span className="text-[10px]">Tanpura</span>
             </button>
 
-            {/* Theme Switcher Quick Toggle */}
+            {/* Theme Switcher Quick Toggle (Parchment Dawn <-> Golden Hour) */}
             <button
               onClick={() => {
-                const nextMap: Record<AppTheme, AppTheme> = {
-                  sandstone: "amethyst",
-                  amethyst: "light",
-                  light: "festival",
-                  festival: "golden-hour",
-                  "golden-hour": "prism-pulse",
-                  "prism-pulse": "sandstone",
-                };
-                handleSelectTheme(nextMap[theme] || "sandstone");
+                handleSelectTheme(themeConfigService.getNextPermittedTheme(theme));
               }}
               className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs transition-transform active:scale-95 shadow-sm"
-              title={`Switch atmosphere (Current: ${theme})`}
+              title={`Switch sacred atmosphere (${theme === "light" ? "Parchment Dawn" : "Golden Hour"})`}
             >
-              {isLight ? "☀️" : isFestival ? "🪔" : isAmethyst ? "🔮" : isGoldenHour ? "🌅" : isPrismPulse ? "⚡" : "🏛️"}
+              {theme === "light" ? "☀️" : "🌅"}
             </button>
 
             {/* Search Button */}
@@ -1687,6 +1679,47 @@ ${reflections
                     <span className="truncate">Listen</span>
                   </button>
                 )}
+              </div>
+
+              {/* Relocated My Journey Entry Point (Personal Sanctuary Bridge) */}
+              <div className="pt-2 border-t border-amber-500/15">
+                <button
+                  type="button"
+                  id="btn-daily-shloka-my-journey"
+                  onClick={() => {
+                    if (onNavigateTab) {
+                      onNavigateTab("my-journey");
+                    } else {
+                      setActiveTab("journey");
+                    }
+                  }}
+                  className={`w-full py-2.5 px-3 rounded-2xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer shadow-xs hover:scale-[1.01] active:scale-[0.99] border ${
+                    isLightCanvas
+                      ? "bg-gradient-to-r from-amber-50 via-amber-100/70 to-amber-50 hover:bg-amber-100 text-amber-950 border-amber-300"
+                      : "bg-gradient-to-r from-amber-950/40 via-stone-900 to-amber-950/40 hover:bg-amber-900/30 text-amber-200 border-amber-500/35"
+                  }`}
+                  title="Open My Journey: Personal Sanctuary, Sadhana Streaks & Bookmarks"
+                  aria-label="Open My Journey personal spiritual progress"
+                >
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center flex-shrink-0 group-hover:rotate-45 transition-transform">
+                      <Compass className="w-4 h-4" />
+                    </div>
+                    <div className="text-left">
+                      <div className="flex items-center space-x-1.5 leading-tight">
+                        <span className="font-bold">My Sādhana Journey</span>
+                        <span className={`text-[10px] font-sanskrit ${isLightCanvas ? "text-amber-800" : "text-amber-400"}`}>साधना</span>
+                      </div>
+                      <p className="text-[10px] text-stone-600 dark:text-stone-300 font-normal">
+                        Personal sanctuary · Streaks, bookmarks &amp; journal
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-1 text-[11px] font-semibold text-amber-800 dark:text-amber-300">
+                    <span>View Progress</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </button>
               </div>
             </div>
 
@@ -2742,6 +2775,13 @@ ${reflections
               onOpenDonation={onOpenDonation}
               onOpenAdminConsole={onOpenAdmin}
               onNavigateTab={(tab) => {
+                if (tab === "services" || tab === "community") {
+                  if (onNavigateTab) onNavigateTab(tab);
+                  else if (typeof window !== "undefined") {
+                    window.location.search = `?tab=${tab}`;
+                  }
+                  return;
+                }
                 if (tab === "today") setActiveTab("home");
                 else if (tab === "explore") setActiveTab("explore");
                 else if (tab === "search") setActiveTab("search");

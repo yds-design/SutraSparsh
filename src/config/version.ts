@@ -21,5 +21,5 @@ export const APP_VERSION_METADATA: VersionMetadata = {
   commitHash: "66d273b",
   framework: "React 19 + Express 5 + Vite 8",
   nodeVersion: process.version || "v22",
-  phaseStatus: "Phase 23 (All Phases 1–23 Certified; Phase 1 Lockdown Active)",
+  phaseStatus: "Phase 25 (All Phases 1–25 Certified; Purohit Directory & Journey Relocated; Phase 1 Lockdown Active)",
 };

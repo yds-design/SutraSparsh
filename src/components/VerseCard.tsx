@@ -1,5 +1,5 @@
 import React from "react";
-import { Bookmark, BookmarkCheck, Volume2, Sparkles, ArrowRight } from "lucide-react";
+import { Bookmark, BookmarkCheck, Volume2, Sparkles, ArrowRight, Compass } from "lucide-react";
 import type { ContentItem } from "../types";
 import { recitationEngine } from "../utils/recitationEngine";
 
@@ -8,6 +8,7 @@ interface VerseCardProps {
   isBookmarked: boolean;
   onToggleBookmark: (id: string) => void;
   onSelect: (item: ContentItem) => void;
+  onOpenJourney?: (item: ContentItem) => void;
   theme?: "sandstone" | "amethyst" | "light" | "festival" | "golden-hour" | "prism-pulse";
 }
 
@@ -16,6 +17,7 @@ export const VerseCard: React.FC<VerseCardProps> = ({
   isBookmarked,
   onToggleBookmark,
   onSelect,
+  onOpenJourney,
   theme: propTheme,
 }) => {
   const currentTheme =
@@ -285,17 +287,48 @@ export const VerseCard: React.FC<VerseCardProps> = ({
           ))}
         </div>
 
-        <div
-          className={`flex items-center space-x-1 text-xs font-semibold group-hover:translate-x-1 transition-transform ${
-            isLightCanvas
-              ? isPrismPulse
-                ? "text-[#7C3AED]"
-                : "text-amber-800"
-              : "text-amber-400"
-          }`}
-        >
-          <span>Explore</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+        {/* Explore & My Journey Action Area */}
+        <div className="flex items-center space-x-1.5 flex-shrink-0">
+          {onOpenJourney && (
+            <button
+              type="button"
+              id={`btn-verse-journey-${item.id}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenJourney(item);
+              }}
+              title={`View ${item.title} in My Journey sanctuary`}
+              aria-label={`View ${item.title} in My Journey`}
+              className={`px-2 py-1 rounded-lg text-[11px] font-semibold border flex items-center space-x-1 transition-all cursor-pointer hover:scale-105 shadow-2xs ${
+                isLightCanvas
+                  ? "bg-amber-50 hover:bg-amber-100 text-amber-950 border-amber-300"
+                  : "bg-stone-800 hover:bg-stone-700 text-amber-300 border-amber-500/30"
+              }`}
+            >
+              <Compass className="w-3 h-3 text-amber-500 flex-shrink-0" />
+              <span>Journey</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            id={`btn-explore-verse-${item.id}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(item);
+            }}
+            aria-label={`Explore and study ${item.title} in depth`}
+            className={`flex items-center space-x-1 text-xs font-bold px-2.5 py-1 rounded-lg transition-all cursor-pointer group-hover:translate-x-0.5 ${
+              isLightCanvas
+                ? isPrismPulse
+                  ? "text-[#7C3AED] hover:bg-[#936BFA]/10"
+                  : "text-amber-900 hover:bg-amber-100/80"
+                : "text-amber-300 hover:bg-amber-500/20"
+            }`}
+          >
+            <span>Explore</span>
+            <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" />
+          </button>
         </div>
       </div>
     </div>

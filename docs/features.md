@@ -1,6 +1,6 @@
 # SutraSparsh (सूत्रस्पर्श) — Feature Catalog
 
-**Platform Version:** v1.7.0 (Production Launch Certified)  
+**Platform Version:** v1.7.2 (Universal Theme Consistency, High-Contrast Readability & Full SEO Architecture Certified)  
 **Corpus Domain:** Sacred Sanskrit Scriptures & Classical Vedic Wisdom  
 **Architecture:** React 19, TypeScript 6, Vite, Tailwind CSS 4, Express 5, Firebase Firestore, Web Audio API, Google Cloud TTS  
 **Operational Governance:** Phase 1 Sanctuary Mode (Free seeker sanctuary on client devices) with dynamic Phase 2 Monetization & Seva controls in Admin Console.
@@ -19,6 +19,10 @@
    - [2.7 Dedicated Administration & SRE Operations Console](#27-dedicated-administration--sre-operations-console)
    - [2.8 Ethical Monetization, Sādhaka Access & 80G Seva Portal](#28-ethical-monetization-sādhaka-access--80g-seva-portal)
    - [2.9 Official Brand Identity & Native PWA Asset Pipeline](#29-official-brand-identity--native-pwa-asset-pipeline)
+   - [2.10 Complete SEO Compliance & Search Engine Discovery Architecture](#210-complete-seo-compliance--search-engine-discovery-architecture)
+   - [2.11 Universal App-Wide Theme System & High-Contrast Readability Engine](#211-universal-app-wide-theme-system--high-contrast-readability-engine)
+   - [2.12 Vedic Purohit Services & Click-to-WhatsApp Booking Architecture](#212-vedic-purohit-services--click-to-whatsapp-booking-architecture)
+   - [2.13 Consolidated Seeker Journey, Community Board & 15-Min Milestone Engine](#213-consolidated-seeker-journey-community-board--15-min-milestone-engine)
 3. [Minor Features & Supporting Capabilities](#3-minor-features--supporting-capabilities)
    - [3.1 Sacred UI & Visual Ambience](#31-sacred-ui--visual-ambience)
    - [3.2 Audio & Acoustic Nuances](#32-audio--acoustic-nuances)
@@ -187,19 +191,104 @@ The application follows an architectural separation between:
 
 ---
 
+### 2.10 Complete SEO Compliance & Search Engine Discovery Architecture
+*Milestones: M20.2, Release v1.7.0*
+
+- **Dynamic Head Metadata Injection (`DynamicMetadata.tsx`)**:
+  - Context-aware updates of document title (`<title>`), meta description, keywords, canonical URLs, and crawler directives for every scripture, verse, chapter, and tool screen.
+  - Automatically handles route state changes in SPA architecture without requiring server restarts.
+- **Search Engine Crawler Directives (`public/robots.txt`)**:
+  - Directs major web crawlers (Googlebot, Bingbot, Slurp, DuckDuckBot, Baiduspider, Yandex).
+  - Explicitly grants index access to public scripture library, search, and glossary while protecting administrative consoles (`/admin`, `/api/admin`, `/ops`) and backend telemetry endpoints.
+  - Points directly to the XML sitemap index.
+- **Hierarchical XML Sitemap (`public/sitemap.xml`)**:
+  - Comprehensive index of all canonical scripture endpoints (Bhagavad Gita, Patanjali Yoga Sutras, Principal Upanishads, Vedic Chants), philosophical glossary, sadhana tracking, and legal compliance pages.
+  - Formatted with ISO-8601 timestamps, change frequencies (`daily` for home/verse-of-the-day, `weekly` for corpus chapters), and priority weightings (1.0 for Sanctuary, 0.9 for Scriptures, 0.8 for search and glossary).
+- **Full Open Graph Protocol & Social Rich Previews**:
+  - High-fidelity tags (`og:title`, `og:description`, `og:image`, `og:image:secure_url`, `og:type`, `og:url`, `og:site_name`, `og:locale`).
+  - High-resolution preview image (`public/icon-1024.png`) guaranteeing rich unfurls on WhatsApp, iMessage, Twitter/X, Facebook, LinkedIn, Telegram, and Discord.
+  - Multilingual locale alternates (`en_US`, `sa_IN`, `hi_IN`).
+- **Twitter / X Card Integration**:
+  - Formatted with `summary_large_image` presentation, `@SutraSparsh` authorship attribution, and descriptive alt text for accessibility.
+- **Comprehensive Schema.org JSON-LD Structured Data**:
+  - Embedded `@graph` structured entities:
+    - `WebSite`: SearchAction with query template targeting in-app Sanskrit search engine.
+    - `Organization`: SutraSparsh publisher details, official logo URI, and spiritual wisdom mission statement.
+    - `SoftwareApplication`: Categorized as EducationalApplication with free offer and master feature list.
+    - `BreadcrumbList`: Hierarchical navigational hierarchy (Sanctuary Home → Scriptures Library → Sanskrit Search).
+    - `Article` & `Book`: Rich metadata attached to individual verses and canonical scriptures with Devanagari text excerpts and philosophical subjects.
+- **Crawlable Semantic Noscript Fallback**:
+  - Accessible `<noscript>` block inside `index.html` presenting crawlable semantic hyperlinks to core canonical scriptures and legal notices for JavaScript-restricted web indexers.
+- **Dedicated Express Cache-Controlled SEO Endpoints**:
+  - `server.ts` provides explicit GET routes for `/robots.txt` and `/sitemap.xml` with appropriate MIME types (`text/plain` and `application/xml`) and caching headers (`Cache-Control: public, max-age=86400`).
+
+---
+
+### 2.11 Universal App-Wide Theme System & High-Contrast Readability Engine
+*Milestones: v1.7.1, v1.7.2*
+
+- **Six Contemplative Sacred Themes**:
+  1. *Sandstone Temple (Default)*: Classical warm temple ochre, rich amber accents (`#E8921A`), gold leaf highlights, and deep espresso sanctum ground.
+  2. *Amethyst Twilight*: Meditative deep violet dusk (`#0F0A1A`), celestial purple aura (`#4A2264`), radiant amber, and moonlit cream typography.
+  3. *Parchment Dawn (Light Mode)*: Clean daylight readability on soft manuscript parchment (`#FFFBF5`), deep sandalwood text (`#3A2818`), and warm golden accents.
+  4. *Festival Gold & Maroon*: Royal temple vermilion, kumkum maroon (`#4B0E17`), blazing deep saffron glow, and ceremonial gold ornamentation.
+  5. *Golden Hour Atmosphere*: Butter cream (`#F6DFA6`), soft vanilla (`#FFF4D8`), burnt honey (`#C9822B`), ink black sanctum (`#171717`), and warm gray accents.
+  6. *Prism Pulse (Vivid Neo-Dash)*: Electric Purple (`#936BFA`), Vivid Orange (`#FF9D2C`), Dash Pink (`#FA6BA7`), Cyan Blue (`#2CA6FF`), and Emerald (`#2BBF7D`) with Paytone One display styling and crisp light canvas foundation.
+- **Dynamic ModalPortal Theme Synchronization**:
+  - `ModalPortal.tsx` embeds an active `MutationObserver` on `document.documentElement`, propagating `data-theme` and theme CSS classes directly into detached DOM portal sub-trees (`#verse-detail-modal`, `#look-closer-experience`, `#word-explorer-drawer`).
+  - Guarantees zero theme leakage or contrast inversion when modals, drawers, or dialogs are opened.
+- **High-Specificity CSS Contrast Guards (`src/styles/prism-pulse.css`)**:
+  - Hardened contrast rules with `!important` fallbacks specifically defending Sanskrit Devanagari headers, IAST transliterations, English meanings, Hindi translations, and morphological badges.
+  - Multi-layer dark container protections ensuring text remains bright, sharp, and readable across all nested sub-panels.
+- **Unified Light Canvas Pattern (`isLightCanvas`)**:
+  - Replaced fragmented, brittle `is[Theme]` boolean checks across `VerseCard.tsx`, `MyJourneyView.tsx`, `MoreView.tsx`, and `SutraSparshTempleApp.tsx` with a single unified `isLightCanvas = isLight || isPrismPulse` model.
+  - Ensures clean dark text (`#1C1917`, `#292524`) on light backdrops and luminous text (`#FFFBEB`, `#F5F5F4`) on dark sanctuary backdrops.
+
+---
+
+### 2.12 Vedic Purohit Services & Click-to-WhatsApp Booking Architecture
+*Milestones: Phase 24, M49.1 – M49.6*
+
+- **Authentic Purohit Verification**: Direct seeker access to authentic Vedic Purohits (`src/data/purohits.ts`) with documented Veda Shakha lineage (Rigveda Shakala, Shukla Yajurveda Madhyandina, Krishna Yajurveda Taittiriya, Samaveda Kauthuma), educational credentials (*Vedalankar*, *Acharya*), and 10–25+ years of ritual experience.
+- **Comprehensive Vedic Ritual Catalog**:
+  - *Griha Pravesh Mahapuja* (Vastu Shanti, Navagraha Homa, Lakshmi Pravesh)
+  - *Maha Rudrabhishek* (Ekadasha Rudra Patha, Panchamrit Abhishek)
+  - *Satyanarayan Vrat Katha* (Panch Adhyaya Parayana, Prasadam Puja)
+  - *Navagraha & Shanti Homas* (Graha dosha pacification, Nakshatra Shanti)
+  - *Vivah Samskara* (Saptapadi, Kanyadaan, Laja Homa)
+  - *Shradh & Pitru Tarpan* (Tila Tarpan, Pinda Daan, Brahmin Bhojan)
+- **Transparent Dakshina Guidelines**: Clear separation of Purohit Dakshina and Samagri requirements, eliminating opaque pricing and hidden commissions.
+- **Deep-Link WhatsApp Booking Protocol**: One-tap booking generating pre-formatted WhatsApp consultation messages adhering to international E.164 phone formats (`https://wa.me/{phone}?text=...`) encoding seeker name, ritual type, preferred date, and location.
+- **Multi-Lingual Ritual Guidance**: Search and filter purohits by languages spoken (Sanskrit, Hindi, Tamil, Telugu, Kannada, Marathi) and geographic service zones.
+
+---
+
+### 2.13 Consolidated Seeker Journey, Community Board & 15-Min Milestone Engine
+*Milestones: Phase 25, M50.1 – M50.6*
+
+- **Sanctuary Journey Consolidation**: Relocated and consolidated seeker spiritual tracking directly inside `MyJourneyView.tsx` within the primary sanctuary shell, eliminating isolated legacy views and architectural fragmentation.
+- **React Hook Lifecycle Hardening**: Audited and refactored all custom hooks (`useAuth`, `useProgress`, `useTheme`, `useAudio`) to enforce top-level execution without conditional returns, resolving previous "Rendered fewer hooks than expected" exceptions.
+- **15-Minute Daily Sadhana Milestone Engine**:
+  - Dynamic progress ring tracking cumulative scripture recitation and reading time.
+  - Reaching the 15-minute mark triggers a celebratory modal with the sacred Sanskrit benediction *अभ्यासेन तु कौन्तेय वैराग्येण च गृह्यते* (Gita 6.35).
+  - Physics-driven celebratory confetti canvas burst that gracefully unmounts after completion.
+- **Community Board Satsang (`CommunityBoardView.tsx`)**:
+  - Spiritual discussion forum categorized by the four sadhana paths (*Karma*, *Raja*, *Jnana*, *Bhakti*).
+  - Seekers can post contemplation questions, cite specific shlokas, reply in threaded dialogues, and offer *Anumodana* (spiritual affirmations).
+- **Theme Whitelist Restrictions**: Strict theme confinement ensuring all interactive components remain visually grounded within the 6 canonical themes, protecting against arbitrary class mutations.
+
+---
+
 ## 3. Minor Features & Supporting Capabilities
 
 ### 3.1 Sacred UI & Visual Ambience
-- **Four Classical Sanctuary Themes**:
-  - *Sandstone (Default)*: Warm earthy ochre and temple stone hues.
-  - *Amethyst Sanctuary*: Deep twilight contemplative dark tones.
-  - *Sacred Light*: High-contrast parchment daylight reading mode.
-  - *Vedic Festival*: Vibrant saffron, vermilion, and marigold accents.
+- **Six Classical Sanctuary Themes**: Fully configurable in Seeker Settings with real-time reactive cross-fade transitions across all consumer viewports.
 - **Atmospheric Golden Hour Lighting**: Time-of-day contextual backdrop gradients shifting between dawn (*Brahma Muhurta*), midday, sunset (*Sandhya*), and night.
 - **Morning Contemplative Promo Modal**: Elegant daily pop-up presenting the featured morning shloka with contemplative artwork and quick-read navigation.
 - **Sacred Verse Share Card Generator**: One-tap creation of high-resolution graphic cards formatted for WhatsApp, Instagram, and Twitter, featuring Devanagari text, English meaning, and SutraSparsh attribution.
 - **Responsive Mobile Navigation**: Haptic-optimized bottom tab bar (`MobileBottomNav.tsx`) ensuring one-thumb reachability across *Today*, *Search*, *Explore*, *Journey*, and *More*.
-- **Portal-Rendered Modals**: All modals (VerseModal, LookCloserModal, AuthModal, PricingModal) render into isolated DOM portals to eliminate z-index clipping and stacking context collisions.
+- **Portal-Rendered Modals with Theme Observer**: All modals (`VerseModal`, `LookCloserModal`, `WordExplorer`, `AuthModal`, `PricingModal`) render into isolated DOM portals with theme mutation listeners to eliminate z-index clipping and styling desynchronization.
+- **Adaptive Theme Selector Cards**: Interactive theme palette preview cards in Settings featuring active badges, color swatch dots, Devanagari labels, and dynamic contrast adapting cleanly to light and dark canvases.
 
 ---
 
@@ -295,7 +384,11 @@ The application follows an architectural separation between:
 | **M48** | Governance | **Major** | Phase 2 dynamic feature gateways with one-click admin toggles | **COMPLETE ✅** |
 | **v1.6.0** | Morphology | **Major** | Dynamic Paninian morphological engine & 5-stage Look Closer modal | **COMPLETE ✅** |
 | **v1.7.0** | Branding | **Major** | Official geometric sunrise emblem, wordmark & automated resvg pipeline | **COMPLETE ✅** |
+| **v1.7.1** | SEO Architecture| **Major** | Complete SEO Compliance: Dynamic Metadata, Open Graph, Twitter Cards, Schema.org JSON-LD, sitemap.xml, robots.txt, canonical URLs, and crawler fallbacks | **COMPLETE ✅** |
+| **v1.7.2** | Theme & Contrast | **Major** | Universal App-Wide Theme System, High-Specificity Contrast Guards, Light Canvas Normalization, and ModalPortal MutationObserver Synchronization | **COMPLETE ✅** |
+| **M49 (Phase 24)** | Purohit Services | **Major** | Vedic Purohit Directory, Veda Shakha verification, and Click-to-WhatsApp booking protocol | **COMPLETE ✅** |
+| **M50 (Phase 25)** | Journey & Safety | **Major** | Sanctuary Journey Relocation, Hook Lifecycle Hardening, 15-Min Daily Goal Celebration, and 10-Suite System Testing Matrix | **COMPLETE ✅** |
 
 ---
 
-*Document compiled and certified against production codebase v1.7.0.*
+*Document compiled and certified against production codebase v1.0.0 (Launch Certified).*

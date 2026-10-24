@@ -33,6 +33,8 @@ import {
   RefreshCw,
   AlertTriangle,
   Target,
+  UserCheck,
+  Users,
 } from "lucide-react";
 import { soundEngine } from "../utils/audio";
 import { recitationEngine } from "../utils/recitationEngine";
@@ -46,6 +48,7 @@ import {
 } from "../services/dailyGoal.service";
 import { useFeatureFlags } from "../services/feature-flags.service";
 import { TtsAvailabilityIndicator } from "./TtsAvailabilityIndicator";
+import { themeConfigService } from "../services/theme-config.service";
 
 interface MoreViewProps {
   theme?: "sandstone" | "amethyst" | "light" | "festival" | "golden-hour" | "prism-pulse";
@@ -664,99 +667,25 @@ export const MoreView: React.FC<MoreViewProps> = ({
             </h2>
           </div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-amber-500">
-            {theme === "sandstone"
-              ? "Sandstone Mode Active"
-              : theme === "light"
-              ? "Light Mode Active"
-              : theme === "festival"
-              ? "Festival Mode Active"
-              : theme === "golden-hour"
-              ? "Golden Hour Active"
-              : theme === "prism-pulse"
-              ? "Prism Pulse Active"
-              : "Amethyst Mode Active"}
+            {theme === "light"
+              ? "Parchment Dawn Active (☀️)"
+              : "Golden Hour Active (🌅)"}
           </span>
         </div>
 
         <p className="text-xs sm:text-sm leading-relaxed" style={{ color: textSecondary }}>
-          Rooted in the warmth of temples, scriptures, and glowing sacred traditions. Select from the authentic atmospheres defined in the SutraSparsh design system:
+          Per the active theme policy in <code className="text-[11px] font-mono px-1 py-0.5 rounded bg-black/20">config.json</code>, application themes are strictly restricted to the two canonical sacred atmospheres:
         </p>
 
-        {/* Theme Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
-          {/* A. DARK MODE (Contemplative Sandstone) */}
-          <div
-            onClick={() => onSelectTheme && onSelectTheme("sandstone")}
-            className={`p-4 rounded-2xl border cursor-pointer transition-all relative overflow-hidden ${
-              theme === "sandstone"
-                ? "ring-2 ring-amber-500 shadow-xl scale-[1.01]"
-                : "opacity-80 hover:opacity-100"
-            }`}
-            style={{
-              backgroundColor: "#1C120B",
-              borderColor: theme === "sandstone" ? "#D88916" : "#3A2818",
-            }}
-          >
-            {theme === "sandstone" && (
-              <div className="absolute top-0 right-0 bg-amber-500 text-stone-950 font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-bl-lg shadow flex items-center space-x-1">
-                <Check className="w-3 h-3 stroke-[3]" />
-                <span>Active</span>
-              </div>
-            )}
-            <div className="text-2xl mb-2">🌙</div>
-            <div className="font-bold text-sm text-[#F4E9D2]">Sandstone Temple</div>
-            <div className="text-[11px] font-sanskrit text-amber-400">बलुआ पत्थर • Temple Brown</div>
-            <p className="text-[11px] text-[#B9A995] mt-1 leading-relaxed">
-              Default contemplative experience. Ink/Night ground (#120D09) with warm saffron & ivory accents.
-            </p>
-            <div className="flex items-center space-x-1.5 mt-3 pt-2 border-t border-white/10">
-              <span className="w-3.5 h-3.5 rounded-full bg-[#120D09] border border-white/20" title="Ink #120D09" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#24160D]" title="Card Brown #24160D" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#D88916]" title="Saffron #D88916" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#F4E9D2]" title="Ivory #F4E9D2" />
-            </div>
-          </div>
-
-          {/* B. AMETHYST TWILIGHT ATMOSPHERE */}
-          <div
-            onClick={() => onSelectTheme && onSelectTheme("amethyst")}
-            className={`p-4 rounded-2xl border cursor-pointer transition-all relative overflow-hidden ${
-              theme === "amethyst"
-                ? "ring-2 ring-purple-400 shadow-xl scale-[1.01]"
-                : "opacity-80 hover:opacity-100"
-            }`}
-            style={{
-              backgroundColor: "#140A28",
-              borderColor: theme === "amethyst" ? "#9B68D8" : "#321A54",
-            }}
-          >
-            {theme === "amethyst" && (
-              <div className="absolute top-0 right-0 bg-purple-500 text-stone-950 font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-bl-lg shadow flex items-center space-x-1">
-                <Check className="w-3 h-3 stroke-[3]" />
-                <span>Active</span>
-              </div>
-            )}
-            <div className="text-2xl mb-2">🔮</div>
-            <div className="font-bold text-sm text-[#EDE0F8]">Amethyst Twilight</div>
-            <div className="text-[11px] font-sanskrit text-purple-300">जाम्बूनद एवं मणिरत्न • Mystic Violet</div>
-            <p className="text-[11px] text-[#C4A8E6] mt-1 leading-relaxed">
-              Deep contemplative twilight. Midnight violet (#080410), sacred amethyst (#9B68D8), and soft lilac.
-            </p>
-            <div className="flex items-center space-x-1.5 mt-3 pt-2 border-t border-white/10">
-              <span className="w-3.5 h-3.5 rounded-full bg-[#080410] border border-white/20" title="Night Violet #080410" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#251640]" title="Deep Amethyst #251640" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#9B68D8]" title="Sacred Amethyst #9B68D8" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#EDE0F8]" title="Lilac Mist #EDE0F8" />
-            </div>
-          </div>
-
-          {/* C. LIGHT MODE (Clean, Calm & Readable) */}
+        {/* Whitelist Theme Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* 1. PARCHMENT DAWN (Clean, Calm & Readable) */}
           <div
             onClick={() => onSelectTheme && onSelectTheme("light")}
-            className={`p-4 rounded-2xl border cursor-pointer transition-all relative overflow-hidden ${
+            className={`p-5 rounded-2xl border cursor-pointer transition-all relative overflow-hidden ${
               theme === "light"
                 ? "ring-2 ring-amber-500 shadow-xl scale-[1.01]"
-                : "opacity-80 hover:opacity-100"
+                : "opacity-85 hover:opacity-100 hover:border-amber-400"
             }`}
             style={{
               backgroundColor: "#FFFBF5",
@@ -764,65 +693,33 @@ export const MoreView: React.FC<MoreViewProps> = ({
             }}
           >
             {theme === "light" && (
-              <div className="absolute top-0 right-0 bg-amber-500 text-stone-950 font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-bl-lg shadow flex items-center space-x-1">
-                <Check className="w-3 h-3 stroke-[3]" />
-                <span>Active</span>
+              <div className="absolute top-0 right-0 bg-amber-500 text-stone-950 font-bold text-[9.5px] uppercase tracking-wider px-3 py-1 rounded-bl-xl shadow flex items-center space-x-1">
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                <span>Active Atmosphere</span>
               </div>
             )}
-            <div className="text-2xl mb-2">☀️</div>
-            <div className="font-bold text-sm text-[#3A2818]">Parchment Dawn</div>
-            <div className="text-[11px] font-sanskrit text-amber-700">चन्दन एवं पत्र • Sandalwood</div>
-            <p className="text-[11px] text-[#6B5844] mt-1 leading-relaxed">
-              Clean, calm and readable. Soft ivory ground (#FFFBF5) with parchment and deep brown typography.
+            <div className="text-3xl mb-2">☀️</div>
+            <div className="font-bold text-base text-[#3A2818]">Parchment Dawn</div>
+            <div className="text-xs font-sanskrit text-amber-700">चन्दन एवं पत्र • Sandalwood Dawn</div>
+            <p className="text-xs text-[#6B5844] mt-1.5 leading-relaxed">
+              Clean, calm morning light. Soft ivory ground (#FFFBF5) with aged parchment warmth, gentle amber accents, and deep brown typography.
             </p>
-            <div className="flex items-center space-x-1.5 mt-3 pt-2 border-t border-stone-200">
-              <span className="w-3.5 h-3.5 rounded-full bg-[#FFFBF5] border border-stone-300" title="Soft Ivory #FFFBF5" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#F6E8C9]" title="Sandalwood #F6E8C9" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#D88916]" title="Saffron #D88916" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#3A2818]" title="Deep Brown #3A2818" />
+            <div className="flex items-center space-x-2 mt-4 pt-3 border-t border-stone-200">
+              <span className="w-4 h-4 rounded-full bg-[#FFFBF5] border border-stone-300 shadow-xs" title="Soft Ivory #FFFBF5" />
+              <span className="w-4 h-4 rounded-full bg-[#F6E8C9] border border-stone-300 shadow-xs" title="Sandalwood #F6E8C9" />
+              <span className="w-4 h-4 rounded-full bg-[#D88916] shadow-xs" title="Saffron #D88916" />
+              <span className="w-4 h-4 rounded-full bg-[#3A2818] shadow-xs" title="Deep Brown #3A2818" />
+              <span className="text-[10px] text-stone-500 font-mono ml-auto">Canonical Light</span>
             </div>
           </div>
 
-          {/* C. FESTIVAL MODE (Vibrant & Auspicious) */}
-          <div
-            onClick={() => onSelectTheme && onSelectTheme("festival")}
-            className={`p-4 rounded-2xl border cursor-pointer transition-all relative overflow-hidden ${
-              theme === "festival"
-                ? "ring-2 ring-amber-400 shadow-xl scale-[1.01]"
-                : "opacity-80 hover:opacity-100"
-            }`}
-            style={{
-              backgroundColor: "#4B0E17",
-              borderColor: theme === "festival" ? "#FF8A00" : "#7A1825",
-            }}
-          >
-            {theme === "festival" && (
-              <div className="absolute top-0 right-0 bg-amber-400 text-stone-950 font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-bl-lg shadow flex items-center space-x-1">
-                <Check className="w-3 h-3 stroke-[3]" />
-                <span>Active</span>
-              </div>
-            )}
-            <div className="text-2xl mb-2">🪔</div>
-            <div className="font-bold text-sm text-[#FFF6E3]">Festival Maroon</div>
-            <div className="text-[11px] font-sanskrit text-amber-300">उत्सव एवं मङ्गल • Royal Maroon</div>
-            <p className="text-[11px] text-[#FFDDB3] mt-1 leading-relaxed">
-              Vibrant, celebratory and auspicious. Deep royal maroon (#4B0E17), vivid saffron (#FF8A00), and gold.
-            </p>
-            <div className="flex items-center space-x-1.5 mt-3 pt-2 border-t border-white/10">
-              <span className="w-3.5 h-3.5 rounded-full bg-[#4B0E17] border border-white/20" title="Deep Maroon #4B0E17" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#7A1825]" title="Royal Maroon #7A1825" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#FF8A00]" title="Saffron #FF8A00" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#FFD54A]" title="Golden #FFD54A" />
-            </div>
-          </div>
-
-          {/* D. GOLDEN HOUR ATMOSPHERE (गोधूलि वेला) */}
+          {/* 2. GOLDEN HOUR (गोधूलि वेला) */}
           <div
             onClick={() => onSelectTheme && onSelectTheme("golden-hour")}
-            className={`p-4 rounded-2xl border cursor-pointer transition-all relative overflow-hidden ${
+            className={`p-5 rounded-2xl border cursor-pointer transition-all relative overflow-hidden ${
               theme === "golden-hour"
                 ? "ring-2 ring-amber-400 shadow-xl scale-[1.01]"
-                : "opacity-80 hover:opacity-100"
+                : "opacity-85 hover:opacity-100 hover:border-amber-400"
             }`}
             style={{
               backgroundColor: "#251A10",
@@ -830,56 +727,23 @@ export const MoreView: React.FC<MoreViewProps> = ({
             }}
           >
             {theme === "golden-hour" && (
-              <div className="absolute top-0 right-0 bg-gradient-to-l from-[#C9822B] to-[#F6DFA6] text-stone-950 font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-bl-lg shadow flex items-center space-x-1">
-                <Check className="w-3 h-3 stroke-[3]" />
-                <span>Active</span>
+              <div className="absolute top-0 right-0 bg-gradient-to-l from-[#C9822B] to-[#F6DFA6] text-stone-950 font-bold text-[9.5px] uppercase tracking-wider px-3 py-1 rounded-bl-xl shadow flex items-center space-x-1">
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                <span>Active Atmosphere</span>
               </div>
             )}
-            <div className="text-2xl mb-2">🌅</div>
-            <div className="font-bold text-sm text-[#FFF4D8]">Golden Hour</div>
-            <div className="text-[11px] font-sanskrit text-amber-300">गोधूलि वेला • Dusk Glow</div>
-            <p className="text-[11px] text-[#F6DFA6] mt-1 leading-relaxed">
-              Warm sunset glow. Butter cream (#F6DFA6), vanilla (#FFF4D8), burnt honey (#C9822B) & ink sanctum (#171717).
+            <div className="text-3xl mb-2">🌅</div>
+            <div className="font-bold text-base text-[#FFF4D8]">Golden Hour</div>
+            <div className="text-xs font-sanskrit text-amber-300">गोधूलि वेला • Sacred Dusk</div>
+            <p className="text-xs text-[#F6DFA6] mt-1.5 leading-relaxed">
+              Sacred sunset dusk. Burnt honey (#C9822B), butter cream (#F6DFA6), vanilla (#FFF4D8) and deep ink sanctum glow (#171717).
             </p>
-            <div className="flex items-center space-x-1.5 mt-3 pt-2 border-t border-white/10">
-              <span className="w-3.5 h-3.5 rounded-full bg-[#171717] border border-white/20" title="Ink #171717" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#C9822B]" title="Burnt Honey #C9822B" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#F6DFA6]" title="Butter Cream #F6DFA6" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#FFF4D8]" title="Vanilla #FFF4D8" />
-            </div>
-          </div>
-
-          {/* E. PRISM PULSE ATMOSPHERE (चैतन्य वर्ण) */}
-          <div
-            onClick={() => onSelectTheme && onSelectTheme("prism-pulse")}
-            className={`p-4 rounded-2xl border cursor-pointer transition-all relative overflow-hidden ${
-              theme === "prism-pulse"
-                ? "ring-2 ring-purple-400 shadow-xl scale-[1.01]"
-                : "opacity-80 hover:opacity-100"
-            }`}
-            style={{
-              backgroundColor: "#FFFFFF",
-              borderColor: theme === "prism-pulse" ? "#936BFA" : "#E5E7EB",
-            }}
-          >
-            {theme === "prism-pulse" && (
-              <div className="absolute top-0 right-0 bg-gradient-to-l from-[#936BFA] to-[#FA6BA7] text-white font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-bl-lg shadow flex items-center space-x-1">
-                <Check className="w-3 h-3 stroke-[3]" />
-                <span>Active</span>
-              </div>
-            )}
-            <div className="text-2xl mb-2">⚡</div>
-            <div className="font-bold text-sm text-stone-900" style={{ fontFamily: "'Paytone One', sans-serif" }}>Prism Pulse</div>
-            <div className="text-[11px] font-sanskrit text-purple-600">चैतन्य वर्ण • Vivid Neo-Dash</div>
-            <p className="text-[11px] text-stone-600 mt-1 leading-relaxed">
-              Vivid modern dashboard. Electric purple (#936BFA), orange (#FF9D2C), pink (#FA6BA7), blue (#2CA6FF) & emerald (#2BBF7D) with Paytone One.
-            </p>
-            <div className="flex items-center space-x-1.5 mt-3 pt-2 border-t border-stone-200">
-              <span className="w-3.5 h-3.5 rounded-full bg-[#936BFA]" title="Purple #936BFA" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#FF9D2C]" title="Orange #FF9D2C" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#FA6BA7]" title="Pink #FA6BA7" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#2CA6FF]" title="Blue #2CA6FF" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#2BBF7D]" title="Green #2BBF7D" />
+            <div className="flex items-center space-x-2 mt-4 pt-3 border-t border-white/10">
+              <span className="w-4 h-4 rounded-full bg-[#171717] border border-white/20 shadow-xs" title="Ink Sanctum #171717" />
+              <span className="w-4 h-4 rounded-full bg-[#C9822B] shadow-xs" title="Burnt Honey #C9822B" />
+              <span className="w-4 h-4 rounded-full bg-[#F6DFA6] shadow-xs" title="Butter Cream #F6DFA6" />
+              <span className="w-4 h-4 rounded-full bg-[#FFF4D8] shadow-xs" title="Vanilla #FFF4D8" />
+              <span className="text-[10px] text-amber-400/80 font-mono ml-auto">Canonical Dusk</span>
             </div>
           </div>
         </div>
@@ -2309,6 +2173,50 @@ export const MoreView: React.FC<MoreViewProps> = ({
                 </div>
                 <div className="text-[10px]" style={{ color: textMuted }}>
                   Curated journeys: Gita Karma Yoga, Patanjali Meditation, Upanishadic Self-Inquiry
+                </div>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4" style={{ color: textMuted }} />
+          </div>
+
+          {/* Vedic Purohit Directory (Zero-Fee Services) */}
+          <div
+            onClick={() => onNavigateTab?.("services")}
+            className="p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
+            style={{ borderColor: cardBorder }}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500 text-sm">
+                <UserCheck className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold" style={{ color: textPrimary }}>
+                  Vedic Purohit Directory (ऋत्विक् सेवा)
+                </div>
+                <div className="text-[10px]" style={{ color: textMuted }}>
+                  Zero-fee direct connect with verified Pandits via WhatsApp & phone
+                </div>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4" style={{ color: textMuted }} />
+          </div>
+
+          {/* Satsang Mandali (Community Board) */}
+          <div
+            onClick={() => onNavigateTab?.("community")}
+            className="p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
+            style={{ borderColor: cardBorder }}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500 text-sm">
+                <Users className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold" style={{ color: textPrimary }}>
+                  Satsang Mandali Community Board (सत्संग मण्डली)
+                </div>
+                <div className="text-[10px]" style={{ color: textMuted }}>
+                  Share realizations, ask Gita & Upanishad questions, and join discussions
                 </div>
               </div>
             </div>

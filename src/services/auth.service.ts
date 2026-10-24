@@ -97,6 +97,10 @@ export class AuthService {
 
   private loadUserFromStorage(): void {
     try {
+      if (typeof window === "undefined" || typeof localStorage === "undefined") {
+        this.currentUser = null;
+        return;
+      }
       const stored = localStorage.getItem(AUTH_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
@@ -117,6 +121,7 @@ export class AuthService {
 
   private saveUserToStorage(): void {
     try {
+      if (typeof window === "undefined" || typeof localStorage === "undefined") return;
       if (this.currentUser) {
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(this.currentUser));
       } else {

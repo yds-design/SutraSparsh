@@ -16,9 +16,12 @@ import {
   LogIn,
   LogOut,
   Sparkles,
+  Users,
+  UserCheck,
 } from "lucide-react";
 import { soundEngine } from "../utils/audio";
 import { authService, type SeekerUser } from "../services/auth.service";
+import { communityService } from "../services/community.service";
 import { useFeatureFlags } from "../services/feature-flags.service";
 import { type AppTheme } from "../types";
 
@@ -26,6 +29,8 @@ export type NavTab =
   | "today"
   | "explore"
   | "search"
+  | "services"
+  | "community"
   | "my-journey"
   | "preferences"
   | "daily-app"
@@ -94,6 +99,7 @@ export const Header: React.FC<HeaderProps> = ({
   const isTodayActive = activeTab === "today" || activeTab === "daily-app" || activeTab === "daily";
   const isExploreActive = activeTab === "explore" || activeTab === "explorer";
   const isSearchActive = activeTab === "search";
+  const isCommunityActive = activeTab === "community";
   const isJourneyActive = activeTab === "my-journey" || activeTab === "journal" || activeTab === "membership";
   const isPreferencesActive = activeTab === "preferences";
 
@@ -235,31 +241,50 @@ export const Header: React.FC<HeaderProps> = ({
               <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-amber-800" : "text-amber-400/80"}`}>खोज</span>
             </button>
 
-            {/* 4. MY JOURNEY */}
+            {/* 4. COMMUNITY (SATSANG MANDALI) */}
             <button
-              id="tab-my-journey"
+              id="tab-community"
               type="button"
-              onClick={() => setActiveTab("my-journey")}
+              onClick={() => setActiveTab("community")}
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 relative cursor-pointer ${
-                isJourneyActive
+                isCommunityActive
                   ? isLight
                     ? "bg-amber-100 text-amber-950 border border-amber-300 shadow-xs ring-1 ring-amber-400/30 font-bold"
-                    : "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
+                    : "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
                   : isLight
                   ? "text-stone-700 hover:text-stone-950 hover:bg-stone-200/60"
                   : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
               }`}
+              title="Satsang Mandali: Sacred In-App Community Board & Discussions"
             >
-              <Compass className="w-4 h-4 text-amber-500" />
-              <span>My Journey</span>
-              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-amber-800" : "text-amber-400/80"}`}>साधना</span>
-              {savedCount > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                  isLight ? "bg-amber-200 text-amber-950" : "bg-amber-500/30 text-amber-300"
-                }`}>
-                  {savedCount}
-                </span>
+              <Users className="w-4 h-4 text-amber-500" />
+              <span>Community</span>
+              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-amber-800" : "text-amber-400/80"}`}>सत्संग</span>
+              {/* Unread activity dot (FR-NAV-01) */}
+              {communityService.getUnreadNotificationCount() > 0 && (
+                <span className="w-2 h-2 rounded-full bg-amber-400 ring-2 ring-stone-950 animate-pulse" />
               )}
+            </button>
+
+            {/* 4c. SERVICES (VEDIC PUROHIT DIRECTORY) */}
+            <button
+              id="tab-services"
+              type="button"
+              onClick={() => setActiveTab("services")}
+              className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 relative cursor-pointer ${
+                activeTab === "services"
+                  ? isLight
+                    ? "bg-amber-100 text-amber-950 border border-amber-300 shadow-xs ring-1 ring-amber-400/30 font-bold"
+                    : "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
+                  : isLight
+                  ? "text-stone-700 hover:text-stone-950 hover:bg-stone-200/60"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
+              }`}
+              title="Vedic Purohit Directory: Direct Zero-Fee Connection with Verified Priests"
+            >
+              <UserCheck className="w-4 h-4 text-amber-500" />
+              <span>Services</span>
+              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-amber-800" : "text-amber-400/80"}`}>सेवा</span>
             </button>
 
             {/* WORD EXPLORER / LOOK CLOSER */}
@@ -315,8 +340,8 @@ export const Header: React.FC<HeaderProps> = ({
                 id="btn-toggle-theme"
                 type="button"
                 onClick={onToggleTheme}
-                aria-label={`Atmosphere: ${theme}. Click to cycle sacred theme.`}
-                title={`Atmosphere: ${theme.toUpperCase()} (Click to cycle themes)`}
+                aria-label={`Atmosphere: ${theme === "light" ? "Parchment Dawn" : "Golden Hour"}. Click to toggle sacred theme.`}
+                title={`Atmosphere: ${theme === "light" ? "Parchment Dawn (☀️)" : "Golden Hour (🌅)"} (Click to toggle)`}
                 className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border text-xs font-bold transition-all duration-500 active:scale-90 flex items-center justify-center touch-manipulation cursor-pointer hover:scale-105"
                 style={{
                   backgroundColor: isLight

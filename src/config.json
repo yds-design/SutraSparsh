@@ -1,0 +1,23 @@
+{
+  "themeSettings": {
+    "defaultTheme": "light",
+    "fallbackTheme": "light",
+    "permittedThemes": [
+      {
+        "id": "light",
+        "name": "Parchment Dawn",
+        "sanskrit": "चन्दन एवं पत्र",
+        "description": "Calm morning light with off-white parchment and deep ochre",
+        "icon": "☀️"
+      },
+      {
+        "id": "golden-hour",
+        "name": "Golden Hour",
+        "sanskrit": "गोधूलि वेला",
+        "description": "Sacred sunset glow with burnt honey and radiant dusk warmth",
+        "icon": "🌅"
+      }
+    ],
+    "adminOverrideEnabled": true
+  }
+}

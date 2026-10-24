@@ -21,6 +21,21 @@ router.get("/donations/presets", (_req: Request, res: Response): void => {
 });
 
 /**
+ * GET /api/donations/ashram-accounts
+ * Returns designated charitable accounts and presets
+ */
+router.get("/donations/ashram-accounts", (_req: Request, res: Response): void => {
+  res.status(200).json({
+    success: true,
+    accounts: [
+      { id: "sutrasparsh-preservation", name: "SutraSparsh Vedic Heritage & Manuscript Preservation Fund" },
+      { id: "ashram-scholarships", name: "Veda Pathashala Sādhaka Scholarship Seva" },
+    ],
+    presets: DONATION_PRESETS,
+  });
+});
+
+/**
  * POST /api/donations/checkout
  * Initiate sacred donation (M31.2)
  */

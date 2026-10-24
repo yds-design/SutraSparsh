@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Sun, Sparkles, Volume2, Feather, Bookmark, BookmarkCheck, Check } from "lucide-react";
+import { Sun, Sparkles, Volume2, Feather, Bookmark, BookmarkCheck, Check, Compass } from "lucide-react";
 import type { ContentItem } from "../types";
 import { soundEngine } from "../utils/audio";
 
@@ -9,6 +9,7 @@ interface DailySutraProps {
   onToggleBookmark: (id: string) => void;
   onSaveJournalNote: (verseId: string, verseTitle: string, note: string) => void;
   onOpenDetails: (verse: ContentItem) => void;
+  onOpenJourney?: () => void;
 }
 
 export const DailySutra: React.FC<DailySutraProps> = ({
@@ -17,6 +18,7 @@ export const DailySutra: React.FC<DailySutraProps> = ({
   onToggleBookmark,
   onSaveJournalNote,
   onOpenDetails,
+  onOpenJourney,
 }) => {
   const [reflection, setReflection] = useState("");
   const [saved, setSaved] = useState(false);
@@ -124,10 +126,24 @@ export const DailySutra: React.FC<DailySutraProps> = ({
             </div>
           )}
 
-          <div className="flex justify-end pt-2">
+          <div className="flex items-center justify-between flex-wrap gap-2 pt-2">
+            {onOpenJourney && (
+              <button
+                type="button"
+                id="btn-daily-sutra-my-journey"
+                onClick={onOpenJourney}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/35 text-xs font-semibold transition-all cursor-pointer shadow-xs"
+                title="Open My Journey Sanctuary"
+                aria-label="Open My Journey personal sanctuary"
+              >
+                <Compass className="w-3.5 h-3.5 text-amber-400" />
+                <span>My Journey Sanctuary</span>
+              </button>
+            )}
+
             <button
               onClick={() => onOpenDetails(verse)}
-              className="text-xs text-amber-400 hover:text-amber-300 underline underline-offset-4"
+              className="text-xs text-amber-400 hover:text-amber-300 underline underline-offset-4 ml-auto"
             >
               Open Full Reading & Philosophical Analysis →
             </button>

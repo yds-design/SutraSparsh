@@ -384,85 +384,49 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
             <CloudSyncStatusBadge />
           </div>
 
-          {/* Quick Atmosphere Selector (Dark, Light, Festival) */}
+          {/* Whitelist Atmosphere Selector: Parchment Dawn & Golden Hour */}
           {onSelectTheme && (
             <div className="space-y-2">
-              <div className="text-[11px] font-bold uppercase tracking-wider flex items-center space-x-1.5" style={{ color: isLight ? "#6B5844" : "#D88916" }}>
-                <Palette className="w-3.5 h-3.5" />
-                <span>SACRED ATMOSPHERE (DESIGN SYSTEM)</span>
+              <div className="text-[11px] font-bold uppercase tracking-wider flex items-center justify-between" style={{ color: isLight ? "#6B5844" : "#D88916" }}>
+                <div className="flex items-center space-x-1.5">
+                  <Palette className="w-3.5 h-3.5" />
+                  <span>SACRED ATMOSPHERE (THEME WHITELIST)</span>
+                </div>
+                <span className="text-[10px] font-normal opacity-80">2 Active Themes</span>
               </div>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 p-1 rounded-2xl border" style={{ backgroundColor: isLight ? "#FFFFFF" : "rgba(0,0,0,0.3)", borderColor: isLight ? "#E6D7C3" : "rgba(255,255,255,0.08)" }}>
-                <button
-                  type="button"
-                  onClick={() => onSelectTheme("sandstone")}
-                  className={`py-2 px-1 rounded-xl text-[10.5px] font-bold flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer ${
-                    theme === "sandstone"
-                      ? "bg-amber-500 text-stone-950 shadow"
-                      : "text-stone-400 hover:text-stone-200"
-                  }`}
-                >
-                  <span>🏛️</span>
-                  <span>Dark</span>
-                </button>
+              <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl border" style={{ backgroundColor: isLight ? "#FFFFFF" : "rgba(0,0,0,0.3)", borderColor: isLight ? "#E6D7C3" : "rgba(255,255,255,0.08)" }}>
+                {/* 1. Parchment Dawn */}
                 <button
                   type="button"
                   onClick={() => onSelectTheme("light")}
-                  className={`py-2 px-1 rounded-xl text-[10.5px] font-bold flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer ${
+                  className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center space-x-2.5 transition-all cursor-pointer ${
                     theme === "light"
-                      ? "bg-amber-500 text-stone-950 shadow"
-                      : "text-stone-400 hover:text-stone-200"
+                      ? "bg-amber-500 text-stone-950 shadow-md ring-2 ring-amber-400"
+                      : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
                   }`}
                 >
-                  <span>☀️</span>
-                  <span>Light</span>
+                  <span className="text-lg">☀️</span>
+                  <div className="text-left">
+                    <div className="font-bold">Parchment Dawn</div>
+                    <div className="text-[10px] font-sanskrit opacity-75">चन्दन एवं पत्र</div>
+                  </div>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => onSelectTheme("festival")}
-                  className={`py-2 px-1 rounded-xl text-[10.5px] font-bold flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer ${
-                    theme === "festival"
-                      ? "bg-amber-500 text-stone-950 shadow"
-                      : "text-stone-400 hover:text-stone-200"
-                  }`}
-                >
-                  <span>🪔</span>
-                  <span>Festival</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onSelectTheme("amethyst")}
-                  className={`py-2 px-1 rounded-xl text-[10.5px] font-bold flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer ${
-                    theme === "amethyst"
-                      ? "bg-purple-400 text-stone-950 shadow"
-                      : "text-stone-400 hover:text-stone-200"
-                  }`}
-                >
-                  <span>🔮</span>
-                  <span>Amethyst</span>
-                </button>
+
+                {/* 2. Golden Hour */}
                 <button
                   type="button"
                   onClick={() => onSelectTheme("golden-hour")}
-                  className={`py-2 px-1 rounded-xl text-[10.5px] font-bold flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer ${
+                  className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center space-x-2.5 transition-all cursor-pointer ${
                     theme === "golden-hour"
-                      ? "bg-gradient-to-r from-[#C9822B] to-[#F6DFA6] text-stone-950 shadow"
-                      : "text-stone-400 hover:text-stone-200"
+                      ? "bg-gradient-to-r from-[#C9822B] to-[#F6DFA6] text-stone-950 shadow-md ring-2 ring-amber-400"
+                      : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
                   }`}
                 >
-                  <span>🌅</span>
-                  <span>Golden</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onSelectTheme("prism-pulse")}
-                  className={`py-2 px-1 rounded-xl text-[10.5px] font-bold flex flex-col items-center justify-center space-y-0.5 transition-all cursor-pointer ${
-                    theme === "prism-pulse"
-                      ? "bg-gradient-to-r from-[#936BFA] to-[#FA6BA7] text-white shadow"
-                      : "text-stone-400 hover:text-stone-200"
-                  }`}
-                >
-                  <span>⚡</span>
-                  <span>Prism</span>
+                  <span className="text-lg">🌅</span>
+                  <div className="text-left">
+                    <div className="font-bold">Golden Hour</div>
+                    <div className="text-[10px] font-sanskrit opacity-75">गोधूलि वेला</div>
+                  </div>
                 </button>
               </div>
             </div>

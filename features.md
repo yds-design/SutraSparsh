@@ -21,6 +21,8 @@
    - [2.9 Official Brand Identity & Native PWA Asset Pipeline](#29-official-brand-identity--native-pwa-asset-pipeline)
    - [2.10 Complete SEO Compliance & Search Engine Discovery Architecture](#210-complete-seo-compliance--search-engine-discovery-architecture)
    - [2.11 Universal App-Wide Theme System & High-Contrast Readability Engine](#211-universal-app-wide-theme-system--high-contrast-readability-engine)
+   - [2.12 Vedic Purohit Services & Click-to-WhatsApp Booking Architecture](#212-vedic-purohit-services--click-to-whatsapp-booking-architecture)
+   - [2.13 Consolidated Seeker Journey, Community Board & 15-Min Milestone Engine](#213-consolidated-seeker-journey-community-board--15-min-milestone-engine)
 3. [Minor Features & Supporting Capabilities](#3-minor-features--supporting-capabilities)
    - [3.1 Sacred UI & Visual Ambience](#31-sacred-ui--visual-ambience)
    - [3.2 Audio & Acoustic Nuances](#32-audio--acoustic-nuances)
@@ -244,6 +246,39 @@ The application follows an architectural separation between:
 
 ---
 
+### 2.12 Vedic Purohit Services & Click-to-WhatsApp Booking Architecture
+*Milestones: Phase 24, M49.1 – M49.6*
+
+- **Authentic Purohit Verification**: Direct seeker access to authentic Vedic Purohits (`src/data/purohits.ts`) with documented Veda Shakha lineage (Rigveda Shakala, Shukla Yajurveda Madhyandina, Krishna Yajurveda Taittiriya, Samaveda Kauthuma), educational credentials (*Vedalankar*, *Acharya*), and 10–25+ years of ritual experience.
+- **Comprehensive Vedic Ritual Catalog**:
+  - *Griha Pravesh Mahapuja* (Vastu Shanti, Navagraha Homa, Lakshmi Pravesh)
+  - *Maha Rudrabhishek* (Ekadasha Rudra Patha, Panchamrit Abhishek)
+  - *Satyanarayan Vrat Katha* (Panch Adhyaya Parayana, Prasadam Puja)
+  - *Navagraha & Shanti Homas* (Graha dosha pacification, Nakshatra Shanti)
+  - *Vivah Samskara* (Saptapadi, Kanyadaan, Laja Homa)
+  - *Shradh & Pitru Tarpan* (Tila Tarpan, Pinda Daan, Brahmin Bhojan)
+- **Transparent Dakshina Guidelines**: Clear separation of Purohit Dakshina and Samagri requirements, eliminating opaque pricing and hidden commissions.
+- **Deep-Link WhatsApp Booking Protocol**: One-tap booking generating pre-formatted WhatsApp consultation messages adhering to international E.164 phone formats (`https://wa.me/{phone}?text=...`) encoding seeker name, ritual type, preferred date, and location.
+- **Multi-Lingual Ritual Guidance**: Search and filter purohits by languages spoken (Sanskrit, Hindi, Tamil, Telugu, Kannada, Marathi) and geographic service zones.
+
+---
+
+### 2.13 Consolidated Seeker Journey, Community Board & 15-Min Milestone Engine
+*Milestones: Phase 25, M50.1 – M50.6*
+
+- **Sanctuary Journey Consolidation**: Relocated and consolidated seeker spiritual tracking directly inside `MyJourneyView.tsx` within the primary sanctuary shell, eliminating isolated legacy views and architectural fragmentation.
+- **React Hook Lifecycle Hardening**: Audited and refactored all custom hooks (`useAuth`, `useProgress`, `useTheme`, `useAudio`) to enforce top-level execution without conditional returns, resolving previous "Rendered fewer hooks than expected" exceptions.
+- **15-Minute Daily Sadhana Milestone Engine**:
+  - Dynamic progress ring tracking cumulative scripture recitation and reading time.
+  - Reaching the 15-minute mark triggers a celebratory modal with the sacred Sanskrit benediction *अभ्यासेन तु कौन्तेय वैराग्येण च गृह्यते* (Gita 6.35).
+  - Physics-driven celebratory confetti canvas burst that gracefully unmounts after completion.
+- **Community Board Satsang (`CommunityBoardView.tsx`)**:
+  - Spiritual discussion forum categorized by the four sadhana paths (*Karma*, *Raja*, *Jnana*, *Bhakti*).
+  - Seekers can post contemplation questions, cite specific shlokas, reply in threaded dialogues, and offer *Anumodana* (spiritual affirmations).
+- **Theme Whitelist Restrictions**: Strict theme confinement ensuring all interactive components remain visually grounded within the 6 canonical themes, protecting against arbitrary class mutations.
+
+---
+
 ## 3. Minor Features & Supporting Capabilities
 
 ### 3.1 Sacred UI & Visual Ambience
@@ -351,7 +386,9 @@ The application follows an architectural separation between:
 | **v1.7.0** | Branding | **Major** | Official geometric sunrise emblem, wordmark & automated resvg pipeline | **COMPLETE ✅** |
 | **v1.7.1** | SEO Architecture| **Major** | Complete SEO Compliance: Dynamic Metadata, Open Graph, Twitter Cards, Schema.org JSON-LD, sitemap.xml, robots.txt, canonical URLs, and crawler fallbacks | **COMPLETE ✅** |
 | **v1.7.2** | Theme & Contrast | **Major** | Universal App-Wide Theme System, High-Specificity Contrast Guards, Light Canvas Normalization, and ModalPortal MutationObserver Synchronization | **COMPLETE ✅** |
+| **M49 (Phase 24)** | Purohit Services | **Major** | Vedic Purohit Directory, Veda Shakha verification, and Click-to-WhatsApp booking protocol | **COMPLETE ✅** |
+| **M50 (Phase 25)** | Journey & Safety | **Major** | Sanctuary Journey Relocation, Hook Lifecycle Hardening, 15-Min Daily Goal Celebration, and 10-Suite System Testing Matrix | **COMPLETE ✅** |
 
 ---
 
-*Document compiled and certified against production codebase v1.7.2.*
+*Document compiled and certified against production codebase v1.0.0 (Launch Certified).*

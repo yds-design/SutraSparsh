@@ -29,6 +29,18 @@ router.get("/billing/plans", (_req: Request, res: Response): void => {
 });
 
 /**
+ * GET /api/billing/tiers
+ * Alias for plans returning tiers format
+ */
+router.get("/billing/tiers", (_req: Request, res: Response): void => {
+  res.status(200).json({
+    success: true,
+    tiers: Object.values(SUBSCRIPTION_PLANS),
+    plans: Object.values(SUBSCRIPTION_PLANS),
+  });
+});
+
+/**
  * POST /api/billing/checkout
  * Initiates checkout session (M27.1)
  */

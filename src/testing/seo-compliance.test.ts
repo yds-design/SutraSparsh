@@ -193,12 +193,17 @@ async function runSEOVerification() {
       "Schema.org featureList highlights Radiant Spark & Confetti Milestone Animation",
       features.some((f) => f.toLowerCase().includes("spark") && f.toLowerCase().includes("confetti"))
     );
+    assert(
+      "Schema.org featureList highlights Community Board & Satsang",
+      features.some((f) => f.toLowerCase().includes("community") || f.toLowerCase().includes("satsang"))
+    );
   }
 
   // 5. Noscript & Crawler Accessibility
   console.log("\n[Test Suite 5: Noscript & Indexable Content]");
   assert("Noscript fallback container exists", indexHtml.includes("<noscript>"));
   assert("Noscript includes daily study goals link", indexHtml.includes("tab=my-journey"));
+  assert("Noscript includes community board link", indexHtml.includes("tab=community"));
 
   // 6. Robots.txt and Sitemap.xml
   console.log("\n[Test Suite 6: Search Engine Discovery Assets]");
@@ -213,6 +218,7 @@ async function runSEOVerification() {
   const sitemapContent = fs.readFileSync(sitemapPath, "utf-8");
   assert("sitemap.xml contains home entry", sitemapContent.includes("<loc>https://sutrasparsh.com/</loc>"));
   assert("sitemap.xml contains daily study journey entry", sitemapContent.includes("<loc>https://sutrasparsh.com/?tab=my-journey</loc>"));
+  assert("sitemap.xml contains community board entry", sitemapContent.includes("<loc>https://sutrasparsh.com/?tab=community</loc>"));
 
   // 7. Verification of Goal & Streak Feature Service
   console.log("\n[Test Suite 7: Implemented Features Runtime Contract]");

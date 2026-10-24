@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Filter, Sparkles, BookOpen, Sun, Activity, Bookmark, Flame, RefreshCw, Smartphone, Crown, Heart, Zap, ShieldCheck, Compass, Play } from "lucide-react";
+import { Search, Filter, Sparkles, BookOpen, Sun, Activity, Bookmark, Flame, RefreshCw, Smartphone, Crown, Heart, Zap, ShieldCheck, Compass, Play, ArrowRight } from "lucide-react";
 import type { ContentItem, ContentResponse, JournalEntry } from "./types";
 import { Header, type NavTab } from "./components/Header";
 import { VerseCard } from "./components/VerseCard";
@@ -25,10 +25,13 @@ import { AtmosphereCrossfadeBackdrop, ATMOSPHERE_CONFIGS } from "./components/At
 import { soundEngine } from "./utils/audio";
 import type { SubscriptionPlanId } from "./types/monetization";
 import type { AppTheme } from "./types";
+import { themeConfigService } from "./services/theme-config.service";
 import { useFeatureFlags } from "./services/feature-flags.service";
 import { firestoreSyncService } from "./services/firestore-sync.service";
 import { authService, type SeekerUser } from "./services/auth.service";
 import { DynamicMetadata } from "./components/DynamicMetadata";
+import { CommunityBoardView } from "./components/community/CommunityBoardView";
+import { PanditServicesView } from "./components/services/PanditServicesView";
 import { getDailyShlokaForDate } from "./data/scriptureCorpus";
 import {
   WordExplorer,
@@ -66,7 +69,7 @@ export default function App() {
       const tabParam = search.get("tab") as NavTab;
       if (
         tabParam &&
-        ["today", "explore", "explorer", "search", "my-journey", "journal", "preferences", "membership"].includes(
+        ["today", "explore", "explorer", "search", "services", "community", "my-journey", "journal", "preferences", "membership"].includes(
           tabParam
         )
       ) {
@@ -95,33 +98,33 @@ export default function App() {
   // Profile Modal State (Restored for user profile & sacred streak tracking)
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // Persistent Theme Atmosphere ('sandstone' | 'amethyst' | 'light' | 'festival' | 'golden-hour')
-  const [theme, setTheme] = useState<AppTheme>(() => {
-    try {
-      return (localStorage.getItem("sutrasparsh_theme") as AppTheme) || "prism-pulse";
-    } catch {
-      return "prism-pulse";
-    }
-  });
+  // Persistent Theme Atmosphere strictly restricted to 'light' (Parchment Dawn) & 'golden-hour' (Golden Hour)
+  const [theme, setTheme] = useState<AppTheme>(() => themeConfigService.getActiveTheme());
+
+  // Listen to global theme updates (including Admin override changes)
+  useEffect(() => {
+    const unsub = themeConfigService.subscribe((updatedTheme) => {
+      setTheme(updatedTheme);
+    });
+    return unsub;
+  }, []);
 
   // Atmospheric cross-fade animation state
   const [isThemeCrossfading, setIsThemeCrossfading] = useState(false);
   const crossfadeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const triggerThemeTransition = (newTheme: AppTheme) => {
-    if (newTheme === theme) return;
-    setTheme(newTheme);
+    const sanitized = themeConfigService.sanitizeTheme(newTheme);
+    if (sanitized === theme) return;
+    setTheme(sanitized);
+    themeConfigService.setActiveTheme(sanitized);
     setIsThemeCrossfading(true);
 
     // Harmonically tuned temple chime for sacred atmospheric feedback
-    const cfg = ATMOSPHERE_CONFIGS[newTheme];
+    const cfg = ATMOSPHERE_CONFIGS[sanitized];
     if (cfg) {
       soundEngine.playTempleBell(cfg.pitch);
     }
-
-    try {
-      localStorage.setItem("sutrasparsh_theme", newTheme);
-    } catch {}
 
     if (crossfadeTimerRef.current) {
       clearTimeout(crossfadeTimerRef.current);
@@ -132,20 +135,13 @@ export default function App() {
   };
 
   const handleToggleTheme = () => {
-    const cycle: Record<AppTheme, AppTheme> = {
-      sandstone: "amethyst",
-      amethyst: "light",
-      light: "festival",
-      festival: "golden-hour",
-      "golden-hour": "prism-pulse",
-      "prism-pulse": "sandstone",
-    };
-    const next = cycle[theme] || "sandstone";
+    // Whitelist policy: cycles exclusively between Parchment Dawn and Golden Hour
+    const next = themeConfigService.getNextPermittedTheme(theme);
     triggerThemeTransition(next);
   };
 
   const handleSelectTheme = (newTheme: AppTheme) => {
-    triggerThemeTransition(newTheme);
+    triggerThemeTransition(themeConfigService.sanitizeTheme(newTheme));
   };
 
   // Synchronize documentElement and body attributes and theme classes across all themes and portals
@@ -539,43 +535,6 @@ export default function App() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  if (appMode === "admin") {
-    if (!isScreenDevice) {
-      return (
-        <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col items-center justify-center p-6 text-center selection:bg-amber-500/40 selection:text-amber-100">
-          <div className="max-w-md w-full bg-stone-900/90 border border-stone-800 rounded-3xl p-8 space-y-5 shadow-2xl">
-            <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center mx-auto text-2xl">
-              🔒
-            </div>
-            <h2 className="font-serif-sacred text-xl font-bold text-amber-200">
-              Admin Console Screen-Only
-            </h2>
-            <p className="text-xs text-stone-400 leading-relaxed">
-              The SutraSparsh Temple Admin Operations Console is enabled exclusively on <strong>device: screen</strong> (desktop workstations). Admin operations are disabled on mobile and handheld devices for operational security.
-            </p>
-            <button
-              type="button"
-              onClick={handleSwitchToUserApp}
-              className="w-full py-3 px-6 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs transition-all shadow cursor-pointer"
-            >
-              Return to Sacred Temple App
-            </button>
-          </div>
-        </div>
-      );
-    }
-    return (
-      <>
-        <DynamicMetadata
-          title="Admin Operations Console | SutraSparsh"
-          description="SutraSparsh Temple Operations, Sanskrit Corpus Management, and Analytics Console."
-          robots="noindex, nofollow"
-        />
-        <SutraSparshAdminApp onSwitchToUserApp={handleSwitchToUserApp} />
-      </>
-    );
-  }
-
   // Sync activeTab with URL query parameter for clean, shareable & indexable URLs
   useEffect(() => {
     if (typeof window !== "undefined" && appMode === "user") {
@@ -617,6 +576,24 @@ export default function App() {
         ogType: "website" as const,
       };
     }
+    if (activeTab === "services") {
+      return {
+        title: "Vedic Purohit Directory & Ritual Services | SutraSparsh",
+        description: "Directly connect with verified Vedic Panditjis for Pujas, Griha Pravesha, Homa, and Samskaras. 100% Zero Platform Fees, peer-endorsed priests.",
+        keywords: "Vedic Pandit, Purohit directory, Griha Pravesh puja, Satyanarayan katha, Rudrabhishek, Vedic rituals, zero fee priests",
+        canonicalUrl: "https://sutrasparsh.com/?tab=services",
+        ogType: "website" as const,
+      };
+    }
+    if (activeTab === "community") {
+      return {
+        title: "Community Satsang & Spiritual Discussions | SutraSparsh",
+        description: "Engage in sacred Satsang dialogues, ask questions on Bhagavad Gita and Yoga Sutras, and share authentic sadhana realizations.",
+        keywords: "satsang community, spiritual discussion, Gita forum, yoga sutras Q&A, Vedic community, sadhana board",
+        canonicalUrl: "https://sutrasparsh.com/?tab=community",
+        ogType: "website" as const,
+      };
+    }
     if (activeTab === "my-journey" || activeTab === "journal") {
       return {
         title: "My Sādhana Journey, Daily Study Goals & Streaks | SutraSparsh",
@@ -646,6 +623,43 @@ export default function App() {
     }
     return null;
   }, [activeTab, searchTerm]);
+
+  if (appMode === "admin") {
+    if (!isScreenDevice) {
+      return (
+        <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col items-center justify-center p-6 text-center selection:bg-amber-500/40 selection:text-amber-100">
+          <div className="max-w-md w-full bg-stone-900/90 border border-stone-800 rounded-3xl p-8 space-y-5 shadow-2xl">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center mx-auto text-2xl">
+              🔒
+            </div>
+            <h2 className="font-serif-sacred text-xl font-bold text-amber-200">
+              Admin Console Screen-Only
+            </h2>
+            <p className="text-xs text-stone-400 leading-relaxed">
+              The SutraSparsh Temple Admin Operations Console is enabled exclusively on <strong>device: screen</strong> (desktop workstations). Admin operations are disabled on mobile and handheld devices for operational security.
+            </p>
+            <button
+              type="button"
+              onClick={handleSwitchToUserApp}
+              className="w-full py-3 px-6 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs transition-all shadow cursor-pointer"
+            >
+              Return to Sacred Temple App
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <>
+        <DynamicMetadata
+          title="Admin Operations Console | SutraSparsh"
+          description="SutraSparsh Temple Operations, Sanskrit Corpus Management, and Analytics Console."
+          robots="noindex, nofollow"
+        />
+        <SutraSparshAdminApp onSwitchToUserApp={handleSwitchToUserApp} />
+      </>
+    );
+  }
 
   return (
     <div
@@ -846,6 +860,50 @@ export default function App() {
                 </div>
               ) : (
                 <div className="space-y-6">
+                  {/* Contextual My Journey Personal Tracking Bridge Banner in Explore */}
+                  <div
+                    id="explore-my-journey-bridge"
+                    className={`p-4 rounded-2xl border flex items-center justify-between gap-3 shadow-xs ${
+                      theme === "light"
+                        ? "bg-amber-50/80 border-amber-200 text-stone-900"
+                        : "bg-amber-950/20 border-amber-500/30 text-stone-100"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center flex-shrink-0">
+                        <Compass className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <h4 className="text-xs sm:text-sm font-bold font-serif leading-tight">
+                            Personal Study Sanctuary &amp; My Journey
+                          </h4>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 font-semibold border border-amber-500/30">
+                            {bookmarks.length} Saved Verses
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-stone-600 dark:text-stone-300 leading-normal mt-0.5">
+                          Track contemplative reading streaks, habit milestones, and personal reflections across the Sanskrit corpus.
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      id="btn-explore-open-journey"
+                      onClick={() => setActiveTab("my-journey")}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 flex-shrink-0 cursor-pointer ${
+                        theme === "light"
+                          ? "bg-amber-600 hover:bg-amber-700 text-white"
+                          : "bg-amber-500 hover:bg-amber-400 text-stone-950"
+                      }`}
+                      aria-label="Open My Journey personal sanctuary"
+                    >
+                      <span>Open My Journey</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {displayedVerses.map((item) => (
                       <VerseCard
@@ -854,6 +912,8 @@ export default function App() {
                         isBookmarked={bookmarks.includes(item.id)}
                         onToggleBookmark={toggleBookmark}
                         onSelect={handleOpenVerse}
+                        onOpenJourney={() => setActiveTab("my-journey")}
+                        theme={theme}
                       />
                     ))}
                   </div>
@@ -906,6 +966,27 @@ export default function App() {
             bookmarks={bookmarks}
             onToggleBookmark={toggleBookmark}
             onOpenVerseModal={handleOpenVerse}
+          />
+        )}
+
+        {/* 3b. COMMUNITY: Satsang Mandali & Spiritual Discussions */}
+        {activeTab === "community" && (
+          <CommunityBoardView
+            theme={theme}
+            initialPostId={
+              typeof window !== "undefined"
+                ? new URLSearchParams(window.location.search).get("post") || undefined
+                : undefined
+            }
+            onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
+          />
+        )}
+
+        {/* 3c. SERVICES: Zero-Fee Vedic Pandit Directory & Direct WhatsApp Connect */}
+        {activeTab === "services" && (
+          <PanditServicesView
+            theme={theme}
+            onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
           />
         )}
 

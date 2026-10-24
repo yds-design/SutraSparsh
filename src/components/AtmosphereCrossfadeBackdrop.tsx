@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import type { AppTheme } from "../types";
+import { themeConfigService } from "../services/theme-config.service";
 
 interface AtmosphereThemeConfig {
   id: AppTheme;
@@ -136,9 +137,10 @@ interface AtmosphereCrossfadeBackdropProps {
 }
 
 export const AtmosphereCrossfadeBackdrop: React.FC<AtmosphereCrossfadeBackdropProps> = ({
-  theme,
+  theme: rawTheme,
   showIndicator = true,
 }) => {
+  const theme = themeConfigService.sanitizeTheme(rawTheme);
   const [baseTheme, setBaseTheme] = useState<AppTheme>(theme);
   const [incomingTheme, setIncomingTheme] = useState<AppTheme | null>(null);
   const [isCrossfading, setIsCrossfading] = useState(false);

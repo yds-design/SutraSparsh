@@ -1,3 +1,4 @@
+export type PermittedTheme = "light" | "golden-hour";
 export type AppTheme = "sandstone" | "amethyst" | "light" | "festival" | "golden-hour" | "prism-pulse";
 
 export interface ContentMetadata {

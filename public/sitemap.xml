@@ -180,4 +180,20 @@
     <priority>0.5</priority>
   </url>
 
+  <!-- 16. Satsang Mandali & In-App Community Board -->
+  <url>
+    <loc>https://sutrasparsh.com/?tab=community</loc>
+    <lastmod>2026-10-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 17. Vedic Purohit Directory & Services (Zero-Fee Facilitator) -->
+  <url>
+    <loc>https://sutrasparsh.com/?tab=services</loc>
+    <lastmod>2026-10-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
 </urlset>

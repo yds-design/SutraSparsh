@@ -1,7 +1,8 @@
 import React from "react";
-import { Sun, BookOpen, Search, Compass, Sliders } from "lucide-react";
+import { Sun, BookOpen, Search, Compass, Sliders, Users } from "lucide-react";
 import type { NavTab } from "./Header";
 import type { AppTheme } from "../types";
+import { communityService } from "../services/community.service";
 
 interface MobileBottomNavProps {
   activeTab: NavTab;
@@ -28,6 +29,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const isTodayActive = activeTab === "today" || activeTab === "daily-app" || activeTab === "daily";
   const isExploreActive = activeTab === "explore" || activeTab === "explorer";
   const isSearchActive = activeTab === "search";
+  const isCommunityActive = activeTab === "community";
   const isJourneyActive = activeTab === "my-journey" || activeTab === "journal" || activeTab === "membership";
   const isPreferencesActive = activeTab === "preferences";
 
@@ -112,6 +114,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       sanskrit: "खोज",
       icon: Search,
       isActive: isSearchActive,
+    },
+    {
+      id: "community" as NavTab,
+      label: "Community",
+      sanskrit: "सत्संग",
+      icon: Users,
+      isActive: isCommunityActive,
+      badge: communityService.getUnreadNotificationCount() > 0 ? communityService.getUnreadNotificationCount() : null,
     },
     {
       id: "my-journey" as NavTab,
