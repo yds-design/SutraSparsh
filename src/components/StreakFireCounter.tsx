@@ -11,6 +11,16 @@ import { DailyGoalModal } from "./DailyGoalModal";
 import { SubtleConfettiSparkles } from "./SubtleConfettiSparkles";
 import { ProgressBarMilestoneSparkles } from "./ProgressBarMilestoneSparkles";
 
+export const DAILY_15MIN_GOAL_PULSE_STORAGE_KEY = "sutrasparsh_daily_15min_goal_pulse_date_v1";
+
+export function getTodayDateKey(): string {
+  try {
+    return new Date().toISOString().slice(0, 10);
+  } catch {
+    return "today";
+  }
+}
+
 export interface StreakFireCounterProps {
   streakData: StreakData;
   isLight?: boolean;
@@ -37,6 +47,7 @@ export const StreakFireCounter: React.FC<StreakFireCounterProps> = ({
   const [isCelebrating, setIsCelebrating] = useState(false);
   const [isGoalCelebrating, setIsGoalCelebrating] = useState(false);
   const [isProgressBarMilestoneCelebrating, setIsProgressBarMilestoneCelebrating] = useState(false);
+  const [isDailyGoalPulsing, setIsDailyGoalPulsing] = useState(false);
   const [showMilestoneBanner, setShowMilestoneBanner] = useState(false);
   const [bannerMessage, setBannerMessage] = useState("");
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
@@ -52,6 +63,7 @@ export const StreakFireCounter: React.FC<StreakFireCounterProps> = ({
   const isCheckedIn = streakData.checkedInToday;
   const milestoneInfo = getHabitMilestoneInfo(currentStreak);
   const prevPercentageRef = useRef(goalProgress.percentage);
+  const pulseTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Subscribe to daily reading goal updates
   useEffect(() => {
@@ -61,6 +73,49 @@ export const StreakFireCounter: React.FC<StreakFireCounterProps> = ({
     });
     return unsub;
   }, []);
+
+  // Cleanup pulse timer on unmount
+  useEffect(() => {
+    return () => {
+      if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+    };
+  }, []);
+
+  /**
+   * Triggers a subtle pulse animation on the streak counter component
+   * when a user achieves their daily 15-minute goal for the first time in a day.
+   */
+  const triggerDaily15MinGoalPulse = (customMsg?: string) => {
+    const today = getTodayDateKey();
+    let alreadyPulsedToday = false;
+    try {
+      if (typeof window !== "undefined") {
+        alreadyPulsedToday = localStorage.getItem(DAILY_15MIN_GOAL_PULSE_STORAGE_KEY) === today;
+      }
+    } catch {
+      // ignore in restrictive browser modes
+    }
+
+    if (!alreadyPulsedToday) {
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem(DAILY_15MIN_GOAL_PULSE_STORAGE_KEY, today);
+        }
+      } catch {
+        // ignore
+      }
+
+      setIsDailyGoalPulsing(true);
+      triggerFirePulse(
+        customMsg || "15-Minute Daily Sādhana Goal Achieved! 🎯🔥 Inner flame illuminated!"
+      );
+
+      if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+      pulseTimerRef.current = setTimeout(() => {
+        setIsDailyGoalPulsing(false);
+      }, 4800);
+    }
+  };
 
   const triggerProgressBarMilestone = (customMsg?: string) => {
     setIsProgressBarMilestoneCelebrating(true);
@@ -75,10 +130,11 @@ export const StreakFireCounter: React.FC<StreakFireCounterProps> = ({
     return () => clearTimeout(timer);
   };
 
-  // Watch for progress bar reaching 100% of study goal
+  // Watch for progress bar reaching 100% of study goal (15 minutes)
   useEffect(() => {
     if (prevPercentageRef.current < 100 && goalProgress.percentage >= 100) {
       triggerProgressBarMilestone();
+      triggerDaily15MinGoalPulse("15-Minute Study Milestone Achieved! 🎯✨ Sādhana goal completed!");
     }
     prevPercentageRef.current = goalProgress.percentage;
   }, [goalProgress.percentage]);
@@ -87,12 +143,37 @@ export const StreakFireCounter: React.FC<StreakFireCounterProps> = ({
   useEffect(() => {
     const handleGoalMet = () => {
       triggerGoalCelebration();
+      triggerDaily15MinGoalPulse("Daily Sādhana Goal Achieved! 🎯🔥 Inner flame illuminated!");
     };
     window.addEventListener("sutrasparsh:daily_goal_achieved", handleGoalMet);
     return () => {
       window.removeEventListener("sutrasparsh:daily_goal_achieved", handleGoalMet);
     };
   }, [currentStreak, milestoneInfo]);
+
+  // Trigger on initial mount if 15-minute goal has already been achieved today but first-time pulse hasn't run yet
+  useEffect(() => {
+    if (
+      goalProgress.isGoalMet ||
+      goalProgress.percentage >= 100 ||
+      (goalConfig.metric === "minutes" && goalProgress.minutesStudied >= 15)
+    ) {
+      const today = getTodayDateKey();
+      try {
+        if (
+          typeof window !== "undefined" &&
+          localStorage.getItem(DAILY_15MIN_GOAL_PULSE_STORAGE_KEY) !== today
+        ) {
+          const initialTimer = setTimeout(() => {
+            triggerDaily15MinGoalPulse();
+          }, 600);
+          return () => clearTimeout(initialTimer);
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
 
   const triggerGoalCelebration = () => {
     setIsGoalCelebrating(true);
@@ -164,11 +245,34 @@ export const StreakFireCounter: React.FC<StreakFireCounterProps> = ({
 
   if (variant === "card") {
     return (
-      <div
+      <motion.div
         id="streak-fire-counter-card"
+        data-testid="streak-fire-counter-card"
+        data-pulsing={isDailyGoalPulsing ? "true" : undefined}
         onClick={handleClick}
+        animate={
+          isDailyGoalPulsing
+            ? {
+                scale: [1, 1.025, 0.995, 1.02, 1],
+                boxShadow: [
+                  "0 0 0 0 rgba(245,158,11,0)",
+                  "0 0 24px 6px rgba(245,158,11,0.45)",
+                  "0 0 14px 2px rgba(16,185,129,0.3)",
+                  "0 0 20px 4px rgba(245,158,11,0.4)",
+                  "0 0 0 0 rgba(245,158,11,0)",
+                ],
+              }
+            : {}
+        }
+        transition={
+          isDailyGoalPulsing
+            ? { duration: 3.6, ease: "easeInOut" }
+            : undefined
+        }
         className={`relative group cursor-pointer p-4 rounded-2xl border transition-all duration-500 select-none overflow-hidden ${
-          isGoalCelebrating
+          isDailyGoalPulsing
+            ? "border-amber-400 ring-2 ring-amber-400/80 shadow-xl shadow-amber-500/25"
+            : isGoalCelebrating
             ? "border-amber-400 ring-2 ring-amber-400/60 shadow-lg shadow-amber-500/20"
             : isLight
             ? "bg-[#FAF7F0] border-amber-300/80 hover:border-amber-400 shadow-sm"
@@ -180,6 +284,23 @@ export const StreakFireCounter: React.FC<StreakFireCounterProps> = ({
       >
         {/* Subtle Confetti Particles Burst on Goal Achieved */}
         <SubtleConfettiSparkles active={isGoalCelebrating} count={24} isLight={isLight} />
+
+        {/* Subtle 15-Minute Daily Goal Achievement Pulse Halo */}
+        <AnimatePresence>
+          {isDailyGoalPulsing && (
+            <motion.div
+              data-testid="streak-first-time-goal-pulse"
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{
+                opacity: [0, 0.85, 0.3, 0.75, 0],
+                scale: [0.98, 1.035, 1, 1.025, 1],
+              }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 4.5, ease: "easeInOut" }}
+              className="absolute -inset-1.5 rounded-2xl bg-gradient-to-r from-amber-400/40 via-yellow-400/50 to-emerald-400/40 blur-md pointer-events-none -z-10"
+            />
+          )}
+        </AnimatePresence>
 
         {/* Animated Glowing Celebratory Border Shimmer */}
         <AnimatePresence>
@@ -223,45 +344,72 @@ export const StreakFireCounter: React.FC<StreakFireCounterProps> = ({
               )}
             </AnimatePresence>
 
-            {/* Flame Icon with subtle organic flicker */}
+            {/* Multi-layered dynamic flame ambient glow aura */}
+            <motion.div
+              animate={{
+                scale: isCelebrating ? [1, 1.45, 1] : [0.92, 1.18, 0.95, 1.25, 0.98, 1.12, 0.92],
+                opacity: isCelebrating ? [0.6, 1, 0.6] : [0.4, 0.85, 0.5, 0.95, 0.45, 0.8, 0.4],
+              }}
+              transition={{
+                duration: isCelebrating ? 0.9 : 2.2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="absolute inset-1 rounded-full bg-gradient-to-t from-orange-600/40 via-amber-500/50 to-yellow-300/30 blur-md pointer-events-none"
+            />
+
+            {/* Flame Icon with realistic organic flicker & radiant core glow */}
             <motion.div
               animate={
-                isCelebrating
+                isDailyGoalPulsing
                   ? {
-                      scale: [1, 1.35, 0.95, 1.2, 1],
-                      rotate: [0, -5, 5, -2, 0],
+                      scale: [1, 1.35, 0.95, 1.25, 1],
                       filter: [
-                        "drop-shadow(0 0 2px rgba(245,158,11,0.5))",
-                        "drop-shadow(0 0 12px rgba(234,88,12,0.9))",
-                        "drop-shadow(0 0 4px rgba(245,158,11,0.5))",
+                        "drop-shadow(0 0 3px rgba(251,191,36,0.8)) drop-shadow(0 0 10px rgba(234,88,12,0.85))",
+                        "drop-shadow(0 0 8px rgba(254,240,138,1)) drop-shadow(0 0 18px rgba(234,88,12,1)) drop-shadow(0 0 4px rgba(16,185,129,0.7))",
+                        "drop-shadow(0 0 3px rgba(251,191,36,0.8)) drop-shadow(0 0 10px rgba(234,88,12,0.85))",
+                      ],
+                    }
+                  : isCelebrating
+                  ? {
+                      scale: [1, 1.4, 0.92, 1.3, 0.96, 1.2, 1],
+                      rotate: [0, -6, 6, -3, 4, -2, 0],
+                      y: [0, -3, 1, -2.5, 0.5, -1, 0],
+                      filter: [
+                        "drop-shadow(0 0 3px rgba(251,191,36,0.8)) drop-shadow(0 0 12px rgba(234,88,12,0.95))",
+                        "drop-shadow(0 0 8px rgba(254,240,138,0.95)) drop-shadow(0 0 20px rgba(234,88,12,1)) drop-shadow(0 0 4px rgba(255,255,255,0.8))",
+                        "drop-shadow(0 0 4px rgba(251,191,36,0.8)) drop-shadow(0 0 14px rgba(234,88,12,0.9))",
                       ],
                     }
                   : {
-                      scale: [1, 1.12, 0.98, 1.08, 1],
-                      rotate: [-1.5, 1.5, -0.5, 1.5, 0],
+                      scale: [1, 1.09, 0.96, 1.14, 0.98, 1.07, 0.99, 1.12, 1],
+                      rotate: [0, -2.5, 3, -1.8, 2.2, -3, 1.5, -1, 0],
+                      y: [0, -1.5, 0.5, -1.8, 0.2, -1.2, 0.6, -0.8, 0],
                       filter: [
-                        "drop-shadow(0 0 2px rgba(245,158,11,0.4))",
-                        "drop-shadow(0 0 6px rgba(234,88,12,0.7))",
-                        "drop-shadow(0 0 2px rgba(245,158,11,0.4))",
+                        "drop-shadow(0 0 2px rgba(245,158,11,0.6)) drop-shadow(0 0 6px rgba(234,88,12,0.75))",
+                        "drop-shadow(0 0 5px rgba(251,191,36,0.9)) drop-shadow(0 0 12px rgba(234,88,12,0.85)) drop-shadow(0 0 2px rgba(255,255,255,0.45))",
+                        "drop-shadow(0 0 3px rgba(245,158,11,0.65)) drop-shadow(0 0 8px rgba(234,88,12,0.7))",
+                        "drop-shadow(0 0 6px rgba(251,191,36,0.95)) drop-shadow(0 0 15px rgba(234,88,12,0.9)) drop-shadow(0 0 3px rgba(255,255,255,0.5))",
+                        "drop-shadow(0 0 2px rgba(245,158,11,0.6)) drop-shadow(0 0 6px rgba(234,88,12,0.75))",
                       ],
                     }
               }
               transition={{
-                duration: isCelebrating ? 1.4 : 3,
-                repeat: isCelebrating ? 0 : Infinity,
+                duration: isDailyGoalPulsing ? 1.6 : isCelebrating ? 1.4 : 2.4,
+                repeat: Infinity,
                 ease: "easeInOut",
               }}
-              className="text-orange-400 flex items-center justify-center"
+              className="text-orange-400 flex items-center justify-center relative z-10"
             >
               <Flame className="w-6 h-6 fill-current" />
             </motion.div>
           </div>
 
           <div>
-            <div className="flex items-center space-x-1.5">
+            <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
               <motion.span
                 key={currentStreak}
-                animate={isCelebrating ? { scale: [1, 1.25, 1] } : {}}
+                animate={isCelebrating || isDailyGoalPulsing ? { scale: [1, 1.25, 1] } : {}}
                 transition={{ duration: 0.5 }}
                 className={`font-mono text-2xl font-bold ${
                   isLight ? "text-amber-900" : "text-amber-200"
@@ -273,6 +421,12 @@ export const StreakFireCounter: React.FC<StreakFireCounterProps> = ({
               {currentStreak >= 4 && (
                 <span className="ml-1 text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded-sm bg-orange-500/20 text-orange-400 border border-orange-500/30">
                   Milestone
+                </span>
+              )}
+              {isDailyGoalPulsing && (
+                <span className="ml-1 text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded-sm bg-gradient-to-r from-amber-500/25 to-emerald-500/25 text-amber-300 border border-amber-400/40 inline-flex items-center space-x-1">
+                  <Sparkles className="w-2.5 h-2.5 text-amber-300 animate-spin" />
+                  <span>15m Goal Met!</span>
                 </span>
               )}
             </div>
@@ -381,7 +535,7 @@ export const StreakFireCounter: React.FC<StreakFireCounterProps> = ({
           onClose={() => setIsGoalModalOpen(false)}
           isLight={isLight}
         />
-      </div>
+      </motion.div>
     );
   }
 
@@ -412,11 +566,34 @@ export const StreakFireCounter: React.FC<StreakFireCounterProps> = ({
         {/* Main Interactive Streak Counter Pill */}
         <motion.button
           id="streak-4day-counter-pill"
+          data-testid="streak-4day-counter-pill"
+          data-pulsing={isDailyGoalPulsing ? "true" : undefined}
           onClick={handleClick}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
+          animate={
+            isDailyGoalPulsing
+              ? {
+                  scale: [1, 1.055, 0.985, 1.04, 1],
+                  boxShadow: [
+                    "0 0 0 0 rgba(245,158,11,0)",
+                    "0 0 18px 4px rgba(245,158,11,0.55)",
+                    "0 0 10px 2px rgba(16,185,129,0.35)",
+                    "0 0 16px 3px rgba(245,158,11,0.5)",
+                    "0 0 0 0 rgba(245,158,11,0)",
+                  ],
+                }
+              : {}
+          }
+          transition={
+            isDailyGoalPulsing
+              ? { duration: 3.6, ease: "easeInOut" }
+              : undefined
+          }
           className={`relative group inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all duration-300 cursor-pointer select-none ${
-            isGoalCelebrating
+            isDailyGoalPulsing
+              ? "border-amber-400 ring-2 ring-amber-400/80 shadow-lg shadow-amber-500/30"
+              : isGoalCelebrating
               ? "border-amber-400 ring-2 ring-amber-400/50 shadow-md shadow-amber-500/20"
               : isLight
               ? "bg-amber-100/90 text-amber-950 border-amber-300 hover:border-amber-400 shadow-xs"
@@ -427,6 +604,23 @@ export const StreakFireCounter: React.FC<StreakFireCounterProps> = ({
         >
           {/* Subtle Confetti Particles Burst on Goal Achieved */}
           <SubtleConfettiSparkles active={isGoalCelebrating} count={16} isLight={isLight} />
+
+          {/* Subtle 15-Minute Goal First-Time Pulse Halo Wave */}
+          <AnimatePresence>
+            {isDailyGoalPulsing && (
+              <motion.span
+                data-testid="streak-first-time-goal-pulse"
+                initial={{ scale: 0.92, opacity: 0 }}
+                animate={{
+                  scale: [0.95, 1.15, 1.02, 1.12, 1],
+                  opacity: [0.2, 0.85, 0.35, 0.8, 0],
+                }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 4.2, ease: "easeInOut" }}
+                className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-amber-400/50 via-yellow-300/60 to-emerald-400/50 blur-[2px] pointer-events-none -z-10"
+              />
+            )}
+          </AnimatePresence>
 
           {/* Animated Glowing Celebratory Border Shimmer */}
           <AnimatePresence>
@@ -467,48 +661,91 @@ export const StreakFireCounter: React.FC<StreakFireCounterProps> = ({
             className="absolute inset-0 rounded-full bg-gradient-to-r from-orange-500/20 via-amber-500/30 to-orange-500/20 pointer-events-none"
           />
 
-          {/* Flame Icon with subtle organic pulse animation */}
-          <motion.span
-            animate={
-              isCelebrating
-                ? {
-                    scale: [1, 1.4, 0.92, 1.25, 1],
-                    rotate: [0, -6, 6, -3, 0],
-                    filter: [
-                      "drop-shadow(0 0 2px rgba(245,158,11,0.5))",
-                      "drop-shadow(0 0 10px rgba(234,88,12,0.9))",
-                      "drop-shadow(0 0 3px rgba(245,158,11,0.5))",
-                    ],
-                  }
-                : {
-                    scale: [1, 1.14, 0.98, 1.1, 1],
-                    rotate: [-1, 1, -0.5, 1.5, 0],
-                    filter: [
-                      "drop-shadow(0 0 1px rgba(245,158,11,0.4))",
-                      "drop-shadow(0 0 5px rgba(234,88,12,0.65))",
-                      "drop-shadow(0 0 1px rgba(245,158,11,0.4))",
-                    ],
-                  }
-            }
-            transition={{
-              duration: isCelebrating ? 1.2 : 2.6,
-              repeat: isCelebrating ? 0 : Infinity,
-              ease: "easeInOut",
-            }}
-            className="relative text-orange-400 flex items-center justify-center shrink-0"
-          >
-            <Flame className="w-4 h-4 fill-current" />
-          </motion.span>
+          {/* Flame Icon with dynamic organic flicker & glowing halo */}
+          <div className="relative flex items-center justify-center shrink-0">
+            {/* Soft breathing flame glow behind icon */}
+            <motion.div
+              animate={{
+                scale: [0.85, 1.3, 0.9, 1.35, 0.85],
+                opacity: [0.35, 0.75, 0.4, 0.85, 0.35],
+              }}
+              transition={{
+                duration: 2.1,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="absolute inset-[-4px] rounded-full bg-gradient-to-t from-orange-500/40 via-amber-400/50 to-yellow-300/30 blur-[3px] pointer-events-none"
+            />
+
+            <motion.span
+              animate={
+                isDailyGoalPulsing
+                  ? {
+                      scale: [1, 1.35, 0.95, 1.25, 1],
+                      filter: [
+                        "drop-shadow(0 0 3px rgba(251,191,36,0.8)) drop-shadow(0 0 10px rgba(234,88,12,0.85))",
+                        "drop-shadow(0 0 8px rgba(254,240,138,1)) drop-shadow(0 0 18px rgba(234,88,12,1)) drop-shadow(0 0 4px rgba(16,185,129,0.7))",
+                        "drop-shadow(0 0 3px rgba(251,191,36,0.8)) drop-shadow(0 0 10px rgba(234,88,12,0.85))",
+                      ],
+                    }
+                  : isCelebrating
+                  ? {
+                      scale: [1, 1.45, 0.9, 1.35, 0.95, 1.25, 1],
+                      rotate: [0, -7, 7, -4, 5, -2, 0],
+                      y: [0, -2, 0.5, -2, 0, -1, 0],
+                      filter: [
+                        "drop-shadow(0 0 3px rgba(251,191,36,0.8)) drop-shadow(0 0 10px rgba(234,88,12,0.95))",
+                        "drop-shadow(0 0 6px rgba(254,240,138,0.95)) drop-shadow(0 0 16px rgba(234,88,12,1)) drop-shadow(0 0 3px rgba(255,255,255,0.8))",
+                        "drop-shadow(0 0 3px rgba(251,191,36,0.8)) drop-shadow(0 0 10px rgba(234,88,12,0.9))",
+                      ],
+                    }
+                  : {
+                      scale: [1, 1.1, 0.96, 1.15, 0.98, 1.08, 0.99, 1.12, 1],
+                      rotate: [0, -2.5, 3, -1.8, 2.2, -3, 1.5, -1, 0],
+                      y: [0, -1.2, 0.4, -1.5, 0.2, -1, 0.5, -0.6, 0],
+                      filter: [
+                        "drop-shadow(0 0 2px rgba(245,158,11,0.6)) drop-shadow(0 0 5px rgba(234,88,12,0.75))",
+                        "drop-shadow(0 0 4px rgba(251,191,36,0.9)) drop-shadow(0 0 10px rgba(234,88,12,0.85)) drop-shadow(0 0 2px rgba(255,255,255,0.4))",
+                        "drop-shadow(0 0 2px rgba(245,158,11,0.65)) drop-shadow(0 0 6px rgba(234,88,12,0.7))",
+                        "drop-shadow(0 0 5px rgba(251,191,36,0.95)) drop-shadow(0 0 12px rgba(234,88,12,0.9)) drop-shadow(0 0 2px rgba(255,255,255,0.5))",
+                        "drop-shadow(0 0 2px rgba(245,158,11,0.6)) drop-shadow(0 0 5px rgba(234,88,12,0.75))",
+                      ],
+                    }
+              }
+              transition={{
+                duration: isDailyGoalPulsing ? 1.6 : isCelebrating ? 1.2 : 2.3,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="relative text-orange-400 flex items-center justify-center shrink-0 z-10"
+            >
+              <Flame className="w-4 h-4 fill-current" />
+            </motion.span>
+          </div>
 
           {/* Streak Counter Text */}
           <span className="relative z-10 flex items-center space-x-1 whitespace-nowrap">
             <motion.span
               key={currentStreak}
-              animate={isCelebrating ? { scale: [1, 1.2, 1], color: "#F59E0B" } : {}}
+              animate={isCelebrating || isDailyGoalPulsing ? { scale: [1, 1.2, 1], color: "#F59E0B" } : {}}
               transition={{ duration: 0.4 }}
             >
               {currentStreak}-day streak
             </motion.span>
+            {/* 15m Goal First-Time Achievement Badge */}
+            <AnimatePresence>
+              {isDailyGoalPulsing && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="ml-0.5 text-[9.5px] font-extrabold uppercase px-1.5 py-0.2 rounded-full bg-gradient-to-r from-amber-500/25 to-emerald-500/25 text-amber-300 border border-amber-400/40 shadow-xs flex items-center space-x-0.5"
+                >
+                  <Sparkles className="w-2.5 h-2.5 text-amber-300 animate-spin" />
+                  <span>15m Met!</span>
+                </motion.span>
+              )}
+            </AnimatePresence>
           </span>
 
           {/* Tiny checkmark if checked in today */}

@@ -8,6 +8,8 @@
  * automatic base64-to-blob audio URL generation, and export/download support.
  */
 
+import { resilientAudioPlayer } from "../utils/resilientAudioPlayer.js";
+
 export type TtsProviderType = "bhashini" | "google";
 
 export interface SynthesizeAudioResult {
@@ -166,7 +168,11 @@ export class TtsService {
         gender: (localStorage.getItem(BHASHINI_GENDER_KEY) as "female" | "male") || "female",
         pace: parseFloat(localStorage.getItem(BHASHINI_PACE_KEY) || "0.80"),
         userId: localStorage.getItem(BHASHINI_USER_ID_KEY) || (import.meta as any).env?.VITE_BHASHINI_USER_ID || "89125c11d7c54f38b3428cce7114effe",
-        apiKey: localStorage.getItem(BHASHINI_API_KEY) || (import.meta as any).env?.VITE_BHASHINI_API_KEY || "",
+        apiKey:
+          localStorage.getItem(BHASHINI_API_KEY) ||
+          (import.meta as any).env?.VITE_BHASHINI_UDYAT_KEY ||
+          (import.meta as any).env?.VITE_BHASHINI_API_KEY ||
+          "",
         inferenceKey: localStorage.getItem(BHASHINI_INFERENCE_KEY) || (import.meta as any).env?.VITE_BHASHINI_INFERENCE_KEY || "",
         pipelineId: localStorage.getItem(BHASHINI_PIPELINE_ID_KEY) || (import.meta as any).env?.VITE_BHASHINI_PIPELINE_ID || "64392f96daac500b55c543d6",
       };
@@ -283,6 +289,7 @@ export class TtsService {
 
     // Call backend API /api/tts/synthesize with automatic client-side failsafe
     let payload: any = null;
+    let bhashiniFailureReason: string | null = null;
 
     try {
       const response = await fetch("/api/tts/synthesize", {
@@ -302,14 +309,27 @@ export class TtsService {
 
       if (response.ok) {
         payload = await response.json();
+        // Robust payload validation: verify success flag, audio payload presence, and byte integrity
+        if (!payload?.success || !payload?.data?.audioBase64 || payload.data.audioBase64.length < 50) {
+          throw new Error("Bhashini returned empty or incomplete audio payload");
+        }
+
+        // Validate audio source structure before attempting playback
+        const validation = await resilientAudioPlayer.validateAudioSource(payload.data.audioBase64);
+        if (!validation.isValid) {
+          throw new Error(`Bhashini audio data is malformed: ${validation.error || "unrecognized audio structure"}`);
+        }
       } else {
-        throw new Error(`Server returned status ${response.status}`);
+        throw new Error(`Bhashini endpoint returned HTTP ${response.status}`);
       }
     } catch (primaryErr: any) {
-      // If primary provider was Bhashini and request failed, trigger seamless client-side failsafe to Google TTS
+      bhashiniFailureReason = primaryErr?.message || "Bhashini synthesis unavailable";
+
+      // If primary provider was Bhashini and request failed, trigger formal fallback mechanism to Google TTS
       if (activeProvider === "bhashini") {
-        console.warn(`[TtsService] Bhashini request failed (${primaryErr?.message || primaryErr}). Seamlessly switching to Google Cloud TTS failsafe.`);
+        console.warn(`[TtsService] Bhashini request failed (${bhashiniFailureReason}). Retrying recitation via Google Cloud TTS failsafe.`);
         try {
+          const fallbackVoice = gender === "female" ? "hi-IN-Neural2-A" : "hi-IN-Neural2-B";
           const fallbackResponse = await fetch("/api/tts/synthesize", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -317,18 +337,28 @@ export class TtsService {
               text: sanskritText,
               verseId,
               provider: "google",
-              voiceName: "hi-IN-Neural2-B",
+              voiceName: fallbackVoice,
               speed,
             }),
           });
 
           if (fallbackResponse.ok) {
-            payload = await fallbackResponse.json();
-            if (payload?.data) {
+            const fallbackJson = await fallbackResponse.json();
+            if (fallbackJson?.success && fallbackJson?.data?.audioBase64) {
+              payload = fallbackJson;
               payload.data.failsafeActive = true;
               payload.data.failsafeFrom = "bhashini";
               payload.data.failsafeTo = "google";
-              payload.data.failsafeReason = primaryErr?.message || "Bhashini connection issue";
+              payload.data.failsafeReason = bhashiniFailureReason;
+
+              // Notify UI toast that Google Cloud TTS stepped in seamlessly
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(
+                  new CustomEvent("sutrasparsh:toast", {
+                    detail: "⚡ Failsafe: Bhashini unavailable · Chanted seamlessly via Google Cloud Neural2",
+                  })
+                );
+              }
             }
           }
         } catch (fallbackErr: any) {
@@ -350,7 +380,7 @@ export class TtsService {
     const blobUrl = this.base64ToBlobUrl(data.audioBase64, mimeType);
     this.blobUrlCache.set(cacheKey, blobUrl);
 
-    // If failsafe was activated, dispatch notification event for UI
+    // If failsafe was activated, dispatch formal event for UI notifications
     if (data.failsafeActive && typeof window !== "undefined") {
       window.dispatchEvent(
         new CustomEvent("sutrasparsh:tts_fallback_triggered", {
@@ -402,7 +432,7 @@ export class TtsService {
   }
 
   /**
-   * Performs an end-to-end diagnostic test on the TTS service and failsafe fallback.
+   * Performs an end-to-end diagnostic test on the TTS service with automatic fallback recovery.
    */
   public async testTts(
     provider: TtsProviderType | "failsafe" = "bhashini",
@@ -421,17 +451,57 @@ export class TtsService {
       audioUrl?: string;
     };
   }> {
-    const res = await fetch("/api/tts/test", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ provider, simulateFailure }),
-    });
+    let res: Response;
+    try {
+      res = await fetch("/api/tts/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, simulateFailure }),
+      });
+    } catch (networkErr: any) {
+      // If network fails and provider was bhashini or failsafe, retry directly via google endpoint
+      if (provider === "bhashini" || provider === "failsafe") {
+        return this.retryTestViaGoogleCloud("Bhashini network request timed out");
+      }
+      return {
+        success: false,
+        message: `TTS test network failure: ${networkErr?.message || networkErr}`,
+      };
+    }
+
+    // Handle non-200 HTTP response with automatic Google Cloud TTS failover
+    if (!res.ok) {
+      if (provider === "bhashini" || provider === "failsafe") {
+        return this.retryTestViaGoogleCloud(`Bhashini endpoint HTTP status ${res.status}`);
+      }
+      return {
+        success: false,
+        message: `TTS server error (status ${res.status})`,
+      };
+    }
 
     const json = await res.json();
-    if (!json.success || !json.data?.audioBase64) {
+
+    // If Bhashini returned failure or malformed payload, execute formal fallback
+    if (!json.success || !json.data?.audioBase64 || json.data.audioBase64.length < 50) {
+      if (provider === "bhashini" || provider === "failsafe") {
+        return this.retryTestViaGoogleCloud(json.message || "Bhashini returned malformed or empty audio data");
+      }
       return {
         success: false,
         message: json.message || "TTS test failed",
+      };
+    }
+
+    // Validate audio source structure before passing to audio element
+    const validation = await resilientAudioPlayer.validateAudioSource(json.data.audioBase64);
+    if (!validation.isValid) {
+      if (provider === "bhashini" || provider === "failsafe") {
+        return this.retryTestViaGoogleCloud("Bhashini returned unplayable/corrupt audio data");
+      }
+      return {
+        success: false,
+        message: `Malformed audio payload: ${validation.error}`,
       };
     }
 
@@ -443,6 +513,71 @@ export class TtsService {
         ...json.data,
         audioUrl,
       },
+    };
+  }
+
+  /**
+   * Formal fallback retry mechanism for diagnostic tester: retries via Google Cloud TTS.
+   */
+  private async retryTestViaGoogleCloud(reason: string): Promise<{
+    success: boolean;
+    message: string;
+    data?: any;
+  }> {
+    console.warn(`[TtsService] Executing formal failsafe retry via Google Cloud TTS (${reason}).`);
+    try {
+      const fallbackRes = await fetch("/api/tts/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: "google" }),
+      });
+
+      if (fallbackRes.ok) {
+        const fallbackJson = await fallbackRes.json();
+        if (fallbackJson.success && fallbackJson.data?.audioBase64) {
+          const audioUrl = this.base64ToBlobUrl(fallbackJson.data.audioBase64, fallbackJson.data.mimeType || "audio/mp3");
+
+          // Dispatch toast notification informing user that Google Cloud TTS stepped in seamlessly
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(
+              new CustomEvent("sutrasparsh:toast", {
+                detail: "⚡ Failsafe: Bhashini unavailable · Chanted seamlessly via Google Cloud Neural2",
+              })
+            );
+            window.dispatchEvent(
+              new CustomEvent("sutrasparsh:tts_fallback_triggered", {
+                detail: {
+                  from: "bhashini",
+                  to: "google",
+                  reason,
+                },
+              })
+            );
+          }
+
+          return {
+            success: true,
+            message: "⚡ Failsafe Active: Bhashini was unavailable, recitation chanted seamlessly via Google Cloud TTS.",
+            data: {
+              ...fallbackJson.data,
+              failsafeTriggered: true,
+              fallbackInfo: {
+                from: "bhashini",
+                to: "google",
+                reason,
+              },
+              audioUrl,
+            },
+          };
+        }
+      }
+    } catch (fbErr: any) {
+      console.error("[TtsService] Google Cloud fallback retry also failed:", fbErr);
+    }
+
+    return {
+      success: false,
+      message: `TTS test failed (${reason}) and fallback was unable to complete.`,
     };
   }
 
@@ -528,16 +663,13 @@ export class TtsService {
 
   /**
    * Helper: converts base64 string to a persistent browser Blob Object URL.
+   * Leverages resilientAudioPlayer to guarantee 44-byte RIFF WAV framing and tracked disposal.
    */
   private base64ToBlobUrl(base64: string, mimeType = "audio/wav"): string {
-    const binary = atob(base64);
-    const len = binary.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binary.charCodeAt(i);
+    if (mimeType.includes("wav")) {
+      return resilientAudioPlayer.pcmBase64ToRiffWavBlobUrl(base64, 22050);
     }
-    const blob = new Blob([bytes], { type: mimeType });
-    return URL.createObjectURL(blob);
+    return resilientAudioPlayer.base64ToBlobUrl(base64, mimeType);
   }
 }
 

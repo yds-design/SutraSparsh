@@ -36,6 +36,7 @@ interface WordExplorerProps {
   onSelectWord: (word: SanskritWord | string) => void;
   onTabChange: (tab: WordExplorerViewMode) => void;
   onSearch: (query: string) => void;
+  theme?: string;
 }
 
 export const WordExplorer: React.FC<WordExplorerProps> = ({
@@ -50,7 +51,9 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
   onSelectWord,
   onTabChange,
   onSearch,
+  theme,
 }) => {
+  const isLight = theme === "light";
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
 
@@ -73,22 +76,28 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
           id="word-explorer-drawer"
           role="dialog"
           aria-label="SutraSparsh Word Explorer"
-          className="relative w-full sm:max-w-3xl lg:max-w-4xl max-h-[92vh] sm:max-h-[85vh] bg-stone-900 border-t sm:border border-amber-900/40 dark:border-stone-800 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slideUp sm:animate-fadeIn"
+          className={`relative w-full sm:max-w-3xl lg:max-w-4xl max-h-[92vh] sm:max-h-[85vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slideUp sm:animate-fadeIn ${
+            isLight
+              ? "bg-[#FFFDF8] border-t sm:border border-[#E8DCC2] text-[#261B12]"
+              : "bg-stone-900 border-t sm:border border-amber-900/40 dark:border-stone-800 text-stone-100"
+          }`}
         >
         {/* Mobile Swipe / Drag Handle */}
         <div className="sm:hidden flex justify-center pt-2.5 pb-1 cursor-grab">
-          <div className="w-12 h-1.5 rounded-full bg-stone-700/80" />
+          <div className={`w-12 h-1.5 rounded-full ${isLight ? "bg-[#DECB9F]" : "bg-stone-700/80"}`} />
         </div>
 
         {/* ── Top App Bar ── */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 border-b border-stone-800 bg-stone-950/60">
+        <div className={`flex items-center justify-between px-5 sm:px-6 py-3.5 border-b ${
+          isLight ? "border-[#E8DCC2] bg-[#F5EEDB]" : "border-stone-800 bg-stone-950/60"
+        }`}>
           <div className="flex items-center space-x-2.5">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <span className={`w-2 h-2 rounded-full animate-pulse ${isLight ? "bg-[#D96500]" : "bg-amber-400"}`} />
             <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-amber-300">
+              <span className={`text-xs font-bold uppercase tracking-widest ${isLight ? "text-[#874606]" : "text-amber-300"}`}>
                 SutraSparsh Word Explorer
               </span>
-              <span className="hidden sm:inline text-[11px] text-stone-400 ml-2 font-sanskrit">
+              <span className={`hidden sm:inline text-[11px] ml-2 font-sanskrit ${isLight ? "text-[#6E5C4E]" : "text-stone-400"}`}>
                 पद-ज्ञान कोष्ठ
               </span>
             </div>
@@ -97,20 +106,26 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setSearchOpen(!searchOpen)}
-              className={`p-2 rounded-xl text-xs flex items-center space-x-1.5 transition-colors ${
+              className={`p-2 rounded-xl text-xs flex items-center space-x-1.5 transition-colors cursor-pointer ${
                 searchOpen
-                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                  ? isLight
+                    ? "bg-[#FBEFD3] text-[#874606] border border-[#DECB9F]"
+                    : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                  : isLight
+                  ? "bg-[#FFF7E6] hover:bg-[#FBEFD3] text-[#783C00] border border-[#D8A856]"
                   : "bg-stone-800/80 hover:bg-stone-700 text-stone-300"
               }`}
               title="Search verified Sanskrit words"
             >
               <Search className="w-4 h-4" />
-              <span className="hidden sm:inline">Search Lexicon</span>
+              <span className="hidden sm:inline font-semibold">Search Lexicon</span>
             </button>
 
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-stone-400 hover:text-stone-100 hover:bg-stone-800 transition-colors"
+              className={`p-2 rounded-xl transition-colors cursor-pointer ${
+                isLight ? "text-[#6E5C4E] hover:text-[#261B12] hover:bg-[#F5EEDB]" : "text-stone-400 hover:text-stone-100 hover:bg-stone-800"
+              }`}
               title="Close Word Explorer (Esc)"
             >
               <X className="w-5 h-5" />
@@ -120,7 +135,7 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
 
         {/* Search Tray (collapsible) */}
         {searchOpen && (
-          <div className="p-4 bg-stone-950/90 border-b border-stone-800 space-y-3">
+          <div className={`p-4 border-b space-y-3 ${isLight ? "bg-[#F5EEDB] border-[#E8DCC2]" : "bg-stone-950/90 border-stone-800"}`}>
             <form onSubmit={handleSearchSubmit} className="relative">
               <input
                 type="text"
@@ -130,10 +145,14 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
                   onSearch(e.target.value);
                 }}
                 placeholder="Search Sanskrit word, root (e.g. कृ, योग), or meaning..."
-                className="w-full bg-stone-900 border border-amber-500/30 rounded-xl px-4 py-2.5 pl-10 text-sm text-stone-100 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className={`w-full rounded-xl px-4 py-2.5 pl-10 text-sm focus:outline-none focus:ring-2 ${
+                  isLight
+                    ? "bg-[#FFFDF8] border border-[#E8DCC2] text-[#261B12] placeholder-[#846D5B] focus:ring-[#D96500]"
+                    : "bg-stone-900 border border-amber-500/30 text-stone-100 placeholder-stone-500 focus:ring-amber-400"
+                }`}
                 autoFocus
               />
-              <Search className="w-4 h-4 text-amber-400/80 absolute left-3.5 top-3.5" />
+              <Search className={`w-4 h-4 absolute left-3.5 top-3.5 ${isLight ? "text-[#874606]" : "text-amber-400/80"}`} />
             </form>
 
             <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto">
@@ -144,12 +163,16 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
                     onSelectWord(res);
                     setSearchOpen(false);
                   }}
-                  className="flex items-center space-x-2 px-3 py-1 rounded-lg bg-stone-900 border border-stone-800 hover:border-amber-400/50 text-xs transition-colors"
+                  className={`flex items-center space-x-2 px-3 py-1 rounded-lg border text-xs transition-colors cursor-pointer ${
+                    isLight
+                      ? "bg-[#FFFDF8] border-[#E8DCC2] hover:border-[#DECB9F] text-[#261B12]"
+                      : "bg-stone-900 border border-stone-800 hover:border-amber-400/50 text-stone-300"
+                  }`}
                 >
-                  <span className="font-sanskrit font-bold text-amber-200">
+                  <span className={`font-sanskrit font-bold ${isLight ? "text-[#874606]" : "text-amber-200"}`}>
                     {res.surfaceForm}
                   </span>
-                  <span className="italic text-stone-400">({res.transliteration})</span>
+                  <span className={`italic ${isLight ? "text-[#6E5C4E]" : "text-stone-400"}`}>({res.transliteration})</span>
                 </button>
               ))}
             </div>
@@ -158,12 +181,18 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
 
         {/* ── Sub-navigation Tabs ── */}
         {word && (
-          <div className="flex border-b border-stone-800 px-4 sm:px-6 bg-stone-950/40 overflow-x-auto no-scrollbar">
+          <div className={`flex border-b px-4 sm:px-6 overflow-x-auto no-scrollbar ${
+            isLight ? "border-[#E8DCC2] bg-[#FBF8EE]" : "border-stone-800 bg-stone-950/40"
+          }`}>
             <button
               onClick={() => onTabChange("overview")}
-              className={`py-3 px-3 sm:px-4 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors flex items-center space-x-1.5 ${
+              className={`py-3 px-3 sm:px-4 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors flex items-center space-x-1.5 cursor-pointer ${
                 activeTab === "overview"
-                  ? "border-amber-400 text-amber-300"
+                  ? isLight
+                    ? "border-[#D96500] text-[#874606] font-bold"
+                    : "border-amber-400 text-amber-300"
+                  : isLight
+                  ? "border-transparent text-[#6E5C4E] hover:text-[#261B12]"
                   : "border-transparent text-stone-400 hover:text-stone-200"
               }`}
             >
@@ -174,9 +203,13 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
             {word.components && word.components.length > 0 && (
               <button
                 onClick={() => onTabChange("components")}
-                className={`py-3 px-3 sm:px-4 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors flex items-center space-x-1.5 ${
+                className={`py-3 px-3 sm:px-4 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors flex items-center space-x-1.5 cursor-pointer ${
                   activeTab === "components"
-                    ? "border-amber-400 text-amber-300"
+                    ? isLight
+                      ? "border-[#D96500] text-[#874606] font-bold"
+                      : "border-amber-400 text-amber-300"
+                    : isLight
+                    ? "border-transparent text-[#6E5C4E] hover:text-[#261B12]"
                     : "border-transparent text-stone-400 hover:text-stone-200"
                 }`}
               >
@@ -187,9 +220,13 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
 
             <button
               onClick={() => onTabChange("grammar")}
-              className={`py-3 px-3 sm:px-4 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors flex items-center space-x-1.5 ${
+              className={`py-3 px-3 sm:px-4 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors flex items-center space-x-1.5 cursor-pointer ${
                 activeTab === "grammar"
-                  ? "border-amber-400 text-amber-300"
+                  ? isLight
+                    ? "border-[#D96500] text-[#874606] font-bold"
+                    : "border-amber-400 text-amber-300"
+                  : isLight
+                  ? "border-transparent text-[#6E5C4E] hover:text-[#261B12]"
                   : "border-transparent text-stone-400 hover:text-stone-200"
               }`}
             >
@@ -200,9 +237,13 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
             {word.sandhi?.isSandhi && (
               <button
                 onClick={() => onTabChange("sandhi")}
-                className={`py-3 px-3 sm:px-4 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors flex items-center space-x-1.5 ${
+                className={`py-3 px-3 sm:px-4 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors flex items-center space-x-1.5 cursor-pointer ${
                   activeTab === "sandhi"
-                    ? "border-amber-400 text-amber-300"
+                    ? isLight
+                      ? "border-[#D96500] text-[#874606] font-bold"
+                      : "border-amber-400 text-amber-300"
+                    : isLight
+                    ? "border-transparent text-[#6E5C4E] hover:text-[#261B12]"
                     : "border-transparent text-stone-400 hover:text-stone-200"
                 }`}
               >
@@ -214,9 +255,13 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
             {word.occurrences && word.occurrences.length > 0 && (
               <button
                 onClick={() => onTabChange("occurrences")}
-                className={`py-3 px-3 sm:px-4 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors flex items-center space-x-1.5 ${
+                className={`py-3 px-3 sm:px-4 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors flex items-center space-x-1.5 cursor-pointer ${
                   activeTab === "occurrences"
-                    ? "border-amber-400 text-amber-300"
+                    ? isLight
+                      ? "border-[#D96500] text-[#874606] font-bold"
+                      : "border-amber-400 text-amber-300"
+                    : isLight
+                    ? "border-transparent text-[#6E5C4E] hover:text-[#261B12]"
                     : "border-transparent text-stone-400 hover:text-stone-200"
                 }`}
               >

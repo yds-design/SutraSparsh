@@ -573,7 +573,7 @@ export class FirestoreSyncService {
       const docRef = doc(db, "users", cleanUserId, "preferences", "cloud_snapshot");
       await setDoc(docRef, {
         userId: cleanUserId,
-        tanpuraDroneEnabled: true,
+        tanpuraDroneEnabled: false,
         dronePitch: "C#",
         devanagariFontScale: "medium",
         theme: "dark-sacred",

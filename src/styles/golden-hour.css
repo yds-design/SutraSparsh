@@ -38,7 +38,10 @@
 
 /* Theme Context Selectors */
 [data-theme="golden-hour"],
-.theme-golden-hour {
+.theme-golden-hour,
+.golden-hour-mode,
+.theme-golden,
+.golden-hour {
   color: var(--golden-soft-vanilla);
   background-color: var(--golden-bg-sanctum);
 }
@@ -46,7 +49,9 @@
 /* High-Contrast Sacred Text Selection for Golden Hour */
 [data-theme="golden-hour"] ::selection,
 .theme-golden-hour ::selection,
-.golden-hour-mode ::selection {
+.golden-hour-mode ::selection,
+.theme-golden ::selection,
+.golden-hour ::selection {
   background-color: var(--golden-burnt-honey) !important;
   color: var(--golden-soft-vanilla) !important;
 }

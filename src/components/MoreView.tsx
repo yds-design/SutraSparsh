@@ -48,7 +48,9 @@ import {
 } from "../services/dailyGoal.service";
 import { useFeatureFlags } from "../services/feature-flags.service";
 import { TtsAvailabilityIndicator } from "./TtsAvailabilityIndicator";
+import { SoundscapeSelector } from "./SoundscapeSelector";
 import { themeConfigService } from "../services/theme-config.service";
+import { resilientAudioPlayer, type ActiveAudioHandle } from "../utils/resilientAudioPlayer";
 
 interface MoreViewProps {
   theme?: "sandstone" | "amethyst" | "light" | "festival" | "golden-hour" | "prism-pulse";
@@ -170,7 +172,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
     message: "Ready to test Bhashini, Google TTS, and Failsafe fallback.",
   });
   const [isTestingTts, setIsTestingTts] = useState<string | null>(null);
-  const [activeTestAudio, setActiveTestAudio] = useState<HTMLAudioElement | null>(null);
+  const [activeTestAudio, setActiveTestAudio] = useState<ActiveAudioHandle | HTMLAudioElement | null>(null);
 
   // Listen for automatic failsafe events across the entire application
   React.useEffect(() => {
@@ -333,8 +335,17 @@ export const MoreView: React.FC<MoreViewProps> = ({
   };
 
   const handleTestBhashiniVoice = async () => {
+    resilientAudioPlayer.unlockAudio();
     setIsTestingBhashini(true);
     try {
+      if (activeTestAudio) {
+        if ("stop" in activeTestAudio && typeof activeTestAudio.stop === "function") {
+          activeTestAudio.stop();
+        } else if ("pause" in activeTestAudio && typeof activeTestAudio.pause === "function") {
+          activeTestAudio.pause();
+        }
+      }
+
       const sampleVerse = "कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।";
       const result = await ttsService.synthesizeVerse("test-bhashini", sampleVerse, {
         provider: "bhashini",
@@ -343,11 +354,14 @@ export const MoreView: React.FC<MoreViewProps> = ({
         speed: bhashiniPrefs.pace,
       });
 
-      const audio = new Audio(result.audioUrl);
-      audio.playbackRate = bhashiniPrefs.pace;
-      await audio.play();
+      const handle = await resilientAudioPlayer.play(result.audioUrl, {
+        playbackRate: bhashiniPrefs.pace,
+        ariaLabel: `Bhashini Sanskrit Sample (${bhashiniPrefs.language} • ${bhashiniPrefs.gender})`,
+      });
+      setActiveTestAudio(handle);
       showToast(`Chanting sample shloka via Bhashini (${bhashiniPrefs.language.toUpperCase()} • ${bhashiniPrefs.gender})`);
-    } catch {
+    } catch (err: any) {
+      console.warn("[MoreView] Bhashini voice test notice:", err?.message || err);
       showToast("Bhashini audio chanting activated.");
     } finally {
       setIsTestingBhashini(false);
@@ -355,6 +369,9 @@ export const MoreView: React.FC<MoreViewProps> = ({
   };
 
   const handleRunTtsTest = async (testType: "bhashini" | "google" | "failsafe") => {
+    // 1. Immediately pre-unlock audio context on user gesture (crucial for Chrome Android)
+    resilientAudioPlayer.unlockAudio();
+
     setIsTestingTts(testType);
     setTtsTestResult({
       status: "testing",
@@ -366,7 +383,11 @@ export const MoreView: React.FC<MoreViewProps> = ({
 
     try {
       if (activeTestAudio) {
-        activeTestAudio.pause();
+        if ("stop" in activeTestAudio && typeof activeTestAudio.stop === "function") {
+          activeTestAudio.stop();
+        } else if ("pause" in activeTestAudio && typeof activeTestAudio.pause === "function") {
+          activeTestAudio.pause();
+        }
       }
 
       const res = await ttsService.testTts(
@@ -388,10 +409,23 @@ export const MoreView: React.FC<MoreViewProps> = ({
           audioUrl: res.data.audioUrl,
         });
 
-        const audio = new Audio(res.data.audioUrl);
-        audio.playbackRate = prefChantSpeed;
-        setActiveTestAudio(audio);
-        await audio.play();
+        // 2. Play using resilient multi-tier engine (HTML5 Audio with Web Audio API automatic fallback)
+        try {
+          const handle = await resilientAudioPlayer.play(res.data.audioUrl, {
+            playbackRate: prefChantSpeed,
+            ariaLabel: "SutraSparsh Vedic TTS Shloka Recitation",
+          });
+          setActiveTestAudio(handle);
+        } catch (playErr: any) {
+          console.warn("[MoreView] Audio playback note:", playErr?.message || playErr);
+          setTtsTestResult({
+            status: "error",
+            target: testType,
+            message: `Audio playback issue: ${playErr?.message || "No supported audio source was found."}`,
+          });
+          showToast(`Playback issue: ${playErr?.message || "Audio source error"}`);
+          return;
+        }
 
         showToast(
           res.data.failsafeTriggered
@@ -412,7 +446,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
         target: testType,
         message: err?.message || "Synthesis test network failure",
       });
-      showToast("Error running TTS test");
+      showToast("TTS test notice: " + (err?.message || "Connection issue"));
     } finally {
       setIsTestingTts(null);
     }
@@ -444,11 +478,11 @@ export const MoreView: React.FC<MoreViewProps> = ({
     showToast(`✓ Sacred reminder bell tested & scheduled for ${prefReminder} IST.`);
   };
 
-  // Color variables according to design assets
+  // Color variables according to design assets (FR-01 Parchment Dawn)
   const textPrimary = isPrismPulse
     ? "#1E1B2E"
     : isLight
-    ? "#3A2818"
+    ? "#261B12"
     : isFestival
     ? "#FFF6E3"
     : isAmethyst
@@ -460,7 +494,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
   const textSecondary = isPrismPulse
     ? "#4B5563"
     : isLight
-    ? "#6B5844"
+    ? "#4A3A2F"
     : isFestival
     ? "#FFDDB3"
     : isAmethyst
@@ -472,7 +506,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
   const textMuted = isPrismPulse
     ? "#6B7280"
     : isLight
-    ? "#8A7763"
+    ? "#6E5C4E"
     : isFestival
     ? "#E6B17E"
     : isAmethyst
@@ -484,7 +518,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
   const cardBg = isPrismPulse
     ? "#FFFFFF"
     : isLight
-    ? "#FFFFFF"
+    ? "#FFFDF8"
     : isFestival
     ? "#5E111C"
     : isAmethyst
@@ -496,7 +530,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
   const cardBorder = isPrismPulse
     ? "#E5E7EB"
     : isLight
-    ? "#E6D7C3"
+    ? "#E8DCC2"
     : isFestival
     ? "rgba(255, 138, 0, 0.3)"
     : isAmethyst
@@ -507,6 +541,8 @@ export const MoreView: React.FC<MoreViewProps> = ({
 
   const saffronColor = isPrismPulse
     ? "#8B5CF6"
+    : isLight
+    ? "#D96500"
     : isFestival
     ? "#FF8A00"
     : isGoldenHour
@@ -999,6 +1035,11 @@ export const MoreView: React.FC<MoreViewProps> = ({
             </p>
           </div>
 
+          {/* Ambient Soundscape Accompaniment Selector (Temple Bell, Himalayan Breeze, River Ganga) */}
+          <div className="lg:col-span-2">
+            <SoundscapeSelector isLight={isLightCanvas} />
+          </div>
+
           {/* Text-to-Speech Engine & Provider Selection */}
           <div className="space-y-3.5 pt-2 border-t border-white/5 lg:col-span-2">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
@@ -1125,7 +1166,13 @@ export const MoreView: React.FC<MoreViewProps> = ({
 
             {/* Provider-Specific Configuration & Voice Panels */}
             {activeTtsProvider === "bhashini" ? (
-              <div className="space-y-3 p-3.5 rounded-2xl bg-black/10 border border-amber-500/20">
+              <div
+                className={`space-y-3 p-3.5 rounded-2xl border transition-colors ${
+                  isLightCanvas
+                    ? "bg-[#FFFDF8] border-[#E8DCC2]"
+                    : "bg-black/10 border-amber-500/20"
+                }`}
+              >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center space-x-2">
                     <Globe className="w-3.5 h-3.5 text-amber-500" />
@@ -1138,7 +1185,11 @@ export const MoreView: React.FC<MoreViewProps> = ({
                       type="button"
                       onClick={handleTestBhashiniVoice}
                       disabled={isTestingBhashini}
-                      className="text-[10.5px] font-bold px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 transition-all flex items-center space-x-1 cursor-pointer"
+                      className={`text-[10.5px] font-bold px-2.5 py-1 rounded-lg border transition-all flex items-center space-x-1 cursor-pointer ${
+                        isLightCanvas
+                          ? "bg-[#FBEFD3] hover:bg-[#F5EEDB] text-[#874606] border-[#DECB9F]"
+                          : "bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30"
+                      }`}
                     >
                       <Play className="w-3 h-3 fill-current" />
                       <span>{isTestingBhashini ? "Chanting..." : "Test Voice"}</span>
@@ -1146,9 +1197,13 @@ export const MoreView: React.FC<MoreViewProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowBhashiniPortal(!showBhashiniPortal)}
-                      className="text-[10.5px] font-bold px-2.5 py-1 rounded-lg bg-stone-800/80 hover:bg-stone-700/80 text-stone-300 border border-white/10 transition-all flex items-center space-x-1 cursor-pointer"
+                      className={`text-[10.5px] font-bold px-2.5 py-1 rounded-lg border transition-all flex items-center space-x-1 cursor-pointer ${
+                        isLightCanvas
+                          ? "bg-[#FFFDF8] hover:bg-[#F5EEDB] text-[#4A3A2F] border-[#E8DCC2]"
+                          : "bg-stone-800/80 hover:bg-stone-700/80 text-stone-300 border border-white/10"
+                      }`}
                     >
-                      <Key className="w-3 h-3 text-amber-400" />
+                      <Key className={`w-3 h-3 ${isLightCanvas ? "text-[#874606]" : "text-amber-400"}`} />
                       <span>{showBhashiniPortal ? "Hide Portal Keys" : "ULCA Portal Keys"}</span>
                     </button>
                   </div>
@@ -1165,13 +1220,29 @@ export const MoreView: React.FC<MoreViewProps> = ({
                       onClick={() => handleBhashiniPrefUpdate({ language: "sa" })}
                       className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                         bhashiniPrefs.language === "sa"
-                          ? "bg-amber-500/20 border-amber-500"
+                          ? isLightCanvas
+                            ? "bg-[#FBEFD3] border-[#DECB9F]"
+                            : "bg-amber-500/20 border-amber-500"
+                          : isLightCanvas
+                          ? "bg-[#FFFDF8] border-[#E8DCC2] hover:bg-[#F5EEDB]"
                           : "border-transparent bg-white/5 hover:bg-white/10"
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-amber-400">🕉️ Sanskrit ('sa')</span>
-                        {bhashiniPrefs.language === "sa" && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                        <span
+                          className={`text-xs font-bold ${
+                            isLightCanvas
+                              ? bhashiniPrefs.language === "sa"
+                                ? "text-[#874606]"
+                                : "text-[#261B12]"
+                              : "text-amber-400"
+                          }`}
+                        >
+                          🕉️ Sanskrit ('sa')
+                        </span>
+                        {bhashiniPrefs.language === "sa" && (
+                          <Check className={`w-3.5 h-3.5 ${isLightCanvas ? "text-[#874606]" : "text-amber-400"}`} />
+                        )}
                       </div>
                       <div className="text-[10px] mt-0.5" style={{ color: textMuted }}>
                         Vedic shlokas with authentic sandhi, visargas, and svaras
@@ -1183,13 +1254,29 @@ export const MoreView: React.FC<MoreViewProps> = ({
                       onClick={() => handleBhashiniPrefUpdate({ language: "hi" })}
                       className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                         bhashiniPrefs.language === "hi"
-                          ? "bg-amber-500/20 border-amber-500"
+                          ? isLightCanvas
+                            ? "bg-[#FBEFD3] border-[#DECB9F]"
+                            : "bg-amber-500/20 border-amber-500"
+                          : isLightCanvas
+                          ? "bg-[#FFFDF8] border-[#E8DCC2] hover:bg-[#F5EEDB]"
                           : "border-transparent bg-white/5 hover:bg-white/10"
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-amber-400">📖 Hindi ('hi')</span>
-                        {bhashiniPrefs.language === "hi" && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                        <span
+                          className={`text-xs font-bold ${
+                            isLightCanvas
+                              ? bhashiniPrefs.language === "hi"
+                                ? "text-[#874606]"
+                                : "text-[#261B12]"
+                              : "text-amber-400"
+                          }`}
+                        >
+                          📖 Hindi ('hi')
+                        </span>
+                        {bhashiniPrefs.language === "hi" && (
+                          <Check className={`w-3.5 h-3.5 ${isLightCanvas ? "text-[#874606]" : "text-amber-400"}`} />
+                        )}
                       </div>
                       <div className="text-[10px] mt-0.5" style={{ color: textMuted }}>
                         Spiritual translation, meaning, and bhavartha commentary
@@ -1209,13 +1296,29 @@ export const MoreView: React.FC<MoreViewProps> = ({
                       onClick={() => handleBhashiniPrefUpdate({ gender: "female" })}
                       className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                         bhashiniPrefs.gender === "female"
-                          ? "bg-amber-500/20 border-amber-500"
+                          ? isLightCanvas
+                            ? "bg-[#FBEFD3] border-[#DECB9F]"
+                            : "bg-amber-500/20 border-amber-500"
+                          : isLightCanvas
+                          ? "bg-[#FFFDF8] border-[#E8DCC2] hover:bg-[#F5EEDB]"
                           : "border-transparent bg-white/5 hover:bg-white/10"
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-amber-400">🌸 Devī Saraswatī (Female)</span>
-                        {bhashiniPrefs.gender === "female" && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                        <span
+                          className={`text-xs font-bold ${
+                            isLightCanvas
+                              ? bhashiniPrefs.gender === "female"
+                                ? "text-[#874606]"
+                                : "text-[#261B12]"
+                              : "text-amber-400"
+                          }`}
+                        >
+                          🌸 Devī Saraswatī (Female)
+                        </span>
+                        {bhashiniPrefs.gender === "female" && (
+                          <Check className={`w-3.5 h-3.5 ${isLightCanvas ? "text-[#874606]" : "text-amber-400"}`} />
+                        )}
                       </div>
                       <div className="text-[10px] mt-0.5" style={{ color: textMuted }}>
                         Meditative, clear female tone calibrated for devotional dhyana
@@ -1227,13 +1330,29 @@ export const MoreView: React.FC<MoreViewProps> = ({
                       onClick={() => handleBhashiniPrefUpdate({ gender: "male" })}
                       className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                         bhashiniPrefs.gender === "male"
-                          ? "bg-amber-500/20 border-amber-500"
+                          ? isLightCanvas
+                            ? "bg-[#FBEFD3] border-[#DECB9F]"
+                            : "bg-amber-500/20 border-amber-500"
+                          : isLightCanvas
+                          ? "bg-[#FFFDF8] border-[#E8DCC2] hover:bg-[#F5EEDB]"
                           : "border-transparent bg-white/5 hover:bg-white/10"
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-amber-400">🕉️ Sage Vyāsa (Male)</span>
-                        {bhashiniPrefs.gender === "male" && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                        <span
+                          className={`text-xs font-bold ${
+                            isLightCanvas
+                              ? bhashiniPrefs.gender === "male"
+                                ? "text-[#874606]"
+                                : "text-[#261B12]"
+                              : "text-amber-400"
+                          }`}
+                        >
+                          🕉️ Sage Vyāsa (Male)
+                        </span>
+                        {bhashiniPrefs.gender === "male" && (
+                          <Check className={`w-3.5 h-3.5 ${isLightCanvas ? "text-[#874606]" : "text-amber-400"}`} />
+                        )}
                       </div>
                       <div className="text-[10px] mt-0.5" style={{ color: textMuted }}>
                         Deep, resonant contemplative male voice with steady Vedic rhythm
@@ -1248,7 +1367,11 @@ export const MoreView: React.FC<MoreViewProps> = ({
                     <span className="text-[10.5px] font-semibold" style={{ color: textMuted }}>
                       Shloka Cadence & Pace (TTS_DEFAULT_PACE)
                     </span>
-                    <span className="text-[10px] font-mono font-bold text-amber-400">
+                    <span
+                      className={`text-[10px] font-mono font-bold ${
+                        isLightCanvas ? "text-[#874606]" : "text-amber-400"
+                      }`}
+                    >
                       {bhashiniPrefs.pace.toFixed(2)}x (Recommended: 0.80x)
                     </span>
                   </div>
@@ -1260,12 +1383,14 @@ export const MoreView: React.FC<MoreViewProps> = ({
                         onClick={() => handleBhashiniPrefUpdate({ pace })}
                         className={`py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                           bhashiniPrefs.pace === pace
-                            ? "bg-amber-500 text-stone-950 font-black"
-                            : "border-transparent bg-white/5 hover:bg-white/10"
+                            ? "bg-[#D96500] text-white font-black shadow-xs"
+                            : isLightCanvas
+                            ? "bg-[#FFFDF8] border-[#E8DCC2] text-[#4A3A2F] hover:bg-[#F5EEDB]"
+                            : "border-transparent bg-white/5 hover:bg-white/10 text-stone-300"
                         }`}
                         style={{
-                          color: bhashiniPrefs.pace === pace ? "#FFFFFF" : textSecondary,
                           backgroundColor: bhashiniPrefs.pace === pace ? saffronColor : undefined,
+                          borderColor: bhashiniPrefs.pace === pace ? saffronColor : undefined,
                         }}
                       >
                         {pace.toFixed(2)}x {pace === 0.80 && "• Shloka"}
@@ -1276,51 +1401,89 @@ export const MoreView: React.FC<MoreViewProps> = ({
 
                 {/* Bhashini Portal Credentials Drawer */}
                 {showBhashiniPortal && (
-                  <div className="mt-3 p-3 rounded-xl bg-stone-950/60 border border-amber-500/30 space-y-2.5">
+                  <div
+                    className={`mt-3 p-3 rounded-xl border space-y-2.5 ${
+                      isLightCanvas
+                        ? "bg-[#FFFDF8] border-[#DECB9F]"
+                        : "bg-stone-950/60 border-amber-500/30"
+                    }`}
+                  >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-amber-300">Bhashini ULCA Portal Credentials</span>
-                      <span className="text-[9px] font-mono text-stone-400">Pipeline: 64392f96...</span>
+                      <span
+                        className={`text-xs font-bold ${
+                          isLightCanvas ? "text-[#874606]" : "text-amber-300"
+                        }`}
+                      >
+                        Bhashini ULCA Portal Credentials
+                      </span>
+                      <span className="text-[9px] font-mono" style={{ color: textMuted }}>
+                        Pipeline: 64392f96...
+                      </span>
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[10px] text-stone-400">User ID (VITE_BHASHINI_USER_ID)</label>
+                      <label className="text-[10px]" style={{ color: textMuted }}>
+                        User ID (VITE_BHASHINI_USER_ID)
+                      </label>
                       <input
                         type="text"
                         readOnly
                         value={bhashiniPrefs.userId}
-                        className="w-full text-xs font-mono px-2.5 py-1.5 rounded-lg bg-stone-900 border border-stone-700 text-stone-300"
+                        className={`w-full text-xs font-mono px-2.5 py-1.5 rounded-lg border ${
+                          isLightCanvas
+                            ? "bg-[#FBF8EE] border-[#E8DCC2] text-[#261B12]"
+                            : "bg-stone-900 border-stone-700 text-stone-300"
+                        }`}
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[10px] text-stone-400">Pipeline ID (VITE_BHASHINI_PIPELINE_ID)</label>
+                      <label className="text-[10px]" style={{ color: textMuted }}>
+                        Pipeline ID (VITE_BHASHINI_PIPELINE_ID)
+                      </label>
                       <input
                         type="text"
                         readOnly
                         value={bhashiniPrefs.pipelineId}
-                        className="w-full text-xs font-mono px-2.5 py-1.5 rounded-lg bg-stone-900 border border-stone-700 text-stone-300"
+                        className={`w-full text-xs font-mono px-2.5 py-1.5 rounded-lg border ${
+                          isLightCanvas
+                            ? "bg-[#FBF8EE] border-[#E8DCC2] text-[#261B12]"
+                            : "bg-stone-900 border-stone-700 text-stone-300"
+                        }`}
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[10px] text-stone-400">Udyat API Key (VITE_BHASHINI_API_KEY)</label>
+                      <label className="text-[10px]" style={{ color: textMuted }}>
+                        Udyat API Key (VITE_BHASHINI_API_KEY)
+                      </label>
                       <input
                         type="password"
                         placeholder="PASTE_COPIED_UDYAT_KEY_HERE"
                         value={bhashiniUdyatKey}
                         onChange={(e) => setBhashiniUdyatKey(e.target.value)}
-                        className="w-full text-xs font-mono px-2.5 py-1.5 rounded-lg bg-stone-900 border border-stone-700 text-stone-200 focus:border-amber-500 focus:outline-hidden"
+                        className={`w-full text-xs font-mono px-2.5 py-1.5 rounded-lg border focus:outline-hidden ${
+                          isLightCanvas
+                            ? "bg-[#FBF8EE] border-[#E8DCC2] text-[#261B12] focus:border-[#D96500]"
+                            : "bg-stone-900 border-stone-700 text-stone-200 focus:border-amber-500"
+                        }`}
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[10px] text-stone-400">Inference Key (VITE_BHASHINI_INFERENCE_KEY)</label>
+                      <label className="text-[10px]" style={{ color: textMuted }}>
+                        Inference Key (VITE_BHASHINI_INFERENCE_KEY)
+                      </label>
                       <input
                         type="password"
                         placeholder="PASTE_COPIED_INFERENCE_KEY_HERE"
                         value={bhashiniInferenceKey}
                         onChange={(e) => setBhashiniInferenceKey(e.target.value)}
-                        className="w-full text-xs font-mono px-2.5 py-1.5 rounded-lg bg-stone-900 border border-stone-700 text-stone-200 focus:border-amber-500 focus:outline-hidden"
+                        className={`w-full text-xs font-mono px-2.5 py-1.5 rounded-lg border focus:outline-hidden ${
+                          isLightCanvas
+                            ? "bg-[#FBF8EE] border-[#E8DCC2] text-[#261B12] focus:border-[#D96500]"
+                            : "bg-stone-900 border-stone-700 text-stone-200 focus:border-amber-500"
+                        }`}
                       />
                     </div>
 
@@ -1328,7 +1491,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
                       <button
                         type="button"
                         onClick={handleSaveBhashiniCredentials}
-                        className="px-3 py-1.5 rounded-lg bg-amber-500 text-stone-950 font-bold text-xs hover:bg-amber-400 transition-all cursor-pointer"
+                        className="px-3 py-1.5 rounded-lg bg-[#D96500] hover:bg-[#B85300] text-white font-bold text-xs transition-all cursor-pointer shadow-xs"
                       >
                         Save & Apply Credentials
                       </button>
@@ -1445,23 +1608,15 @@ export const MoreView: React.FC<MoreViewProps> = ({
 
             {/* TTS Engine Verification & Failsafe Diagnostic Console */}
             <div
-              className="mt-4 p-4 rounded-2xl border space-y-3 transition-all"
-              style={{
-                backgroundColor: isLightCanvas
-                  ? isLight
-                    ? "#FAF5ED"
-                    : "#F8FAFC"
-                  : "rgba(0, 0, 0, 0.28)",
-                borderColor: ttsTestResult.failsafeTriggered
-                  ? "#F59E0B"
-                  : isLightCanvas
-                  ? "rgba(216, 137, 22, 0.25)"
-                  : "rgba(216, 137, 22, 0.2)",
-              }}
+              className={`mt-4 p-4 rounded-2xl border space-y-3 transition-all ${
+                isLightCanvas
+                  ? "bg-[#FFFDF8] border-[#E8DCC2]"
+                  : "bg-black/25 border-amber-500/20"
+              }`}
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center space-x-2">
-                  <Activity className="w-4 h-4 text-amber-500" />
+                  <Activity className={`w-4 h-4 ${isLightCanvas ? "text-[#A64E04]" : "text-amber-500"}`} />
                   <div>
                     <div className="text-xs font-bold" style={{ color: textSecondary }}>
                       TTS ENGINE VERIFICATION & FAILSAFE TESTER
@@ -1473,8 +1628,14 @@ export const MoreView: React.FC<MoreViewProps> = ({
                 </div>
 
                 <div className="flex items-center space-x-1.5">
-                  <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9.5px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span
+                    className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9.5px] font-mono font-bold border ${
+                      isLightCanvas
+                        ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                        : "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                    }`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span>Failsafe Active</span>
                   </span>
                 </div>
@@ -1489,16 +1650,28 @@ export const MoreView: React.FC<MoreViewProps> = ({
                   disabled={Boolean(isTestingTts)}
                   className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                     isTestingTts === "bhashini"
-                      ? "bg-amber-500/25 border-amber-500"
+                      ? isLightCanvas
+                        ? "bg-[#FBEFD3] border-[#DECB9F]"
+                        : "bg-amber-500/25 border-amber-500"
+                      : isLightCanvas
+                      ? "border-[#E8DCC2] hover:border-[#DECB9F] bg-[#FFFDF8] hover:bg-[#F5EEDB]"
                       : "border-white/10 hover:border-amber-500/40 bg-white/5 hover:bg-white/10"
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-amber-400 flex items-center space-x-1">
+                    <span
+                      className={`text-xs font-bold flex items-center space-x-1 ${
+                        isLightCanvas ? "text-[#874606]" : "text-amber-400"
+                      }`}
+                    >
                       <span>🇮🇳</span>
                       <span>Test Bhashini</span>
                     </span>
-                    <Play className={`w-3 h-3 text-amber-400 ${isTestingTts === "bhashini" ? "animate-spin" : "fill-current"}`} />
+                    <Play
+                      className={`w-3 h-3 ${
+                        isLightCanvas ? "text-[#874606]" : "text-amber-400"
+                      } ${isTestingTts === "bhashini" ? "animate-spin" : "fill-current"}`}
+                    />
                   </div>
                   <div className="text-[10px] mt-1" style={{ color: textMuted }}>
                     {isTestingTts === "bhashini" ? "Synthesizing..." : "Indic-TTS WAV 22kHz"}
@@ -1512,16 +1685,28 @@ export const MoreView: React.FC<MoreViewProps> = ({
                   disabled={Boolean(isTestingTts)}
                   className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                     isTestingTts === "google"
-                      ? "bg-amber-500/25 border-amber-500"
+                      ? isLightCanvas
+                        ? "bg-[#FBEFD3] border-[#DECB9F]"
+                        : "bg-amber-500/25 border-amber-500"
+                      : isLightCanvas
+                      ? "border-[#E8DCC2] hover:border-[#DECB9F] bg-[#FFFDF8] hover:bg-[#F5EEDB]"
                       : "border-white/10 hover:border-amber-500/40 bg-white/5 hover:bg-white/10"
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-amber-400 flex items-center space-x-1">
+                    <span
+                      className={`text-xs font-bold flex items-center space-x-1 ${
+                        isLightCanvas ? "text-[#874606]" : "text-amber-400"
+                      }`}
+                    >
                       <span>☁️</span>
                       <span>Test Google TTS</span>
                     </span>
-                    <Play className={`w-3 h-3 text-amber-400 ${isTestingTts === "google" ? "animate-spin" : "fill-current"}`} />
+                    <Play
+                      className={`w-3 h-3 ${
+                        isLightCanvas ? "text-[#874606]" : "text-amber-400"
+                      } ${isTestingTts === "google" ? "animate-spin" : "fill-current"}`}
+                    />
                   </div>
                   <div className="text-[10px] mt-1" style={{ color: textMuted }}>
                     {isTestingTts === "google" ? "Synthesizing..." : "Neural2 MP3 / WAV"}
@@ -1535,20 +1720,36 @@ export const MoreView: React.FC<MoreViewProps> = ({
                   disabled={Boolean(isTestingTts)}
                   className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden ${
                     isTestingTts === "failsafe"
-                      ? "bg-amber-500/30 border-amber-400 ring-2 ring-amber-400/40"
+                      ? isLightCanvas
+                        ? "bg-[#FBEFD3] border-[#DECB9F] ring-2 ring-[#D96500]/40"
+                        : "bg-amber-500/30 border-amber-400 ring-2 ring-amber-400/40"
+                      : isLightCanvas
+                      ? "border-[#DECB9F] bg-[#FDF3DF] hover:bg-[#FBEFD3]"
                       : "border-amber-500/50 hover:border-amber-400 bg-amber-500/10 hover:bg-amber-500/15"
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-amber-300 flex items-center space-x-1">
-                      <Zap className="w-3.5 h-3.5 text-amber-400 fill-current" />
+                    <span
+                      className={`text-xs font-bold flex items-center space-x-1 ${
+                        isLightCanvas ? "text-[#874606]" : "text-amber-300"
+                      }`}
+                    >
+                      <Zap className={`w-3.5 h-3.5 ${isLightCanvas ? "text-[#874606]" : "text-amber-400"} fill-current`} />
                       <span>Test Failsafe</span>
                     </span>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500 text-stone-950">
+                    <span
+                      className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
+                        isLightCanvas ? "bg-[#D96500] text-white" : "bg-amber-500 text-stone-950"
+                      }`}
+                    >
                       Fallback
                     </span>
                   </div>
-                  <div className="text-[10px] mt-1 text-amber-200/80">
+                  <div
+                    className={`text-[10px] mt-1 ${
+                      isLightCanvas ? "text-[#6E5C4E]" : "text-amber-200/80"
+                    }`}
+                  >
                     {isTestingTts === "failsafe" ? "Simulating Outage..." : "Bhashini ➔ Google Cloud"}
                   </div>
                 </button>
@@ -1557,42 +1758,56 @@ export const MoreView: React.FC<MoreViewProps> = ({
               {/* Real-time Diagnostics Output Box */}
               {ttsTestResult.status !== "idle" && (
                 <div
-                  className="p-3 rounded-xl border space-y-2 text-xs transition-all"
+                  className={`p-3 rounded-xl border space-y-2 text-xs transition-all ${
+                    isLightCanvas
+                      ? ttsTestResult.status === "error"
+                        ? "bg-[#FEF2F2] border-[#FCA5A5] text-[#991B1B]"
+                        : ttsTestResult.failsafeTriggered
+                        ? "bg-[#FDF3DF] border-[#DECB9F] text-[#874606]"
+                        : "bg-[#F0FDF4] border-[#86EFAC] text-[#166534]"
+                      : "bg-black/40"
+                  }`}
                   style={{
-                    backgroundColor: isLightCanvas
-                      ? "#FFFFFF"
-                      : "rgba(0, 0, 0, 0.4)",
-                    borderColor:
-                      ttsTestResult.status === "error"
+                    borderColor: !isLightCanvas
+                      ? ttsTestResult.status === "error"
                         ? "#EF4444"
                         : ttsTestResult.failsafeTriggered
                         ? "#F59E0B"
-                        : "#10B981",
+                        : "#10B981"
+                      : undefined,
                   }}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-1.5">
                     <div className="flex items-center space-x-1.5 font-bold">
                       {ttsTestResult.status === "testing" ? (
-                        <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+                        <RefreshCw className="w-3.5 h-3.5 text-amber-500 animate-spin" />
                       ) : ttsTestResult.status === "error" ? (
-                        <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+                        <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
                       ) : ttsTestResult.failsafeTriggered ? (
-                        <Zap className="w-3.5 h-3.5 text-amber-400 fill-current" />
+                        <Zap className={`w-3.5 h-3.5 ${isLightCanvas ? "text-[#874606]" : "text-amber-500"} fill-current`} />
                       ) : (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                       )}
 
                       <span
                         className={
                           ttsTestResult.status === "error"
-                            ? "text-red-400 font-semibold"
+                            ? isLightCanvas
+                              ? "text-red-700 font-semibold"
+                              : "text-red-400 font-semibold"
                             : ttsTestResult.failsafeTriggered
-                            ? "text-amber-300 font-bold"
+                            ? isLightCanvas
+                              ? "text-[#874606] font-bold"
+                              : "text-amber-300 font-bold"
+                            : isLightCanvas
+                            ? "text-[#15803D] font-bold"
                             : "text-emerald-400 font-bold"
                         }
                       >
                         {ttsTestResult.status === "testing"
                           ? "Testing Synthesis..."
+                          : ttsTestResult.status === "error"
+                          ? "TTS Synthesis Notice"
                           : ttsTestResult.failsafeTriggered
                           ? "⚡ Failsafe Verified (Bhashini ➔ Google Cloud TTS)"
                           : "Synthesis & Playback Successful"}
@@ -1601,16 +1816,34 @@ export const MoreView: React.FC<MoreViewProps> = ({
 
                     {ttsTestResult.latencyMs && (
                       <div className="flex items-center space-x-1.5 text-[10px] font-mono" style={{ color: textMuted }}>
-                        <span className="px-1.5 py-0.5 rounded bg-black/20 border border-white/5">
+                        <span
+                          className={`px-1.5 py-0.5 rounded border ${
+                            isLightCanvas
+                              ? "bg-[#F5EEDB] border-[#E8DCC2] text-[#4A3A2F]"
+                              : "bg-black/20 border-white/5"
+                          }`}
+                        >
                           {ttsTestResult.latencyMs} ms
                         </span>
                         {ttsTestResult.mimeType && (
-                          <span className="px-1.5 py-0.5 rounded bg-black/20 border border-white/5 uppercase">
+                          <span
+                            className={`px-1.5 py-0.5 rounded border uppercase ${
+                              isLightCanvas
+                                ? "bg-[#F5EEDB] border-[#E8DCC2] text-[#4A3A2F]"
+                                : "bg-black/20 border-white/5"
+                            }`}
+                          >
                             {ttsTestResult.mimeType.replace("audio/", "")}
                           </span>
                         )}
                         {ttsTestResult.audioSizeKB && (
-                          <span className="px-1.5 py-0.5 rounded bg-black/20 border border-white/5">
+                          <span
+                            className={`px-1.5 py-0.5 rounded border ${
+                              isLightCanvas
+                                ? "bg-[#F5EEDB] border-[#E8DCC2] text-[#4A3A2F]"
+                                : "bg-black/20 border-white/5"
+                            }`}
+                          >
                             {ttsTestResult.audioSizeKB} KB
                           </span>
                         )}
@@ -1623,14 +1856,27 @@ export const MoreView: React.FC<MoreViewProps> = ({
                   </p>
 
                   {ttsTestResult.failsafeTriggered && ttsTestResult.fallbackInfo && (
-                    <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[10.5px] text-amber-200/90 space-y-1">
+                    <div
+                      className={`p-2 rounded-lg border text-[10.5px] space-y-1 ${
+                        isLightCanvas
+                          ? "bg-[#FFFDF8] border-[#DECB9F] text-[#4A3A2F]"
+                          : "bg-amber-500/10 border-amber-500/20 text-amber-200/90"
+                      }`}
+                    >
                       <div className="font-bold flex items-center space-x-1">
                         <span>🛡️ Failsafe Trigger Details:</span>
                       </div>
                       <div className="text-[10px] leading-relaxed">
-                        • Primary Requested: <span className="font-mono text-amber-300">{ttsTestResult.fallbackInfo.from}</span> (downtime detected)
+                        • Primary Requested:{" "}
+                        <span className={`font-mono font-bold ${isLightCanvas ? "text-[#874606]" : "text-amber-300"}`}>
+                          {ttsTestResult.fallbackInfo.from}
+                        </span>{" "}
+                        (downtime detected)
                         <br />
-                        • Fallback Chanted By: <span className="font-mono text-emerald-300">{ttsTestResult.fallbackInfo.to} (Google Cloud Neural2)</span>
+                        • Fallback Chanted By:{" "}
+                        <span className={`font-mono font-bold ${isLightCanvas ? "text-[#065F46]" : "text-emerald-300"}`}>
+                          {ttsTestResult.fallbackInfo.to} (Google Cloud Neural2)
+                        </span>
                         <br />
                         • Reason: {ttsTestResult.fallbackInfo.reason}
                       </div>
@@ -1639,19 +1885,34 @@ export const MoreView: React.FC<MoreViewProps> = ({
 
                   {ttsTestResult.audioUrl && (
                     <div className="flex items-center justify-between pt-1">
-                      <span className="text-[10px] font-sanskrit text-amber-400">
+                      <span
+                        className={`text-[10px] font-sanskrit ${
+                          isLightCanvas ? "text-[#874606]" : "text-amber-400"
+                        }`}
+                      >
                         ॐ असतो मा सद्गमय । तमसो मा ज्योतिर्गमय ।
                       </span>
                       <button
                         type="button"
-                        onClick={() => {
+                        onClick={async () => {
                           if (ttsTestResult.audioUrl) {
-                            const a = new Audio(ttsTestResult.audioUrl);
-                            a.playbackRate = prefChantSpeed;
-                            a.play();
+                            resilientAudioPlayer.unlockAudio();
+                            try {
+                              const handle = await resilientAudioPlayer.play(ttsTestResult.audioUrl, {
+                                playbackRate: prefChantSpeed,
+                                ariaLabel: "Replay Shanti Patha Recitation",
+                              });
+                              setActiveTestAudio(handle);
+                            } catch (e: any) {
+                              console.warn("[MoreView] Replay error:", e);
+                            }
                           }
                         }}
-                        className="text-[10.5px] font-bold px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 transition-all flex items-center space-x-1 cursor-pointer"
+                        className={`text-[10.5px] font-bold px-2 py-0.5 rounded border transition-all flex items-center space-x-1 cursor-pointer ${
+                          isLightCanvas
+                            ? "bg-[#FBEFD3] hover:bg-[#F5EEDB] text-[#874606] border-[#DECB9F]"
+                            : "bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border-amber-500/30"
+                        }`}
                       >
                         <Play className="w-2.5 h-2.5 fill-current" />
                         <span>Replay Audio</span>
@@ -1667,13 +1928,15 @@ export const MoreView: React.FC<MoreViewProps> = ({
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1.5 text-xs font-bold" style={{ color: textSecondary }}>
-                <Clock className="w-4 h-4 text-amber-500" />
+                <Clock className={`w-4 h-4 ${isLightCanvas ? "text-[#A64E04]" : "text-amber-500"}`} />
                 <span>BRAHMA MUHURTA REMINDER</span>
               </div>
               <button
                 type="button"
                 onClick={handleTestNotification}
-                className="text-[11px] text-amber-500 font-bold hover:underline cursor-pointer flex items-center space-x-1"
+                className={`text-[11px] font-bold hover:underline cursor-pointer flex items-center space-x-1 ${
+                  isLightCanvas ? "text-[#874606]" : "text-amber-500"
+                }`}
                 title="Test 432Hz temple bell and notification"
               >
                 <span>🔔 Test Bell</span>
@@ -1693,11 +1956,13 @@ export const MoreView: React.FC<MoreViewProps> = ({
                   key={p.time}
                   type="button"
                   onClick={() => handleReminderChange(p.time)}
-                  className={`px-2 py-1 rounded-lg text-[10.5px] font-bold border transition-colors ${
+                  className={`px-2 py-1 rounded-lg text-[10.5px] font-bold border transition-colors cursor-pointer ${
                     prefReminder === p.time
-                      ? "bg-amber-500 text-stone-950 border-amber-400"
+                      ? isLightCanvas
+                        ? "bg-[#D96500] text-white border-[#D96500] shadow-xs"
+                        : "bg-amber-500 text-stone-950 border-amber-400"
                       : isLightCanvas
-                      ? "bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200"
+                      ? "bg-[#F5EEDB] border-[#E8DCC2] text-[#4A3A2F] hover:bg-[#FBEFD3]"
                       : "bg-white/5 border-white/10 text-stone-300 hover:bg-white/10"
                   }`}
                 >
@@ -1713,7 +1978,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
                 onChange={(e) => handleReminderChange(e.target.value)}
                 className="flex-1 px-3 py-2 rounded-xl border text-xs font-bold transition-all"
                 style={{
-                  backgroundColor: isLightCanvas ? (isLight ? "#F6EDE1" : "#F8FAFC") : "rgba(0,0,0,0.3)",
+                  backgroundColor: isLightCanvas ? (isLight ? "#FFFDF8" : "#F8FAFC") : "rgba(0,0,0,0.3)",
                   borderColor: cardBorder,
                   color: textPrimary,
                 }}
@@ -1721,7 +1986,11 @@ export const MoreView: React.FC<MoreViewProps> = ({
               <button
                 type="button"
                 onClick={handleTestNotification}
-                className="px-3 py-2 rounded-xl text-xs font-bold bg-amber-500/20 border border-amber-500/40 text-amber-400 hover:bg-amber-500/30 transition-all cursor-pointer flex items-center space-x-1"
+                className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center space-x-1 ${
+                  isLightCanvas
+                    ? "bg-[#FBEFD3] border-[#DECB9F] text-[#874606] hover:bg-[#F5EEDB]"
+                    : "bg-amber-500/20 border-amber-500/40 text-amber-400 hover:bg-amber-500/30"
+                }`}
               >
                 <Bell className="w-3.5 h-3.5" />
                 <span>Notify</span>
@@ -1742,7 +2011,13 @@ export const MoreView: React.FC<MoreViewProps> = ({
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-500">
+            <div
+              className={`w-9 h-9 rounded-xl border flex items-center justify-center ${
+                isLightCanvas
+                  ? "bg-[#FBEFD3] border-[#DECB9F] text-[#874606]"
+                  : "bg-amber-500/20 border-amber-500/40 text-amber-500"
+              }`}
+            >
               <Target className="w-5 h-5" />
             </div>
             <div>
@@ -1750,7 +2025,13 @@ export const MoreView: React.FC<MoreViewProps> = ({
                 <h2 className="font-serif-sacred text-base sm:text-lg font-bold" style={{ color: textPrimary }}>
                   Daily Reading & Study Goal
                 </h2>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                <span
+                  className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border ${
+                    isLightCanvas
+                      ? "bg-[#FBEFD3] text-[#874606] border-[#DECB9F]"
+                      : "bg-amber-500/15 text-amber-500 border border-amber-500/30"
+                  }`}
+                >
                   स्वाध्याय लक्ष्य
                 </span>
               </div>
@@ -1761,9 +2042,15 @@ export const MoreView: React.FC<MoreViewProps> = ({
           </div>
 
           <div className="flex items-center space-x-1.5 self-start sm:self-auto">
-            <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+            <span
+              className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-mono font-bold border ${
+                isLightCanvas
+                  ? "bg-[#FBEFD3] text-[#874606] border-[#DECB9F]"
+                  : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+              }`}
+            >
               <span>Target:</span>
-              <span className="text-amber-300">
+              <span className={isLightCanvas ? "text-[#874606] font-extrabold" : "text-amber-300"}>
                 {goalConfig.metric === "minutes" ? `${goalConfig.targetMinutes}m / day` : `${goalConfig.targetVerses} shlokas / day`}
               </span>
             </span>
@@ -1781,25 +2068,34 @@ export const MoreView: React.FC<MoreViewProps> = ({
               onClick={() => handleGoalMetricChange("minutes")}
               className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                 goalConfig.metric === "minutes"
-                  ? "bg-amber-500/20 border-amber-500 shadow-sm"
+                  ? isLightCanvas
+                    ? "bg-[#FBEFD3] border-[#DECB9F] shadow-xs"
+                    : "bg-amber-500/20 border-amber-500 shadow-sm"
+                  : isLightCanvas
+                  ? "bg-[#FFFDF8] border-[#E8DCC2] hover:bg-[#F5EEDB]"
                   : "border-transparent hover:bg-white/5"
               }`}
-              style={{
-                backgroundColor:
-                  goalConfig.metric === "minutes"
-                    ? isLightCanvas ? "rgba(216, 137, 22, 0.15)" : "rgba(216, 137, 22, 0.22)"
-                    : isLightCanvas ? (isLight ? "#F6EDE1" : "#F8FAFC") : "rgba(0, 0, 0, 0.2)",
-                borderColor: goalConfig.metric === "minutes" ? saffronColor : "transparent",
-              }}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Clock className="w-4 h-4 text-amber-500" />
-                  <span className="text-xs font-bold" style={{ color: goalConfig.metric === "minutes" ? saffronColor : textPrimary }}>
+                  <Clock className={`w-4 h-4 ${isLightCanvas ? "text-[#874606]" : "text-amber-500"}`} />
+                  <span
+                    className="text-xs font-bold"
+                    style={{
+                      color:
+                        goalConfig.metric === "minutes"
+                          ? isLightCanvas
+                            ? "#874606"
+                            : saffronColor
+                          : textPrimary,
+                    }}
+                  >
                     Minutes of Study
                   </span>
                 </div>
-                {goalConfig.metric === "minutes" && <Check className="w-4 h-4 text-amber-400" />}
+                {goalConfig.metric === "minutes" && (
+                  <Check className={`w-4 h-4 ${isLightCanvas ? "text-[#874606]" : "text-amber-400"}`} />
+                )}
               </div>
               <div className="text-[10.5px] mt-1" style={{ color: textMuted }}>
                 Active reading, chant listening & contemplation time. (Recommended: 15m)
@@ -1811,25 +2107,34 @@ export const MoreView: React.FC<MoreViewProps> = ({
               onClick={() => handleGoalMetricChange("verses")}
               className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                 goalConfig.metric === "verses"
-                  ? "bg-amber-500/20 border-amber-500 shadow-sm"
+                  ? isLightCanvas
+                    ? "bg-[#FBEFD3] border-[#DECB9F] shadow-xs"
+                    : "bg-amber-500/20 border-amber-500 shadow-sm"
+                  : isLightCanvas
+                  ? "bg-[#FFFDF8] border-[#E8DCC2] hover:bg-[#F5EEDB]"
                   : "border-transparent hover:bg-white/5"
               }`}
-              style={{
-                backgroundColor:
-                  goalConfig.metric === "verses"
-                    ? isLightCanvas ? "rgba(216, 137, 22, 0.15)" : "rgba(216, 137, 22, 0.22)"
-                    : isLightCanvas ? (isLight ? "#F6EDE1" : "#F8FAFC") : "rgba(0, 0, 0, 0.2)",
-                borderColor: goalConfig.metric === "verses" ? saffronColor : "transparent",
-              }}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <BookOpen className="w-4 h-4 text-amber-500" />
-                  <span className="text-xs font-bold" style={{ color: goalConfig.metric === "verses" ? saffronColor : textPrimary }}>
+                  <BookOpen className={`w-4 h-4 ${isLightCanvas ? "text-[#874606]" : "text-amber-500"}`} />
+                  <span
+                    className="text-xs font-bold"
+                    style={{
+                      color:
+                        goalConfig.metric === "verses"
+                          ? isLightCanvas
+                            ? "#874606"
+                            : saffronColor
+                          : textPrimary,
+                    }}
+                  >
                     Number of Verses
                   </span>
                 </div>
-                {goalConfig.metric === "verses" && <Check className="w-4 h-4 text-amber-400" />}
+                {goalConfig.metric === "verses" && (
+                  <Check className={`w-4 h-4 ${isLightCanvas ? "text-[#874606]" : "text-amber-400"}`} />
+                )}
               </div>
               <div className="text-[10.5px] mt-1" style={{ color: textMuted }}>
                 Count of distinct shlokas recited and meditated upon today.
@@ -1845,7 +2150,11 @@ export const MoreView: React.FC<MoreViewProps> = ({
               <label className="text-xs font-bold block" style={{ color: textSecondary }}>
                 STUDY DURATION PRESETS (MINUTES / DAY)
               </label>
-              <span className="text-[11px] font-mono font-bold text-amber-400">
+              <span
+                className={`text-[11px] font-mono font-bold ${
+                  isLightCanvas ? "text-[#874606]" : "text-amber-400"
+                }`}
+              >
                 Current: {goalConfig.targetMinutes} minutes
               </span>
             </div>
@@ -1857,22 +2166,21 @@ export const MoreView: React.FC<MoreViewProps> = ({
                   onClick={() => handleGoalMinutesChange(mins)}
                   className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all cursor-pointer relative ${
                     goalConfig.targetMinutes === mins
-                      ? "bg-amber-500 text-stone-950 font-black shadow"
-                      : "border-transparent hover:border-amber-500/30"
+                      ? isLightCanvas
+                        ? "bg-[#D96500] text-white border-[#D96500] font-black shadow-xs"
+                        : "bg-amber-500 text-stone-950 font-black shadow"
+                      : isLightCanvas
+                      ? "bg-[#FFFDF8] border-[#E8DCC2] text-[#4A3A2F] hover:bg-[#F5EEDB]"
+                      : "border-transparent bg-white/5 hover:bg-white/10 text-stone-300"
                   }`}
-                  style={{
-                    backgroundColor:
-                      goalConfig.targetMinutes === mins
-                        ? saffronColor
-                        : isLightCanvas
-                        ? isLight ? "#F6EDE1" : "#F3F4F6"
-                        : "rgba(0, 0, 0, 0.2)",
-                    color: goalConfig.targetMinutes === mins ? "#FFFFFF" : textSecondary,
-                  }}
                 >
                   <span>{mins}m</span>
                   {mins === 15 && (
-                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[8px] font-black uppercase px-1 rounded bg-amber-400 text-stone-950 shadow-xs">
+                    <span
+                      className={`absolute -top-2 left-1/2 -translate-x-1/2 text-[8px] font-black uppercase px-1 rounded ${
+                        isLightCanvas ? "bg-[#874606] text-white" : "bg-amber-400 text-stone-950 shadow-xs"
+                      }`}
+                    >
                       Default
                     </span>
                   )}
@@ -1889,7 +2197,11 @@ export const MoreView: React.FC<MoreViewProps> = ({
               <label className="text-xs font-bold block" style={{ color: textSecondary }}>
                 SHLOKA COUNT PRESETS (VERSES / DAY)
               </label>
-              <span className="text-[11px] font-mono font-bold text-amber-400">
+              <span
+                className={`text-[11px] font-mono font-bold ${
+                  isLightCanvas ? "text-[#874606]" : "text-amber-400"
+                }`}
+              >
                 Current: {goalConfig.targetVerses} shlokas
               </span>
             </div>
@@ -1901,18 +2213,13 @@ export const MoreView: React.FC<MoreViewProps> = ({
                   onClick={() => handleGoalVersesChange(verses)}
                   className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all cursor-pointer relative ${
                     goalConfig.targetVerses === verses
-                      ? "bg-amber-500 text-stone-950 font-black shadow"
-                      : "border-transparent hover:border-amber-500/30"
+                      ? isLightCanvas
+                        ? "bg-[#D96500] text-white border-[#D96500] font-black shadow-xs"
+                        : "bg-amber-500 text-stone-950 font-black shadow"
+                      : isLightCanvas
+                      ? "bg-[#FFFDF8] border-[#E8DCC2] text-[#4A3A2F] hover:bg-[#F5EEDB]"
+                      : "border-transparent bg-white/5 hover:bg-white/10 text-stone-300"
                   }`}
-                  style={{
-                    backgroundColor:
-                      goalConfig.targetVerses === verses
-                        ? saffronColor
-                        : isLightCanvas
-                        ? isLight ? "#F6EDE1" : "#F3F4F6"
-                        : "rgba(0, 0, 0, 0.2)",
-                    color: goalConfig.targetVerses === verses ? "#FFFFFF" : textSecondary,
-                  }}
                 >
                   <span>{verses}</span>
                 </button>
@@ -1925,32 +2232,50 @@ export const MoreView: React.FC<MoreViewProps> = ({
         <div
           className="p-4 rounded-2xl border space-y-3"
           style={{
-            backgroundColor: isLightCanvas ? (isLight ? "#FAF5ED" : "#F8FAFC") : "rgba(0, 0, 0, 0.3)",
+            backgroundColor: isLightCanvas ? (isLight ? "#FFFDF8" : "#F8FAFC") : "rgba(0, 0, 0, 0.3)",
             borderColor: goalProgress.isGoalMet ? "#10B981" : cardBorder,
           }}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Flame className={`w-4 h-4 ${goalProgress.isGoalMet ? "text-emerald-400" : "text-amber-500"}`} />
+              <Flame
+                className={`w-4 h-4 ${
+                  goalProgress.isGoalMet
+                    ? "text-emerald-500"
+                    : isLightCanvas
+                    ? "text-[#A64E04]"
+                    : "text-amber-500"
+                }`}
+              />
               <span className="text-xs font-bold" style={{ color: textPrimary }}>
                 Today&apos;s Goal Progress
               </span>
             </div>
 
             {goalProgress.isGoalMet ? (
-              <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+              <span
+                className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-bold border ${
+                  isLightCanvas
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                    : "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                }`}
+              >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Goal Met Today! 🔥</span>
               </span>
             ) : (
-              <span className="text-xs font-mono font-bold text-amber-500">
+              <span
+                className={`text-xs font-mono font-bold ${
+                  isLightCanvas ? "text-[#874606]" : "text-amber-500"
+                }`}
+              >
                 {goalProgress.percentage}% Achieved
               </span>
             )}
           </div>
 
           {/* Progress bar */}
-          <div className="w-full h-2.5 rounded-full bg-stone-800/40 overflow-hidden relative border border-white/5">
+          <div className="w-full h-2.5 rounded-full bg-stone-800/20 overflow-hidden relative border border-white/5">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
                 goalProgress.isGoalMet
@@ -1963,7 +2288,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
 
           <div className="grid grid-cols-2 gap-3 text-xs pt-1">
             <div className="flex items-center space-x-2">
-              <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <Clock className={`w-3.5 h-3.5 ${isLightCanvas ? "text-[#874606]" : "text-amber-400"} shrink-0`} />
               <div>
                 <span className="text-[10px] block opacity-70">Study Time Today:</span>
                 <span className="font-mono font-bold" style={{ color: textPrimary }}>
@@ -1973,7 +2298,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
             </div>
 
             <div className="flex items-center space-x-2">
-              <BookOpen className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <BookOpen className={`w-3.5 h-3.5 ${isLightCanvas ? "text-[#874606]" : "text-amber-400"} shrink-0`} />
               <div>
                 <span className="text-[10px] block opacity-70">Verses Contemplated:</span>
                 <span className="font-mono font-bold" style={{ color: textPrimary }}>
@@ -1984,12 +2309,16 @@ export const MoreView: React.FC<MoreViewProps> = ({
           </div>
 
           {/* Quick simulation / testing controls */}
-          <div className="flex items-center justify-between pt-2 border-t border-white/5">
+          <div className="flex items-center justify-between pt-2 border-t border-black/5">
             <div className="flex items-center space-x-2">
               <button
                 type="button"
                 onClick={() => handleAddManualGoalStudy(5)}
-                className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 transition-all cursor-pointer flex items-center space-x-1"
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer flex items-center space-x-1 ${
+                  isLightCanvas
+                    ? "bg-[#FBEFD3] hover:bg-[#F5EEDB] text-[#874606] border-[#DECB9F]"
+                    : "bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30"
+                }`}
               >
                 <span>+5m Quick Log</span>
               </button>
@@ -2007,10 +2336,14 @@ export const MoreView: React.FC<MoreViewProps> = ({
                   }
                   showToast("Daily Goal target reached! Celebratory animation triggered 🔥");
                 }}
-                className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 transition-all cursor-pointer flex items-center space-x-1"
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer flex items-center space-x-1 ${
+                  isLightCanvas
+                    ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300"
+                    : "bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30"
+                }`}
                 title="Test reaching 100% daily goal and trigger celebration animation"
               >
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
                 <span>Hit Goal (Test)</span>
               </button>
             </div>
@@ -2302,13 +2635,19 @@ export const MoreView: React.FC<MoreViewProps> = ({
               }}
               title="Launch SutraSparsh Temple Admin Operations Console (Device: Screen Verified)"
             >
-              <ShieldCheck className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
+              <ShieldCheck className={`w-4 h-4 ${isLightCanvas ? "text-[#A64E04]" : "text-amber-500"} group-hover:scale-110 transition-transform`} />
               <span>Launch SutraSparsh Temple Admin Operations Console</span>
-              <span className="text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-mono font-normal ml-1">
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-normal ml-1 border ${
+                  isLightCanvas
+                    ? "bg-[#FBEFD3] text-[#874606] border-[#DECB9F]"
+                    : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                }`}
+              >
                 Screen Device Active
               </span>
             </button>
-            <p className="text-[11px] text-stone-500 text-center font-mono">
+            <p className={`text-[11px] text-center font-mono ${isLightCanvas ? "text-[#6E5C4E]" : "text-stone-500"}`}>
               🖥️ Device: Screen verified • Administrative control plane enabled
             </p>
           </div>
@@ -2319,16 +2658,26 @@ export const MoreView: React.FC<MoreViewProps> = ({
               id="btn-launch-admin-console-disabled"
               disabled
               aria-disabled="true"
-              className="w-full py-3.5 px-4 rounded-2xl border flex items-center justify-center space-x-2 text-xs font-bold opacity-50 cursor-not-allowed bg-stone-900/40 border-stone-800 text-stone-500 shadow-none"
+              className={`w-full py-3.5 px-4 rounded-2xl border flex items-center justify-center space-x-2 text-xs font-bold opacity-60 cursor-not-allowed shadow-none ${
+                isLightCanvas
+                  ? "bg-[#F5EEDB] border-[#E8DCC2] text-[#6E5C4E]"
+                  : "bg-stone-900/40 border-stone-800 text-stone-500"
+              }`}
               title="Admin Console is disabled on mobile/handheld devices. Exclusively enabled for device: screen."
             >
-              <Lock className="w-4 h-4 text-stone-500" />
+              <Lock className="w-4 h-4" />
               <span>Launch SutraSparsh Temple Admin Operations Console</span>
-              <span className="text-[10px] bg-stone-800 text-stone-400 border border-stone-700 px-2 py-0.5 rounded-full font-mono font-normal ml-1">
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-normal ml-1 border ${
+                  isLightCanvas
+                    ? "bg-[#FFFDF8] text-[#6E5C4E] border-[#E8DCC2]"
+                    : "bg-stone-800 text-stone-400 border border-stone-700"
+                }`}
+              >
                 Disabled on Mobile
               </span>
             </button>
-            <p className="text-[11px] text-amber-500/80 text-center font-mono">
+            <p className={`text-[11px] text-center font-mono ${isLightCanvas ? "text-[#874606]" : "text-amber-500/80"}`}>
               🔒 Admin Console is enabled only from device: screen. Disabled on mobile/handheld devices.
             </p>
           </div>

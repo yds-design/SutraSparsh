@@ -4,7 +4,7 @@
 > *"Take refuge in Him alone with all your being."* — Bhagavad Gita 18.62
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0-gold.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-1.8.0-gold.svg)](package.json)
 [![Status](https://img.shields.io/badge/status-PRODUCTION_LAUNCH_CERTIFIED-success.svg)](TEST_RESULTS.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue.svg)](tsconfig.json)
 [![React](https://img.shields.io/badge/React-19.2-cyan.svg)](package.json)
@@ -34,11 +34,13 @@ SutraSparsh is a digital sanctuary engineered for the study, contemplation, and 
   4. *Lineage Perspectives* (Comparative commentary insights)
   5. *Contemplative Application* (Practical daily sadhana integration)
 
-### 3. Sacred Vedic Audio Engine & Chants Player
-- **Sanskrit Neural Text-to-Speech**: High-fidelity Sanskrit recitation powered by Google Cloud Neural TTS models (`hi-IN-Neural2-B`, `hi-IN-Neural2-C`) with SSML phonetic tuning and browser `SpeechSynthesis` offline fallback.
+### 3. Sacred Vedic Audio Engine, Bhashini ULCA & Chants Player
+- **Bhashini ULCA Dual-Engine Integration**: Government of India MeitY Bhashini Indic-TTS pipeline (`bhashiniService.js`) providing sacred Sanskrit (`sa`) and Hindi (`hi`) voice synthesis with archetypes: *Devī Saraswatī (Female)* and *Sage Vyāsa (Male)*.
+- **Automatic Multi-Tier Failsafe**: Seamless automated retry mechanism falling back to Google Cloud Neural2 (`hi-IN-Neural2-A/B`) upon Bhashini 500 error or network outage, with browser `SpeechSynthesis` offline contingency.
+- **Resilient Audio Lifecycle & Memory Disposal**: Deterministic byte-level pre-validation (`validateAudioSource`), RIFF/WAV header packaging, and automatic `URL.revokeObjectURL()` upon playback completion or error to eliminate memory leaks during long contemplative sessions.
 - **432Hz Ambient Synthesizer**: Continuous 432 Hz frequency resonance engine tuned for deep meditative listening.
 - **Temple Acoustic Drone**: Continuous Tanpura and sacred *Om* acoustic loops creating an immersive sanctum atmosphere.
-- **Recitation Highlighting & Controls**: Synchronized verse highlighting, repetition loops, playback speed scaling (0.75x–1.5x), and independent drone volume faders.
+- **Recitation Highlighting & Controls**: Synchronized verse highlighting, repetition loops, playback speed scaling (0.70x–1.00x with 0.80x default shloka pace), and independent drone volume faders.
 
 ### 4. Instant Sanskrit Search & Transliteration Discovery Engine
 - **Multi-Script Inverted Index**: Sub-15ms search across Devanagari script (e.g. `कर्म`), IAST transliteration (`karma`), and English semantic meanings (`duty`).
@@ -63,20 +65,24 @@ SutraSparsh is a digital sanctuary engineered for the study, contemplation, and 
 - **Verse-Linked Dialogues**: Seekers can anchor contemplative insights directly to specific shlokas.
 - **Anumodana (Spiritual Upvoting)**: Uplifting community feedback mechanism supporting respectful discussion.
 
-### 8. Universal Six-Theme Sanctuary Palette
+### 8. Universal Six-Theme Sanctuary & Parchment Dawn Constitution
+- **Parchment Dawn (Light Mode)**: Authentic manuscript aesthetic on warm aged paper (`#FBF8EE`, card surface `#FFFDF8`) with roasted espresso typography (`#261B12` titles, `#4A3A2F` body) providing strict WCAG 2.1 AAA contrast (>16:1 ratio) with zero low-contrast amber text.
 - **Sandstone Temple (Default)**: Warm monastic earth, rich amber accents, gold leaf highlights, deep espresso sanctum ground.
 - **Amethyst Twilight**: Meditative deep violet dusk, radiant amber, moonlit cream typography.
-- **Parchment Dawn (Light Mode)**: Clean daylight readability on soft manuscript parchment with deep sandalwood typography.
 - **Festival Gold & Maroon**: Royal temple vermilion, kumkum maroon, and ceremonial gold ornamentation.
 - **Golden Hour Atmosphere**: Butter cream, burnt honey, ink black sanctum, and warm gray accents.
 - **Prism Pulse (Vivid Neo-Dash)**: Electric purple, vivid orange, cyan blue, and emerald with crisp light canvas foundation.
 - **ModalPortal Theme Observer**: Active `MutationObserver` synchronizing theme classes into detached DOM dialogs, guaranteeing zero theme leakage or contrast inversion.
 
-### 9. Operational Governance: Phase 1 Sanctuary & Phase 2 Gateways
+### 9. High-Performance Infinite Scroll & Memoization
+- **React.memo Custom Comparison**: `VerseCard` memoization with custom predicate evaluating `id`, `isBookmarked`, and active recitation state, preventing unnecessary re-renders.
+- **O(1) Bookmark Lookups & useMemo Architecture**: Instant lookup via `bookmarkedIdsSet` and memoized verse list collections, guaranteeing smooth 60fps rendering during infinite scroll operations.
+
+### 10. Operational Governance: Phase 1 Sanctuary & Phase 2 Gateways
 - **Phase 1 Sanctuary Mode (Active by Default)**: Client devices operate in a pure, distraction-free spiritual sanctuary with all monetization and donation features hidden.
 - **Phase 2 Dynamic Admin Controls**: Centralized feature flags service in Admin Console (`/admin`) allowing instant one-click activation of Sādhaka Patrons, Gurudakshina, and 80G tax receipt issuance.
 
-### 10. Progressive Web App (PWA) & Complete SEO Architecture
+### 11. Progressive Web App (PWA) & Complete SEO Architecture
 - **PWA Ready**: Web App Manifest (`manifest.webmanifest`), standalone display mode, home screen installability, and offline caching.
 - **Complete SEO**: Dynamic head metadata injection, canonical URLs, multilingual hreflang (`en`, `sa`, `hi`), OpenGraph social cards, Twitter cards, Schema.org JSON-LD `@graph`, `/robots.txt`, and `/sitemap.xml`.
 

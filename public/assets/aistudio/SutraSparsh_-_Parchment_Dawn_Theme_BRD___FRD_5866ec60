@@ -1,0 +1,174 @@
+﻿Business Requirements Document (BRD) & Functional Requirements Document (FRD)
+Project Name: SutraSparsh UI/UX System Standardization: "Parchment Dawn" Theme & WCAG Contrast Remediation Document Version: 1.0.0 Target Platform: Mobile Web & Responsive Web App (React / PWA / Native Webview) Status: Approved for Implementation
+1. Executive Summary & Problem Statement
+1.1 Context & Background
+SutraSparsh is an authentic sacred wisdom, philosophy, and Sanskrit corpus learning application (Bhagavad Gita, Patanjali Yoga Sutras, Upanishads). The application’s spiritual and reflective nature demands an organic, warm, and reverent atmosphere referred to as the "Parchment Dawn" visual design language.
+1.2 Core Problem Identification
+Recent audits and visual evidence (as seen across the active screens) demonstrate significant theme fragmentation and severe accessibility regressions:
+1. Severe Contrast Deficit (Explore Tab / Screen 2):
+   * The sub-hero card ("Don't just read the translation. Explore the word.") uses high-luminance golden/sand text (#F5DEB3 / #F3C068) directly on an off-white/parchment background (#FFFDF7 / #F8F3E6).
+   * Body copy ("A translation tells you what a sentence means...") fades into the background with less than a 1.4:1 contrast ratio, causing total illegibility and severe WCAG 2.1 AA violations.
+2. Inconsistent Component Theming:
+   * Screen 1 (Today Screen): Displays a balanced, high-contrast, warm cream aesthetic with deep espresso typography (#2D1F17), warm amber badges, and crisp terracotta CTA buttons.
+   * Screen 2 (Explore Screen): Inconsistently introduces an inverted, dark charcoal-brown gradient hero card juxtaposed against washed-out, illegible parchment elements below it, breaking continuous visual flow.
+3. Absence of Unified Design Tokens:
+   * Colors are currently hardcoded or weakly scoped, leading to accidental bleeding of light accents into light container surfaces.
+2. Business Case & Objectives (BRD)
+2.1 Strategic Business Goals
+* Improve Readability & Engagement Time: Eliminate visual strain during prolonged contemplative reading and recitation sessions.
+* WCAG 2.1 AA & AAA Compliance: Ensure all textual content meets a minimum contrast ratio of 4.5:1 for regular text and 3.0:1 for large text/interactive UI boundaries.
+* Brand Cohesion & Emotional Resonance: Deliver an uninterrupted, sacred, tactile "Parchment & Incense" feeling that matches the meditative discipline of Patanjali and the Upanishads.
+* Reduce Bounce & Abandonment: Prevent drop-offs caused by illegible content on discovery and search paths.
+2.2 Success Metrics (KPIs)
+Metric
+	Baseline
+	Target
+	WCAG 2.1 Level AA Compliance
+	~42% across discovery screens
+	100% across all screens & components
+	Day-7 Retention Rate on Explore Flow
+	Monitored baseline
+	+18% post-deployment
+	Average Reading Session Duration
+	4.2 minutes
+	\ge 7.5 minutes
+	Accessibility Audit Pass Rate
+	Automated scan score < 65
+	Lighthouse/Axe score \ge 98/100
+	3. Design System Specification: "Parchment Dawn"
+3.1 Color Token Taxonomy
+Light Theme (Parchment Dawn Core)
+├── Canvas & Surfaces
+│   ├── bg-parchment-base: #FBF8EE (Warm aged paper)
+│   ├── bg-parchment-surface: #FFFDF8 (Elevated cards)
+│   ├── bg-parchment-subtle: #F3EBD8 (Tonal chips & pills)
+│   └── border-parchment: #E8DCC2 (Delicate dividing lines)
+├── Sacred Typography
+│   ├── text-espresso-primary: #261B12 (Deep roasted bean, >12:1 contrast)
+│   ├── text-espresso-secondary: #5C4738 (Muted reading text, >5.8:1 contrast)
+│   ├── text-espresso-tertiary: #846D5B (Footnotes & metadata, >4.5:1 contrast)
+│   └── text-saffron-heading: #9E4D00 (Deep burnt amber, calibrated for cream)
+└── Accents & Actions
+   ├── saffron-primary: #D96500 (Vibrant terracotta/saffron CTA)
+   ├── saffron-hover: #B85300 (Depressed state)
+   ├── gold-accent: #C58814 (Sacred highlights, borders, badges)
+   └── sacred-badge-bg: #FBEFD3 (Soft warm glow background)
+
+3.2 Contrast Validation Matrix (WCAG Compliance)
+Foreground Token
+	Background Token
+	Calculated Ratio
+	WCAG AA Regular
+	WCAG AAA Large
+	text-espresso-primary (#261B12)
+	bg-parchment-surface (#FFFDF8)
+	15.2:1
+	PASS
+	PASS
+	text-espresso-secondary (#5C4738)
+	bg-parchment-surface (#FFFDF8)
+	7.4:1
+	PASS
+	PASS
+	text-saffron-heading (#9E4D00)
+	bg-parchment-surface (#FFFDF8)
+	5.3:1
+	PASS
+	PASS
+	text-burnt-amber (#873E00)
+	bg-parchment-subtle (#F3EBD8)
+	5.8:1
+	PASS
+	PASS
+	(Old buggy yellow #F3C068)
+	bg-parchment-surface (#FFFDF8)
+	1.38:1
+	FAIL
+	FAIL
+	4. Functional Requirements Document (FRD)
+4.1 Global Architectural Changes
+FR-01: Global CSS Custom Properties & Semantic Token Engine
+* All hardcoded hex values across .jsx, .tsx, or .css modules must be replaced with semantic CSS tokens or Tailwind utility classes mapped to the Parchment Dawn palette.
+* Under no circumstances shall yellow (#F..., #FFD700, etc.) be assigned to the color CSS property on light canvas surfaces.
+:root {
+ /* Parchment Dawn Foundation */
+ --color-canvas-bg: #FBF8EE;
+ --color-surface-card: #FFFDF8;
+ --color-surface-subtle: #F5EEDB;
+ --color-border-subtle: #E8DCC2;
+ --color-border-highlight: #DECB9F;
+
+ /* Typography Hierarchy */
+ --color-text-title: #261B12;
+ --color-text-body: #4A3A2F;
+ --color-text-muted: #6E5C4E;
+ --color-text-sacred-accent: #A64E04;
+
+ /* Interactive Elements */
+ --color-action-primary: #E05A1B;
+ --color-action-primary-hover: #C54C13;
+ --color-action-primary-text: #FFFFFF;
+ --color-action-secondary-bg: #FDF3DF;
+ --color-action-secondary-text: #874606;
+ --color-action-secondary-border: #E8CF9A;
+}
+
+4.2 Component-Specific Functional Requirements
+FR-02: Discovery & Banner Cards (Remediating Image 2 Regression)
+* Target Component: DiscoveryCard, LookCloserHero, SacredCorpusBanner.
+* Requirements:
+   1. If a card utilizes a light parchment background (#FFFDF8):
+      * The category badge pill must use bg-[#FBEFD3] text-[#874606] border-[#E8CF9A].
+      * The primary heading ("Don't just read the translation...") must be rendered in text-espresso-primary (#261B12) or high-contrast deep saffron (#A64E04), never pale gold.
+      * The display cursive/emphasis ("Explore the word.") must use deep burnt saffron (#B85002), guaranteeing a minimum 5.2:1 contrast ratio against the card canvas.
+      * The descriptive body copy must use text-espresso-secondary (#4A3A2F), replacing the invisible light-grey/beige font.
+   2. If the card uses the deep charcoal/amber dusk gradient (as seen in the top hero of Image 2):
+      * The background gradient must remain consistently dark: linear-gradient(135deg, #231C18 0%, #352B23 60%, #4D382A 100%).
+      * Text inside this dark card must remain light-gold (#FBE29D for headings, #DAC5B0 for body) with contrast exceeding 7:1 against the dark background.
+FR-03: Shloka & Sanskrit Card Rendering (Standardizing Image 1)
+* Target Component: DailyShlokaCard, ScriptureReader.
+* Requirements:
+   1. Devanagari script (अभ्यासवैराग्याभ्यां तन्निरोधः ॥) must maintain crisp, deep contrast (#1E1610) with distinct font-weight (\ge 600) to guarantee legibility of vowel signs (matras) and conjunct characters.
+   2. IAST Romanized transliteration must render in italicized deep warm taupe (#544134).
+   3. Word-by-word interactive chips ("Tap any word above to Look Closer") must pair a burnt amber icon with #824300 text, ensuring accessibility compliance while retaining the sacred glowing aesthetic.
+   4. Card elevation must feature a soft ambient shadow: box-shadow: 0 4px 20px -2px rgba(80, 50, 20, 0.06), 0 0 0 1px rgba(222, 203, 159, 0.4).
+FR-04: Action Buttons & Navigation Elements
+* Target Component: BottomNavbar, StreakCounter, AudioControls.
+* Requirements:
+   1. Primary Button: Warm Terracotta/Saffron gradient (linear-gradient(180deg, #E66020 0%, #D44E0E 100%)) with white text (#FFFFFF) and warm drop shadow.
+   2. Secondary Button ("Look Closer"): #FFF7E6 background, #D8A856 border, and #783C00 text with sparkles icon.
+   3. Bottom Navigation Bar: Ensure inactive tabs (Explore, Search, Community, Journey, More) have #69574A color with proper labels, transitioning to #C65507 when active with a warm glowing pill backdrop.
+5. UI Implementation & Transformation Matrix
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                             SCREEN 2 DEFECT REMEDIATION                           │
+├─────────────────────────────────────────┬────────────────────────────────────────┤
+│ Before (Defect: Low Contrast / Buggy)    │ After (Standardized: Parchment Dawn)   │
+├─────────────────────────────────────────┼────────────────────────────────────────┤
+│ Card Background: #FFFDF7                │ Card Background: #FFFDF8               │
+│ Eyebrow: Light Yellow (#F9DE96)         │ Eyebrow: Rich Ochre (#8C4E05)          │
+│ Title: Pale Sand (#F3E2B8) -> Invisible │ Title: Deep Sacred Amber (#9A4700)     │
+│ Accent: Faint Gold (#F0CD7B)            │ Accent: Burnt Terracotta (#B43E00)     │
+│ Body Text: Low grey (#C2B6A6)           │ Body Text: Roasted Espresso (#423429)  │
+│ WCAG Ratio: 1.35:1 (Severe Failure)     │ WCAG Ratio: 6.8:1+ (AAA Standard)      │
+└─────────────────────────────────────────┴────────────────────────────────────────┘
+
+6. Acceptance Criteria & QA Checklist
+6.1 Contrast & Accessibility Validation
+* [ ] AC-01: Automated Axe core / Google Lighthouse accessibility tests run across all routes without any contrast violations (minimum score: 98).
+* [ ] AC-02: All Devanagari text renders with crisp edges and is readable in bright ambient light settings.
+* [ ] AC-03: The subtitle and body copy under "Don't just read the translation. Explore the word." in the Explore tab is verified at \ge 4.5:1 contrast against the container card surface.
+6.2 Theme Consistency
+* [ ] AC-04: Background canvas color #FBF8EE is maintained uniformly when switching between Today, Explore, Community, and Journey tabs.
+* [ ] AC-05: Pill buttons, audio speeds (0.85x), and streak badges adhere to the shared palette variables rather than isolated inline styles.
+* [ ] AC-06: Dark mode or dark-tinted elements (e.g., top hero banner in Explore) are reserved strictly for high-impact contemplative showcases and maintain distinct high-contrast golden typography on dark grounds.
+7. Migration & Rollout Plan
+1. Phase 1: Token Centralization (Day 1-2)
+   * Consolidate color palette into unified Tailwind/CSS variable definitions.
+   * Deprecate rogue inline color styles.
+2. Phase 2: Screen 2 Remediation (Day 2-3)
+   * Refactor Explore tab cards to bind to the newly defined high-contrast Parchment Dawn tokens.
+3. Phase 3: Visual Regression & Accessibility Audit (Day 4)
+   * Perform automated contrast verification via Percy/Chromatic and Axe-core.
+   * Validate readability on low-brightness OLED and LCD displays.
+4. Phase 4: Production Release (Day 5)
+   * Deploy updated layout across production builds.

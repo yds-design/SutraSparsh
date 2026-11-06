@@ -34,7 +34,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const isPreferencesActive = activeTab === "preferences";
 
   const navBg = isLight
-    ? "rgba(255, 251, 245, 0.96)"
+    ? "#FFFDF8"
     : isPrismPulse
     ? "rgba(255, 255, 255, 0.98)"
     : isFestival
@@ -46,7 +46,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     : "rgba(18, 13, 9, 0.96)";
 
   const navBorder = isLight
-    ? "#E6D7C3"
+    ? "#E8DCC2"
     : isPrismPulse
     ? "#E5E7EB"
     : isFestival
@@ -58,7 +58,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     : "rgba(216, 137, 22, 0.25)";
 
   const activeColor = isLight
-    ? "#B9680D"
+    ? "#C65507"
     : isPrismPulse
     ? "#936BFA"
     : isFestival
@@ -70,7 +70,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     : "#F2B333";
 
   const inactiveColor = isLight
-    ? "#6B5844"
+    ? "#69574A"
     : isPrismPulse
     ? "#6B7280"
     : isFestival
@@ -82,7 +82,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     : "#B9A995";
 
   const activePillBg = isLight
-    ? "rgba(216, 137, 22, 0.15)"
+    ? "#FBEFD3"
     : isPrismPulse
     ? "rgba(147, 107, 250, 0.15)"
     : isFestival
@@ -152,8 +152,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     >
       {/* Interactive Toast on API Engine Button Tap */}
       {showApiStatus && (
-        <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-50 bg-stone-900 border border-amber-500/40 text-amber-200 text-[10.5px] px-3 py-1 rounded-full shadow-lg flex items-center space-x-1.5 whitespace-nowrap animate-fadeIn">
-          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <div
+          className={`absolute -top-10 left-1/2 -translate-x-1/2 z-50 text-[10.5px] px-3 py-1 rounded-full shadow-lg flex items-center space-x-1.5 whitespace-nowrap animate-fadeIn ${
+            isLight
+              ? "bg-[#FFFDF8] border border-[#DECB9F] text-[#261B12]"
+              : "bg-stone-900 border border-amber-500/40 text-amber-200"
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
           <span>API Engine v1.0.0 Online • Firestore Synced</span>
         </div>
       )}
@@ -167,13 +173,25 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             setShowApiStatus(true);
             setTimeout(() => setShowApiStatus(false), 3000);
           }}
-          className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-semibold border bg-orange-950/60 border-orange-500/40 text-orange-300 shadow-sm active:scale-95 transition-all cursor-pointer"
+          className={`inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-semibold border shadow-sm active:scale-95 transition-all cursor-pointer ${
+            isLight
+              ? "bg-[#FBEFD3] border-[#DECB9F] text-[#874606]"
+              : "bg-orange-950/60 border-orange-500/40 text-orange-300"
+          }`}
           title="API Engine: Online & Synced (Mobile Bottom Toolbar)"
           aria-label="API Engine Live"
         >
           <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-orange-500 shadow-[0_0_6px_rgba(249,115,22,0.95)]"></span>
+            <span
+              className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                isLight ? "bg-[#D96500]" : "bg-orange-400"
+              }`}
+            ></span>
+            <span
+              className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
+                isLight ? "bg-[#D96500]" : "bg-orange-500 shadow-[0_0_6px_rgba(249,115,22,0.95)]"
+              }`}
+            ></span>
           </span>
           <span className="whitespace-nowrap tracking-wider uppercase font-mono text-[8.5px]">
             API Engine • Online

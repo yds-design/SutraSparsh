@@ -25,7 +25,7 @@ import { AtmosphereCrossfadeBackdrop, ATMOSPHERE_CONFIGS } from "./components/At
 import { soundEngine } from "./utils/audio";
 import type { SubscriptionPlanId } from "./types/monetization";
 import type { AppTheme } from "./types";
-import { themeConfigService } from "./services/theme-config.service";
+import { themeConfigService, themeObserver } from "./services/theme-config.service";
 import { useFeatureFlags } from "./services/feature-flags.service";
 import { firestoreSyncService } from "./services/firestore-sync.service";
 import { authService, type SeekerUser } from "./services/auth.service";
@@ -144,22 +144,13 @@ export default function App() {
     triggerThemeTransition(themeConfigService.sanitizeTheme(newTheme));
   };
 
-  // Synchronize documentElement and body attributes and theme classes across all themes and portals
+  // Synchronize documentElement and body attributes and theme classes via unified ThemeObserver pattern
   useEffect(() => {
     if (typeof document === "undefined") return;
     document.documentElement.setAttribute("data-theme", theme);
     document.body.setAttribute("data-theme", theme);
-    const themeClass = `theme-${theme} ${
-      theme === "light"
-        ? "light-mode"
-        : theme === "golden-hour"
-        ? "golden-hour-mode"
-        : theme === "prism-pulse"
-        ? "theme-prism-pulse"
-        : ""
-    }`;
-    document.documentElement.className = themeClass;
-    document.body.className = themeClass;
+    // Guarantees Parchment Dawn and Golden Hour classes are applied globally and instantly to document root
+    themeObserver.applyTheme(theme, "manual");
   }, [theme]);
 
   // Daily Promo Popup ("First load of the day" across all devices)
@@ -340,25 +331,24 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [selectedCategory, searchTerm]);
 
-  const toggleBookmark = (id: string, verseTitle?: string) => {
-    const willBookmark = !bookmarks.includes(id);
-    setBookmarks((prev) =>
-      willBookmark ? [...prev, id] : prev.filter((item) => item !== id)
-    );
-
-    // Sync to Firestore if authenticated with Firebase Auth
-    if (currentUser && authService.isFirebaseAuthenticated()) {
-      if (willBookmark) {
-        firestoreSyncService.setBookmark(currentUser.uid, id, verseTitle || id).catch((err) => {
-          console.warn("Could not sync bookmark to cloud:", err);
-        });
-      } else {
-        firestoreSyncService.removeBookmark(currentUser.uid, id).catch((err) => {
-          console.warn("Could not remove bookmark from cloud:", err);
-        });
+  const toggleBookmark = React.useCallback((id: string, verseTitle?: string) => {
+    setBookmarks((prev) => {
+      const willBookmark = !prev.includes(id);
+      // Sync to Firestore if authenticated with Firebase Auth
+      if (currentUser && authService.isFirebaseAuthenticated()) {
+        if (willBookmark) {
+          firestoreSyncService.setBookmark(currentUser.uid, id, verseTitle || id).catch((err) => {
+            console.warn("Could not sync bookmark to cloud:", err);
+          });
+        } else {
+          firestoreSyncService.removeBookmark(currentUser.uid, id).catch((err) => {
+            console.warn("Could not remove bookmark from cloud:", err);
+          });
+        }
       }
-    }
-  };
+      return willBookmark ? [...prev, id] : prev.filter((item) => item !== id);
+    });
+  }, [currentUser]);
 
   const handleSaveJournalNote = (verseId: string, verseTitle: string, note: string) => {
     const newEntry: JournalEntry = {
@@ -427,10 +417,14 @@ export default function App() {
     }
   };
 
-  const handleOpenVerse = (verse: ContentItem) => {
+  const handleOpenVerse = React.useCallback((verse: ContentItem) => {
     setSelectedVerse(verse);
     setIsModalOpen(true);
-  };
+  }, []);
+
+  const handleOpenJourneyFromCard = React.useCallback((item?: ContentItem) => {
+    setActiveTab("my-journey");
+  }, []);
 
   const triggerPaywall = (title: string, description: string) => {
     setPaywallFeature({ title, description });
@@ -453,6 +447,23 @@ export default function App() {
 
   const displayedVerses = filteredVerses.slice(0, visibleVerseLimit);
   const hasMoreVerses = visibleVerseLimit < filteredVerses.length;
+
+  const bookmarkedIdsSet = React.useMemo(() => new Set(bookmarks), [bookmarks]);
+
+  // High-performance memoization for infinite scroll rendering
+  const memoizedVerseCards = React.useMemo(() => {
+    return displayedVerses.map((item) => (
+      <VerseCard
+        key={item.id}
+        item={item}
+        isBookmarked={bookmarkedIdsSet.has(item.id)}
+        onToggleBookmark={toggleBookmark}
+        onSelect={handleOpenVerse}
+        onOpenJourney={() => setActiveTab("my-journey")}
+        theme={theme}
+      />
+    ));
+  }, [displayedVerses, bookmarkedIdsSet, toggleBookmark, handleOpenVerse, theme]);
 
   // IntersectionObserver for seamless infinite scrolling & lazy loading
   useEffect(() => {
@@ -539,19 +550,23 @@ export default function App() {
   useEffect(() => {
     if (typeof window !== "undefined" && appMode === "user") {
       const search = new URLSearchParams(window.location.search);
-      if (activeTab === "today") {
-        if (search.has("tab")) {
-          search.delete("tab");
-          const query = search.toString();
-          const newUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
-          window.history.replaceState(null, "", newUrl);
+      try {
+        if (activeTab === "today") {
+          if (search.has("tab")) {
+            search.delete("tab");
+            const query = search.toString();
+            const newUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+            window.history.replaceState(null, "", newUrl);
+          }
+        } else {
+          if (search.get("tab") !== activeTab) {
+            search.set("tab", activeTab);
+            const newUrl = `${window.location.pathname}?${search.toString()}${window.location.hash}`;
+            window.history.replaceState(null, "", newUrl);
+          }
         }
-      } else {
-        if (search.get("tab") !== activeTab) {
-          search.set("tab", activeTab);
-          const newUrl = `${window.location.pathname}?${search.toString()}${window.location.hash}`;
-          window.history.replaceState(null, "", newUrl);
-        }
+      } catch (err) {
+        // Silently handle iframes with restricted History API permissions
       }
     }
   }, [activeTab, appMode]);
@@ -708,6 +723,7 @@ export default function App() {
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenLookCloser={() => setIsLookCloserOpen(true)}
         onOpenWordExplorer={() => wordExplorer.openWord("कर्मण्येवाधिकारस्ते")}
+        onManualSync={handleManualSync}
       />
 
       {/* Main Content Area */}
@@ -728,41 +744,41 @@ export default function App() {
         {/* 2. EXPLORE: Tradition & Category Discovery */}
         {(activeTab === "explore" || activeTab === "explorer") && (
           <div className="space-y-8 animate-fadeIn">
-            {/* Hero / Sacred Welcome Banner */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-stone-900 via-stone-900/90 to-amber-950/30 border border-stone-800 p-8 sm:p-12 shadow-2xl">
+            {/* Hero / Sacred Welcome Banner (FR-02 Point 2) */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#231C18] via-[#352B23] to-[#4D382A] border border-amber-500/25 p-8 sm:p-12 shadow-2xl">
               <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
               
               <div className="max-w-2xl space-y-4 relative z-10">
-                <div className="flex items-center space-x-2 text-amber-400 text-xs font-semibold uppercase tracking-widest">
-                  <Sparkles className="w-4 h-4" />
+                <div className="flex items-center space-x-2 text-amber-300 text-xs font-semibold uppercase tracking-widest">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
                   <span>Timeless Sanskrit Wisdom & Philosophical Heritage</span>
                 </div>
-                <h1 className="font-serif-sacred text-3xl sm:text-5xl font-bold tracking-tight text-amber-100 leading-tight">
+                <h1 className="font-serif-sacred text-3xl sm:text-5xl font-bold tracking-tight text-[#FBE29D] leading-tight">
                   Touch the Sacred Essence of Ancient Sutras
                 </h1>
-                <p className="text-stone-300 text-sm sm:text-base leading-relaxed font-light">
+                <p className="text-[#DAC5B0] text-sm sm:text-base leading-relaxed font-light">
                   Explore authentic verses from the Bhagavad Gita, Patanjali Yoga Sutras, and the Upanishads. Study transliterations, commentaries, and chant sacred mantras.
                 </p>
                 <div className="pt-2 flex flex-wrap items-center gap-3">
                   <button
                     onClick={() => setActiveTab("search")}
-                    className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-bold rounded-xl text-xs shadow hover:scale-105 transition-all flex items-center space-x-1.5"
+                    className="px-4 py-2 bg-gradient-to-b from-[#E66020] to-[#D44E0E] text-white font-bold rounded-xl text-xs shadow-md hover:scale-105 transition-all flex items-center space-x-1.5 cursor-pointer"
                   >
                     <Search className="w-3.5 h-3.5" />
                     <span>Search Sacred Corpus</span>
                   </button>
                   <button
                     onClick={() => setActiveTab("my-journey")}
-                    className="px-4 py-2 bg-stone-900 hover:bg-stone-800 border border-stone-800 text-amber-300 font-semibold rounded-xl text-xs transition-all flex items-center space-x-1.5"
+                    className="px-4 py-2 bg-stone-900/90 hover:bg-stone-800 border border-stone-700/80 text-[#DAC5B0] font-semibold rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer"
                   >
-                    <Compass className="w-3.5 h-3.5" />
+                    <Compass className="w-3.5 h-3.5 text-amber-400" />
                     <span>My Sacred Sanctuary</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* SutraSparsh Discovery: Look Closer Feature Banner */}
+            {/* SutraSparsh Discovery: Look Closer Feature Banner (FR-02) */}
             <LookCloserBanner
               onOpenLookCloser={() => setIsLookCloserOpen(true)}
               onOpenExplorer={() => wordExplorer.openWord("कर्मण्येवाधिकारस्ते")}
@@ -770,20 +786,34 @@ export default function App() {
             />
 
             {/* Filter Bar */}
-            <div className="space-y-4 bg-stone-900/60 border border-stone-800 rounded-3xl p-6 shadow-lg">
+            <div
+              className={`space-y-4 rounded-3xl p-6 transition-colors ${
+                theme === "light"
+                  ? "bg-[#FFFDF8] border border-[#E8DCC2] shadow-xs"
+                  : "bg-stone-900/60 border border-stone-800 shadow-lg"
+              }`}
+            >
               {/* Traditions / Authors Filter Chips */}
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold text-stone-400 mr-2 flex items-center gap-1">
-                  <Filter className="w-3.5 h-3.5 text-amber-400" />
+                <span
+                  className={`text-xs font-semibold mr-2 flex items-center gap-1 ${
+                    theme === "light" ? "text-[#261B12]" : "text-stone-400"
+                  }`}
+                >
+                  <Filter className={`w-3.5 h-3.5 ${theme === "light" ? "text-[#A64E04]" : "text-amber-400"}`} />
                   <span>Tradition:</span>
                 </span>
                 {TRADITIONS.map((tradition) => (
                   <button
                     key={tradition}
                     onClick={() => setSelectedTradition(tradition)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                       selectedTradition === tradition
-                        ? "bg-amber-500/25 text-amber-200 border border-amber-500/40 shadow-sm"
+                        ? theme === "light"
+                          ? "bg-[#FBEFD3] text-[#874606] border border-[#DECB9F] font-bold shadow-xs"
+                          : "bg-amber-500/25 text-amber-200 border border-amber-500/40 shadow-sm font-semibold"
+                        : theme === "light"
+                        ? "bg-[#F5EEDB] text-[#4A3A2F] hover:text-[#261B12] hover:bg-[#EFE6D0] border border-[#E8DCC2]"
                         : "bg-stone-900 text-stone-400 hover:text-stone-200 border border-stone-800"
                     }`}
                   >
@@ -794,17 +824,25 @@ export default function App() {
 
               {/* Categories Filter Chips */}
               <div className="flex flex-wrap items-center gap-2 pt-1">
-                <span className="text-xs font-semibold text-stone-400 mr-2 flex items-center gap-1">
-                  <Flame className="w-3.5 h-3.5 text-amber-400" />
+                <span
+                  className={`text-xs font-semibold mr-2 flex items-center gap-1 ${
+                    theme === "light" ? "text-[#261B12]" : "text-stone-400"
+                  }`}
+                >
+                  <Flame className={`w-3.5 h-3.5 ${theme === "light" ? "text-[#A64E04]" : "text-amber-400"}`} />
                   <span>Path / Yoga:</span>
                 </span>
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                       selectedCategory === cat
-                        ? "bg-amber-500/25 text-amber-200 border border-amber-500/40 shadow-sm"
+                        ? theme === "light"
+                          ? "bg-[#FBEFD3] text-[#874606] border border-[#DECB9F] font-bold shadow-xs"
+                          : "bg-amber-500/25 text-amber-200 border border-amber-500/40 shadow-sm font-semibold"
+                        : theme === "light"
+                        ? "bg-[#F5EEDB] text-[#4A3A2F] hover:text-[#261B12] hover:bg-[#EFE6D0] border border-[#E8DCC2]"
                         : "bg-stone-900 text-stone-400 hover:text-stone-200 border border-stone-800"
                     }`}
                   >
@@ -817,10 +855,18 @@ export default function App() {
             {/* Results Grid */}
             <div>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="font-serif-sacred text-xl font-bold text-amber-100 flex items-center space-x-2">
-                  <BookOpen className="w-5 h-5 text-amber-400" />
+                <h3
+                  className={`font-serif-sacred text-xl font-bold flex items-center space-x-2 ${
+                    theme === "light" ? "text-[#261B12]" : "text-amber-100"
+                  }`}
+                >
+                  <BookOpen className={`w-5 h-5 ${theme === "light" ? "text-[#A64E04]" : "text-amber-400"}`} />
                   <span>Sacred Scripture Verses</span>
-                  <span className="text-xs text-stone-500 font-sans font-normal ml-2">
+                  <span
+                    className={`text-xs font-sans font-normal ml-2 ${
+                      theme === "light" ? "text-[#6E5C4E]" : "text-stone-500"
+                    }`}
+                  >
                     ({filteredVerses.length} verses)
                   </span>
                 </h3>
@@ -828,7 +874,11 @@ export default function App() {
                 <button
                   onClick={fetchContent}
                   title="Reload verses"
-                  className="p-2 text-stone-500 hover:text-amber-300 transition-colors"
+                  className={`p-2 transition-colors cursor-pointer ${
+                    theme === "light"
+                      ? "text-[#6E5C4E] hover:text-[#A64E04]"
+                      : "text-stone-500 hover:text-amber-300"
+                  }`}
                 >
                   <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-amber-400" : ""}`} />
                 </button>
@@ -894,7 +944,7 @@ export default function App() {
                       onClick={() => setActiveTab("my-journey")}
                       className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 flex-shrink-0 cursor-pointer ${
                         theme === "light"
-                          ? "bg-amber-600 hover:bg-amber-700 text-white"
+                          ? "bg-gradient-to-b from-[#E66020] to-[#D44E0E] text-white hover:brightness-105"
                           : "bg-amber-500 hover:bg-amber-400 text-stone-950"
                       }`}
                       aria-label="Open My Journey personal sanctuary"
@@ -905,17 +955,7 @@ export default function App() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {displayedVerses.map((item) => (
-                      <VerseCard
-                        key={item.id}
-                        item={item}
-                        isBookmarked={bookmarks.includes(item.id)}
-                        onToggleBookmark={toggleBookmark}
-                        onSelect={handleOpenVerse}
-                        onOpenJourney={() => setActiveTab("my-journey")}
-                        theme={theme}
-                      />
-                    ))}
+                    {memoizedVerseCards}
                   </div>
 
                   {/* Virtualized / Lazy Loading Sentinel & Pagination Controls */}
@@ -966,6 +1006,7 @@ export default function App() {
             bookmarks={bookmarks}
             onToggleBookmark={toggleBookmark}
             onOpenVerseModal={handleOpenVerse}
+            theme={theme}
           />
         )}
 
@@ -1004,6 +1045,7 @@ export default function App() {
             onOpenDonation={() => setIsDonationOpen(true)}
             onNavigateTab={(tab) => setActiveTab(tab)}
             onManualSync={handleManualSync}
+            theme={theme}
           />
         )}
 
@@ -1117,6 +1159,7 @@ export default function App() {
         onSelectWord={wordExplorer.selectWord}
         onTabChange={wordExplorer.setActiveTab}
         onSearch={wordExplorer.search}
+        theme={theme}
       />
 
       {/* SutraSparsh 'Look Closer' Interactive Discovery Experience */}
@@ -1158,13 +1201,33 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-stone-900 bg-stone-950 py-8 mt-12 text-center text-xs text-stone-500 space-y-3">
-        <div className="flex items-center justify-center space-x-2 text-stone-400">
-          <span className="font-serif-sacred font-bold text-amber-200">SutraSparsh</span>
+      <footer
+        className={`border-t py-8 mt-12 text-center text-xs space-y-3 transition-colors ${
+          theme === "light"
+            ? "border-[#E8DCC2] bg-[#FFFDF8] text-[#6E5C4E]"
+            : "border-stone-900 bg-stone-950 text-stone-500"
+        }`}
+      >
+        <div
+          className={`flex items-center justify-center space-x-2 ${
+            theme === "light" ? "text-[#261B12]" : "text-stone-400"
+          }`}
+        >
+          <span
+            className={`font-serif-sacred font-bold ${
+              theme === "light" ? "text-[#A64E04]" : "text-amber-200"
+            }`}
+          >
+            SutraSparsh
+          </span>
           <span>•</span>
           <span className="font-sanskrit">सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः</span>
         </div>
-        <p className="text-[11px] max-w-lg mx-auto px-4 text-stone-400">
+        <p
+          className={`text-[11px] max-w-lg mx-auto px-4 ${
+            theme === "light" ? "text-[#4A3A2F]" : "text-stone-400"
+          }`}
+        >
           Dedicated to the preservation, exploration, and meditative study of sacred spiritual wisdom.
         </p>
 
@@ -1175,19 +1238,41 @@ export default function App() {
             href="https://play.google.com/store/apps/details?id=com.yds.sutrasparsh"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-stone-900 hover:bg-stone-850 text-stone-200 border border-stone-800 hover:border-amber-500/50 shadow-lg hover:shadow-amber-500/10 transition-all duration-200 group active:scale-[0.98] cursor-pointer"
+            className={`inline-flex items-center gap-3 px-5 py-2.5 rounded-2xl border shadow-lg transition-all duration-200 group active:scale-[0.98] cursor-pointer ${
+              theme === "light"
+                ? "bg-[#FFFDF8] hover:bg-[#F5EEDB] text-[#261B12] border-[#E8DCC2] hover:border-[#DECB9F] shadow-[0_4px_20px_-2px_rgba(80,50,20,0.06),0_0_0_1px_rgba(222,203,159,0.4)]"
+                : "bg-stone-900 hover:bg-stone-850 text-stone-200 border-stone-800 hover:border-amber-500/50 hover:shadow-amber-500/10"
+            }`}
             title="Get SutraSparsh on Google Play"
           >
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 via-amber-400 to-blue-500 flex items-center justify-center p-0.5 shadow-sm">
-              <div className="w-full h-full bg-stone-950 rounded-[9px] flex items-center justify-center">
-                <Play className="w-3.5 h-3.5 fill-amber-400 text-amber-400 ml-0.5" />
+              <div
+                className={`w-full h-full rounded-[9px] flex items-center justify-center ${
+                  theme === "light" ? "bg-[#FFFDF8]" : "bg-stone-950"
+                }`}
+              >
+                <Play
+                  className={`w-3.5 h-3.5 ml-0.5 ${
+                    theme === "light" ? "fill-[#A64E04] text-[#A64E04]" : "fill-amber-400 text-amber-400"
+                  }`}
+                />
               </div>
             </div>
             <div className="text-left leading-tight">
-              <span className="block text-[9px] uppercase tracking-wider text-stone-400 font-medium">
+              <span
+                className={`block text-[9px] uppercase tracking-wider font-medium ${
+                  theme === "light" ? "text-[#6E5C4E]" : "text-stone-400"
+                }`}
+              >
                 Get it on
               </span>
-              <span className="block text-sm font-semibold text-stone-100 group-hover:text-amber-200 transition-colors">
+              <span
+                className={`block text-sm font-semibold transition-colors ${
+                  theme === "light"
+                    ? "text-[#261B12] group-hover:text-[#A64E04]"
+                    : "text-stone-100 group-hover:text-amber-200"
+                }`}
+              >
                 Google Play
               </span>
             </div>
@@ -1195,11 +1280,17 @@ export default function App() {
         </div>
 
         {/* Store Listing, Legal, and Seeker Navigation Links */}
-        <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] pt-1 text-stone-400">
+        <div
+          className={`flex flex-wrap items-center justify-center gap-4 text-[11px] pt-1 ${
+            theme === "light" ? "text-[#6E5C4E]" : "text-stone-400"
+          }`}
+        >
           <button
             type="button"
             onClick={() => setIsAuthOpen(true)}
-            className="hover:text-amber-300 transition-colors cursor-pointer"
+            className={`transition-colors cursor-pointer ${
+              theme === "light" ? "hover:text-[#A64E04]" : "hover:text-amber-300"
+            }`}
           >
             Seeker Sign In / Sign Off
           </button>

@@ -1,18 +1,18 @@
 import React from "react";
-import { Bookmark, BookmarkCheck, Volume2, Sparkles, ArrowRight, Compass } from "lucide-react";
+import { Bookmark, BookmarkCheck, Volume2, ArrowRight, Compass } from "lucide-react";
 import type { ContentItem } from "../types";
 import { recitationEngine } from "../utils/recitationEngine";
 
-interface VerseCardProps {
+export interface VerseCardProps {
   item: ContentItem;
   isBookmarked: boolean;
-  onToggleBookmark: (id: string) => void;
+  onToggleBookmark: (id: string, title?: string) => void;
   onSelect: (item: ContentItem) => void;
   onOpenJourney?: (item: ContentItem) => void;
   theme?: "sandstone" | "amethyst" | "light" | "festival" | "golden-hour" | "prism-pulse";
 }
 
-export const VerseCard: React.FC<VerseCardProps> = ({
+const VerseCardComponent: React.FC<VerseCardProps> = ({
   item,
   isBookmarked,
   onToggleBookmark,
@@ -69,10 +69,10 @@ export const VerseCard: React.FC<VerseCardProps> = ({
       ? ["Patanjali", "Yoga", "Mind"]
       : ["Wisdom", "Sutra", "Vedanta"];
 
-  const cardBgClass = isLightCanvas
-    ? isPrismPulse
-      ? "bg-white hover:bg-slate-50/90 border-stone-200 hover:border-[#936BFA]/50 text-[#1e1b2e] shadow-xs hover:shadow-md"
-      : "bg-white hover:bg-[#FFFDF9] border-stone-200 hover:border-amber-500/50 text-stone-900 shadow-sm hover:shadow-md"
+  const cardBgClass = isLight
+    ? "bg-[#FFFDF8] hover:bg-[#FAF6EC] border-[#E8DCC2] hover:border-[#DECB9F] text-[#261B12]"
+    : isPrismPulse
+    ? "bg-white hover:bg-slate-50/90 border-stone-200 hover:border-[#936BFA]/50 text-[#1e1b2e] shadow-xs hover:shadow-md"
     : isFestival
     ? "bg-[#480C14]/90 hover:bg-[#57101B] border-[#FF8A00]/30 hover:border-[#FF8A00]/60 text-[#FFF6E3] shadow-md"
     : isAmethyst
@@ -85,6 +85,11 @@ export const VerseCard: React.FC<VerseCardProps> = ({
     <div
       id={`verse-card-${item.id}`}
       onClick={() => onSelect(item)}
+      style={{
+        boxShadow: isLight
+          ? "0 4px 20px -2px rgba(80, 50, 20, 0.06), 0 0 0 1px rgba(222, 203, 159, 0.4)"
+          : undefined,
+      }}
       className={`group relative rounded-2xl p-6 transition-all duration-300 cursor-pointer flex flex-col justify-between border ${cardBgClass}`}
     >
       <div>
@@ -93,10 +98,10 @@ export const VerseCard: React.FC<VerseCardProps> = ({
           <div className="flex flex-wrap items-center gap-2">
             <span
               className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
-                isLightCanvas
-                  ? isPrismPulse
-                    ? "bg-[#936BFA]/10 text-[#6D28D9] border-[#936BFA]/30"
-                    : "bg-amber-100/80 text-amber-900 border-amber-300/80"
+                isLight
+                  ? "bg-[#FBEFD3] text-[#824300] border-[#E8CF9A]"
+                  : isPrismPulse
+                  ? "bg-[#936BFA]/10 text-[#6D28D9] border-[#936BFA]/30"
                   : "bg-amber-500/10 text-amber-300 border-amber-500/20"
               }`}
             >
@@ -105,10 +110,10 @@ export const VerseCard: React.FC<VerseCardProps> = ({
             {item.metadata.category && (
               <span
                 className={`px-2 py-0.5 rounded-full text-[11px] border ${
-                  isLightCanvas
-                    ? isPrismPulse
-                      ? "bg-stone-100 text-stone-700 border-stone-200"
-                      : "bg-stone-100 text-stone-700 border-stone-200"
+                  isLight
+                    ? "bg-[#F5EEDB] text-[#4A3A2F] border-[#E8DCC2]"
+                    : isPrismPulse
+                    ? "bg-stone-100 text-stone-700 border-stone-200"
                     : "bg-stone-800 text-stone-300 border-stone-700"
                 }`}
               >
@@ -124,7 +129,9 @@ export const VerseCard: React.FC<VerseCardProps> = ({
               title="Listen to verse recitation"
               aria-label="Listen to verse recitation"
               className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                isLightCanvas
+                isLight
+                  ? "text-[#6E5C4E] hover:text-[#A64E04] hover:bg-[#F5EEDB]"
+                  : isLightCanvas
                   ? "text-stone-500 hover:text-amber-800 hover:bg-stone-100"
                   : "text-stone-400 hover:text-amber-300 hover:bg-stone-800"
               }`}
@@ -134,11 +141,13 @@ export const VerseCard: React.FC<VerseCardProps> = ({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onToggleBookmark(item.id);
+                onToggleBookmark(item.id, item.title);
               }}
               title={isBookmarked ? "Remove Bookmark" : "Bookmark Verse"}
-              className={`p-1.5 rounded-lg transition-colors ${
-                isLightCanvas
+              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                isLight
+                  ? "text-[#6E5C4E] hover:text-[#A64E04] hover:bg-[#F5EEDB]"
+                  : isLightCanvas
                   ? "text-stone-500 hover:text-amber-800 hover:bg-stone-100"
                   : "text-stone-400 hover:text-amber-300 hover:bg-stone-800"
               }`}
@@ -146,10 +155,10 @@ export const VerseCard: React.FC<VerseCardProps> = ({
               {isBookmarked ? (
                 <BookmarkCheck
                   className={`w-4 h-4 ${
-                    isLightCanvas
-                      ? isPrismPulse
-                        ? "text-[#936BFA] fill-[#936BFA]/20"
-                        : "text-amber-700 fill-amber-700/20"
+                    isLight
+                      ? "text-[#A64E04] fill-[#A64E04]/20"
+                      : isPrismPulse
+                      ? "text-[#936BFA] fill-[#936BFA]/20"
                       : "text-amber-400 fill-amber-400/20"
                   }`}
                 />
@@ -163,10 +172,10 @@ export const VerseCard: React.FC<VerseCardProps> = ({
         {/* Title */}
         <h3
           className={`font-serif-sacred text-lg font-bold transition-colors mb-1 ${
-            isLightCanvas
-              ? isPrismPulse
-                ? "text-[#1e1b2e] group-hover:text-[#936BFA]"
-                : "text-[#221509] group-hover:text-amber-800"
+            isLight
+              ? "text-[#261B12] group-hover:text-[#A64E04]"
+              : isPrismPulse
+              ? "text-[#1e1b2e] group-hover:text-[#936BFA]"
               : "text-amber-100 group-hover:text-amber-300"
           }`}
         >
@@ -175,10 +184,10 @@ export const VerseCard: React.FC<VerseCardProps> = ({
         {item.subtitle && (
           <p
             className={`text-xs mb-3 italic ${
-              isLightCanvas
-                ? isPrismPulse
-                  ? "text-[#7C3AED]"
-                  : "text-[#8C4A00]"
+              isLight
+                ? "text-[#A64E04] font-medium"
+                : isPrismPulse
+                ? "text-[#7C3AED]"
                 : "text-amber-400/80"
             }`}
           >
@@ -186,22 +195,22 @@ export const VerseCard: React.FC<VerseCardProps> = ({
           </p>
         )}
 
-        {/* Sanskrit Devanagari Body */}
+        {/* Sanskrit Devanagari Body (FR-03: crisp contrast #1E1610 with font-weight >= 600) */}
         <div
           className={`rounded-xl p-4 border mb-4 transition-colors ${
-            isLightCanvas
-              ? isPrismPulse
-                ? "bg-[#F8FAFC] border-stone-200 group-hover:border-[#936BFA]/40"
-                : "bg-[#FAF7F0] border-[#E8DCCB] group-hover:border-amber-300"
+            isLight
+              ? "bg-[#FBF8EE] border-[#E8DCC2] group-hover:border-[#DECB9F]"
+              : isPrismPulse
+              ? "bg-[#F8FAFC] border-stone-200 group-hover:border-[#936BFA]/40"
               : "bg-stone-950/60 border-stone-800/80 group-hover:border-stone-700/80"
           }`}
         >
           <div
             className={`font-sanskrit text-base sm:text-lg leading-relaxed whitespace-pre-line text-center select-text ${
-              isLightCanvas
-                ? isPrismPulse
-                  ? "text-[#181326] font-bold"
-                  : "text-[#1C0F05] font-semibold"
+              isLight
+                ? "text-[#1E1610] font-semibold"
+                : isPrismPulse
+                ? "text-[#181326] font-bold"
                 : "text-amber-200/90"
             }`}
           >
@@ -220,7 +229,11 @@ export const VerseCard: React.FC<VerseCardProps> = ({
                           e.stopPropagation();
                           recitationEngine.play(item.id, item.body, 0.85);
                         }}
-                        className="group inline-block px-1 py-0.5 mx-0.5 rounded cursor-pointer hover:bg-amber-400/20 hover:scale-[1.04] transition-all focus:outline-none focus:ring-1 focus:ring-amber-400"
+                        className={`group inline-block px-1 py-0.5 mx-0.5 rounded cursor-pointer hover:scale-[1.04] transition-all focus:outline-none ${
+                          isLight
+                            ? "hover:bg-[#FBEFD3] hover:text-[#824300] focus:ring-1 focus:ring-[#DECB9F]"
+                            : "hover:bg-amber-400/20 focus:ring-1 focus:ring-amber-400"
+                        }`}
                         title={`Click word to listen to verse recitation · "${chunk}"`}
                       >
                         {chunk}
@@ -233,14 +246,14 @@ export const VerseCard: React.FC<VerseCardProps> = ({
           </div>
         </div>
 
-        {/* Transliteration */}
+        {/* Transliteration (FR-03: italicized deep warm taupe #544134) */}
         {item.transliteration && (
           <p
             className={`text-xs font-mono italic mb-3 leading-relaxed ${
-              isLightCanvas
-                ? isPrismPulse
-                  ? "text-[#6B46C1] font-medium"
-                  : "text-[#5C4533]"
+              isLight
+                ? "text-[#544134] font-medium"
+                : isPrismPulse
+                ? "text-[#6B46C1] font-medium"
                 : "text-stone-300"
             }`}
           >
@@ -248,14 +261,14 @@ export const VerseCard: React.FC<VerseCardProps> = ({
           </p>
         )}
 
-        {/* English Meaning */}
+        {/* English Meaning (FR-03: deep readable espresso #4A3A2F) */}
         {item.meaning && (
           <p
             className={`text-sm leading-relaxed ${
-              isLightCanvas
-                ? isPrismPulse
-                  ? "text-[#2D3748] font-normal"
-                  : "text-[#2B1B10] font-normal"
+              isLight
+                ? "text-[#4A3A2F] font-normal"
+                : isPrismPulse
+                ? "text-[#2D3748] font-normal"
                 : "text-stone-200"
             }`}
           >
@@ -267,19 +280,23 @@ export const VerseCard: React.FC<VerseCardProps> = ({
       {/* Footer tags and read more */}
       <div
         className={`mt-5 pt-4 border-t flex items-center justify-between ${
-          isLightCanvas ? "border-stone-200" : "border-stone-800/60"
+          isLight
+            ? "border-[#E8DCC2]"
+            : isPrismPulse
+            ? "border-stone-200"
+            : "border-stone-800/60"
         }`}
       >
         <div className="flex flex-wrap gap-1.5">
           {spiritualTags.slice(0, 3).map((tag) => (
             <span
               key={tag}
-              className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-md ${
-                isLightCanvas
-                  ? isPrismPulse
-                    ? "bg-[#936BFA]/10 text-[#6D28D9] border border-[#936BFA]/20"
-                    : "bg-amber-100/70 text-amber-900 border border-amber-200"
-                  : "bg-stone-800/80 text-amber-300/80 border border-white/5"
+              className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-md border ${
+                isLight
+                  ? "bg-[#FBEFD3] text-[#824300] border-[#E8CF9A]"
+                  : isPrismPulse
+                  ? "bg-[#936BFA]/10 text-[#6D28D9] border-[#936BFA]/20"
+                  : "bg-stone-800/80 text-amber-300/80 border-white/5"
               }`}
             >
               #{tag}
@@ -287,7 +304,7 @@ export const VerseCard: React.FC<VerseCardProps> = ({
           ))}
         </div>
 
-        {/* Explore & My Journey Action Area */}
+        {/* Explore & My Journey Action Area (FR-04) */}
         <div className="flex items-center space-x-1.5 flex-shrink-0">
           {onOpenJourney && (
             <button
@@ -300,12 +317,12 @@ export const VerseCard: React.FC<VerseCardProps> = ({
               title={`View ${item.title} in My Journey sanctuary`}
               aria-label={`View ${item.title} in My Journey`}
               className={`px-2 py-1 rounded-lg text-[11px] font-semibold border flex items-center space-x-1 transition-all cursor-pointer hover:scale-105 shadow-2xs ${
-                isLightCanvas
-                  ? "bg-amber-50 hover:bg-amber-100 text-amber-950 border-amber-300"
+                isLight
+                  ? "bg-[#FFF7E6] hover:bg-[#FDF3DF] text-[#783C00] border-[#D8A856]"
                   : "bg-stone-800 hover:bg-stone-700 text-amber-300 border-amber-500/30"
               }`}
             >
-              <Compass className="w-3 h-3 text-amber-500 flex-shrink-0" />
+              <Compass className={`w-3 h-3 ${isLight ? "text-[#874606]" : "text-amber-500"} flex-shrink-0`} />
               <span>Journey</span>
             </button>
           )}
@@ -319,10 +336,10 @@ export const VerseCard: React.FC<VerseCardProps> = ({
             }}
             aria-label={`Explore and study ${item.title} in depth`}
             className={`flex items-center space-x-1 text-xs font-bold px-2.5 py-1 rounded-lg transition-all cursor-pointer group-hover:translate-x-0.5 ${
-              isLightCanvas
-                ? isPrismPulse
-                  ? "text-[#7C3AED] hover:bg-[#936BFA]/10"
-                  : "text-amber-900 hover:bg-amber-100/80"
+              isLight
+                ? "text-[#A64E04] hover:bg-[#FBEFD3]"
+                : isPrismPulse
+                ? "text-[#7C3AED] hover:bg-[#936BFA]/10"
                 : "text-amber-300 hover:bg-amber-500/20"
             }`}
           >
@@ -334,3 +351,14 @@ export const VerseCard: React.FC<VerseCardProps> = ({
     </div>
   );
 };
+
+export const VerseCard = React.memo<VerseCardProps>(VerseCardComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.item === nextProps.item &&
+    prevProps.isBookmarked === nextProps.isBookmarked &&
+    prevProps.theme === nextProps.theme &&
+    prevProps.onToggleBookmark === nextProps.onToggleBookmark &&
+    prevProps.onSelect === nextProps.onSelect
+  );
+});

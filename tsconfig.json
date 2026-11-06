@@ -16,7 +16,8 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "allowJs": true
   },
   "include": ["src", "server.ts", "scripts", "backend/importer/src"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]

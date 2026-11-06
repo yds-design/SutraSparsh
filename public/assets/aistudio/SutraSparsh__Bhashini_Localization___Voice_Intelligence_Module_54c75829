@@ -1,0 +1,62 @@
+﻿Business Requirements Document (BRD)
+Project SutraSparsh: Bhashini Localization & Voice Intelligence Module
+1. Executive Summary
+SutraSparsh is a multilingual text-to-speech (TTS) and recitation platform. To democratize accessibility and provide culturally nuanced, regional language synthesis, SutraSparsh requires seamless integration with India’s National Language Translation Mission (NLTM) infrastructure—Bhashini. This document outlines the business objectives, scope, and strategic value of configuring Bhashini’s Udyat and Inference pipelines into the SutraSparsh ecosystem.
+2. Business Objectives
+* Multilingual Expansion: Enable real-time, high-fidelity Indian language text-to-speech and translation capabilities across scheduled regional dialects.
+* National Compliance & Ecosystem Alignment: Leverage government-backed open-source AI infrastructure to drastically reduce third-party API licensing costs while maintaining data sovereignty and localization standards.
+* Enhanced User Engagement: Provide localized audio rendering for community-driven content sharing, scripture/text recitations, and educational modules.
+3. Scope of Work
+* In-Scope:
+   * Secure environment variable configuration (VITE_BHASHINI_USER_ID, VITE_BHASHINI_UDYAT_KEY, VITE_BHASHINI_INFERENCE_KEY) within the frontend build system.
+   * Integration of Bhashini authentication middleware and pipeline token exchange.
+   * Implementation of client-side error handling, fallback mechanisms, and API rate-limiting guardrails.
+* Out-of-Scope:
+   * Custom model training or fine-tuning of Bhashini base models (utilizing pre-existing endpoints).
+   * Backend infrastructure migration away from existing hosting providers.
+4. Stakeholders & Success Metrics
+* Key Stakeholders: Product Engineering, Project Management, Quality Assurance.
+* Success Metrics:
+   * Successful token authentication and zero unauthorized key leakage in client bundles.
+   * Sub-1.5 second latency for initial audio stream generation on standard broadband/mobile networks.
+   * Support for at least 10 major scheduled Indian languages within the first release cycle.
+Functional Requirements Document (FRD)
+SutraSparsh Bhashini Integration Specification
+1. System Architecture & Configuration Management
+The application must securely ingest and manage the provided Bhashini credentials via environment configuration files without hardcoding secrets into the source repository.
+Variable Name
+	Target Value
+	Description
+	VITE_BHASHINI_USER_ID
+	89125c11d7c54f38b3428cce7114effe
+	Unique identifier for the Bhashini user account/client.
+	VITE_BHASHINI_UDYAT_KEY
+	067fe8c17c-1ce8-406e-b4b2-e3666689d1dc
+	Authorization/Subscription key for the Udyat gateway tier.
+	VITE_BHASHINI_INFERENCE_KEY
+	jSdE5OsFhqgtwgK5yGp56pwR0WZGGM4MIVCfanQ-cUAm-YlI_9pWBFVPzz1UjJoA
+	Primary inference key for executing model translation and TTS payloads.
+	2. Functional Modules & User Stories
+FR-01: Secure Credential Initialization & Auth Handshake
+* Description: Upon application boot, the client-side module must initialize headers using the configured environment variables.
+* Requirements:
+   * The application must construct the authorization payload incorporating VITE_BHASHINI_USER_ID and VITE_BHASHINI_UDYAT_KEY.
+   * The inference requests must append VITE_BHASHINI_INFERENCE_KEY in the designated header (e.g., ulcaApiKey or Authorization depending on the Bhashini pipeline spec).
+FR-02: Pipeline Compute Service Integration (TTS / Translation)
+* Description: Users inputting text in SutraSparsh can trigger text-to-speech synthesis or text translation.
+* Requirements:
+   * Input Validation: The UI must accept text strings and validate target language codes (ISO 639-1 / Bhashini standard language identifiers).
+   * Payload Construction: The client must format requests matching Bhashini’s ULCA (Open Language Collection Architecture) pipeline specifications, passing the inference key for compute endpoint access.
+   * Response Handling: Audio buffers received from Bhashini must be piped into an HTML5 audio element or Web Audio API context for immediate playback and optional caching.
+FR-03: Error Handling & Graceful Fallbacks
+* Description: Protect the user experience against network failures, expired tokens, or rate limits.
+* Requirements:
+   * If a Bhashini endpoint returns a 401 or 403 error, log the incident securely and display a user-friendly toast notification ("Language service temporarily unavailable").
+   * Implement exponential backoff retry logic (maximum 3 retries) for transient network timeouts (504/502).
+3. Non-Functional Requirements
+* Security: Ensure VITE_ prefixed variables are handled properly in Vite build pipelines so that secret inference keys are scoped securely or routed through a proxy server if strict zero-exposure policies are mandated for production deployments.
+* Performance: Audio chunk streaming should initialize playback within 1,500ms of user trigger.
+* Accessibility: Audio controls generated from Bhashini TTS output must include appropriate ARIA labels for screen readers.
+Implementation Prompt for Your IDE / AI Assistant
+If you are ready to implement this directly into your codebase, use the following prompt with your development assistant:
+"Act as a Senior Frontend Architect. Configure the Bhashini integration for SutraSparsh using Vite. Add the environment variables (VITE_BHASHINI_USER_ID, VITE_BHASHINI_UDYAT_KEY, VITE_BHASHINI_INFERENCE_KEY) to .env.local. Create a dedicated service utility src/services/bhashiniService.js that handles authentication headers, pipeline compute requests, and error fallbacks for text-to-speech synthesis. Ensure proper TypeScript interfaces or JSDoc types for the request payloads."

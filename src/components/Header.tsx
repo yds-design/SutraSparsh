@@ -18,11 +18,18 @@ import {
   Sparkles,
   Users,
   UserCheck,
+  Cloud,
+  CloudCheck,
+  CloudOff,
+  RefreshCw,
+  AlertCircle,
+  Database,
 } from "lucide-react";
 import { soundEngine } from "../utils/audio";
 import { authService, type SeekerUser } from "../services/auth.service";
 import { communityService } from "../services/community.service";
 import { useFeatureFlags } from "../services/feature-flags.service";
+import { firestoreSyncService, type SyncStatus } from "../services/firestore-sync.service";
 import { type AppTheme } from "../types";
 
 export type NavTab =
@@ -54,6 +61,7 @@ interface HeaderProps {
   onOpenAssets?: () => void;
   onOpenLookCloser?: () => void;
   onOpenWordExplorer?: () => void;
+  onManualSync?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -71,19 +79,62 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAssets,
   onOpenLookCloser,
   onOpenWordExplorer,
+  onManualSync,
 }) => {
   const { isSadhakaEnabled, isGurudakshinaEnabled } = useFeatureFlags();
   const [currentUser, setCurrentUser] = React.useState<SeekerUser | null>(() =>
     authService.getCurrentUser()
   );
   const [isDroneActive, setIsDroneActive] = React.useState(false);
+  const [syncStatus, setSyncStatus] = React.useState<SyncStatus>(() =>
+    firestoreSyncService.getStatus()
+  );
+  const [isManualSyncing, setIsManualSyncing] = React.useState(false);
 
   React.useEffect(() => {
-    const unsub = authService.subscribe((user) => {
+    const unsubAuth = authService.subscribe((user) => {
       setCurrentUser(user);
     });
-    return unsub;
+    const unsubSync = firestoreSyncService.subscribeStatus((status) => {
+      setSyncStatus(status);
+    });
+    return () => {
+      unsubAuth();
+      unsubSync();
+    };
   }, []);
+
+  const handleTriggerSync = async () => {
+    if (isManualSyncing) return;
+    setIsManualSyncing(true);
+    try {
+      if (onManualSync) {
+        await onManualSync();
+      } else {
+        await firestoreSyncService.reconcileData(
+          currentUser?.uid || "guest_seeker",
+          [],
+          []
+        );
+      }
+    } finally {
+      setTimeout(() => setIsManualSyncing(false), 600);
+    }
+  };
+
+  const formatLastSync = (isoString: string | null) => {
+    if (!isoString) return "Real-time";
+    try {
+      const date = new Date(isoString);
+      const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+      if (diffSec < 10) return "Just now";
+      if (diffSec < 60) return `${diffSec}s ago`;
+      if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    } catch {
+      return "Synced";
+    }
+  };
   const isLight = theme === "light";
   const isFestival = theme === "festival";
   const isAmethyst = theme === "amethyst";
@@ -104,7 +155,7 @@ export const Header: React.FC<HeaderProps> = ({
   const isPreferencesActive = activeTab === "preferences";
 
   const headerBg = isLight
-    ? "rgba(255, 251, 245, 0.94)"
+    ? "rgba(251, 248, 238, 0.96)"
     : isFestival
     ? "rgba(75, 14, 23, 0.94)"
     : isAmethyst
@@ -114,7 +165,7 @@ export const Header: React.FC<HeaderProps> = ({
     : "rgba(18, 13, 9, 0.94)";
 
   const headerBorder = isLight
-    ? "#E6D7C3"
+    ? "#E8DCC2"
     : isFestival
     ? "rgba(255, 138, 0, 0.3)"
     : isAmethyst
@@ -123,7 +174,7 @@ export const Header: React.FC<HeaderProps> = ({
     ? "rgba(201, 130, 43, 0.35)"
     : "rgba(216, 137, 22, 0.2)";
 
-  const brandTextColor = isLight ? "#3A2818" : isFestival ? "#FFF6E3" : isGoldenHour ? "#FFF4D8" : "#F4E9D2";
+  const brandTextColor = isLight ? "#261B12" : isFestival ? "#FFF6E3" : isGoldenHour ? "#FFF4D8" : "#F4E9D2";
 
   return (
     <header
@@ -162,15 +213,19 @@ export const Header: React.FC<HeaderProps> = ({
                 <span
                   className="font-sanskrit text-[10px] sm:text-xs px-1.5 py-0.5 rounded border hidden xs:inline"
                   style={{
-                    backgroundColor: isSandstone ? "rgba(232,146,26,0.12)" : "rgba(196,168,230,0.12)",
-                    borderColor: isSandstone ? "rgba(232,146,26,0.3)" : "rgba(196,168,230,0.3)",
-                    color: isSandstone ? "#F4B24B" : "#D4BEF2",
+                    backgroundColor: isLight ? "#FBEFD3" : isSandstone ? "rgba(232,146,26,0.12)" : "rgba(196,168,230,0.12)",
+                    borderColor: isLight ? "#E8CF9A" : isSandstone ? "rgba(232,146,26,0.3)" : "rgba(196,168,230,0.3)",
+                    color: isLight ? "#874606" : isSandstone ? "#F4B24B" : "#D4BEF2",
                   }}
                 >
                   सूत्रस्पर्श
                 </span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-stone-400 font-light hidden 2xl:block truncate max-w-sm">
+              <p
+                className={`text-[10px] sm:text-[11px] font-light hidden 2xl:block truncate max-w-sm ${
+                  isLight ? "text-[#6E5C4E]" : "text-stone-400"
+                }`}
+              >
                 A sacred space to discover, understand, and reflect on timeless wisdom
               </p>
             </div>
@@ -189,16 +244,16 @@ export const Header: React.FC<HeaderProps> = ({
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer ${
                 isTodayActive
                   ? isLight
-                    ? "bg-amber-100 text-amber-950 border border-amber-300 shadow-xs ring-1 ring-amber-400/30 font-bold"
+                    ? "bg-[#FBEFD3] text-[#874606] border border-[#DECB9F] shadow-xs ring-1 ring-amber-400/30 font-bold"
                     : "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
                   : isLight
-                  ? "text-stone-700 hover:text-stone-950 hover:bg-stone-200/60"
+                  ? "text-[#69574A] hover:text-[#261B12] hover:bg-[#F5EEDB]"
                   : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
               }`}
             >
               <Sun className="w-4 h-4 text-amber-500" />
               <span>Today</span>
-              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-amber-800" : "text-amber-400/80"}`}>आज</span>
+              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-[#874606]" : "text-amber-400/80"}`}>आज</span>
             </button>
 
             {/* 2. EXPLORE */}
@@ -209,16 +264,16 @@ export const Header: React.FC<HeaderProps> = ({
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer ${
                 isExploreActive
                   ? isLight
-                    ? "bg-amber-100 text-amber-950 border border-amber-300 shadow-xs ring-1 ring-amber-400/30 font-bold"
+                    ? "bg-[#FBEFD3] text-[#874606] border border-[#DECB9F] shadow-xs ring-1 ring-amber-400/30 font-bold"
                     : "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
                   : isLight
-                  ? "text-stone-700 hover:text-stone-950 hover:bg-stone-200/60"
+                  ? "text-[#69574A] hover:text-[#261B12] hover:bg-[#F5EEDB]"
                   : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
               }`}
             >
               <BookOpen className="w-4 h-4 text-amber-500" />
               <span>Explore</span>
-              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-amber-800" : "text-amber-400/80"}`}>दर्शन</span>
+              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-[#874606]" : "text-amber-400/80"}`}>दर्शन</span>
             </button>
 
             {/* 3. SEARCH */}
@@ -229,16 +284,16 @@ export const Header: React.FC<HeaderProps> = ({
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer ${
                 isSearchActive
                   ? isLight
-                    ? "bg-amber-100 text-amber-950 border border-amber-300 shadow-xs ring-1 ring-amber-400/30 font-bold"
+                    ? "bg-[#FBEFD3] text-[#874606] border border-[#DECB9F] shadow-xs ring-1 ring-amber-400/30 font-bold"
                     : "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
                   : isLight
-                  ? "text-stone-700 hover:text-stone-950 hover:bg-stone-200/60"
+                  ? "text-[#69574A] hover:text-[#261B12] hover:bg-[#F5EEDB]"
                   : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
               }`}
             >
               <Search className="w-4 h-4 text-amber-500" />
               <span>Search</span>
-              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-amber-800" : "text-amber-400/80"}`}>खोज</span>
+              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-[#874606]" : "text-amber-400/80"}`}>खोज</span>
             </button>
 
             {/* 4. COMMUNITY (SATSANG MANDALI) */}
@@ -249,17 +304,17 @@ export const Header: React.FC<HeaderProps> = ({
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 relative cursor-pointer ${
                 isCommunityActive
                   ? isLight
-                    ? "bg-amber-100 text-amber-950 border border-amber-300 shadow-xs ring-1 ring-amber-400/30 font-bold"
+                    ? "bg-[#FBEFD3] text-[#874606] border border-[#DECB9F] shadow-xs ring-1 ring-amber-400/30 font-bold"
                     : "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
                   : isLight
-                  ? "text-stone-700 hover:text-stone-950 hover:bg-stone-200/60"
+                  ? "text-[#69574A] hover:text-[#261B12] hover:bg-[#F5EEDB]"
                   : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
               }`}
               title="Satsang Mandali: Sacred In-App Community Board & Discussions"
             >
               <Users className="w-4 h-4 text-amber-500" />
               <span>Community</span>
-              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-amber-800" : "text-amber-400/80"}`}>सत्संग</span>
+              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-[#874606]" : "text-amber-400/80"}`}>सत्संग</span>
               {/* Unread activity dot (FR-NAV-01) */}
               {communityService.getUnreadNotificationCount() > 0 && (
                 <span className="w-2 h-2 rounded-full bg-amber-400 ring-2 ring-stone-950 animate-pulse" />
@@ -274,17 +329,17 @@ export const Header: React.FC<HeaderProps> = ({
               className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 relative cursor-pointer ${
                 activeTab === "services"
                   ? isLight
-                    ? "bg-amber-100 text-amber-950 border border-amber-300 shadow-xs ring-1 ring-amber-400/30 font-bold"
+                    ? "bg-[#FBEFD3] text-[#874606] border border-[#DECB9F] shadow-xs ring-1 ring-amber-400/30 font-bold"
                     : "bg-amber-500/20 text-amber-200 border border-amber-500/40 shadow-sm ring-1 ring-amber-400/20"
                   : isLight
-                  ? "text-stone-700 hover:text-stone-950 hover:bg-stone-200/60"
+                  ? "text-[#69574A] hover:text-[#261B12] hover:bg-[#F5EEDB]"
                   : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
               }`}
               title="Vedic Purohit Directory: Direct Zero-Fee Connection with Verified Priests"
             >
               <UserCheck className="w-4 h-4 text-amber-500" />
               <span>Services</span>
-              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-amber-800" : "text-amber-400/80"}`}>सेवा</span>
+              <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-[#874606]" : "text-amber-400/80"}`}>सेवा</span>
             </button>
 
             {/* WORD EXPLORER / LOOK CLOSER */}
@@ -299,13 +354,13 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Look Closer: Explore Sanskrit Word Components, Roots & Grammar"
                 className={`flex items-center space-x-1.5 px-2.5 lg:px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer ${
                   isLight
-                    ? "bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-300/80 shadow-xs"
+                    ? "bg-[#FFF7E6] text-[#783C00] hover:bg-[#FBEFD3] border border-[#D8A856] shadow-xs"
                     : "bg-amber-500/15 text-amber-200 hover:bg-amber-500/25 border border-amber-500/30"
                 }`}
               >
                 <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
                 <span>Look Closer</span>
-                <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-amber-800" : "text-amber-400/80"}`}>
+                <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-[#783C00]" : "text-amber-400/80"}`}>
                   पद-बोध
                 </span>
               </button>
@@ -385,23 +440,25 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Tanpura Drone Ambient Audio Button (Icon-focused) */}
+            {/* Ambient Soundscape & Tanpura Drone Audio Button (Icon-focused) */}
             <button
               id="btn-drone-soundscape"
               type="button"
               onClick={toggleSoundscape}
-              aria-label={isDroneActive ? "Mute Tanpura Drone (136.1Hz Om)" : "Play Meditative Tanpura Ambience"}
-              title={isDroneActive ? "Mute Tanpura Drone (136.1Hz Om)" : "Play Meditative Tanpura Ambience (432Hz)"}
+              aria-label={isDroneActive ? "Mute Ambient Soundscape" : "Play Meditative Ambient Soundscape"}
+              title={isDroneActive ? "Mute Ambient Soundscape" : "Play Meditative Ambient Soundscape (Temple Bell / Himalayan Breeze / River Ganga)"}
               className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-xs transition-all duration-150 border flex items-center justify-center touch-manipulation cursor-pointer active:scale-95 ${
                 isDroneActive
                   ? "bg-amber-500/25 border-amber-500/60 text-amber-200 animate-pulse shadow-[0_0_12px_rgba(232,146,26,0.3)]"
+                  : isLight
+                  ? "bg-[#FFF7E6] border-[#E8DCC2] text-[#6E5C4E] hover:text-[#261B12] hover:bg-[#F5EEDB]"
                   : "bg-white/5 border-white/10 text-stone-300 hover:text-white hover:bg-white/10"
               }`}
             >
               {isDroneActive ? (
-                <Volume2 className="w-4 h-4 text-amber-400" />
+                <Volume2 className={`w-4 h-4 ${isLight ? "text-[#874606]" : "text-amber-400"}`} />
               ) : (
-                <VolumeX className="w-4 h-4 text-stone-400" />
+                <VolumeX className={`w-4 h-4 ${isLight ? "text-[#6E5C4E]" : "text-stone-400"}`} />
               )}
             </button>
 
@@ -507,6 +564,64 @@ export const Header: React.FC<HeaderProps> = ({
                 <ShieldCheck className="w-4 h-4 text-amber-400" />
               </button>
             )}
+
+            {/* Visual Real-Time Firestore Sync Status Indicator */}
+            <button
+              id="firestore-sync-indicator"
+              type="button"
+              onClick={handleTriggerSync}
+              className={`flex items-center space-x-1.5 px-2 py-1 rounded-full text-[10px] sm:text-[10.5px] font-semibold border transition-all cursor-pointer shadow-xs active:scale-95 ${
+                isManualSyncing || syncStatus.state === "syncing"
+                  ? isLight
+                    ? "bg-[#FFF2D6] border-[#D97706]/50 text-[#874606]"
+                    : "bg-amber-950/40 border-amber-500/50 text-amber-300"
+                  : syncStatus.state === "error"
+                  ? "bg-rose-950/40 border-rose-500/50 text-rose-300"
+                  : syncStatus.state === "offline"
+                  ? isLight
+                    ? "bg-[#F5EEDB] border-[#E8DCC2] text-[#6E5C4E]"
+                    : "bg-stone-900 border-stone-800 text-stone-400"
+                  : isLight
+                  ? "bg-[#EBF7EE] border-[#86EFAC] text-[#166534]"
+                  : "bg-emerald-950/40 border-emerald-500/40 text-emerald-300"
+              }`}
+              title={`Firestore Database: ${
+                isManualSyncing || syncStatus.state === "syncing"
+                  ? "Reconciling background changes..."
+                  : syncStatus.state === "error"
+                  ? `Sync Alert: ${syncStatus.error || "Connection issue"}`
+                  : syncStatus.state === "offline"
+                  ? "Local Sanctuary Cache"
+                  : `Real-time Synced (${formatLastSync(syncStatus.lastSyncedAt)})`
+              } • Tap to reconcile now`}
+              aria-label="Firestore Connection & Sync Status"
+            >
+              {isManualSyncing || syncStatus.state === "syncing" ? (
+                <>
+                  <RefreshCw className="w-3 h-3 text-amber-500 animate-spin flex-shrink-0" />
+                  <span className="hidden sm:inline font-mono">Syncing...</span>
+                </>
+              ) : syncStatus.state === "error" ? (
+                <>
+                  <AlertCircle className="w-3 h-3 text-rose-400 flex-shrink-0" />
+                  <span className="hidden sm:inline font-mono">Offline / Retry</span>
+                </>
+              ) : syncStatus.state === "offline" ? (
+                <>
+                  <CloudOff className="w-3 h-3 text-stone-400 flex-shrink-0" />
+                  <span className="hidden sm:inline font-mono">Offline</span>
+                </>
+              ) : (
+                <>
+                  <span className="relative flex h-2 w-2 flex-shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.95)]"></span>
+                  </span>
+                  <CloudCheck className="w-3 h-3 text-emerald-500 flex-shrink-0 hidden xs:inline" />
+                  <span className="hidden sm:inline font-mono">Firestore</span>
+                </>
+              )}
+            </button>
 
             {/* API Engine Pulsating Orange Dot - Screen / Desktop Toolbar only (Moved to Bottom Toolbar on Mobile) */}
             <div

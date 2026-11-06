@@ -63,16 +63,16 @@ export const ATMOSPHERE_CONFIGS: Record<AppTheme, AtmosphereThemeConfig> = {
     sanskrit: "चन्दन एवं पत्र • Sandalwood Dawn",
     about: "Calm morning light with off-white parchment and deep ochre",
     icon: "☀️",
-    bgBase: "#FDFBF7",
+    bgBase: "#FBF8EE",
     bgGradient:
-      "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(246, 223, 166, 0.45) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 100% 100%, rgba(230, 215, 195, 0.35) 0%, transparent 60%), #FDFBF7",
+      "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(246, 223, 166, 0.45) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 100% 100%, rgba(230, 215, 195, 0.35) 0%, transparent 60%), #FBF8EE",
     auraGradient:
       "radial-gradient(circle at 50% 35%, rgba(246, 223, 166, 0.55) 0%, rgba(217, 119, 6, 0.18) 45%, transparent 75%)",
     accentColor: "#B9680D",
     pillBorder: "rgba(216, 137, 22, 0.35)",
     pillBg: "rgba(255, 251, 245, 0.96)",
-    textColor: "#3A2818",
-    subtextColor: "#B9680D",
+    textColor: "#261B12",
+    subtextColor: "#A64E04",
     pitch: 528,
   },
   festival: {

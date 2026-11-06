@@ -58,6 +58,8 @@ import { MoreView } from "./MoreView";
 import { BrahmaMuhurtaTimer } from "./BrahmaMuhurtaTimer";
 import { ImportantTithisParv } from "./ImportantTithisParv";
 import { StreakFireCounter } from "./StreakFireCounter";
+import { DailySpiritualAffirmation } from "./DailySpiritualAffirmation";
+import { SoundscapeSelector } from "./SoundscapeSelector";
 import { TtsAvailabilityIndicator } from "./TtsAvailabilityIndicator";
 import { progressService, type StreakData } from "../services/progress.service";
 import { dailyGoalService } from "../services/dailyGoal.service";
@@ -70,6 +72,7 @@ import { useFeatureFlags } from "../services/feature-flags.service";
 import { recitationEngine, type RecitationState } from "../utils/recitationEngine";
 import { ttsService, type TtsProviderType } from "../services/tts.service";
 import { themeConfigService } from "../services/theme-config.service";
+import { resilientAudioPlayer } from "../utils/resilientAudioPlayer";
 import { matchesSanskritQuery } from "../utils/sanskritSearch";
 import {
   LookCloserModal,
@@ -923,7 +926,7 @@ ${reflections
   const isLightCanvas = isLight || isPrismPulse;
 
   const themeCardDark = isLight
-    ? "bg-gradient-to-b from-[#FFFFFF] to-[#F6EDE1] border border-[#E6D7C3] text-[#3A2818]"
+    ? "bg-[#FFFDF8] border border-[#E8DCC2] text-[#261B12] shadow-[0_4px_20px_-2px_rgba(80,50,20,0.06),0_0_0_1px_rgba(222,203,159,0.4)]"
     : isPrismPulse
     ? "bg-white border border-stone-200 text-[#1E1B2E] shadow-md rounded-3xl"
     : isFestival
@@ -934,13 +937,13 @@ ${reflections
     ? "bg-gradient-to-b from-[#312318] to-[#1C140D] border border-[#C9822B]/40 text-[#FFF4D8]"
     : "bg-gradient-to-b from-[#2B1706] to-[#1D0F04] border border-[#78300C]/40 text-[#F5E4C8]";
 
-  const themeGold = isLight ? "#B9680D" : isPrismPulse ? "#936BFA" : isFestival ? "#FF8A00" : isAmethyst ? "#C4A8E6" : isGoldenHour ? "#C9822B" : "#E8921A";
-  const themeGoldLight = isLight ? "#B9680D" : isPrismPulse ? "#6D28D9" : isFestival ? "#FFD54A" : isAmethyst ? "#D4BEF2" : isGoldenHour ? "#F6DFA6" : "#F4B24B";
-  const themeMist = isLight ? "#574332" : isPrismPulse ? "#4B5563" : isFestival ? "#FFDDB3" : isAmethyst ? "#B8A4CC" : isGoldenHour ? "#A89F94" : "#D4BC96";
-  const themeTextColor = isLightCanvas ? "text-stone-900" : isFestival ? "text-[#FFF6E3]" : isAmethyst ? "text-[#EDE0F8]" : isGoldenHour ? "text-[#FFF4D8]" : "text-stone-100";
-  const themeSubTextColor = isLightCanvas ? "text-stone-600" : isFestival ? "text-amber-200/80" : isAmethyst ? "text-purple-200/80" : isGoldenHour ? "text-[#F6DFA6]/80" : "text-stone-400";
+  const themeGold = isLight ? "#A64E04" : isPrismPulse ? "#936BFA" : isFestival ? "#FF8A00" : isAmethyst ? "#C4A8E6" : isGoldenHour ? "#C9822B" : "#E8921A";
+  const themeGoldLight = isLight ? "#D96500" : isPrismPulse ? "#6D28D9" : isFestival ? "#FFD54A" : isAmethyst ? "#D4BEF2" : isGoldenHour ? "#F6DFA6" : "#F4B24B";
+  const themeMist = isLight ? "#4A3A2F" : isPrismPulse ? "#4B5563" : isFestival ? "#FFDDB3" : isAmethyst ? "#B8A4CC" : isGoldenHour ? "#A89F94" : "#D4BC96";
+  const themeTextColor = isLight ? "text-[#261B12]" : isPrismPulse ? "text-[#1E1B2E]" : isFestival ? "text-[#FFF6E3]" : isAmethyst ? "text-[#EDE0F8]" : isGoldenHour ? "text-[#FFF4D8]" : "text-stone-100";
+  const themeSubTextColor = isLight ? "text-[#6E5C4E]" : isPrismPulse ? "text-stone-600" : isFestival ? "text-amber-200/80" : isAmethyst ? "text-purple-200/80" : isGoldenHour ? "text-[#F6DFA6]/80" : "text-stone-400";
   const themeCardBg = isLight
-    ? "linear-gradient(145deg, #FFFBF5, #F6EDE1)"
+    ? "#FFFDF8"
     : isPrismPulse
     ? "#FFFFFF"
     : isFestival
@@ -951,7 +954,9 @@ ${reflections
     ? "linear-gradient(145deg, #38271A, #1C140D)"
     : "linear-gradient(145deg, #fdf0d0, #f5e0a0)";
 
-  const subScreenBg = isLight || isPrismPulse
+  const subScreenBg = isLight
+    ? "#FBF8EE"
+    : isPrismPulse
     ? "#F9F9F9"
     : isFestival
     ? "#38060D"
@@ -961,7 +966,9 @@ ${reflections
     ? "#140E08"
     : "#120A04";
 
-  const subScreenBarBg = isLight || isPrismPulse
+  const subScreenBarBg = isLight
+    ? "rgba(251, 248, 238, 0.96)"
+    : isPrismPulse
     ? "rgba(249,249,249,0.96)"
     : isFestival
     ? "rgba(56,6,13,0.96)"
@@ -971,7 +978,9 @@ ${reflections
     ? "rgba(20,14,8,0.96)"
     : "rgba(18,10,4,0.96)";
 
-  const subScreenBorder = isLight || isPrismPulse
+  const subScreenBorder = isLight
+    ? "border-[#E8DCC2]"
+    : isPrismPulse
     ? "border-stone-200"
     : isFestival
     ? "border-[#FF8A00]/25"
@@ -982,7 +991,7 @@ ${reflections
     : "border-white/10";
 
   const subScreenHeaderBorder = isLight
-    ? "border-stone-200"
+    ? "border-[#E8DCC2]"
     : isFestival
     ? "border-[#FF8A00]/20"
     : isAmethyst
@@ -1737,6 +1746,20 @@ ${reflections
                     const el = document.getElementById("section-daily-reading-goal");
                     if (el) el.scrollIntoView({ behavior: "smooth" });
                   }, 150);
+                }}
+              />
+            </div>
+
+            {/* Daily Spiritual Affirmation (Rotating Sanskrit Quote of the Day) */}
+            <div className="px-4">
+              <DailySpiritualAffirmation
+                theme={theme}
+                onReflect={(aff) => {
+                  if (onNavigateTab) {
+                    onNavigateTab("my-journey");
+                  } else {
+                    setActiveTab("journey");
+                  }
                 }}
               />
             </div>
@@ -3953,6 +3976,9 @@ ${reflections
                   </div>
                 </div>
 
+                {/* Ambient Soundscape Accompaniment Selector (Temple Bell, Himalayan Breeze, River Ganga) */}
+                <SoundscapeSelector isLight={isLight} />
+
                 {/* Text-to-Speech Provider & Voice Selection */}
                 <div className={`p-3.5 rounded-2xl border space-y-2.5 ${
                   isLight ? "bg-white border-stone-200 shadow-2xs" : "bg-white/5 border-white/5"
@@ -4183,11 +4209,13 @@ ${reflections
                       type="button"
                       onClick={async () => {
                         try {
+                          resilientAudioPlayer.unlockAudio();
                           soundEngine.playTempleBell(440);
                           const res = await ttsService.testTts("failsafe", "bhashini");
                           if (res.success && res.data?.audioUrl) {
-                            const audio = new Audio(res.data.audioUrl);
-                            audio.play();
+                            await resilientAudioPlayer.play(res.data.audioUrl, {
+                              ariaLabel: "Failsafe Google Cloud TTS Chanting Sample",
+                            });
                             setNotificationToast("⚡ Failsafe verified: Google Cloud TTS stepped in seamlessly!");
                           }
                         } catch {
