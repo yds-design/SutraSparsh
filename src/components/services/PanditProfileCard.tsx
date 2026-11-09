@@ -10,6 +10,7 @@ import {
   CheckCircle,
   ChevronRight,
   ExternalLink,
+  Star,
 } from "lucide-react";
 import type { PanditProfile } from "../../types/pandit";
 import { PanditTrustBadges } from "./PanditTrustBadges";
@@ -24,6 +25,7 @@ export interface PanditProfileCardProps {
   pandit: PanditProfile;
   theme?: AppTheme;
   onOpenDetails?: (pandit: PanditProfile) => void;
+  onOpenReviews?: (pandit: PanditProfile) => void;
   defaultRitualId?: string;
 }
 
@@ -31,6 +33,7 @@ export const PanditProfileCard: React.FC<PanditProfileCardProps> = ({
   pandit,
   theme = "light",
   onOpenDetails,
+  onOpenReviews,
   defaultRitualId,
 }) => {
   const isLight = theme === "light";
@@ -131,8 +134,25 @@ export const PanditProfileCard: React.FC<PanditProfileCardProps> = ({
               {pandit.title}
             </p>
 
-            {/* Trust Badges: Positioned cleanly alongside name & expertise */}
-            <div className="mt-2">
+            {/* Trust Badges & Rating: Positioned cleanly alongside name & expertise */}
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {onOpenReviews && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenReviews(pandit);
+                  }}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-900 dark:text-amber-300 border border-amber-500/30 transition-colors cursor-pointer"
+                  title="View verified devotee reviews and ratings"
+                >
+                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                  <span>{(pandit.rating || 5.0).toFixed(1)}</span>
+                  <span className="text-stone-500 dark:text-stone-400 font-normal">
+                    ({pandit.reviewCount ?? 1})
+                  </span>
+                </button>
+              )}
               <PanditTrustBadges
                 isVerified={pandit.isVerified}
                 verificationDetails={pandit.verificationDetails}
@@ -280,17 +300,29 @@ export const PanditProfileCard: React.FC<PanditProfileCardProps> = ({
           </a>
         </div>
 
-        {/* View Profile Details Link */}
-        {onOpenDetails && (
-          <button
-            type="button"
-            onClick={() => onOpenDetails(pandit)}
-            className="w-full text-center text-[11px] font-semibold text-amber-800 hover:text-amber-900 dark:text-amber-300/90 dark:hover:text-amber-200 transition-colors flex items-center justify-center gap-1 pt-1 cursor-pointer"
-          >
-            <span>View Full Credentials & Endorsements</span>
-            <ChevronRight className="w-3 h-3" />
-          </button>
-        )}
+        {/* View Profile Details & Reviews Links */}
+        <div className="flex items-center justify-between pt-1 gap-2 text-[11px] font-semibold text-amber-850 dark:text-amber-300/90">
+          {onOpenDetails && (
+            <button
+              type="button"
+              onClick={() => onOpenDetails(pandit)}
+              className="hover:text-amber-950 dark:hover:text-amber-200 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <span>Full Credentials</span>
+              <ChevronRight className="w-3 h-3" />
+            </button>
+          )}
+          {onOpenReviews && (
+            <button
+              type="button"
+              onClick={() => onOpenReviews(pandit)}
+              className="hover:text-amber-950 dark:hover:text-amber-200 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+              <span>Devotee Reviews ({pandit.reviewCount ?? 1})</span>
+            </button>
+          )}
+        </div>
       </footer>
     </article>
   );

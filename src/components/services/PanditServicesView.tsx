@@ -22,6 +22,7 @@ import type { PanditProfile } from "../../types/pandit";
 import { PanditProfileCard } from "./PanditProfileCard";
 import { PanditProfileModal } from "./PanditProfileModal";
 import { PanditOnboardingModal } from "./PanditOnboardingModal";
+import { PanditReviewsDrawer } from "./PanditReviewsDrawer";
 import { type AppTheme } from "../../types";
 
 export interface PanditServicesViewProps {
@@ -54,8 +55,9 @@ export const PanditServicesView: React.FC<PanditServicesViewProps> = ({
   const [verifiedOnly, setVerifiedOnly] = useState<boolean>(false);
   const [peerEndorsedOnly, setPeerEndorsedOnly] = useState<boolean>(false);
 
-  // Selected Pandit for modal detail
+  // Selected Pandit for modal detail & reviews drawer
   const [selectedPanditForModal, setSelectedPanditForModal] = useState<PanditProfile | null>(null);
+  const [selectedPanditForReviews, setSelectedPanditForReviews] = useState<PanditProfile | null>(null);
 
   // Unique Traditions & Languages
   const traditions = useMemo(() => {
@@ -400,6 +402,7 @@ export const PanditServicesView: React.FC<PanditServicesViewProps> = ({
               pandit={pandit}
               theme={theme}
               onOpenDetails={(p) => setSelectedPanditForModal(p)}
+              onOpenReviews={(p) => setSelectedPanditForReviews(p)}
             />
           ))}
         </div>
@@ -443,7 +446,15 @@ export const PanditServicesView: React.FC<PanditServicesViewProps> = ({
         theme={theme}
       />
 
-      {/* ════════════ 6. MODAL FOR PUROHIT ONBOARDING ════════════ */}
+      {/* ════════════ 6. DRAWER FOR DEVOTEE REVIEWS & STAR RATINGS ════════════ */}
+      <PanditReviewsDrawer
+        pandit={selectedPanditForReviews}
+        isOpen={Boolean(selectedPanditForReviews)}
+        onClose={() => setSelectedPanditForReviews(null)}
+        theme={theme}
+      />
+
+      {/* ════════════ 7. MODAL FOR PUROHIT ONBOARDING ════════════ */}
       <PanditOnboardingModal
         isOpen={isOnboardingModalOpen}
         onClose={() => setIsOnboardingModalOpen(false)}

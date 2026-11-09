@@ -60,6 +60,7 @@ export interface PanditProfile {
   rating: number; // Devotee feedback metric (e.g. 4.9)
   completedRitualsCount: number;
   isAvailable: boolean;
+  reviewCount?: number;
 }
 
 export interface PanditFilterState {
@@ -69,4 +70,39 @@ export interface PanditFilterState {
   searchQuery: string;
   verifiedOnly: boolean;
   peerEndorsedOnly: boolean;
+}
+
+export interface PanditReview {
+  id: string;
+  panditId: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  isVerifiedYajamana: boolean; // Confirmed booking via app
+  bookingId: string;
+  ritualName: string;
+  rating: number; // 1 to 5 stars
+  title?: string;
+  comment: string;
+  aspects?: {
+    uccharana?: number; // Vedic pronunciation purity (1-5)
+    punctuality?: number; // Punctuality & Maryada (1-5)
+    samagriGuidance?: number; // Samagri guidance clarity (1-5)
+  };
+  createdAt: string;
+  status: "PUBLISHED" | "PENDING_AUDIT" | "FLAGGED";
+}
+
+export interface PanditBooking {
+  id: string;
+  panditId: string;
+  panditName: string;
+  userId: string;
+  userName: string;
+  ritualId: string;
+  ritualName: string;
+  bookingDate: string;
+  ritualDate: string;
+  status: "COMPLETED" | "CONFIRMED" | "INQUIRY";
+  reviewed: boolean;
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   X,
   MapPin,
@@ -15,9 +15,13 @@ import {
   Sparkles,
   Heart,
   Share2,
+  Star,
+  Plus,
 } from "lucide-react";
-import type { PanditProfile } from "../../types/pandit";
+import type { PanditProfile, PanditReview } from "../../types/pandit";
+import { panditService } from "../../services/pandit.service";
 import { PanditTrustBadges } from "./PanditTrustBadges";
+import { PanditReviewModal } from "./PanditReviewModal";
 import {
   createWhatsAppDeepLink,
   triggerWhatsAppConnect,
@@ -44,7 +48,23 @@ export const PanditProfileModal: React.FC<PanditProfileModalProps> = ({
   const [selectedRitualId, setSelectedRitualId] = useState<string>(
     pandit.rituals[0]?.id || "general"
   );
-  const [activeTab, setActiveTab] = useState<"rituals" | "credentials" | "endorsements">("rituals");
+  const [activeTab, setActiveTab] = useState<
+    "rituals" | "credentials" | "endorsements" | "reviews"
+  >("rituals");
+  const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false);
+  const [reviews, setReviews] = useState<PanditReview[]>(() =>
+    panditService.getReviewsForPandit(pandit.id)
+  );
+
+  useEffect(() => {
+    setReviews(panditService.getReviewsForPandit(pandit.id));
+    const unsub = panditService.subscribe(() => {
+      setReviews(panditService.getReviewsForPandit(pandit.id));
+    });
+    return unsub;
+  }, [pandit.id]);
+
+  const ratingSummary = panditService.getRatingSummary(pandit.id);
 
   const selectedRitual =
     pandit.rituals.find((r) => r.id === selectedRitualId) || pandit.rituals[0];
@@ -145,16 +165,17 @@ export const PanditProfileModal: React.FC<PanditProfileModalProps> = ({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-amber-500/10 px-4 sm:px-6 bg-amber-500/[0.01]">
+        <div className="flex border-b border-amber-500/10 px-4 sm:px-6 bg-amber-500/[0.01] overflow-x-auto scrollbar-none">
           {[
             { id: "rituals", label: `Rituals & Pujas (${pandit.rituals.length})` },
             { id: "credentials", label: "Lineage & Credentials" },
             { id: "endorsements", label: `Peer Endorsements (${pandit.peerEndorsements.length})` },
+            { id: "reviews", label: `Reviews (${reviews.length})` },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`py-3 px-3 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+              className={`py-3 px-3 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === tab.id
                   ? "border-amber-500 text-amber-900 dark:text-amber-300"
                   : "border-transparent text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-200"
@@ -322,6 +343,122 @@ export const PanditProfileModal: React.FC<PanditProfileModalProps> = ({
               ))}
             </div>
           )}
+
+          {activeTab === "reviews" && (
+            <div className="space-y-4">
+              {/* Reviews Summary Header */}
+              <div
+                className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 ${
+                  isLight ? "bg-amber-50/50 border-amber-200" : "bg-stone-800/40 border-amber-500/20"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl font-extrabold text-amber-500 font-serif">
+                    {ratingSummary.average.toFixed(1)}
+                  </div>
+                  <div className="space-y-0.5">
+                    <div className="flex items-center text-amber-400">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star
+                          key={s}
+                          className={`w-3.5 h-3.5 ${
+                            s <= Math.round(ratingSummary.average)
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-stone-300 dark:text-stone-700"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <div className="text-[11px] text-stone-600 dark:text-stone-400 font-medium">
+                      Based on {ratingSummary.count} verified{" "}
+                      {ratingSummary.count === 1 ? "review" : "reviews"}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsWriteReviewOpen(true)}
+                  className="py-2 px-3.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-stone-950 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Write a Review</span>
+                </button>
+              </div>
+
+              {/* Reviews List */}
+              {reviews.length === 0 ? (
+                <div className="py-8 text-center space-y-2">
+                  <p className="text-xs text-stone-500 dark:text-stone-400">
+                    No verified devotee reviews yet for {pandit.name}.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setIsWriteReviewOpen(true)}
+                    className="py-1.5 px-3 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-900 dark:text-amber-200 border border-amber-500/30 hover:bg-amber-500/30 transition-colors"
+                  >
+                    Share First Devotee Experience
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {reviews.map((rev) => (
+                    <div
+                      key={rev.id}
+                      className={`p-3.5 rounded-xl border text-xs leading-relaxed space-y-2 ${
+                        isLight
+                          ? "bg-white border-stone-200/80 shadow-xs"
+                          : "bg-stone-800/60 border-stone-700/60"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-stone-900 dark:text-stone-100">
+                            {rev.userName}
+                          </span>
+                          {rev.isVerifiedYajamana && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
+                              <CheckCircle2 className="w-2.5 h-2.5" />
+                              <span>Verified</span>
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 text-amber-400">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star
+                              key={s}
+                              className={`w-3 h-3 ${
+                                s <= rev.rating
+                                  ? "fill-amber-400 text-amber-400"
+                                  : "text-stone-300 dark:text-stone-700"
+                              }`}
+                            />
+                          ))}
+                          <span className="text-[10.5px] font-bold text-stone-600 dark:text-stone-300 ml-0.5">
+                            {rev.rating}.0
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="text-[10.5px] text-stone-500 dark:text-stone-400">
+                        Ritual: <span className="font-medium text-amber-800 dark:text-amber-400">{rev.ritualName}</span>
+                      </div>
+
+                      {rev.title && (
+                        <div className="font-bold text-stone-900 dark:text-stone-100">
+                          &ldquo;{rev.title}&rdquo;
+                        </div>
+                      )}
+
+                      <p className="text-stone-700 dark:text-stone-300 text-[11.5px]">
+                        {rev.comment}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Modal Action Footer */}
@@ -368,6 +505,18 @@ export const PanditProfileModal: React.FC<PanditProfileModalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Review Submission Modal */}
+      <PanditReviewModal
+        pandit={pandit}
+        isOpen={isWriteReviewOpen}
+        onClose={() => setIsWriteReviewOpen(false)}
+        theme={theme}
+        onReviewSubmitted={() => {
+          setIsWriteReviewOpen(false);
+          setReviews(panditService.getReviewsForPandit(pandit.id));
+        }}
+      />
     </div>
   );
 };
