@@ -98,40 +98,42 @@ export const SearchView: React.FC<SearchViewProps> = ({
   };
 
   const bannerBgClass = isLight
-    ? "bg-[#FFFDF8] border-[#E8DCC2] text-[#261B12] shadow-sm"
+    ? "bg-white border border-[#cfcbe0] text-[#1d1b2e] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] hover:shadow-[0_10px_30px_-12px_rgb(27_23_64_/_0.28)] hover:border-[#d9a441] rounded-[28px]"
     : isFestival
-    ? "bg-[#450A12]/90 border-[#FF8A00]/30 text-[#FFF6E3] shadow-xl"
+    ? "bg-[#450A12]/90 border-[#FF8A00]/30 text-[#FFF6E3] shadow-xl rounded-3xl"
     : isAmethyst
-    ? "bg-[#180C2C]/90 border-[#52297A]/40 text-[#EDE0F8] shadow-xl"
-    : "bg-stone-900/60 border-stone-800 text-stone-100 shadow-xl";
+    ? "bg-[#180C2C]/90 border-[#52297A]/40 text-[#EDE0F8] shadow-xl rounded-3xl"
+    : "bg-stone-900/60 border-stone-800 text-stone-100 shadow-xl rounded-3xl";
 
   const cardBgClass = isLight
-    ? "bg-[#FFFDF8] border-[#E8DCC2] hover:border-[#DECB9F] text-[#261B12] shadow-xs hover:shadow-md"
+    ? "bg-white hover:bg-[#faf9fd] border-[#cfcbe0] hover:border-[#d9a441] text-[#1d1b2e] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] hover:shadow-[0_10px_30px_-12px_rgb(27_23_64_/_0.28)] rounded-[20px]"
     : isFestival
-    ? "bg-[#480C14]/90 border-[#FF8A00]/30 hover:border-[#FF8A00]/60 text-[#FFF6E3] shadow-md"
+    ? "bg-[#480C14]/90 border-[#FF8A00]/30 hover:border-[#FF8A00]/60 text-[#FFF6E3] shadow-md rounded-2xl"
     : isAmethyst
-    ? "bg-[#180C2C]/90 border-[#52297A]/40 hover:border-[#8A4AC7]/60 text-[#EDE0F8] shadow-md"
-    : "bg-stone-900/60 border-stone-800 hover:border-amber-500/40 text-stone-100 shadow-md";
+    ? "bg-[#180C2C]/90 border-[#52297A]/40 hover:border-[#8A4AC7]/60 text-[#EDE0F8] shadow-md rounded-2xl"
+    : "bg-stone-900/60 border-stone-800 hover:border-amber-500/40 text-stone-100 shadow-md rounded-2xl";
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fadeIn">
       {/* Search Header Banner */}
-      <div className={`border rounded-3xl p-6 sm:p-10 space-y-6 relative overflow-hidden ${bannerBgClass}`}>
+      <div className={`border rounded-[28px] p-6 sm:p-10 space-y-6 relative overflow-hidden transition-all ${bannerBgClass}`}>
         <div className="space-y-2 max-w-2xl">
-          <div className="flex items-center space-x-2 text-xs font-mono uppercase tracking-wider text-[#A64E04]">
-            <Search className="w-3.5 h-3.5" />
+          <div className={`flex items-center space-x-2 text-[10.5px] font-extrabold tracking-widest uppercase ${
+            isLight ? "text-[#b8801f]" : "text-amber-300"
+          }`}>
+            <Search className={`w-3.5 h-3.5 ${isLight ? "text-[#b8801f]" : "text-amber-400"}`} />
             <span>Intent-Driven Discovery • ज्ञान खोज</span>
           </div>
           <h1
-            className={`font-serif-sacred text-2xl sm:text-4xl font-bold ${
-              isLight ? "text-[#261B12]" : "text-amber-100"
+            className={`font-serif-sacred text-2xl sm:text-4xl font-bold tracking-tight ${
+              isLight ? "text-[#1b1740]" : "text-amber-100"
             }`}
           >
             Search Timeless Wisdom
           </h1>
           <p
-            className={`text-xs sm:text-sm font-light ${
-              isLight ? "text-[#4A3A2F]" : "text-stone-300"
+            className={`text-xs sm:text-sm font-light leading-relaxed ${
+              isLight ? "text-[#55526b]" : "text-stone-300"
             }`}
           >
             Search sacred scriptures by Sanskrit Devanagari, IAST transliteration, English keywords, or spiritual questions.
@@ -140,15 +142,15 @@ export const SearchView: React.FC<SearchViewProps> = ({
 
         {/* Search Input Bar */}
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-500" />
+          <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isLight ? "text-[#b8801f]" : "text-amber-500"}`} />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Type a Sanskrit shloka, keyword (e.g., 'detachment', 'chitta', 'dharma', 'Gita 2.47')..."
-            className={`w-full pl-12 pr-4 py-3.5 rounded-2xl text-sm focus:outline-none shadow-inner border transition-all ${
+            className={`w-full pl-12 pr-12 py-3.5 rounded-full text-sm focus:outline-none shadow-xs border transition-all ${
               isLight
-                ? "bg-[#FFFDF8] border-[#E8DCC2] focus:border-[#D96500] text-[#261B12] placeholder-[#846D5B]"
+                ? "bg-[#f7f6fb] border-[#cfcbe0] focus:border-[#d9a441] text-[#1d1b2e] placeholder-[#55526b]"
                 : "bg-stone-950/90 border-stone-800 focus:border-amber-500/60 text-stone-100 placeholder-stone-500"
             }`}
           />
@@ -156,7 +158,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
             <button
               onClick={() => setSearchTerm("")}
               className={`absolute right-4 top-1/2 -translate-y-1/2 text-xs transition-colors cursor-pointer ${
-                isLight ? "text-[#6E5C4E] hover:text-[#261B12]" : "text-stone-400 hover:text-stone-200"
+                isLight ? "text-[#55526b] hover:text-[#1b1740]" : "text-stone-400 hover:text-stone-200"
               }`}
             >
               Clear
@@ -167,8 +169,8 @@ export const SearchView: React.FC<SearchViewProps> = ({
         {/* Suggested Spiritual Queries */}
         <div className="space-y-2">
           <span
-            className={`text-[11px] font-mono uppercase tracking-wider block ${
-              isLight ? "text-[#6E5C4E] font-semibold" : "text-stone-400"
+            className={`text-[10.5px] font-extrabold tracking-widest uppercase block ${
+              isLight ? "text-[#b8801f]" : "text-stone-400"
             }`}
           >
             Suggested Contemplation Queries:
@@ -180,13 +182,13 @@ export const SearchView: React.FC<SearchViewProps> = ({
                 <button
                   key={sq.label}
                   onClick={() => setSearchTerm(sq.query)}
-                  className={`text-xs px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
+                  className={`text-xs px-3.5 py-1.5 rounded-full border transition-all cursor-pointer ${
                     isSelected
                       ? isLight
-                        ? "bg-[#FBEFD3] text-[#874606] border-[#DECB9F] font-semibold shadow-xs"
+                        ? "bg-[#d9a441] text-[#100e2b] border-[#d9a441] font-bold shadow-xs"
                         : "bg-amber-500/20 text-amber-200 border-amber-500/50 shadow-sm"
                       : isLight
-                      ? "bg-[#F5EEDB] border-[#E8DCC2] text-[#4A3A2F] hover:border-[#DECB9F] hover:text-[#261B12] hover:bg-[#FBEFD3]"
+                      ? "bg-[#efedf6] border-[#cfcbe0] text-[#55526b] hover:bg-white hover:text-[#1b1740] hover:border-[#d9a441]"
                       : "bg-stone-950 border-stone-800/80 text-stone-300 hover:border-amber-500/40 hover:text-amber-300"
                   }`}
                 >
@@ -200,11 +202,11 @@ export const SearchView: React.FC<SearchViewProps> = ({
         {/* Filter Pills */}
         <div
           className={`pt-4 border-t flex flex-wrap gap-4 items-center justify-between text-xs ${
-            isLight ? "border-[#E8DCC2]" : "border-stone-800"
+            isLight ? "border-[#efedf6]" : "border-stone-800"
           }`}
         >
           <div className="flex items-center space-x-2">
-            <span className={`font-medium ${isLight ? "text-[#4A3A2F]" : "text-stone-500"}`}>
+            <span className={`font-medium ${isLight ? "text-[#55526b]" : "text-stone-500"}`}>
               Tradition:
             </span>
             <div className="flex flex-wrap gap-1.5">
@@ -214,13 +216,13 @@ export const SearchView: React.FC<SearchViewProps> = ({
                   <button
                     key={t}
                     onClick={() => setSelectedTradition(t)}
-                    className={`px-2.5 py-1 rounded-lg text-xs transition-colors border cursor-pointer ${
+                    className={`px-3 py-1 rounded-full text-xs transition-colors border cursor-pointer ${
                       isSelected
                         ? isLight
-                          ? "bg-[#FBEFD3] text-[#874606] border-[#DECB9F] font-semibold"
+                          ? "bg-[#1b1740] text-[#f4f2ff] border-[#1b1740] font-bold shadow-xs"
                           : "bg-amber-500/20 text-amber-200 border-amber-500/40"
                         : isLight
-                        ? "bg-[#F5EEDB] text-[#4A3A2F] border-[#E8DCC2] hover:bg-[#FBEFD3]"
+                        ? "bg-[#efedf6] text-[#55526b] border-[#cfcbe0] hover:bg-white hover:text-[#1b1740] hover:border-[#d9a441]"
                         : "bg-stone-950 text-stone-400 border-stone-800 hover:text-stone-200"
                     }`}
                   >
@@ -232,7 +234,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className={`font-medium ${isLight ? "text-[#4A3A2F]" : "text-stone-500"}`}>
+            <span className={`font-medium ${isLight ? "text-[#55526b]" : "text-stone-500"}`}>
               Category:
             </span>
             <div className="flex flex-wrap gap-1.5">
@@ -242,13 +244,13 @@ export const SearchView: React.FC<SearchViewProps> = ({
                   <button
                     key={c}
                     onClick={() => setSelectedCategory(c)}
-                    className={`px-2.5 py-1 rounded-lg text-xs transition-colors border cursor-pointer ${
+                    className={`px-3 py-1 rounded-full text-xs transition-colors border cursor-pointer ${
                       isSelected
                         ? isLight
-                          ? "bg-[#FBEFD3] text-[#874606] border-[#DECB9F] font-semibold"
+                          ? "bg-[#1b1740] text-[#f4f2ff] border-[#1b1740] font-bold shadow-xs"
                           : "bg-amber-500/20 text-amber-200 border-amber-500/40"
                         : isLight
-                        ? "bg-[#F5EEDB] text-[#4A3A2F] border-[#E8DCC2] hover:bg-[#FBEFD3]"
+                        ? "bg-[#efedf6] text-[#55526b] border-[#cfcbe0] hover:bg-white hover:text-[#1b1740] hover:border-[#d9a441]"
                         : "bg-stone-950 text-stone-400 border-stone-800 hover:text-stone-200"
                     }`}
                   >
@@ -264,7 +266,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
       {/* Search Results Summary */}
       <div
         className={`flex items-center justify-between text-xs px-1 ${
-          isLight ? "text-[#6E5C4E]" : "text-stone-400"
+          isLight ? "text-[#55526b]" : "text-stone-400"
         }`}
       >
         <span>Found {filteredVerses.length} sacred verses</span>
@@ -276,7 +278,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
               setSelectedCategory("All");
             }}
             className={`font-semibold hover:underline cursor-pointer ${
-              isLight ? "text-[#D96500]" : "text-amber-500"
+              isLight ? "text-[#b8801f]" : "text-amber-500"
             }`}
           >
             Reset Filters
@@ -287,17 +289,17 @@ export const SearchView: React.FC<SearchViewProps> = ({
       {/* Results Grid */}
       {filteredVerses.length === 0 ? (
         <div
-          className={`border rounded-3xl p-12 text-center space-y-3 ${
+          className={`border rounded-[20px] p-12 text-center space-y-3 ${
             isLight
-              ? "bg-[#FFFDF8] border-[#E8DCC2] text-[#4A3A2F]"
+              ? "bg-white border-[#cfcbe0] text-[#1d1b2e] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)]"
               : "bg-stone-900/40 border-stone-800 text-stone-300"
           }`}
         >
-          <Search className={`w-8 h-8 mx-auto ${isLight ? "text-[#846D5B]" : "text-stone-400"}`} />
-          <p className={`text-sm font-serif-sacred font-bold ${isLight ? "text-[#261B12]" : "text-stone-100"}`}>
+          <Search className={`w-8 h-8 mx-auto ${isLight ? "text-[#b8801f]" : "text-stone-400"}`} />
+          <p className={`text-sm font-serif-sacred font-bold ${isLight ? "text-[#1b1740]" : "text-stone-100"}`}>
             No verses found matching your query.
           </p>
-          <p className={`text-xs ${isLight ? "text-[#6E5C4E]" : "text-stone-400"}`}>
+          <p className={`text-xs ${isLight ? "text-[#55526b]" : "text-stone-400"}`}>
             Try searching for broader spiritual concepts like "peace", "dharma", "gita", or "chitta".
           </p>
         </div>
@@ -324,14 +326,14 @@ export const SearchView: React.FC<SearchViewProps> = ({
               <div
                 key={verse.id}
                 onClick={() => onOpenVerseModal(verse)}
-                className={`group border rounded-2xl p-5 space-y-3 transition-all cursor-pointer flex flex-col justify-between hover:-translate-y-0.5 ${cardBgClass}`}
+                className={`group border rounded-[20px] p-5 space-y-3 transition-all cursor-pointer flex flex-col justify-between hover:-translate-y-0.5 ${cardBgClass}`}
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span
-                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
+                      className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
                         isLight
-                          ? "bg-[#FBEFD3] text-[#874606] border-[#E8CF9A]"
+                          ? "bg-[#fbf0d6] text-[#b8801f] border-[#f0cf8a]/60"
                           : "bg-amber-500/10 text-amber-400 border-amber-500/20"
                       }`}
                     >
@@ -341,8 +343,8 @@ export const SearchView: React.FC<SearchViewProps> = ({
                     <div className="flex items-center space-x-1">
                       <button
                         onClick={handlePlayChime}
-                        className={`p-1 transition-colors ${
-                          isLight ? "text-[#6E5C4E] hover:text-[#261B12]" : "text-stone-400 hover:text-amber-300"
+                        className={`p-1.5 rounded-full transition-colors ${
+                          isLight ? "text-[#55526b] hover:text-[#1b1740] hover:bg-[#efedf6]" : "text-stone-400 hover:text-amber-300"
                         }`}
                         title="Chime"
                       >
@@ -354,15 +356,15 @@ export const SearchView: React.FC<SearchViewProps> = ({
                           e.stopPropagation();
                           onToggleBookmark(verse.id);
                         }}
-                        className={`p-1 transition-colors ${
-                          isLight ? "text-[#6E5C4E] hover:text-[#A64E04]" : "text-stone-400 hover:text-amber-400"
+                        className={`p-1.5 rounded-full transition-colors ${
+                          isLight ? "text-[#55526b] hover:text-[#b8801f] hover:bg-[#efedf6]" : "text-stone-400 hover:text-amber-400"
                         }`}
                         title="Save to Sanctuary"
                       >
                         {isSaved ? (
                           <BookmarkCheck
                             className={`w-4 h-4 ${
-                              isLight ? "text-[#A64E04] fill-[#FBEFD3]" : "text-amber-400 fill-amber-400/20"
+                              isLight ? "text-[#b8801f] fill-[#d9a441]/30" : "text-amber-400 fill-amber-400/20"
                             }`}
                           />
                         ) : (
@@ -375,7 +377,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
                   <h3
                     className={`font-serif-sacred font-bold text-sm transition-colors ${
                       isLight
-                        ? "text-[#261B12] group-hover:text-[#A64E04]"
+                        ? "text-[#1b1740] group-hover:text-[#b8801f]"
                         : "text-amber-100 group-hover:text-amber-300"
                     }`}
                   >
@@ -384,7 +386,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
 
                   <p
                     className={`font-sanskrit text-sm leading-relaxed ${
-                      isLight ? "text-[#1E1610] font-semibold" : "text-amber-200/90"
+                      isLight ? "text-[#1b1740] font-semibold" : "text-amber-200/90"
                     }`}
                   >
                     {verse.body}
@@ -394,7 +396,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
                     <p
                       className={`text-xs italic leading-relaxed pt-1.5 border-t ${
                         isLight
-                          ? "text-[#4A3A2F] border-[#E8DCC2]"
+                          ? "text-[#1d1b2e] border-[#cfcbe0] border-dashed"
                           : "text-stone-300 border-stone-800/60"
                       }`}
                     >
@@ -405,12 +407,12 @@ export const SearchView: React.FC<SearchViewProps> = ({
 
                 <div
                   className={`pt-3 border-t flex items-center justify-between text-xs ${
-                    isLight ? "border-[#E8DCC2] text-[#874606]" : "border-stone-800/80 text-amber-400/90"
+                    isLight ? "border-[#cfcbe0] border-dashed text-[#b8801f]" : "border-stone-800/80 text-amber-400/90"
                   }`}
                 >
                   <span
                     className={`text-[11px] font-semibold ${
-                      isLight ? "text-[#6E5C4E]" : "text-stone-400"
+                      isLight ? "text-[#55526b]" : "text-stone-400"
                     }`}
                   >
                     {cleanSource}

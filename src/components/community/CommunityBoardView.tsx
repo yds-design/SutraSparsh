@@ -329,21 +329,47 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
       )}
 
       {/* 1. HERO SATSANG MANDALI BANNER */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-stone-900 via-stone-900/90 to-amber-950/40 border border-stone-800 p-6 sm:p-10 shadow-2xl">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div
+        className={`relative overflow-hidden rounded-[28px] p-6 sm:p-10 transition-all ${
+          isLight
+            ? "bg-white border border-[#cfcbe0] text-[#1d1b2e] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] hover:shadow-[0_10px_30px_-12px_rgb(27_23_64_/_0.28)] hover:border-[#d9a441]"
+            : theme === "golden-hour"
+            ? "bg-gradient-to-r from-[#24150A] via-[#2A180C] to-[#3A2210] border-[#C9822B]/40 text-[#FFF4D8] shadow-2xl"
+            : "bg-gradient-to-r from-stone-900 via-stone-900/90 to-amber-950/40 border border-stone-800 text-stone-100 shadow-2xl"
+        }`}
+      >
+        {!isLight && (
+          <div
+            className="absolute top-0 right-0 w-80 h-80 rounded-full blur-3xl pointer-events-none bg-amber-500/10"
+          />
+        )}
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <div
+              className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold border ${
+                isLight
+                  ? "bg-[#fbf0d6] border-[#f0cf8a] text-[#b8801f]"
+                  : "bg-amber-500/15 border-amber-500/30 text-amber-300"
+              }`}
+            >
+              <Sparkles className={`w-3.5 h-3.5 ${isLight ? "text-[#b8801f]" : "text-amber-400"}`} />
               <span>Satsang Mandali • सत्संग मण्डली</span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif-sacred font-bold text-amber-100 tracking-tight">
-              Community Wisdom & In-App Discussions
+            <h1
+              className={`text-2xl sm:text-3xl lg:text-4xl font-serif-sacred font-bold tracking-tight ${
+                isLight ? "text-[#1b1740]" : "text-amber-100"
+              }`}
+            >
+              Community Wisdom &amp; In-App Discussions
             </h1>
 
-            <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
+            <p
+              className={`text-xs sm:text-sm leading-relaxed font-light ${
+                isLight ? "text-[#55526b]" : "text-stone-300"
+              }`}
+            >
               Connect with fellow practitioners, ask philosophical questions, explore Gita commentaries, and share daily
               Brahma Muhurta experiences in a safe, authentic sanctuary.
             </p>
@@ -359,7 +385,11 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                   setIsCreateOpen(true);
                 }
               }}
-              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-stone-950 font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95 flex items-center space-x-2 cursor-pointer"
+              className={`px-5 py-2.5 rounded-full font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95 flex items-center space-x-2 cursor-pointer ${
+                isLight
+                  ? "bg-[#d9a441] hover:bg-[#c99435] text-[#100e2b]"
+                  : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-stone-950"
+              }`}
             >
               <Plus className="w-4 h-4" />
               <span>Share Reflection</span>
@@ -367,7 +397,11 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
 
             <button
               onClick={() => setIsNotificationsOpen(true)}
-              className="relative p-2.5 rounded-2xl border border-stone-800 bg-stone-900/80 hover:bg-stone-800 text-stone-300 transition-all cursor-pointer"
+              className={`relative p-2.5 rounded-full border transition-all cursor-pointer ${
+                isLight
+                  ? "border-[#cfcbe0] bg-[#efedf6] hover:bg-white text-[#1b1740]"
+                  : "border-stone-800 bg-stone-900/80 hover:bg-stone-800 text-stone-300"
+              }`}
               title="Notifications"
               aria-label="Community Notifications"
             >
@@ -381,7 +415,11 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
 
             <button
               onClick={() => setIsGuidelinesOpen(true)}
-              className="p-2.5 rounded-2xl border border-stone-800 bg-stone-900/80 hover:bg-stone-800 text-amber-400 transition-all cursor-pointer"
+              className={`p-2.5 rounded-full border transition-all cursor-pointer ${
+                isLight
+                  ? "border-[#cfcbe0] bg-[#efedf6] hover:bg-white text-[#b8801f]"
+                  : "border-stone-800 bg-stone-900/80 hover:bg-stone-800 text-amber-400"
+              }`}
               title="Satsang Maryādā Guidelines"
               aria-label="Community Guidelines"
             >
@@ -391,7 +429,11 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
             {isModOrAdmin && (
               <button
                 onClick={() => setIsModConsoleOpen(true)}
-                className="px-3 py-2 rounded-2xl border border-amber-500/40 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer"
+                className={`px-3 py-2 rounded-2xl border text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                  isLight
+                    ? "border-[#f0cf8a] bg-[#fbf0d6] text-[#b8801f] hover:bg-[#f0cf8a]"
+                    : "border-amber-500/40 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25"
+                }`}
                 title="Open Moderator Console"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
@@ -404,11 +446,11 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
 
       {/* 2. SEARCH & MULTI-CRITERIA FILTERING / SORTING TOOLBAR */}
       <div className={`flex flex-col md:flex-row items-center justify-between gap-3 p-2 sm:p-2.5 rounded-2xl border transition-all ${
-        isLight ? "bg-[#FFFDF8] border-[#E8DCC2] shadow-sm" : "bg-stone-950/60 border-stone-800"
+        isLight ? "bg-white border-[#cfcbe0] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)]" : "bg-stone-950/60 border-stone-800"
       }`}>
         {/* Instant Search Field */}
         <div className="relative flex-1 w-full">
-          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${isLight ? "text-[#846D5B]" : "text-stone-400"}`} />
+          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${isLight ? "text-[#55526b]" : "text-stone-400"}`} />
           <input
             type="text"
             value={searchQuery}
@@ -416,14 +458,14 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
             placeholder="Search reflections by topic, verse (e.g. Gita 2.47), or teacher..."
             className={`w-full pl-10 pr-9 py-2 rounded-xl border text-xs sm:text-sm transition-all focus:outline-hidden ${
               isLight
-                ? "bg-[#FBF8EE] border-[#E8DCC2] focus:border-[#D96500] text-[#261B12] placeholder-[#846D5B]"
+                ? "bg-[#f7f6fb] border-[#cfcbe0] focus:border-[#d9a441] text-[#1d1b2e] placeholder-[#55526b]"
                 : "bg-stone-900/80 border-stone-800 focus:border-amber-400 text-stone-100"
             }`}
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? "text-[#846D5B] hover:text-[#261B12]" : "text-stone-400 hover:text-stone-200"}`}
+              className={`absolute right-3 top-1/2 -translate-y-1/2 ${isLight ? "text-[#55526b] hover:text-[#1b1740]" : "text-stone-400 hover:text-stone-200"}`}
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -435,7 +477,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
           role="tablist"
           aria-label="Community Feed Filter"
           className={`flex items-center space-x-1 p-1 rounded-xl border self-stretch md:self-auto overflow-x-auto shrink-0 ${
-            isLight ? "bg-[#F5EEDB] border-[#E8DCC2]" : "bg-stone-900 border-stone-800/80"
+            isLight ? "bg-[#efedf6] border-[#cfcbe0]" : "bg-stone-900 border-stone-800/80"
           }`}
         >
           {/* Criterion a: Newest (नूतन) */}
@@ -446,10 +488,10 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center space-x-1.5 ${
               sortOption === "newest"
                 ? isLight
-                  ? "bg-[#D96500] text-white shadow-xs font-bold"
+                  ? "bg-[#1b1740] text-[#f4f2ff] shadow-xs font-bold"
                   : "bg-amber-500 text-stone-950 shadow-md font-extrabold"
                 : isLight
-                ? "text-[#6E5C4E] hover:text-[#261B12] hover:bg-[#FFFDF8]"
+                ? "text-[#55526b] hover:text-[#1b1740] hover:bg-white"
                 : "text-stone-400 hover:text-stone-200"
             }`}
           >
@@ -465,10 +507,10 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center space-x-1.5 ${
               sortOption === "popular"
                 ? isLight
-                  ? "bg-[#D96500] text-white shadow-xs font-bold"
+                  ? "bg-[#1b1740] text-[#f4f2ff] shadow-xs font-bold"
                   : "bg-amber-500 text-stone-950 shadow-md font-extrabold"
                 : isLight
-                ? "text-[#6E5C4E] hover:text-[#261B12] hover:bg-[#FFFDF8]"
+                ? "text-[#55526b] hover:text-[#1b1740] hover:bg-white"
                 : "text-stone-400 hover:text-stone-200"
             }`}
           >
@@ -484,10 +526,10 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center space-x-1.5 ${
               sortOption === "my_discussions"
                 ? isLight
-                  ? "bg-[#D96500] text-white shadow-xs font-bold"
+                  ? "bg-[#1b1740] text-[#f4f2ff] shadow-xs font-bold"
                   : "bg-amber-500 text-stone-950 shadow-md font-extrabold"
                 : isLight
-                ? "text-[#6E5C4E] hover:text-[#261B12] hover:bg-[#FFFDF8]"
+                ? "text-[#55526b] hover:text-[#1b1740] hover:bg-white"
                 : "text-stone-400 hover:text-stone-200"
             }`}
           >
@@ -508,9 +550,11 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-all flex items-center space-x-1.5 cursor-pointer shrink-0 ${
                 isSelected
-                  ? "bg-amber-500 text-stone-950 border-amber-400 shadow-sm"
+                  ? isLight
+                    ? "bg-[#1b1740] text-[#f4f2ff] border-[#1b1740] shadow-xs"
+                    : "bg-amber-500 text-stone-950 border-amber-400 shadow-sm"
                   : isLight
-                  ? "bg-white/80 border-stone-300 text-stone-700 hover:border-amber-400"
+                  ? "bg-white border-[#cfcbe0] text-[#1d1b2e] hover:border-[#d9a441] hover:bg-[#fbf0d6]"
                   : "bg-stone-900/60 border-stone-800 text-stone-300 hover:border-amber-500/40"
               }`}
             >
@@ -529,9 +573,13 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="py-16 text-center rounded-3xl bg-stone-900/40 border border-stone-800 p-8 space-y-4"
+            className={`py-16 text-center rounded-[20px] border p-8 space-y-4 ${
+              isLight ? "bg-white border-[#cfcbe0] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)]" : "bg-stone-900/40 border-stone-800"
+            }`}
           >
-            <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto text-amber-400">
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto border ${
+              isLight ? "bg-[#fbf0d6] border-[#f0cf8a] text-[#b8801f]" : "bg-amber-500/10 border-amber-500/20 text-amber-400"
+            }`}>
               {sortOption === "my_discussions" ? (
                 <MessageCircle className="w-7 h-7" />
               ) : sortOption === "popular" ? (
@@ -542,14 +590,14 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
             </div>
 
             <div className="space-y-1">
-              <h3 className="text-base sm:text-lg font-bold text-stone-200">
+              <h3 className={`text-base sm:text-lg font-bold ${isLight ? "text-[#1b1740]" : "text-stone-200"}`}>
                 {sortOption === "my_discussions"
                   ? "You haven't posted any reflections or questions yet"
                   : sortOption === "popular"
                   ? "No trending discussions in this space yet"
                   : "No recent reflections in this category"}
               </h3>
-              <p className="text-xs sm:text-sm text-stone-400 max-w-md mx-auto leading-relaxed">
+              <p className={`text-xs sm:text-sm max-w-md mx-auto leading-relaxed ${isLight ? "text-[#55526b]" : "text-stone-400"}`}>
                 {sortOption === "my_discussions"
                   ? "Share a verse contemplation, ask a philosophy question on the Bhagavad Gita or Yoga Sutras, and engage with fellow seekers."
                   : sortOption === "popular"
@@ -561,7 +609,11 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
             <div className="pt-2 flex justify-center gap-3">
               <button
                 onClick={() => setIsCreateOpen(true)}
-                className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs shadow-md transition-transform active:scale-95 cursor-pointer flex items-center space-x-1.5"
+                className={`px-5 py-2.5 rounded-xl font-bold text-xs shadow-md transition-transform active:scale-95 cursor-pointer flex items-center space-x-1.5 ${
+                  isLight
+                    ? "bg-[#1b1740] hover:bg-[#2b2560] text-[#f4f2ff]"
+                    : "bg-amber-500 hover:bg-amber-400 text-stone-950"
+                }`}
               >
                 <Plus className="w-4 h-4" />
                 <span>
@@ -572,7 +624,11 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
               {sortOption !== "newest" && (
                 <button
                   onClick={() => handleSortChange("newest")}
-                  className="px-4 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold text-xs border border-stone-700 transition-colors"
+                  className={`px-4 py-2.5 rounded-xl font-semibold text-xs border transition-colors ${
+                    isLight
+                      ? "bg-[#efedf6] hover:bg-[#e4e1f0] text-[#1b1740] border-[#cfcbe0]"
+                      : "bg-stone-800 hover:bg-stone-700 text-stone-200 border-stone-700"
+                  }`}
                 >
                   Browse Newest Feed
                 </button>
@@ -594,14 +650,14 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
               <article
                 key={post.id}
                 onClick={() => setSelectedPost(post)}
-                className={`p-5 sm:p-6 rounded-3xl border transition-all cursor-pointer relative group ${
+                className={`p-5 sm:p-6 rounded-[20px] border transition-all cursor-pointer relative group ${
                   post.isPinned
                     ? isLight
-                      ? "bg-gradient-to-br from-[#FFFDF8] via-[#FFFDF8] to-[#FBEFD3] border-[#DECB9F] shadow-md"
-                      : "bg-gradient-to-br from-stone-900/90 via-stone-900/70 to-amber-950/20 border-amber-500/40 shadow-lg"
+                      ? "bg-[#fbf0d6]/80 border-[#d9a441] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] text-[#1d1b2e]"
+                      : "bg-gradient-to-br from-stone-900/90 via-stone-900/70 to-amber-950/20 border-amber-500/40 shadow-lg text-stone-100"
                     : isLight
-                    ? "bg-[#FFFDF8] border-[#E8DCC2] hover:border-[#DECB9F] text-[#261B12] shadow-xs"
-                    : "bg-stone-900/50 border-stone-800/80 hover:border-amber-500/30 hover:bg-stone-900/80 shadow-sm"
+                    ? "bg-white hover:bg-[#faf9fd] border-[#cfcbe0] hover:border-[#d9a441] text-[#1d1b2e] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] hover:shadow-[0_10px_30px_-12px_rgb(27_23_64_/_0.28)]"
+                    : "bg-stone-900/50 border-stone-800/80 hover:border-amber-500/30 hover:bg-stone-900/80 shadow-sm text-stone-100"
                 }`}
               >
                 {/* Author row */}
@@ -610,18 +666,18 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                     <img
                       src={post.authorAvatar}
                       alt={post.authorName}
-                      className={`w-9 h-9 rounded-full object-cover border ${isLight ? "border-[#DECB9F]" : "border-amber-500/30"}`}
+                      className={`w-9 h-9 rounded-full object-cover border ${isLight ? "border-[#cfcbe0]" : "border-amber-500/30"}`}
                     />
                     <div>
                       <div className="flex items-center space-x-2">
                         <span className={`text-xs sm:text-sm font-bold transition-colors ${
-                          isLight ? "text-[#261B12] group-hover:text-[#A64E04]" : "text-stone-100 group-hover:text-amber-200"
+                          isLight ? "text-[#1b1740] group-hover:text-[#b8801f]" : "text-stone-100 group-hover:text-amber-200"
                         }`}>
                           {post.authorName}
                         </span>
                         <span className={`text-[9.5px] font-mono px-2 py-0.5 rounded-full font-semibold border ${
                           isLight
-                            ? "bg-[#FBEFD3] text-[#874606] border-[#E8CF9A]"
+                            ? "bg-[#fbf0d6] text-[#b8801f] border-[#f0cf8a]/60"
                             : "bg-amber-500/15 text-amber-300 border-amber-500/25"
                         }`}>
                           {post.authorBadge}
@@ -629,7 +685,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                         {post.isPinned && (
                           <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full flex items-center space-x-1 border ${
                             isLight
-                              ? "bg-[#FBEFD3] text-[#874606] border-[#DECB9F]"
+                              ? "bg-[#fbf0d6] text-[#b8801f] border-[#d9a441]"
                               : "bg-orange-500/20 text-orange-400 border-orange-500/30"
                           }`}>
                             <Pin className="w-2.5 h-2.5" />
@@ -637,7 +693,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                           </span>
                         )}
                       </div>
-                      <span className={`text-[11px] ${isLight ? "text-[#6E5C4E]" : "text-stone-400"}`}>
+                      <span className={`text-[11px] ${isLight ? "text-[#55526b]" : "text-stone-400"}`}>
                         {new Date(post.createdAt).toLocaleDateString(undefined, {
                           month: "short",
                           day: "numeric",
@@ -651,7 +707,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                   <div className="flex items-center space-x-1.5" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={(e) => handleShare(post, e)}
-                      className={`p-1.5 rounded-full transition-colors ${isLight ? "text-[#6E5C4E] hover:text-[#261B12]" : "text-stone-400 hover:text-stone-200"}`}
+                      className={`p-1.5 rounded-full transition-colors ${isLight ? "text-[#55526b] hover:text-[#1b1740] hover:bg-[#efedf6]" : "text-stone-400 hover:text-stone-200"}`}
                       title={copiedPostId === post.id ? "Link copied!" : "Share"}
                     >
                       <Share2 className="w-4 h-4" />
@@ -661,8 +717,8 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                       onClick={() => communityService.toggleBookmark(post.id)}
                       className={`p-1.5 rounded-full transition-colors ${
                         isBookmarked
-                          ? isLight ? "fill-[#D96500] text-[#D96500]" : "fill-amber-400 text-amber-400"
-                          : isLight ? "text-[#6E5C4E] hover:text-[#D96500]" : "text-stone-400 hover:text-amber-300"
+                          ? isLight ? "fill-[#b8801f] text-[#b8801f]" : "fill-amber-400 text-amber-400"
+                          : isLight ? "text-[#55526b] hover:text-[#b8801f] hover:bg-[#efedf6]" : "text-stone-400 hover:text-amber-300"
                       }`}
                       title={isBookmarked ? "Remove bookmark" : "Bookmark"}
                     >
@@ -672,7 +728,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                     <div className="relative">
                       <button
                         onClick={() => setActiveMenuPostId(isMenuOpen ? null : post.id)}
-                        className={`p-1.5 rounded-full ${isLight ? "text-[#6E5C4E] hover:text-[#261B12]" : "text-stone-400 hover:text-stone-200"}`}
+                        className={`p-1.5 rounded-full ${isLight ? "text-[#55526b] hover:text-[#1b1740] hover:bg-[#efedf6]" : "text-stone-400 hover:text-stone-200"}`}
                         aria-label="More options"
                       >
                         <MoreVertical className="w-4 h-4" />
@@ -680,7 +736,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
 
                       {isMenuOpen && (
                         <div className={`absolute right-0 top-8 w-44 rounded-2xl border p-1.5 shadow-2xl z-30 space-y-1 ${
-                          isLight ? "bg-[#FFFDF8] border-[#E8DCC2]" : "bg-stone-900 border-stone-800"
+                          isLight ? "bg-white border-[#cfcbe0] text-[#1d1b2e]" : "bg-stone-900 border-stone-800"
                         }`}>
                           <button
                             onClick={() => {
@@ -688,7 +744,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                               setReportTarget({ type: "post", id: post.id });
                             }}
                             className={`w-full px-3 py-1.5 rounded-xl text-left text-xs font-semibold flex items-center space-x-2 cursor-pointer ${
-                              isLight ? "text-rose-700 hover:bg-rose-50" : "text-rose-300 hover:bg-rose-950/40"
+                              isLight ? "text-rose-600 hover:bg-rose-50" : "text-rose-300 hover:bg-rose-950/40"
                             }`}
                           >
                             <Flag className="w-3.5 h-3.5" />
@@ -702,7 +758,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                                 communityService.blockUser(post.authorId);
                               }}
                               className={`w-full px-3 py-1.5 rounded-xl text-left text-xs font-semibold flex items-center space-x-2 cursor-pointer ${
-                                isLight ? "text-[#6E5C4E] hover:bg-[#F5EEDB]" : "text-stone-400 hover:bg-stone-800"
+                                isLight ? "text-[#1d1b2e] hover:bg-[#efedf6]" : "text-stone-400 hover:bg-stone-800"
                               }`}
                             >
                               <UserX className="w-3.5 h-3.5" />
@@ -717,7 +773,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                                 communityService.togglePinPost(post.id);
                               }}
                               className={`w-full px-3 py-1.5 rounded-xl text-left text-xs font-semibold flex items-center space-x-2 cursor-pointer ${
-                                isLight ? "text-[#874606] hover:bg-[#FBEFD3]" : "text-amber-300 hover:bg-amber-950/40"
+                                isLight ? "text-[#b8801f] hover:bg-[#fbf0d6]" : "text-amber-300 hover:bg-amber-950/40"
                               }`}
                             >
                               <Pin className="w-3.5 h-3.5" />
@@ -732,21 +788,21 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
 
                 {/* Title */}
                 <h2 className={`text-base sm:text-lg font-bold font-serif-sacred transition-colors mb-2 ${
-                  isLight ? "text-[#261B12] group-hover:text-[#A64E04]" : "text-amber-100 group-hover:text-amber-200"
+                  isLight ? "text-[#1b1740] group-hover:text-[#b8801f]" : "text-amber-100 group-hover:text-amber-200"
                 }`}>
                   {post.title}
                 </h2>
 
                 {/* Canonical Scripture Citation Quote Box (if present) */}
                 {post.scriptureRef && (
-                  <div className={`mb-3 p-3 rounded-2xl border flex items-center justify-between ${
-                    isLight ? "bg-[#FBEFD3] border-[#DECB9F]" : "bg-amber-500/10 border-amber-500/25"
+                  <div className={`mb-3 p-3 rounded-xl border flex items-center justify-between ${
+                    isLight ? "bg-[#efedf6] border-[#cfcbe0]" : "bg-amber-500/10 border-amber-500/25"
                   }`}>
                     <div className="flex items-center space-x-2">
-                      <BookOpen className={`w-3.5 h-3.5 shrink-0 ${isLight ? "text-[#874606]" : "text-amber-400"}`} />
-                      <span className={`text-xs font-bold font-mono ${isLight ? "text-[#874606]" : "text-amber-300"}`}>{post.scriptureRef.verseRef}</span>
+                      <BookOpen className={`w-3.5 h-3.5 shrink-0 ${isLight ? "text-[#b8801f]" : "text-amber-400"}`} />
+                      <span className={`text-xs font-bold font-mono ${isLight ? "text-[#b8801f]" : "text-amber-300"}`}>{post.scriptureRef.verseRef}</span>
                       {post.scriptureRef.sanskritSnippet && (
-                        <span className={`text-xs font-sanskrit hidden sm:inline truncate max-w-sm ${isLight ? "text-[#4A3A2F]" : "text-amber-200/80"}`}>
+                        <span className={`text-xs font-sanskrit hidden sm:inline truncate max-w-sm ${isLight ? "text-[#1b1740] font-semibold" : "text-amber-200/80"}`}>
                           "{post.scriptureRef.sanskritSnippet}"
                         </span>
                       )}
@@ -757,7 +813,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                 {/* Body snippet */}
                 <p
                   className={`text-xs sm:text-sm line-clamp-3 leading-relaxed mb-4 ${
-                    isLight ? "text-[#4A3A2F]" : "text-stone-300"
+                    isLight ? "text-[#1d1b2e]" : "text-stone-300"
                   }`}
                 >
                   {post.body}
@@ -770,7 +826,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                       <span
                         key={idx}
                         className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
-                          isLight ? "bg-[#F5EEDB] border-[#E8DCC2] text-[#6E5C4E]" : "bg-stone-900 border-stone-800 text-stone-400"
+                          isLight ? "bg-[#efedf6] border-[#cfcbe0] text-[#55526b]" : "bg-stone-900 border-stone-800 text-stone-400"
                         }`}
                       >
                         #{t}
@@ -781,7 +837,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
 
                 {/* INTERACTIVE ACTION BAR: Animated Like Button & Threaded Reply Action */}
                 <div
-                  className={`flex items-center justify-between pt-3 border-t ${isLight ? "border-[#E8DCC2]" : "border-amber-500/15"}`}
+                  className={`flex items-center justify-between pt-3 border-t ${isLight ? "border-[#efedf6]" : "border-amber-500/15"}`}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-center space-x-2">
@@ -792,9 +848,11 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                       onClick={(e) => handleLikePost(post, e)}
                       className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center space-x-1.5 transition-colors cursor-pointer ${
                         likeState.isLiked
-                          ? "bg-rose-500/20 border-rose-400 text-rose-300 ring-1 ring-rose-400/40"
+                          ? isLight
+                            ? "bg-rose-50 border-rose-300 text-rose-600 ring-1 ring-rose-400/30"
+                            : "bg-rose-500/20 border-rose-400 text-rose-300 ring-1 ring-rose-400/40"
                           : isLight
-                          ? "bg-[#F5EEDB] border-[#E8DCC2] text-[#4A3A2F] hover:border-[#DECB9F] hover:text-rose-600"
+                          ? "bg-[#efedf6] border-[#cfcbe0] text-[#1b1740] hover:border-rose-300 hover:text-rose-600"
                           : "bg-stone-900/60 border-stone-800 text-stone-300 hover:border-rose-500/40 hover:text-rose-300"
                       }`}
                       title={likeState.isLiked ? "Unlike reflection" : "Like reflection"}
@@ -809,7 +867,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                       >
                         <Heart
                           className={`w-3.5 h-3.5 transition-colors ${
-                            likeState.isLiked ? "fill-rose-500 text-rose-400" : ""
+                            likeState.isLiked ? (isLight ? "fill-rose-500 text-rose-600" : "fill-rose-500 text-rose-400") : ""
                           }`}
                         />
                       </motion.div>
@@ -825,12 +883,16 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                       }}
                       className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
                         isThreadExpanded
-                          ? "bg-amber-500/20 border-amber-400 text-amber-300"
+                          ? isLight
+                            ? "bg-[#fbf0d6] border-[#d9a441] text-[#b8801f]"
+                            : "bg-amber-500/20 border-amber-400 text-amber-300"
+                          : isLight
+                          ? "bg-[#efedf6] border-[#cfcbe0] text-[#1b1740] hover:border-[#d9a441]"
                           : "bg-stone-900/60 border-stone-800 text-stone-300 hover:border-amber-500/30"
                       }`}
                       title="View & Post Threaded Replies"
                     >
-                      <MessageCircle className="w-3.5 h-3.5 text-amber-400" />
+                      <MessageCircle className={`w-3.5 h-3.5 ${isLight ? "text-[#b8801f]" : "text-amber-400"}`} />
                       <span>{post.commentsCount || 0} Replies</span>
                       {isThreadExpanded ? (
                         <ChevronUp className="w-3.5 h-3.5" />
@@ -843,7 +905,9 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                   {/* Open Full Dialog Detail */}
                   <button
                     onClick={() => setSelectedPost(post)}
-                    className="text-xs font-medium text-stone-400 hover:text-amber-300 transition-colors flex items-center space-x-1"
+                    className={`text-xs font-medium transition-colors flex items-center space-x-1 ${
+                      isLight ? "text-[#55526b] hover:text-[#b8801f]" : "text-stone-400 hover:text-amber-300"
+                    }`}
                   >
                     <span>Full Discussion</span>
                     <CornerDownRight className="w-3 h-3" />
@@ -859,17 +923,17 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.25 }}
                       onClick={(e) => e.stopPropagation()}
-                      className={`mt-4 pt-4 border-t space-y-4 ${isLight ? "border-[#E8DCC2]" : "border-stone-800/80"}`}
+                      className={`mt-4 pt-4 border-t space-y-4 ${isLight ? "border-[#cfcbe0]" : "border-stone-800/80"}`}
                     >
                       {/* Thread Header */}
                       <div className="flex items-center justify-between">
-                        <span className={`text-xs font-bold flex items-center space-x-1.5 ${isLight ? "text-[#874606]" : "text-amber-300"}`}>
+                        <span className={`text-xs font-bold flex items-center space-x-1.5 ${isLight ? "text-[#b8801f]" : "text-amber-300"}`}>
                           <MessageCircle className="w-3.5 h-3.5" />
                           <span>Threaded Discussion ({threadedComments.length} root reflections)</span>
                         </span>
                         <button
                           onClick={(e) => toggleThreadExpanded(post.id, e)}
-                          className={`text-[11px] font-semibold ${isLight ? "text-[#6E5C4E] hover:text-[#261B12]" : "text-stone-400 hover:text-stone-200"}`}
+                          className={`text-[11px] font-semibold ${isLight ? "text-[#55526b] hover:text-[#1b1740]" : "text-stone-400 hover:text-stone-200"}`}
                         >
                           Collapse thread
                         </button>
@@ -877,8 +941,8 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
 
                       {/* Threaded Comments List */}
                       {threadedComments.length === 0 ? (
-                        <div className={`py-4 text-center rounded-2xl p-4 border ${isLight ? "bg-[#F5EEDB] border-[#E8DCC2]" : "bg-stone-950/40 border-stone-800/60"}`}>
-                          <p className={`text-xs ${isLight ? "text-[#6E5C4E]" : "text-stone-400"}`}>
+                        <div className={`py-4 text-center rounded-2xl p-4 border ${isLight ? "bg-[#f7f6fb] border-[#cfcbe0]" : "bg-stone-950/40 border-stone-800/60"}`}>
+                          <p className={`text-xs ${isLight ? "text-[#55526b]" : "text-stone-400"}`}>
                             No comments yet. Share the first thoughtful answer or realization below!
                           </p>
                         </div>
@@ -889,7 +953,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                             return (
                               <div
                                 key={rootComment.id}
-                                className={`p-3.5 rounded-2xl border space-y-2 text-xs ${isLight ? "bg-[#F5EEDB] border-[#E8DCC2]" : "bg-stone-950/60 border-stone-800/70"}`}
+                                className={`p-3.5 rounded-2xl border space-y-2 text-xs ${isLight ? "bg-[#f7f6fb] border-[#cfcbe0]" : "bg-stone-950/60 border-stone-800/70"}`}
                               >
                                 {/* Root Comment Author */}
                                 <div className="flex items-center justify-between">
@@ -897,14 +961,14 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                                     <img
                                       src={rootComment.authorAvatar}
                                       alt={rootComment.authorName}
-                                      className={`w-6 h-6 rounded-full object-cover border ${isLight ? "border-[#DECB9F]" : "border-amber-500/20"}`}
+                                      className={`w-6 h-6 rounded-full object-cover border ${isLight ? "border-[#cfcbe0]" : "border-amber-500/20"}`}
                                     />
-                                    <span className={`font-bold ${isLight ? "text-[#261B12]" : "text-stone-200"}`}>{rootComment.authorName}</span>
-                                    <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-mono border ${isLight ? "bg-[#FBEFD3] text-[#874606] border-[#DECB9F]" : "bg-amber-500/10 text-amber-300"}`}>
+                                    <span className={`font-bold ${isLight ? "text-[#1b1740]" : "text-stone-200"}`}>{rootComment.authorName}</span>
+                                    <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-mono border ${isLight ? "bg-[#fbf0d6] text-[#b8801f] border-[#f0cf8a]" : "bg-amber-500/10 text-amber-300"}`}>
                                       {rootComment.authorBadge}
                                     </span>
                                   </div>
-                                  <span className={`text-[10px] ${isLight ? "text-[#6E5C4E]" : "text-stone-500"}`}>
+                                  <span className={`text-[10px] ${isLight ? "text-[#55526b]" : "text-stone-500"}`}>
                                     {new Date(rootComment.createdAt).toLocaleTimeString([], {
                                       hour: "2-digit",
                                       minute: "2-digit",
@@ -912,17 +976,17 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                                   </span>
                                 </div>
 
-                                <p className={`pl-8 leading-relaxed whitespace-pre-wrap ${isLight ? "text-[#4A3A2F]" : "text-stone-300"}`}>
+                                <p className={`pl-8 leading-relaxed whitespace-pre-wrap ${isLight ? "text-[#1d1b2e]" : "text-stone-300"}`}>
                                   {rootComment.body}
                                 </p>
 
                                 {/* Comment Actions: Inline Reply Button & Nested Replies Toggle */}
-                                <div className={`flex items-center justify-between pl-8 pt-1 text-[11px] ${isLight ? "text-[#6E5C4E]" : "text-stone-400"}`}>
+                                <div className={`flex items-center justify-between pl-8 pt-1 text-[11px] ${isLight ? "text-[#55526b]" : "text-stone-400"}`}>
                                   <button
                                     onClick={(e) =>
                                       handleInitiateReply(post.id, rootComment.id, rootComment.authorName, e)
                                     }
-                                    className={`font-bold flex items-center space-x-1 cursor-pointer ${isLight ? "text-[#874606] hover:text-[#A64E04]" : "hover:text-amber-300"}`}
+                                    className={`font-bold flex items-center space-x-1 cursor-pointer ${isLight ? "text-[#b8801f] hover:text-[#8f5d07]" : "hover:text-amber-300"}`}
                                   >
                                     <CornerDownRight className="w-3 h-3" />
                                     <span>Reply</span>
@@ -931,7 +995,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                                   {rootComment.replies && rootComment.replies.length > 0 && (
                                     <button
                                       onClick={(e) => toggleCollapseReplies(rootComment.id, e)}
-                                      className={`font-semibold flex items-center space-x-1 cursor-pointer ${isLight ? "text-[#D96500] hover:text-[#A64E04]" : "text-amber-400 hover:text-amber-300"}`}
+                                      className={`font-semibold flex items-center space-x-1 cursor-pointer ${isLight ? "text-[#b8801f] hover:text-[#8f5d07]" : "text-amber-400 hover:text-amber-300"}`}
                                     >
                                       <span>
                                         {areRepliesCollapsed
@@ -951,32 +1015,32 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                                 {!areRepliesCollapsed &&
                                   rootComment.replies &&
                                   rootComment.replies.length > 0 && (
-                                    <div className={`border-l-2 pl-4 ml-6 mt-2 space-y-2.5 ${isLight ? "border-[#D96500]/40" : "border-amber-500/30"}`}>
+                                    <div className={`border-l-2 pl-4 ml-6 mt-2 space-y-2.5 ${isLight ? "border-[#d9a441]/40" : "border-amber-500/30"}`}>
                                       {rootComment.replies.map((reply) => (
                                         <div
                                           key={reply.id}
-                                          className={`p-2.5 rounded-xl border space-y-1.5 ${isLight ? "bg-[#FFFDF8] border-[#E8DCC2]" : "bg-stone-900/70 border-stone-800/80"}`}
+                                          className={`p-2.5 rounded-xl border space-y-1.5 ${isLight ? "bg-white border-[#cfcbe0]" : "bg-stone-900/70 border-stone-800/80"}`}
                                         >
                                           <div className="flex items-center justify-between">
                                             <div className="flex items-center space-x-2">
                                               <img
                                                 src={reply.authorAvatar}
                                                 alt={reply.authorName}
-                                                className={`w-5 h-5 rounded-full object-cover border ${isLight ? "border-[#DECB9F]" : "border-amber-500/20"}`}
+                                                className={`w-5 h-5 rounded-full object-cover border ${isLight ? "border-[#cfcbe0]" : "border-amber-500/20"}`}
                                               />
-                                              <span className={`font-bold ${isLight ? "text-[#261B12]" : "text-stone-200"}`}>{reply.authorName}</span>
-                                              <span className={`text-[8.5px] px-1 rounded font-mono border ${isLight ? "bg-[#FBEFD3] text-[#874606] border-[#DECB9F]" : "bg-stone-800 text-stone-400"}`}>
+                                              <span className={`font-bold ${isLight ? "text-[#1b1740]" : "text-stone-200"}`}>{reply.authorName}</span>
+                                              <span className={`text-[8.5px] px-1 rounded font-mono border ${isLight ? "bg-[#fbf0d6] text-[#b8801f] border-[#f0cf8a]" : "bg-stone-800 text-stone-400"}`}>
                                                 {reply.authorBadge}
                                               </span>
                                             </div>
-                                            <span className={`text-[9.5px] ${isLight ? "text-[#6E5C4E]" : "text-stone-500"}`}>
+                                            <span className={`text-[9.5px] ${isLight ? "text-[#55526b]" : "text-stone-500"}`}>
                                               {new Date(reply.createdAt).toLocaleTimeString([], {
                                                 hour: "2-digit",
                                                 minute: "2-digit",
                                               })}
                                             </span>
                                           </div>
-                                          <p className={`pl-7 leading-relaxed ${isLight ? "text-[#4A3A2F]" : "text-stone-300"}`}>{reply.body}</p>
+                                          <p className={`pl-7 leading-relaxed ${isLight ? "text-[#1d1b2e]" : "text-stone-300"}`}>{reply.body}</p>
                                         </div>
                                       ))}
                                     </div>
@@ -991,7 +1055,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                       <form onSubmit={(e) => handleSubmitInlineComment(post.id, e)} className="space-y-2 pt-2">
                         {activeReplyInput.parentCommentId && (
                           <div className={`flex items-center justify-between text-xs px-3 py-1 rounded-xl border ${
-                            isLight ? "bg-[#FBEFD3] border-[#DECB9F] text-[#874606]" : "bg-amber-500/15 border-amber-500/30 text-amber-300"
+                            isLight ? "bg-[#fbf0d6] border-[#f0cf8a] text-[#b8801f]" : "bg-amber-500/15 border-amber-500/30 text-amber-300"
                           }`}>
                             <span className="flex items-center space-x-1.5">
                               <CornerDownRight className="w-3 h-3" />
@@ -1006,7 +1070,7 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                                   [post.id]: { parentCommentId: undefined, authorName: undefined, text: prev[post.id]?.text || "" },
                                 }));
                               }}
-                              className={`transition-colors ${isLight ? "text-[#6E5C4E] hover:text-[#261B12]" : "text-stone-400 hover:text-white"}`}
+                              className={`transition-colors ${isLight ? "text-[#55526b] hover:text-[#1b1740]" : "text-stone-400 hover:text-white"}`}
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -1033,14 +1097,18 @@ export const CommunityBoardView: React.FC<CommunityBoardViewProps> = ({
                             }
                             className={`flex-1 px-3.5 py-2 rounded-xl border text-xs transition-all focus:outline-hidden ${
                               isLight
-                                ? "bg-[#FFFDF8] border-[#E8DCC2] focus:border-[#D96500] text-[#261B12] placeholder-[#846D5B]"
+                                ? "bg-white border-[#cfcbe0] focus:border-[#d9a441] text-[#1d1b2e] placeholder-[#55526b]"
                                 : "bg-stone-950 border-stone-800 focus:border-amber-400 text-stone-100"
                             }`}
                           />
                           <button
                             type="submit"
                             disabled={!activeReplyInput.text?.trim()}
-                            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-stone-950 font-bold text-xs shadow transition-transform active:scale-95 flex items-center space-x-1.5 shrink-0 cursor-pointer"
+                            className={`px-4 py-2 rounded-xl disabled:opacity-40 font-bold text-xs shadow transition-transform active:scale-95 flex items-center space-x-1.5 shrink-0 cursor-pointer ${
+                              isLight
+                                ? "bg-[#1b1740] hover:bg-[#2b2560] text-[#f4f2ff]"
+                                : "bg-amber-500 hover:bg-amber-400 text-stone-950"
+                            }`}
                           >
                             <Send className="w-3.5 h-3.5" />
                             <span>{activeReplyInput.parentCommentId ? "Reply" : "Comment"}</span>

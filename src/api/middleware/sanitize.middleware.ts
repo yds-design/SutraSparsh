@@ -10,6 +10,10 @@ export function sanitizeMiddleware(
   _res: Response,
   next: NextFunction
 ): void {
+  // Only sanitize /api requests; do not mutate query parameters on Vite internal module imports
+  if (!req.path.startsWith("/api")) {
+    return next();
+  }
   try {
     if (req.body && typeof req.body === "object") {
       req.body = Sanitizer.sanitizePayload(req.body);

@@ -1,18 +1,19 @@
 @import "tailwindcss";
+@import "./styles/sutrasparsh-theme.css";
 @import "./styles/golden-hour.css";
 @import "./styles/prism-pulse.css";
 
 @layer base {
   body {
-    font-family: 'Manrope', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-family: 'Hanken Grotesk', 'Manrope', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   }
 
   .font-serif-sacred {
-    font-family: 'Fraunces', 'Cinzel', serif;
+    font-family: 'Newsreader', 'Fraunces', 'Cinzel', serif;
   }
 
   .font-sanskrit {
-    font-family: 'Tiro Devanagari Sanskrit', 'Noto Serif Devanagari', 'Yatra One', serif;
+    font-family: 'Tiro Devanagari Hindi', 'Tiro Devanagari Sanskrit', 'Noto Serif Devanagari', 'Yatra One', serif;
   }
 }
 
@@ -23,6 +24,64 @@
 
 .animate-fadeIn {
   animation: fadeIn 0.22s ease-out forwards;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Fluid Sacred Micro-Interactions & Slide-In Animations
+   ══════════════════════════════════════════════════════════════ */
+@keyframes slideUpFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideUpFadeIn {
+  animation: slideUpFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes verseCardIn {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-verseCardIn {
+  animation: verseCardIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes verseModalSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(22px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-verseModalSlideIn {
+  animation: verseModalSlideIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Accessibility: respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-slideUpFadeIn,
+  .animate-verseCardIn,
+  .animate-verseModalSlideIn {
+    animation: fadeIn 0.15s ease-out forwards;
+    transform: none !important;
+  }
 }
 
 @keyframes speakPulse {
@@ -87,7 +146,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════════
-   Parchment Dawn Design System Semantic Tokens (FR-01)
+   Parchment Dawn Design System Semantic Tokens (SutraSparsh Theme)
    ══════════════════════════════════════════════════════════════ */
 :root,
 [data-theme="light"],
@@ -95,28 +154,43 @@
 .theme-light,
 .theme-parchment-dawn,
 .parchment-dawn {
-  /* Canvas & Surfaces */
-  --color-canvas-bg: #FBF8EE;
-  --color-surface-card: #FFFDF8;
-  --color-surface-subtle: #F5EEDB;
-  --color-border-subtle: #E8DCC2;
-  --color-border-highlight: #DECB9F;
+  /* Canvas & Surfaces: Ash 50 (#f7f6fb) canvas with pure white (#ffffff) Restro-style cards */
+  --color-canvas-bg: #f7f6fb;
+  --color-surface-card: #ffffff;
+  --color-surface-card-gradient: none;
+  --color-border-subtle: #cfcbe0;
+  --color-border-highlight: #d9a441;
 
-  /* Typography Hierarchy (>4.5:1 to 15.2:1 contrast) */
-  --color-text-title: #261B12;
-  --color-text-body: #4A3A2F;
-  --color-text-muted: #6E5C4E;
-  --color-text-sacred-accent: #A64E04;
+  /* Typography Hierarchy */
+  --color-text-title: #1b1740;
+  --color-text-body: #1d1b2e;
+  --color-text-muted: #55526b;
+  --color-text-sacred-accent: #b8801f;
+  --color-card-title: #1b1740;
+  --color-card-body: #1d1b2e;
+  --color-card-accent: #b8801f;
 
   /* Interactive Elements */
-  --color-action-primary: #E05A1B;
-  --color-action-primary-hover: #C54C13;
-  --color-action-primary-text: #FFFFFF;
-  --color-action-secondary-bg: #FDF3DF;
-  --color-action-secondary-text: #874606;
-  --color-action-secondary-border: #E8CF9A;
+  --color-action-primary: #1b1740;
+  --color-action-primary-hover: #100e2b;
+  --color-action-primary-text: #f4f2ff;
+  --color-action-secondary-bg: #fbf0d6;
+  --color-action-secondary-text: #b8801f;
+  --color-action-secondary-border: #f0cf8a;
 
-  /* Soft Ambient Elevation Shadow */
-  --shadow-parchment-card: 0 4px 20px -2px rgba(80, 50, 20, 0.06), 0 0 0 1px rgba(222, 203, 159, 0.4);
+  /* Card Elevation Shadow */
+  --shadow-parchment-card: 0 1px 2px rgb(27 23 64 / 0.06);
 }
+
+/* ══════════════════════════════════════════════════════════════
+   SutraSparsh Card Component Theme (.ss-card / .card-sacred-timber)
+   ══════════════════════════════════════════════════════════════ */
+.card-sacred-timber {
+  background: #ffffff;
+  border: 1px solid #cfcbe0;
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgb(27 23 64 / 0.06);
+  color: #1d1b2e;
+}
+
 

@@ -49,6 +49,10 @@ SutraSparsh v1.0.0 marks the official initial production release of the digital 
 - `FIX-SEC-02`: Hardened search tokenization regexes against ReDoS vulnerability patterns.
 - `FIX-CORPUS-03`: Preserved Unicode virama and matra sequences during text normalization.
 - `FIX-PERF-04`: Added bounded LRU eviction to inverted index cache to cap peak heap consumption.
+- `FIX-PERF-05`: Scoped Express `rateLimiterMiddleware`, `sanitizeMiddleware`, and `timeoutMiddleware` strictly to `/api/*` endpoints, eliminating HTTP 429 throttling on Vite development modules.
+- `FIX-UI-06`: Unified Parchment Dawn palette with pure white card surfaces (`#ffffff`), Night Indigo headers (`#1b1740`), Soft Ink typography (`#55526b`), and Diya Gold accents (`#b8801f`) across Explore, Search, Community Board, and Personal Sanctuary.
+- `FIX-RESIL-07`: Integrated top-level React `ErrorBoundary` (`src/components/ErrorBoundary.tsx`) in `src/main.tsx` with one-tap reload and session cache reset controls.
+- `FIX-SEC-08`: Configured `Content-Security-Policy` with `frame-ancestors *` and full `media-src` permissions to support seamless AI Studio preview iframe embedding and 432Hz audio playback.
 
 ---
 

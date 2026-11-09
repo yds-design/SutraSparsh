@@ -138,6 +138,16 @@ export function rateLimiterMiddleware(
   res: Response,
   next: NextFunction
 ): void {
+  // In development mode (npm run dev / local developer environment), bypass rate limiting completely
+  if (process.env.NODE_ENV !== "production") {
+    return next();
+  }
+
+  // CRITICAL: Never throttle Vite development assets, static files, scripts, or non-API routes
+  if (!req.path.startsWith("/api")) {
+    return next();
+  }
+
   // Allow health endpoints, test routes, admin tokens, and status probes to bypass rate limiting
   if (
     req.path.startsWith("/api/health") ||

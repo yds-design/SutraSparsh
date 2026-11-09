@@ -6,6 +6,9 @@ export function telemetryMiddleware(
   res: Response,
   next: NextFunction
 ): void {
+  if (!req.path.startsWith("/api")) {
+    return next();
+  }
   const start = performance.now();
   const path = req.path;
   const method = req.method;

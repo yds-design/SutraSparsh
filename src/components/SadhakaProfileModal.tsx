@@ -112,20 +112,20 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
           className="w-full max-w-full sm:max-w-lg min-h-dvh sm:min-h-0 sm:my-auto rounded-none sm:rounded-3xl shadow-2xl border overflow-hidden relative transition-all flex flex-col"
         style={{
           backgroundColor: isLight
-            ? "#FFFBF5"
+            ? "#f7f6fb"
             : isFestival
             ? "#4B0E17"
             : isAmethyst
             ? "#140A28"
             : "#1C120B",
           borderColor: isLight
-            ? "#E6D7C3"
+            ? "#cfcbe0"
             : isFestival
             ? "rgba(255, 138, 0, 0.35)"
             : isAmethyst
             ? "rgba(196, 168, 230, 0.3)"
             : "rgba(216, 137, 22, 0.3)",
-          color: isLight ? "#3A2818" : "#F4E9D2",
+          color: isLight ? "#1d1b2e" : "#F4E9D2",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -140,7 +140,7 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
               : isAmethyst
               ? "linear-gradient(135deg, #1E1038, #351C5E)"
               : "linear-gradient(135deg, #24160D, #3A281B)",
-            borderColor: isLight ? "#E6D7C3" : "rgba(255, 255, 255, 0.08)",
+            borderColor: isLight ? "#cfcbe0" : "rgba(255, 255, 255, 0.08)",
           }}
         >
           {/* Close button */}
@@ -149,8 +149,8 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
             aria-label="Close Profile"
             className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
             style={{
-              backgroundColor: isLight ? "rgba(58, 40, 24, 0.08)" : "rgba(255, 255, 255, 0.1)",
-              color: isLight ? "#3A2818" : "#F4E9D2",
+              backgroundColor: isLight ? "rgba(27, 23, 64, 0.08)" : "rgba(255, 255, 255, 0.1)",
+              color: isLight ? "#1b1740" : "#F4E9D2",
             }}
           >
             <X className="w-5 h-5" />
@@ -190,30 +190,30 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
                 <h2
                   id="profile-modal-title"
                   className="font-serif-sacred text-xl font-bold truncate"
-                  style={{ color: isLight ? "#3A2818" : "#F4E9D2" }}
+                  style={{ color: isLight ? "#1b1740" : "#F4E9D2" }}
                 >
                   {currentUser ? currentUser.displayName : "Guest Sādhaka"}
                 </h2>
                 <span
                   className="text-[10px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0 uppercase tracking-wider"
                   style={{
-                    backgroundColor: isLight ? "rgba(216, 137, 22, 0.15)" : "rgba(216, 137, 22, 0.2)",
-                    borderColor: "#D88916",
-                    color: isLight ? "#B9680D" : "#F2B333",
+                    backgroundColor: isLight ? "#fbf0d6" : "rgba(216, 137, 22, 0.2)",
+                    borderColor: isLight ? "#f0cf8a" : "#D88916",
+                    color: isLight ? "#b8801f" : "#F2B333",
                   }}
                 >
                   {currentUser ? (currentUser.provider === "google" ? "Google" : "Email") : "Guest"}
                 </span>
               </div>
               <p
-                className="text-xs font-sanskrit mt-0.5"
-                style={{ color: isLight ? "#8A7763" : "#B9A995" }}
+                className="text-xs font-sanskrit mt-0.5 font-medium"
+                style={{ color: isLight ? "#55526b" : "#B9A995" }}
               >
                 {currentUser?.spiritualTitle || "साधना स्तर ३ • ज्ञान एवं कर्म योग खोजी"}
               </p>
               <p
                 className="text-[11px] mt-0.5 truncate font-mono"
-                style={{ color: isLight ? "#6B5844" : "#8A7961" }}
+                style={{ color: isLight ? "#55526b" : "#8A7961" }}
               >
                 {currentUser ? currentUser.email : "Not signed in • Tap below to link account"}
               </p>
@@ -225,10 +225,14 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
         <div className="p-5 space-y-5 overflow-y-auto flex-1">
           {/* Sacred Streak Card */}
           <div
-            className="p-4 rounded-2xl border"
+            className="p-4 rounded-2xl border shadow-xs"
             style={{
-              backgroundColor: isLight ? "#FFFFFF" : isFestival ? "#5E111C" : "rgba(36, 22, 13, 0.6)",
-              borderColor: isLight ? "#E6D7C3" : "rgba(216, 137, 22, 0.3)",
+              background: isLight
+                ? "#ffffff"
+                : isFestival
+                ? "#5E111C"
+                : "rgba(36, 22, 13, 0.6)",
+              borderColor: isLight ? "#cfcbe0" : "rgba(216, 137, 22, 0.3)",
             }}
           >
             <div className="flex items-center justify-between mb-3">
@@ -237,10 +241,10 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
                   <Flame className="w-4 h-4 fill-amber-500" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold" style={{ color: isLight ? "#3A2818" : "#F4E9D2" }}>
+                  <div className="text-xs font-bold" style={{ color: isLight ? "#1b1740" : "#F4E9D2" }}>
                     Daily Sacred Streak
                   </div>
-                  <div className="text-[10px]" style={{ color: isLight ? "#8A7763" : "#B9A995" }}>
+                  <div className="text-[10px]" style={{ color: isLight ? "#55526b" : "#B9A995" }}>
                     नित्य नियम • Daily Shloka Contemplation
                   </div>
                 </div>
@@ -249,26 +253,26 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
                 <div className="text-lg font-black text-amber-500">
                   {streakData.currentStreak || 4} Days
                 </div>
-                <div className="text-[10px] text-emerald-500 font-semibold">Active Today ✓</div>
+                <div className="text-[10px] text-emerald-600 font-semibold">Active Today ✓</div>
               </div>
             </div>
 
             {/* Weekly Habit Dots */}
-            <div className="grid grid-cols-7 gap-2 pt-2 border-t border-white/5">
+            <div className={`grid grid-cols-7 gap-2 pt-2 border-t ${isLight ? "border-[#efedf6]" : "border-white/5"}`}>
               {daysOfWeek.map((day, idx) => {
                 const isCompleted = idx <= currentDayIndex;
                 const isToday = idx === currentDayIndex;
                 return (
                   <div key={idx} className="flex flex-col items-center space-y-1">
-                    <span className="text-[10px] font-bold" style={{ color: isLight ? "#8A7763" : "#8A7961" }}>
+                    <span className="text-[10px] font-bold" style={{ color: isLight ? "#55526b" : "#8A7961" }}>
                       {day}
                     </span>
                     <div
                       className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
                         isCompleted
-                          ? "bg-amber-500 text-stone-950 shadow-sm"
+                          ? "bg-amber-500 text-stone-950 shadow-xs"
                           : isLight
-                          ? "bg-stone-200 text-stone-400"
+                          ? "bg-[#efedf6] text-[#55526b] border border-[#cfcbe0]"
                           : "bg-white/5 text-stone-600"
                       } ${isToday ? "ring-2 ring-amber-400" : ""}`}
                     >
@@ -285,17 +289,21 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
             {/* 1. Saved */}
             <div
               onClick={() => handleNavigate("my-journey")}
-              className="p-3 rounded-2xl border text-center cursor-pointer hover:scale-[1.02] active:scale-95 transition-all"
+              className="p-3 rounded-2xl border text-center cursor-pointer hover:scale-[1.02] active:scale-95 transition-all shadow-xs"
               style={{
-                backgroundColor: isLight ? "#FFFFFF" : isFestival ? "#5E111C" : "rgba(36, 22, 13, 0.6)",
-                borderColor: isLight ? "#E6D7C3" : "rgba(255, 255, 255, 0.08)",
+                background: isLight
+                  ? "#ffffff"
+                  : isFestival
+                  ? "#5E111C"
+                  : "rgba(36, 22, 13, 0.6)",
+                borderColor: isLight ? "#cfcbe0" : "rgba(255, 255, 255, 0.08)",
               }}
             >
               <Bookmark className="w-4 h-4 mx-auto mb-1 text-amber-500" />
-              <div className="text-base font-extrabold" style={{ color: isLight ? "#3A2818" : "#F4E9D2" }}>
+              <div className="text-base font-extrabold" style={{ color: isLight ? "#1b1740" : "#F4E9D2" }}>
                 {savedCount}
               </div>
-              <div className="text-[10px]" style={{ color: isLight ? "#8A7763" : "#B9A995" }}>
+              <div className="text-[10px] font-medium" style={{ color: isLight ? "#55526b" : "#B9A995" }}>
                 Saved Verses
               </div>
             </div>
@@ -303,17 +311,21 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
             {/* 2. Reflections */}
             <div
               onClick={() => handleNavigate("my-journey")}
-              className="p-3 rounded-2xl border text-center cursor-pointer hover:scale-[1.02] active:scale-95 transition-all"
+              className="p-3 rounded-2xl border text-center cursor-pointer hover:scale-[1.02] active:scale-95 transition-all shadow-xs"
               style={{
-                backgroundColor: isLight ? "#FFFFFF" : isFestival ? "#5E111C" : "rgba(36, 22, 13, 0.6)",
-                borderColor: isLight ? "#E6D7C3" : "rgba(255, 255, 255, 0.08)",
+                background: isLight
+                  ? "#ffffff"
+                  : isFestival
+                  ? "#5E111C"
+                  : "rgba(36, 22, 13, 0.6)",
+                borderColor: isLight ? "#cfcbe0" : "rgba(255, 255, 255, 0.08)",
               }}
             >
-              <Feather className="w-4 h-4 mx-auto mb-1 text-rose-400" />
-              <div className="text-base font-extrabold" style={{ color: isLight ? "#3A2818" : "#F4E9D2" }}>
+              <Feather className="w-4 h-4 mx-auto mb-1 text-rose-500" />
+              <div className="text-base font-extrabold" style={{ color: isLight ? "#1b1740" : "#F4E9D2" }}>
                 {journalCount || 3}
               </div>
-              <div className="text-[10px]" style={{ color: isLight ? "#8A7763" : "#B9A995" }}>
+              <div className="text-[10px] font-medium" style={{ color: isLight ? "#55526b" : "#B9A995" }}>
                 Reflections
               </div>
             </div>
@@ -321,17 +333,21 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
             {/* 3. Audio Chants */}
             <div
               onClick={() => handleNavigate("today")}
-              className="p-3 rounded-2xl border text-center cursor-pointer hover:scale-[1.02] active:scale-95 transition-all"
+              className="p-3 rounded-2xl border text-center cursor-pointer hover:scale-[1.02] active:scale-95 transition-all shadow-xs"
               style={{
-                backgroundColor: isLight ? "#FFFFFF" : isFestival ? "#5E111C" : "rgba(36, 22, 13, 0.6)",
-                borderColor: isLight ? "#E6D7C3" : "rgba(255, 255, 255, 0.08)",
+                background: isLight
+                  ? "#ffffff"
+                  : isFestival
+                  ? "#5E111C"
+                  : "rgba(36, 22, 13, 0.6)",
+                borderColor: isLight ? "#cfcbe0" : "rgba(255, 255, 255, 0.08)",
               }}
             >
-              <Volume2 className="w-4 h-4 mx-auto mb-1 text-emerald-400" />
-              <div className="text-base font-extrabold" style={{ color: isLight ? "#3A2818" : "#F4E9D2" }}>
+              <Volume2 className="w-4 h-4 mx-auto mb-1 text-emerald-600" />
+              <div className="text-base font-extrabold" style={{ color: isLight ? "#1b1740" : "#F4E9D2" }}>
                 48m
               </div>
-              <div className="text-[10px]" style={{ color: isLight ? "#8A7763" : "#B9A995" }}>
+              <div className="text-[10px] font-medium" style={{ color: isLight ? "#55526b" : "#B9A995" }}>
                 Chanting Time
               </div>
             </div>
@@ -378,37 +394,41 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
 
           {/* Multi-Device Cloud Sync Status */}
           <div className="space-y-1.5">
-            <div className="text-[11px] font-bold uppercase tracking-wider flex items-center space-x-1.5" style={{ color: isLight ? "#6B5844" : "#D88916" }}>
+            <div className="text-[11px] font-bold uppercase tracking-wider flex items-center space-x-1.5" style={{ color: isLight ? "#55526b" : "#D88916" }}>
               <span>MULTI-DEVICE CLOUD SYNC (FIRESTORE)</span>
             </div>
-            <CloudSyncStatusBadge />
+            <CloudSyncStatusBadge theme={theme} />
           </div>
 
           {/* Whitelist Atmosphere Selector: Parchment Dawn & Golden Hour */}
           {onSelectTheme && (
             <div className="space-y-2">
-              <div className="text-[11px] font-bold uppercase tracking-wider flex items-center justify-between" style={{ color: isLight ? "#6B5844" : "#D88916" }}>
+              <div className="text-[11px] font-bold uppercase tracking-wider flex items-center justify-between" style={{ color: isLight ? "#55526b" : "#D88916" }}>
                 <div className="flex items-center space-x-1.5">
                   <Palette className="w-3.5 h-3.5" />
                   <span>SACRED ATMOSPHERE (THEME WHITELIST)</span>
                 </div>
                 <span className="text-[10px] font-normal opacity-80">2 Active Themes</span>
               </div>
-              <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl border" style={{ backgroundColor: isLight ? "#FFFFFF" : "rgba(0,0,0,0.3)", borderColor: isLight ? "#E6D7C3" : "rgba(255,255,255,0.08)" }}>
+              <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl border" style={{ background: isLight ? "#ffffff" : "rgba(0,0,0,0.3)", borderColor: isLight ? "#cfcbe0" : "rgba(255,255,255,0.08)" }}>
                 {/* 1. Parchment Dawn */}
                 <button
                   type="button"
                   onClick={() => onSelectTheme("light")}
                   className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center space-x-2.5 transition-all cursor-pointer ${
                     theme === "light"
-                      ? "bg-amber-500 text-stone-950 shadow-md ring-2 ring-amber-400"
+                      ? "bg-[#d9a441] text-[#100e2b] shadow-sm ring-1 ring-[#b8801f]"
+                      : isLight
+                      ? "text-[#1b1740] hover:bg-[#efedf6]"
                       : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
                   }`}
                 >
                   <span className="text-lg">☀️</span>
                   <div className="text-left">
                     <div className="font-bold">Parchment Dawn</div>
-                    <div className="text-[10px] font-sanskrit opacity-75">चन्दन एवं पत्र</div>
+                    <div className={`text-[10px] font-sanskrit ${theme === "light" ? "opacity-90 text-[#100e2b]" : isLight ? "text-[#b8801f]" : "opacity-75"}`}>
+                      चन्दन एवं पत्र
+                    </div>
                   </div>
                 </button>
 
@@ -419,13 +439,17 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
                   className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center space-x-2.5 transition-all cursor-pointer ${
                     theme === "golden-hour"
                       ? "bg-gradient-to-r from-[#C9822B] to-[#F6DFA6] text-stone-950 shadow-md ring-2 ring-amber-400"
+                      : isLight
+                      ? "text-[#1b1740] hover:bg-[#efedf6]"
                       : "text-stone-400 hover:text-stone-200 hover:bg-white/5"
                   }`}
                 >
                   <span className="text-lg">🌅</span>
                   <div className="text-left">
                     <div className="font-bold">Golden Hour</div>
-                    <div className="text-[10px] font-sanskrit opacity-75">गोधूलि वेला</div>
+                    <div className={`text-[10px] font-sanskrit ${theme === "golden-hour" ? "opacity-90" : isLight ? "text-[#b8801f]" : "opacity-75"}`}>
+                      गोधूलि वेला
+                    </div>
                   </div>
                 </button>
               </div>
@@ -436,17 +460,18 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
           <div className="space-y-1.5 pt-1">
             <button
               onClick={() => handleNavigate("my-journey")}
-              className="w-full py-3 px-4 rounded-xl border flex items-center justify-between text-xs font-bold transition-all hover:bg-white/5 active:scale-[0.99] cursor-pointer"
+              className="w-full py-3 px-4 rounded-xl border flex items-center justify-between text-xs font-bold transition-all hover:brightness-105 active:scale-[0.99] cursor-pointer shadow-xs"
               style={{
-                borderColor: isLight ? "#E6D7C3" : "rgba(255, 255, 255, 0.08)",
-                color: isLight ? "#3A2818" : "#F4E9D2",
+                background: isLight ? "#ffffff" : undefined,
+                borderColor: isLight ? "#cfcbe0" : "rgba(255, 255, 255, 0.08)",
+                color: isLight ? "#1b1740" : "#F4E9D2",
               }}
             >
               <div className="flex items-center space-x-2.5">
-                <Bookmark className="w-4 h-4 text-amber-500" />
+                <Bookmark className={`w-4 h-4 ${isLight ? "text-[#b8801f]" : "text-amber-400"}`} />
                 <span>View Full Sādhana Journey & Saved Verses</span>
               </div>
-              <ArrowRight className="w-4 h-4 text-stone-400" />
+              <ArrowRight className={`w-4 h-4 ${isLight ? "text-[#b8801f]" : "text-stone-400"}`} />
             </button>
 
             {isGurudakshinaEnabled && (
@@ -457,8 +482,8 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
                 }}
                 className="w-full py-3 px-4 rounded-xl border flex items-center justify-between text-xs font-bold transition-all hover:bg-white/5 active:scale-[0.99] cursor-pointer"
                 style={{
-                  borderColor: isLight ? "#E6D7C3" : "rgba(255, 255, 255, 0.08)",
-                  color: isLight ? "#3A2818" : "#F4E9D2",
+                  borderColor: isLight ? "#cfcbe0" : "rgba(255, 255, 255, 0.08)",
+                  color: isLight ? "#1b1740" : "#F4E9D2",
                 }}
               >
                 <div className="flex items-center space-x-2.5">
@@ -487,13 +512,17 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
                   onClose();
                   if (onOpenAuth) onOpenAuth();
                 }}
-                className="w-full py-3 px-4 rounded-xl border border-amber-500/40 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 flex items-center justify-between text-xs font-bold transition-all active:scale-[0.99] cursor-pointer"
+                className={`w-full py-3 px-4 rounded-xl flex items-center justify-between text-xs font-bold transition-all active:scale-[0.99] cursor-pointer shadow-xs ${
+                  isLight
+                    ? "bg-[#fbf0d6] hover:bg-[#f0cf8a] text-[#b8801f] border border-[#f0cf8a]"
+                    : "border border-amber-500/40 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200"
+                }`}
               >
                 <div className="flex items-center space-x-2.5">
-                  <LogIn className="w-4 h-4 text-amber-400" />
+                  <LogIn className={`w-4 h-4 ${isLight ? "text-[#b8801f]" : "text-amber-400"}`} />
                   <span>Sign In via Gmail / Firebase or Email ID</span>
                 </div>
-                <ArrowRight className="w-4 h-4 text-amber-400" />
+                <ArrowRight className={`w-4 h-4 ${isLight ? "text-[#b8801f]" : "text-amber-400"}`} />
               </button>
             )}
 
@@ -517,9 +546,9 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
         <div
           className="p-4 border-t text-center text-[10px]"
           style={{
-            borderColor: isLight ? "#E6D7C3" : "rgba(255, 255, 255, 0.08)",
-            color: isLight ? "#8A7763" : "#8A7961",
-            backgroundColor: isLight ? "#F6EDE1" : "rgba(0, 0, 0, 0.2)",
+            borderColor: isLight ? "#cfcbe0" : "rgba(255, 255, 255, 0.08)",
+            color: isLight ? "#55526b" : "#8A7961",
+            backgroundColor: isLight ? "#efedf6" : "rgba(0, 0, 0, 0.2)",
           }}
         >
           ॐ स्पर्श से संस्कार, विचार से विस्तार • SutraSparsh Sādhana Engine

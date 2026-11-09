@@ -78,7 +78,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
   const { isSadhakaEnabled, isGurudakshinaEnabled } = useFeatureFlags();
 
   const bannerBgClass = isLight
-    ? "bg-[#FFFDF8] border-[#E8DCC2] text-[#261B12] shadow-sm"
+    ? "bg-white border border-[#cfcbe0] text-[#1d1b2e] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] hover:shadow-[0_10px_30px_-12px_rgb(27_23_64_/_0.28)] hover:border-[#d9a441] rounded-[28px]"
     : isPrismPulse
     ? "bg-white border-stone-200 text-[#1e1b2e] shadow-xs"
     : isFestival
@@ -194,21 +194,26 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fadeIn">
       {/* Journey Banner & Philosophy Header */}
-      <div className={`relative overflow-hidden rounded-3xl border p-6 sm:p-10 ${bannerBgClass}`}>
-        <div className="absolute -top-10 -right-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Journey Banner & Philosophy Header */}
+      <div className={`relative overflow-hidden rounded-[28px] border p-6 sm:p-10 transition-all ${bannerBgClass}`}>
+        {!isLight && (
+          <div className="absolute -top-10 -right-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        )}
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center space-x-2 text-amber-500 text-xs font-mono uppercase tracking-wider">
-              <Compass className="w-4 h-4" />
+            <div className={`flex items-center space-x-2 text-[10.5px] font-extrabold tracking-widest uppercase ${
+              isLight ? "text-[#b8801f]" : "text-amber-500"
+            }`}>
+              <Compass className={`w-3.5 h-3.5 ${isLight ? "text-[#b8801f]" : "text-amber-400"}`} />
               <span>Personal Sanctuary • मेरी साधना</span>
             </div>
             <h1
-              className={`font-serif-sacred text-2xl sm:text-4xl font-bold ${
-                isLightCanvas
-                  ? isPrismPulse
-                    ? "text-[#1e1b2e]"
-                    : "text-[#221509]"
+              className={`font-serif-sacred text-2xl sm:text-4xl font-bold tracking-tight ${
+                isLight
+                  ? "text-[#1b1740]"
+                  : isPrismPulse
+                  ? "text-[#1e1b2e]"
                   : "text-amber-100"
               }`}
             >
@@ -216,10 +221,10 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             </h1>
             <p
               className={`text-xs sm:text-sm font-light leading-relaxed ${
-                isLightCanvas
-                  ? isPrismPulse
-                    ? "text-stone-600"
-                    : "text-[#5C4533]"
+                isLight
+                  ? "text-[#55526b]"
+                  : isPrismPulse
+                  ? "text-stone-600"
                   : "text-stone-300"
               }`}
             >
@@ -241,128 +246,128 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
         {/* Sub-Navigation Tabs inside My Journey */}
         <div
           className={`mt-8 pt-6 border-t flex flex-wrap gap-2 text-xs ${
-            isLight ? "border-[#E8DCC2]" : isPrismPulse ? "border-stone-200" : "border-stone-800/80"
+            isLight ? "border-[#efedf6]" : isPrismPulse ? "border-stone-200" : "border-stone-800/80"
           }`}
         >
           <button
             onClick={() => setSubSection("overview")}
-            className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all ${
+            className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all cursor-pointer ${
               subSection === "overview"
                 ? isLight
-                  ? "bg-[#FBEFD3] text-[#874606] border border-[#DECB9F] shadow-sm font-semibold"
+                  ? "bg-[#1b1740] text-[#f4f2ff] border border-[#1b1740] shadow-xs font-bold"
                   : isPrismPulse
                   ? "bg-[#936BFA]/15 text-[#6D28D9] border border-[#936BFA]/40 shadow-xs font-semibold"
                   : "bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm"
                 : isLight
-                ? "text-[#69574A] hover:text-[#261B12] hover:bg-[#F5EEDB]"
+                ? "bg-[#efedf6] border border-[#cfcbe0] text-[#55526b] hover:bg-white hover:text-[#1b1740] hover:border-[#d9a441]"
                 : isPrismPulse
                 ? "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
                 : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
             }`}
           >
-            <Sun className={`w-4 h-4 ${isLight ? "text-[#D96500]" : "text-amber-500"}`} />
+            <Sun className={`w-4 h-4 ${isLight ? (subSection === "overview" ? "text-[#d9a441]" : "text-[#55526b]") : "text-amber-500"}`} />
             <span>Practice & Habits</span>
           </button>
 
           <button
             onClick={() => setSubSection("saved")}
-            className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all ${
+            className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all cursor-pointer ${
               subSection === "saved"
                 ? isLight
-                  ? "bg-[#FBEFD3] text-[#874606] border border-[#DECB9F] shadow-sm font-semibold"
+                  ? "bg-[#1b1740] text-[#f4f2ff] border border-[#1b1740] shadow-xs font-bold"
                   : isPrismPulse
                   ? "bg-[#936BFA]/15 text-[#6D28D9] border border-[#936BFA]/40 shadow-xs font-semibold"
                   : "bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm"
                 : isLight
-                ? "text-[#69574A] hover:text-[#261B12] hover:bg-[#F5EEDB]"
+                ? "bg-[#efedf6] border border-[#cfcbe0] text-[#55526b] hover:bg-white hover:text-[#1b1740] hover:border-[#d9a441]"
                 : isPrismPulse
                 ? "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
                 : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
             }`}
           >
-            <Bookmark className={`w-4 h-4 ${isLight ? "text-[#D96500]" : "text-amber-500"}`} />
+            <Bookmark className={`w-4 h-4 ${isLight ? (subSection === "saved" ? "text-[#d9a441]" : "text-[#55526b]") : "text-amber-500"}`} />
             <span>Saved Wisdom ({savedVersesList.length})</span>
           </button>
 
           <button
             onClick={() => setSubSection("reflections")}
-            className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all ${
+            className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all cursor-pointer ${
               subSection === "reflections"
                 ? isLight
-                  ? "bg-[#FBEFD3] text-[#874606] border border-[#DECB9F] shadow-sm font-semibold"
+                  ? "bg-[#1b1740] text-[#f4f2ff] border border-[#1b1740] shadow-xs font-bold"
                   : isPrismPulse
                   ? "bg-[#936BFA]/15 text-[#6D28D9] border border-[#936BFA]/40 shadow-xs font-semibold"
                   : "bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm"
                 : isLight
-                ? "text-[#69574A] hover:text-[#261B12] hover:bg-[#F5EEDB]"
+                ? "bg-[#efedf6] border border-[#cfcbe0] text-[#55526b] hover:bg-white hover:text-[#1b1740] hover:border-[#d9a441]"
                 : isPrismPulse
                 ? "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
                 : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
             }`}
           >
-            <Feather className={`w-4 h-4 ${isLight ? "text-[#D96500]" : "text-amber-500"}`} />
+            <Feather className={`w-4 h-4 ${isLight ? (subSection === "reflections" ? "text-[#d9a441]" : "text-[#55526b]") : "text-amber-500"}`} />
             <span>Reflections & Journal ({journalEntries.length})</span>
           </button>
 
           <button
             onClick={() => setSubSection("recommendations")}
-            className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all ${
+            className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all cursor-pointer ${
               subSection === "recommendations"
                 ? isLight
-                  ? "bg-[#FBEFD3] text-[#874606] border border-[#DECB9F] shadow-sm font-semibold"
+                  ? "bg-[#1b1740] text-[#f4f2ff] border border-[#1b1740] shadow-xs font-bold"
                   : isPrismPulse
                   ? "bg-[#936BFA]/15 text-[#6D28D9] border border-[#936BFA]/40 shadow-xs font-semibold"
                   : "bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm"
                 : isLight
-                ? "text-[#69574A] hover:text-[#261B12] hover:bg-[#F5EEDB]"
+                ? "bg-[#efedf6] border border-[#cfcbe0] text-[#55526b] hover:bg-white hover:text-[#1b1740] hover:border-[#d9a441]"
                 : isPrismPulse
                 ? "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
                 : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
             }`}
           >
-            <Sparkles className={`w-4 h-4 ${isLight ? "text-[#D96500]" : "text-amber-500"}`} />
+            <Sparkles className={`w-4 h-4 ${isLight ? (subSection === "recommendations" ? "text-[#d9a441]" : "text-[#55526b]") : "text-amber-500"}`} />
             <span>Recommendations</span>
           </button>
 
           {(isSadhakaEnabled || isGurudakshinaEnabled) && (
             <button
               onClick={() => setSubSection("membership")}
-              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all ${
+              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all cursor-pointer ${
                 subSection === "membership"
                   ? isLight
-                    ? "bg-[#FBEFD3] text-[#874606] border border-[#DECB9F] shadow-sm font-semibold"
+                    ? "bg-[#1b1740] text-[#f4f2ff] border border-[#1b1740] shadow-xs font-bold"
                     : isPrismPulse
                     ? "bg-[#936BFA]/15 text-[#6D28D9] border border-[#936BFA]/40 shadow-xs font-semibold"
                     : "bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-200 border border-amber-400/40 shadow-sm"
                   : isLight
-                  ? "text-[#69574A] hover:text-[#261B12] hover:bg-[#F5EEDB]"
+                  ? "bg-[#efedf6] border border-[#cfcbe0] text-[#55526b] hover:bg-white hover:text-[#1b1740] hover:border-[#d9a441]"
                   : isPrismPulse
                   ? "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
                   : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
               }`}
             >
-              <Crown className={`w-4 h-4 ${isLight ? "text-[#D96500]" : "text-amber-400"}`} />
+              <Crown className={`w-4 h-4 ${isLight ? (subSection === "membership" ? "text-[#d9a441]" : "text-[#55526b]") : "text-amber-400"}`} />
               <span>Membership & Seva</span>
             </button>
           )}
 
           <button
             onClick={() => setSubSection("advocacy")}
-            className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all ${
+            className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl font-medium transition-all cursor-pointer ${
               subSection === "advocacy"
                 ? isLight
-                  ? "bg-[#E6F4EA] text-[#137333] border border-[#A8DAB5] shadow-xs font-semibold"
+                  ? "bg-[#1b1740] text-[#f4f2ff] border border-[#1b1740] shadow-xs font-bold"
                   : isPrismPulse
                   ? "bg-teal-500/15 text-teal-800 border border-teal-300 shadow-xs font-semibold"
                   : "bg-teal-500/20 text-teal-200 border border-teal-400/40 shadow-sm"
                 : isLight
-                ? "text-[#69574A] hover:text-[#261B12] hover:bg-[#F5EEDB]"
+                ? "bg-[#efedf6] border border-[#cfcbe0] text-[#55526b] hover:bg-white hover:text-[#1b1740] hover:border-[#d9a441]"
                 : isPrismPulse
                 ? "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
                 : "text-stone-400 hover:text-stone-200 hover:bg-stone-900"
             }`}
           >
-            <Share2 className={`w-4 h-4 ${isLight ? "text-[#137333]" : "text-teal-400"}`} />
+            <Share2 className={`w-4 h-4 ${isLight ? (subSection === "advocacy" ? "text-[#d9a441]" : "text-[#55526b]") : "text-teal-400"}`} />
             <span>Wisdom Cards & Share</span>
           </button>
         </div>
@@ -381,9 +386,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
           {/* Continue Reading Card */}
           {lastActiveVerse && (
             <div
-              className={`rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-xl border transition-all ${
+              className={`rounded-[20px] p-6 sm:p-8 relative overflow-hidden shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] border transition-all ${
                 isLight
-                  ? "bg-[#FFFDF8] border-[#E8DCC2] text-[#261B12] shadow-sm"
+                  ? "bg-white border-[#cfcbe0] text-[#1d1b2e]"
                   : isPrismPulse
                   ? "bg-white border-stone-200 text-[#1e1b2e] shadow-xs"
                   : isFestival
@@ -397,13 +402,13 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             >
               <div
                 className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4 mb-4 ${
-                  isLight ? "border-[#E8DCC2]" : isPrismPulse ? "border-stone-200" : "border-stone-800/80"
+                  isLight ? "border-[#efedf6]" : isPrismPulse ? "border-stone-200" : "border-stone-800/80"
                 }`}
               >
                 <div
                   className={`flex items-center space-x-2 text-xs font-semibold uppercase tracking-wider ${
                     isLight
-                      ? "text-[#874606]"
+                      ? "text-[#b8801f]"
                       : isPrismPulse
                       ? "text-[#7C3AED]"
                       : "text-amber-400"
@@ -412,7 +417,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                   <BookOpen className="w-4 h-4" />
                   <span>Continue Where You Left Off</span>
                 </div>
-                <span className={`text-[11px] font-mono ${isLight ? "text-[#6E5C4E]" : "text-stone-500"}`}>
+                <span className={`text-[11px] font-mono ${isLight ? "text-[#55526b]" : "text-stone-500"}`}>
                   Last Active: Today
                 </span>
               </div>
@@ -421,7 +426,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                 <h3
                   className={`font-serif-sacred text-xl sm:text-2xl font-bold ${
                     isLight
-                      ? "text-[#261B12]"
+                      ? "text-[#1b1740]"
                       : isPrismPulse
                       ? "text-[#1e1b2e]"
                       : "text-amber-100"
@@ -432,7 +437,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                 <p
                   className={`font-sanskrit text-lg whitespace-pre-line leading-relaxed ${
                     isLight
-                      ? "text-[#1C0F05] font-semibold"
+                      ? "text-[#1b1740] font-semibold"
                       : isPrismPulse
                       ? "text-[#181326] font-bold"
                       : "text-amber-200/90"
@@ -444,7 +449,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                   <p
                     className={`text-xs sm:text-sm italic leading-relaxed ${
                       isLight
-                        ? "text-[#4A3A2F]"
+                        ? "text-[#1d1b2e]"
                         : isPrismPulse
                         ? "text-[#2d3748]"
                         : "text-stone-300"
@@ -457,7 +462,11 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                 <div className="pt-4 flex flex-wrap items-center gap-3">
                   <button
                     onClick={() => onOpenVerseModal(lastActiveVerse)}
-                    className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-bold text-xs shadow-lg hover:scale-105 transition-all"
+                    className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl font-bold text-xs shadow-md hover:scale-105 transition-all cursor-pointer ${
+                      isLight
+                        ? "bg-[#1b1740] hover:bg-[#2b2560] text-[#f4f2ff]"
+                        : "bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950"
+                    }`}
                   >
                     <span>Resume Contemplation</span>
                     <ArrowRight className="w-4 h-4" />
@@ -465,9 +474,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
 
                   <button
                     onClick={() => onNavigateTab("today")}
-                    className={`px-4 py-2.5 rounded-xl border text-xs transition-colors ${
+                    className={`px-4 py-2.5 rounded-xl border text-xs transition-colors cursor-pointer ${
                       isLight
-                        ? "bg-[#F5EEDB] border-[#E8DCC2] hover:border-[#DECB9F] text-[#261B12]"
+                        ? "bg-white border-[#cfcbe0] hover:bg-[#efedf6] text-[#1b1740]"
                         : isPrismPulse
                         ? "bg-stone-100 border-stone-200 hover:border-amber-500/40 text-stone-800"
                         : "bg-stone-950 border border-stone-800 hover:border-amber-500/40 text-stone-300"
@@ -482,9 +491,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
 
           {/* DAILY READING TIME GOAL RADIAL PROGRESS BAR (M53-M74 PROGRESS SERVICE) */}
           <div
-            className={`rounded-3xl border p-6 sm:p-8 relative overflow-hidden shadow-xl transition-all ${
+            className={`rounded-[20px] border p-6 sm:p-8 relative overflow-hidden shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] transition-all ${
               isLight
-                ? "bg-[#FFFDF8] border-[#E8DCC2] text-[#261B12] shadow-sm"
+                ? "bg-white border-[#cfcbe0] text-[#1d1b2e]"
                 : isPrismPulse
                 ? "bg-white border-stone-200 text-[#1e1b2e] shadow-xs"
                 : isFestival
@@ -832,9 +841,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
               {savedVersesList.map((verse) => (
                 <div
                   key={verse.id}
-                  className={`border rounded-2xl p-5 space-y-3 transition-all flex flex-col justify-between ${
+                  className={`border rounded-[20px] p-5 space-y-3 transition-all flex flex-col justify-between ${
                     isLight
-                      ? "bg-[#FFFDF8] border-[#E8DCC2] text-[#261B12] shadow-sm hover:border-[#DECB9F]"
+                      ? "bg-white hover:bg-[#faf9fd] border-[#cfcbe0] hover:border-[#d9a441] text-[#1d1b2e] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)]"
                       : isPrismPulse
                       ? "bg-white border-stone-200 text-[#1e1b2e] shadow-xs hover:border-[#7C3AED]/40"
                       : isFestival
@@ -850,7 +859,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                     <div className="flex items-center justify-between">
                       <span
                         className={`font-serif-sacred font-bold text-sm ${
-                          isLightCanvas
+                          isLight
+                            ? "text-[#1b1740]"
+                            : isLightCanvas
                             ? isPrismPulse
                               ? "text-[#1e1b2e]"
                               : "text-stone-900"
@@ -861,7 +872,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                       </span>
                       <button
                         onClick={() => onToggleBookmark(verse.id)}
-                        className="text-amber-400 hover:text-rose-400 transition-colors p-1"
+                        className={`p-1 transition-colors ${
+                          isLight ? "text-[#b8801f] hover:text-rose-500" : "text-amber-400 hover:text-rose-400"
+                        }`}
                         title="Remove bookmark"
                       >
                         <Bookmark className="w-4 h-4 fill-current" />
@@ -870,7 +883,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
 
                     <p
                       className={`font-sanskrit text-sm whitespace-pre-line leading-relaxed ${
-                        isLightCanvas
+                        isLight
+                          ? "text-[#1b1740] font-semibold"
+                          : isLightCanvas
                           ? isPrismPulse
                             ? "text-[#181326] font-bold"
                             : "text-[#1C0F05] font-semibold"
@@ -883,7 +898,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                     {verse.meaning && (
                       <p
                         className={`text-xs italic leading-relaxed ${
-                          isLightCanvas
+                          isLight
+                            ? "text-[#1d1b2e]"
+                            : isLightCanvas
                             ? isPrismPulse
                               ? "text-[#4a5568]"
                               : "text-stone-600"
@@ -897,13 +914,19 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
 
                   <div
                     className={`pt-3 border-t flex items-center justify-between text-xs ${
-                      isLightCanvas ? "border-stone-200" : "border-stone-800/80"
+                      isLight
+                        ? "border-[#cfcbe0] border-dashed"
+                        : isLightCanvas
+                        ? "border-stone-200"
+                        : "border-stone-800/80"
                     }`}
                   >
                     <button
                       onClick={() => onOpenVerseModal(verse)}
                       className={`font-semibold flex items-center space-x-1 ${
-                        isLightCanvas && isPrismPulse
+                        isLight
+                          ? "text-[#1b1740] hover:text-[#b8801f]"
+                          : isLightCanvas && isPrismPulse
                           ? "text-[#7C3AED] hover:text-[#6D28D9]"
                           : "text-amber-500 hover:text-amber-400"
                       }`}
@@ -940,9 +963,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
 
           {/* New Reflection Composer */}
           <div
-            className={`border rounded-3xl p-6 space-y-4 ${
+            className={`border rounded-[20px] p-6 space-y-4 shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] ${
               isLight
-                ? "bg-[#FFFDF8] border-[#E8DCC2] text-[#261B12] shadow-sm"
+                ? "bg-white border-[#cfcbe0] text-[#1d1b2e]"
                 : isPrismPulse
                 ? "bg-white border-stone-200 text-[#1e1b2e] shadow-xs"
                 : isFestival
@@ -957,7 +980,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             <div
               className={`flex items-center space-x-2 text-xs font-semibold uppercase tracking-wider ${
                 isLight
-                  ? "text-[#874606]"
+                  ? "text-[#b8801f]"
                   : isPrismPulse
                   ? "text-[#7C3AED]"
                   : "text-amber-400"
@@ -971,7 +994,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
               <div>
                 <label
                   className={`block text-xs font-medium mb-1 ${
-                    isLightCanvas ? "text-stone-700" : "text-stone-400"
+                    isLight ? "text-[#55526b]" : isLightCanvas ? "text-stone-700" : "text-stone-400"
                   }`}
                 >
                   Connect Reflection to Sacred Verse:
@@ -980,13 +1003,15 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                   value={selectedVerseForReflection}
                   onChange={(e) => setSelectedVerseForReflection(e.target.value)}
                   className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none transition-colors ${
-                    isLightCanvas
+                    isLight
+                      ? "bg-white border border-[#cfcbe0] text-[#1d1b2e] focus:border-[#d9a441]"
+                      : isLightCanvas
                       ? "bg-stone-50 border border-stone-300 text-stone-900 focus:border-amber-500"
                       : "bg-stone-950 border border-stone-800 text-stone-200 focus:border-amber-500/60"
                   }`}
                 >
                   {verses.map((v) => (
-                    <option key={v.id} value={v.id}>
+                    <option key={v.id} value={v.id} className={isLight ? "bg-white text-[#1d1b2e]" : ""}>
                       {v.title} — {v.metadata.category || "Scripture"}
                     </option>
                   ))}
@@ -996,7 +1021,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
               <div>
                 <label
                   className={`block text-xs font-medium mb-1 ${
-                    isLightCanvas ? "text-stone-700" : "text-stone-400"
+                    isLight ? "text-[#55526b]" : isLightCanvas ? "text-stone-700" : "text-stone-400"
                   }`}
                 >
                   Your Personal Contemplation:
@@ -1007,7 +1032,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                   onChange={(e) => setNewReflectionText(e.target.value)}
                   placeholder="How does this shloka apply to your mind, work, or inner stillness today?"
                   className={`w-full rounded-xl p-3 text-xs focus:outline-none resize-none transition-colors ${
-                    isLightCanvas
+                    isLight
+                      ? "bg-white border border-[#cfcbe0] text-[#1d1b2e] placeholder:text-[#55526b] focus:border-[#d9a441]"
+                      : isLightCanvas
                       ? "bg-stone-50 border border-stone-300 text-stone-900 focus:border-amber-500"
                       : "bg-stone-950 border border-stone-800 text-stone-200 focus:border-amber-500/60"
                   }`}
@@ -1018,7 +1045,11 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                 <button
                   type="submit"
                   disabled={!newReflectionText.trim()}
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-bold text-xs shadow hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 transition-all flex items-center space-x-1.5"
+                  className={`px-5 py-2 rounded-full font-bold text-xs shadow-xs hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    isLight
+                      ? "bg-[#1b1740] hover:bg-[#100e2b] text-[#f4f2ff]"
+                      : "bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950"
+                  }`}
                 >
                   <Plus className="w-4 h-4" />
                   <span>Save Reflection</span>
@@ -1032,7 +1063,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <h3
                 className={`font-serif-sacred text-lg font-bold flex items-center space-x-2 ${
-                  isLightCanvas
+                  isLight
+                    ? "text-[#1b1740]"
+                    : isLightCanvas
                     ? isPrismPulse
                       ? "text-[#1e1b2e]"
                       : "text-stone-900"
@@ -1040,13 +1073,13 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                 }`}
               >
                 <span>Journal Entries</span>
-                <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/25">
+                <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-[#fbf0d6] text-[#b8801f] border border-[#f0cf8a]/60">
                   {journalEntries.length}
                 </span>
               </h3>
 
               {journalEntries.length > 0 && (
-                <span className="text-[11px] font-mono text-stone-500">
+                <span className="text-[11px] font-mono text-[#55526b]">
                   {journalSearchQuery.trim()
                     ? `Showing ${filteredJournalEntries.length} of ${journalEntries.length}`
                     : `${journalEntries.length} reflections recorded`}
@@ -1057,24 +1090,24 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             {/* Keyword Search Input for Journal Entries */}
             {journalEntries.length > 0 && (
               <div
-                className={`relative flex items-center rounded-2xl border transition-all ${
+                className={`relative flex items-center rounded-full border transition-all ${
                   isLight
-                    ? "bg-[#FFFDF8] border-[#E8DCC2] focus-within:border-[#C65507] focus-within:ring-2 focus-within:ring-[#C65507]/20 shadow-xs"
+                    ? "bg-white border-[#cfcbe0] focus-within:border-[#d9a441] focus-within:ring-2 focus-within:ring-[#d9a441]/20 shadow-xs"
                     : isPrismPulse
                     ? "bg-white border-stone-200 focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-500/20 shadow-xs"
                     : "bg-stone-900/80 border-stone-800 focus-within:border-amber-500/60 focus-within:ring-2 focus-within:ring-amber-500/20"
                 }`}
               >
                 <div className="pl-3.5 pr-2 pointer-events-none text-stone-400">
-                  <Search className="w-4 h-4 text-amber-500" />
+                  <Search className={`w-4 h-4 ${isLight ? "text-[#b8801f]" : "text-amber-500"}`} />
                 </div>
                 <input
                   type="text"
                   value={journalSearchQuery}
                   onChange={(e) => setJournalSearchQuery(e.target.value)}
                   placeholder="Search reflections by keyword (e.g. peace, karma, mind, stillness)..."
-                  className={`w-full py-2.5 pr-10 text-xs sm:text-sm bg-transparent focus:outline-none placeholder:text-stone-400 font-medium ${
-                    isLight ? "text-[#261B12]" : isPrismPulse ? "text-[#1e1b2e]" : "text-stone-100"
+                  className={`w-full py-2.5 pr-10 text-xs sm:text-sm bg-transparent focus:outline-none font-medium ${
+                    isLight ? "text-[#1d1b2e] placeholder:text-[#55526b]" : isPrismPulse ? "text-[#1e1b2e] placeholder:text-stone-400" : "text-stone-100 placeholder:text-stone-400"
                   }`}
                   aria-label="Search journal reflections by keyword"
                 />
@@ -1082,7 +1115,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setJournalSearchQuery("")}
-                    className="absolute right-3 p-1 rounded-full text-stone-400 hover:text-stone-200 hover:bg-stone-500/20 transition-all cursor-pointer"
+                    className="absolute right-3 p-1 rounded-full text-[#55526b] hover:text-[#1b1740] hover:bg-[#efedf6] transition-all cursor-pointer"
                     title="Clear search filter"
                     aria-label="Clear search"
                   >
@@ -1094,8 +1127,10 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
 
             {journalEntries.length === 0 ? (
               <div
-                className={`border rounded-2xl p-8 text-center text-xs ${
-                  isLightCanvas
+                className={`border rounded-[20px] p-8 text-center text-xs ${
+                  isLight
+                    ? "bg-white border-[#cfcbe0] text-[#55526b] shadow-xs"
+                    : isLightCanvas
                     ? "bg-white border-stone-200 text-stone-600 shadow-xs"
                     : "bg-stone-900/40 border-stone-800 text-stone-400"
                 }`}
@@ -1104,8 +1139,10 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
               </div>
             ) : filteredJournalEntries.length === 0 ? (
               <div
-                className={`border rounded-2xl p-8 text-center space-y-3 ${
-                  isLightCanvas
+                className={`border rounded-[20px] p-8 text-center space-y-3 ${
+                  isLight
+                    ? "bg-white border-[#cfcbe0] text-[#55526b] shadow-xs"
+                    : isLightCanvas
                     ? "bg-white border-stone-200 text-stone-600 shadow-xs"
                     : "bg-stone-900/40 border-stone-800 text-stone-400"
                 }`}
@@ -1119,7 +1156,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setJournalSearchQuery("")}
-                  className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 transition-all cursor-pointer"
+                  className="px-4 py-1.5 rounded-full text-xs font-semibold bg-[#fbf0d6] hover:bg-[#f0cf8a] text-[#b8801f] border border-[#f0cf8a] transition-all cursor-pointer"
                 >
                   Clear Search Filter
                 </button>
@@ -1129,9 +1166,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                 {filteredJournalEntries.map((entry) => (
                   <div
                     key={entry.id}
-                    className={`border rounded-2xl p-5 space-y-2 relative transition-all ${
+                    className={`border rounded-[20px] p-5 space-y-2 relative transition-all ${
                       isLight
-                        ? "bg-[#FFFDF8] border-[#E8DCC2] text-[#261B12] shadow-sm"
+                        ? "bg-white border-[#cfcbe0] text-[#1d1b2e] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)]"
                         : isPrismPulse
                         ? "bg-white border-stone-200 text-[#1e1b2e] shadow-xs"
                         : isFestival
@@ -1147,7 +1184,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                       <span
                         className={`font-serif-sacred font-bold ${
                           isLight
-                            ? "text-[#874606]"
+                            ? "text-[#1b1740]"
                             : isPrismPulse
                             ? "text-[#6D28D9]"
                             : "text-amber-800"
@@ -1155,11 +1192,11 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                       >
                         {entry.verseTitle}
                       </span>
-                      <div className="flex items-center space-x-3 text-stone-500 text-[11px]">
+                      <div className="flex items-center space-x-3 text-[#55526b] text-[11px]">
                         <span>{new Date(entry.createdAt).toLocaleDateString()}</span>
                         <button
                           onClick={() => onDeleteJournalEntry(entry.id)}
-                          className="text-stone-400 hover:text-rose-400 p-1 transition-colors"
+                          className="text-[#55526b] hover:text-rose-500 p-1 transition-colors cursor-pointer"
                           title="Delete entry"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1168,7 +1205,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                     </div>
                     <p
                       className={`text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
-                        isLightCanvas ? "text-stone-700" : "text-stone-300"
+                        isLight ? "text-[#1d1b2e]" : isLightCanvas ? "text-stone-700" : "text-stone-300"
                       }`}
                     >
                       {entry.note}
@@ -1187,7 +1224,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
           <div className="space-y-1">
             <h2
               className={`font-serif-sacred text-xl font-bold ${
-                isLightCanvas
+                isLight
+                  ? "text-[#1b1740]"
+                  : isLightCanvas
                   ? isPrismPulse
                     ? "text-[#1e1b2e]"
                     : "text-stone-900"
@@ -1205,9 +1244,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             {recommendedVerses.map((verse) => (
               <div
                 key={verse.id}
-                className={`border rounded-2xl p-5 space-y-3 transition-all flex flex-col justify-between ${
+                className={`border rounded-[20px] p-5 space-y-3 transition-all flex flex-col justify-between ${
                   isLight
-                    ? "bg-[#FFFDF8] border-[#E8DCC2] text-[#261B12] shadow-sm hover:border-[#DECB9F]"
+                    ? "bg-white hover:bg-[#faf9fd] border-[#cfcbe0] hover:border-[#d9a441] text-[#1d1b2e] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)]"
                     : isPrismPulse
                     ? "bg-white border-stone-200 text-[#1e1b2e] shadow-xs hover:border-[#7C3AED]/40"
                     : isFestival
@@ -1234,7 +1273,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
 
                   <h4
                     className={`font-serif-sacred font-bold text-sm ${
-                      isLightCanvas
+                      isLight
+                        ? "text-[#1b1740]"
+                        : isLightCanvas
                         ? isPrismPulse
                           ? "text-[#1e1b2e]"
                           : "text-stone-900"
@@ -1246,7 +1287,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
 
                   <p
                     className={`font-sanskrit text-xs whitespace-pre-line leading-relaxed ${
-                      isLightCanvas
+                      isLight
+                        ? "text-[#1b1740] font-semibold"
+                        : isLightCanvas
                         ? isPrismPulse
                           ? "text-[#181326] font-bold"
                           : "text-[#1C0F05] font-semibold"
@@ -1259,7 +1302,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                   {verse.meaning && (
                     <p
                       className={`text-xs italic leading-relaxed ${
-                        isLightCanvas
+                        isLight
+                          ? "text-[#1d1b2e]"
+                          : isLightCanvas
                           ? isPrismPulse
                             ? "text-[#4a5568]"
                             : "text-stone-600"
@@ -1273,7 +1318,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
 
                 <div
                   className={`pt-3 border-t flex items-center justify-between text-xs ${
-                    isLightCanvas ? "border-stone-200" : "border-stone-800/80"
+                    isLight ? "border-[#efedf6]" : isLightCanvas ? "border-stone-200" : "border-stone-800/80"
                   }`}
                 >
                   <button
@@ -1302,11 +1347,11 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             {/* Sādhaka Membership */}
             {isSadhakaEnabled && (
               <div
-                className={`rounded-3xl p-6 sm:p-8 space-y-6 relative shadow-xl border transition-all ${
-                  isLightCanvas
-                    ? isPrismPulse
-                      ? "bg-white border-stone-200 text-[#1e1b2e]"
-                      : "bg-white border-stone-200 text-stone-900"
+                className={`rounded-[24px] p-6 sm:p-8 space-y-6 relative shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] border transition-all ${
+                  isLight
+                    ? "bg-white border-[#cfcbe0] text-[#1d1b2e]"
+                    : isPrismPulse
+                    ? "bg-white border-stone-200 text-[#1e1b2e]"
                     : "bg-gradient-to-br from-stone-900 to-stone-950 border-amber-500/40 text-stone-100"
                 }`}
               >
@@ -1314,7 +1359,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                   <div className="space-y-1">
                     <div
                       className={`flex items-center space-x-2 text-xs font-mono uppercase tracking-wider ${
-                        isLightCanvas && isPrismPulse ? "text-[#7C3AED]" : "text-amber-500"
+                        isLight ? "text-[#b8801f]" : isLightCanvas && isPrismPulse ? "text-[#7C3AED]" : "text-amber-500"
                       }`}
                     >
                       <Crown className="w-4 h-4" />
@@ -1322,7 +1367,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                     </div>
                     <h3
                       className={`font-serif-sacred text-2xl font-bold ${
-                        isLightCanvas
+                        isLight
+                          ? "text-[#1b1740]"
+                          : isLightCanvas
                           ? isPrismPulse
                             ? "text-[#1e1b2e]"
                             : "text-stone-900"
@@ -1335,7 +1382,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                   <div className="text-right">
                     <span
                       className={`font-mono text-2xl font-bold ${
-                        isLightCanvas
+                        isLight
+                          ? "text-[#b8801f]"
+                          : isLightCanvas
                           ? isPrismPulse
                             ? "text-[#6D28D9]"
                             : "text-amber-800"
@@ -1350,30 +1399,34 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
 
                 <ul
                   className={`space-y-2.5 text-xs ${
-                    isLightCanvas ? "text-stone-700" : "text-stone-300"
+                    isLight ? "text-[#1d1b2e]" : isLightCanvas ? "text-stone-700" : "text-stone-300"
                   }`}
                 >
                   <li className="flex items-center space-x-2">
-                    <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 ${isLight ? "text-[#2f5d50]" : "text-amber-500"}`} />
                     <span>Full Sanskrit audio chants with variable tempo pronunciation</span>
                   </li>
                   <li className="flex items-center space-x-2">
-                    <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 ${isLight ? "text-[#2f5d50]" : "text-amber-500"}`} />
                     <span>Complete Shankaracharya & Ramanuja comparative commentaries</span>
                   </li>
                   <li className="flex items-center space-x-2">
-                    <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 ${isLight ? "text-[#2f5d50]" : "text-amber-500"}`} />
                     <span>Offline study downloads for contemplative meditation</span>
                   </li>
                   <li className="flex items-center space-x-2">
-                    <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 ${isLight ? "text-[#2f5d50]" : "text-amber-500"}`} />
                     <span>Unlimited journal sync across devices</span>
                   </li>
                 </ul>
 
                 <button
                   onClick={onOpenPricing}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-bold text-xs shadow-lg hover:scale-105 transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                  className={`w-full py-3 rounded-full font-bold text-xs shadow-xs hover:scale-105 transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+                    isLight
+                      ? "bg-[#1b1740] hover:bg-[#100e2b] text-[#f4f2ff]"
+                      : "bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950"
+                  }`}
                 >
                   <Zap className="w-4 h-4 fill-current" />
                   <span>Begin Sādhaka Practice →</span>
@@ -1384,21 +1437,23 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             {/* Sacred Gurudakshina / Seva (80G Tax Exemption) */}
             {isGurudakshinaEnabled && (
               <div
-                className={`rounded-3xl p-6 sm:p-8 space-y-6 relative shadow-xl border transition-all ${
-                  isLightCanvas
+                className={`rounded-[24px] p-6 sm:p-8 space-y-6 relative shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] border transition-all ${
+                  isLight
+                    ? "bg-[#fdf2f4] border-[#f9cbd3] text-[#1d1b2e]"
+                    : isPrismPulse
                     ? "bg-rose-50/50 border-rose-200 text-stone-900"
                     : "bg-gradient-to-br from-rose-950/20 via-stone-900 to-stone-950 border-rose-800/40 text-stone-100"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <div className="flex items-center space-x-2 text-rose-500 text-xs font-mono uppercase tracking-wider">
-                      <Heart className="w-4 h-4 fill-rose-500/20" />
-                      <span>Sacred Seva & Gurudakshina</span>
+                    <div className="flex items-center space-x-2 text-[#b23c63] text-xs font-mono uppercase tracking-wider">
+                      <Heart className="w-4 h-4 fill-[#b23c63]/20" />
+                      <span>Sacred Seva &amp; Gurudakshina</span>
                     </div>
                     <h3
                       className={`font-serif-sacred text-2xl font-bold ${
-                        isLightCanvas ? "text-stone-900" : "text-rose-100"
+                        isLight ? "text-[#1b1740]" : isLightCanvas ? "text-stone-900" : "text-rose-100"
                       }`}
                     >
                       Preserve Vedic Heritage
@@ -1500,9 +1555,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
             {verses.slice(0, 4).map((verse) => (
               <div
                 key={verse.id}
-                className={`rounded-3xl p-6 sm:p-8 space-y-4 shadow-xl relative border transition-all ${
+                className={`rounded-[20px] p-6 sm:p-8 space-y-4 shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] relative border transition-all ${
                   isLight
-                    ? "bg-[#FFFDF8] border-[#E8DCC2] text-[#261B12] shadow-sm"
+                    ? "bg-white border-[#cfcbe0] text-[#1d1b2e]"
                     : isPrismPulse
                     ? "bg-white border-stone-200 text-[#1e1b2e] shadow-xs"
                     : isFestival
@@ -1516,7 +1571,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
               >
                 <div
                   className={`flex items-center justify-between text-xs border-b pb-3 ${
-                    isLightCanvas
+                    isLight
+                      ? "text-[#b8801f] border-[#cfcbe0] border-dashed"
+                      : isLightCanvas
                       ? isPrismPulse
                         ? "text-[#7C3AED] border-stone-200"
                         : "text-amber-800 border-stone-200"
@@ -1533,7 +1590,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                 <div className="text-center py-2 space-y-2">
                   <p
                     className={`font-sanskrit text-lg sm:text-xl leading-loose whitespace-pre-line ${
-                      isLightCanvas
+                      isLight
+                        ? "text-[#1b1740] font-semibold"
+                        : isLightCanvas
                         ? isPrismPulse
                           ? "text-[#181326] font-bold"
                           : "text-[#1C0F05] font-semibold"
@@ -1545,7 +1604,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                   {verse.transliteration && (
                     <p
                       className={`font-serif text-xs italic ${
-                        isLightCanvas
+                        isLight
+                          ? "text-[#55526b]"
+                          : isLightCanvas
                           ? isPrismPulse
                             ? "text-[#6D28D9]"
                             : "text-amber-800"
@@ -1558,7 +1619,9 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
                   {verse.meaning && (
                     <p
                       className={`text-xs sm:text-sm leading-relaxed w-full pt-2 border-t ${
-                        isLightCanvas
+                        isLight
+                          ? "text-[#1d1b2e] border-[#cfcbe0] border-dashed"
+                          : isLightCanvas
                           ? isPrismPulse
                             ? "text-[#4a5568] border-stone-200"
                             : "text-stone-600 border-stone-200"
@@ -1572,7 +1635,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
 
                 <div
                   className={`pt-3 border-t flex items-center justify-between text-xs ${
-                    isLightCanvas ? "border-stone-200" : "border-stone-800"
+                    isLight ? "border-[#efedf6]" : isLightCanvas ? "border-stone-200" : "border-stone-800"
                   }`}
                 >
                   <span className="text-[11px] opacity-60 font-mono">sutrasparsh.com</span>

@@ -478,11 +478,11 @@ export const MoreView: React.FC<MoreViewProps> = ({
     showToast(`✓ Sacred reminder bell tested & scheduled for ${prefReminder} IST.`);
   };
 
-  // Color variables according to design assets (FR-01 Parchment Dawn)
+  // Color variables according to design assets (Sacred Sandalwood Card Component Theme)
   const textPrimary = isPrismPulse
     ? "#1E1B2E"
     : isLight
-    ? "#261B12"
+    ? "#1b1740"
     : isFestival
     ? "#FFF6E3"
     : isAmethyst
@@ -494,7 +494,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
   const textSecondary = isPrismPulse
     ? "#4B5563"
     : isLight
-    ? "#4A3A2F"
+    ? "#1d1b2e"
     : isFestival
     ? "#FFDDB3"
     : isAmethyst
@@ -506,7 +506,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
   const textMuted = isPrismPulse
     ? "#6B7280"
     : isLight
-    ? "#6E5C4E"
+    ? "#55526b"
     : isFestival
     ? "#E6B17E"
     : isAmethyst
@@ -518,7 +518,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
   const cardBg = isPrismPulse
     ? "#FFFFFF"
     : isLight
-    ? "#FFFDF8"
+    ? "#FFFFFF"
     : isFestival
     ? "#5E111C"
     : isAmethyst
@@ -530,7 +530,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
   const cardBorder = isPrismPulse
     ? "#E5E7EB"
     : isLight
-    ? "#E8DCC2"
+    ? "#cfcbe0"
     : isFestival
     ? "rgba(255, 138, 0, 0.3)"
     : isAmethyst
@@ -542,7 +542,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
   const saffronColor = isPrismPulse
     ? "#8B5CF6"
     : isLight
-    ? "#D96500"
+    ? "#b8801f"
     : isFestival
     ? "#FF8A00"
     : isGoldenHour
@@ -565,7 +565,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
           <div className="flex flex-wrap items-center gap-2">
             <h1
               className="font-serif-sacred text-2xl sm:text-3xl font-bold tracking-tight"
-              style={{ color: textPrimary }}
+              style={{ color: isLight ? "#261B12" : textPrimary }}
             >
               More & Sacred Settings
             </h1>
@@ -580,35 +580,15 @@ export const MoreView: React.FC<MoreViewProps> = ({
               अधिक एवं स्वरूप
             </span>
           </div>
-          <p className="text-xs sm:text-sm" style={{ color: textSecondary }}>
+          <p className="text-xs sm:text-sm font-light" style={{ color: isLight ? "#4A3A2F" : textSecondary }}>
             Personalize your spiritual atmosphere, recitation preferences, and profile identity.
           </p>
         </div>
-
-        {/* Profile Button Shortcut (compact without redundant text clutter) */}
-        {onOpenProfile && (
-          <button
-            onClick={onOpenProfile}
-            type="button"
-            className="self-start sm:self-center p-2 rounded-2xl border flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-sm cursor-pointer flex-shrink-0 group"
-            title="Seeker Profile"
-            aria-label="Seeker Profile"
-            style={{
-              backgroundColor: cardBg,
-              borderColor: cardBorder,
-              color: textPrimary,
-            }}
-          >
-            <div className="w-7 h-7 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-xs group-hover:bg-amber-500 group-hover:text-stone-950 transition-colors">
-              ॐ
-            </div>
-          </button>
-        )}
       </div>
 
       {/* 1. SĀDHAKA PROFILE SUMMARY CARD */}
       <div
-        className="p-5 sm:p-6 rounded-3xl border shadow-lg relative overflow-hidden transition-all"
+        className="p-5 sm:p-6 rounded-3xl border shadow-xs relative overflow-hidden transition-all"
         style={{
           backgroundColor: cardBg,
           borderColor: cardBorder,
@@ -617,7 +597,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
             <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center font-sanskrit text-2xl font-bold shadow border flex-shrink-0"
+              className="w-14 h-14 rounded-2xl flex items-center justify-center font-sanskrit text-2xl font-bold shadow-sm border flex-shrink-0"
               style={{
                 background: isPrismPulse
                   ? "linear-gradient(135deg, #936BFA, #FA6BA7)"
@@ -629,7 +609,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
                   ? "linear-gradient(135deg, #8A4AC7, #C4A8E6)"
                   : "linear-gradient(135deg, #D88916, #70501F)",
                 color: isLight || isFestival ? "#1A0E06" : "#FFFFFF",
-                borderColor: saffronColor,
+                borderColor: isLight ? "#DECB9F" : saffronColor,
               }}
             >
               ॐ
@@ -642,24 +622,24 @@ export const MoreView: React.FC<MoreViewProps> = ({
                 <span
                   className="text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase"
                   style={{
-                    backgroundColor: isLightCanvas ? "rgba(216, 137, 22, 0.12)" : "rgba(216, 137, 22, 0.15)",
-                    borderColor: saffronColor,
-                    color: isLightCanvas ? (isPrismPulse ? "#7C3AED" : "#B9680D") : "#F2B333",
+                    backgroundColor: isLight ? "#fbf0d6" : "rgba(216, 137, 22, 0.15)",
+                    borderColor: isLight ? "#f0cf8a" : saffronColor,
+                    color: isLight ? "#b8801f" : "#F2B333",
                   }}
                 >
                   Sādhaka Level 3
                 </span>
               </div>
-              <p className="text-xs font-sanskrit mt-0.5" style={{ color: textSecondary }}>
+              <p className="text-xs font-sanskrit mt-0.5 font-medium" style={{ color: textSecondary }}>
                 ज्ञान एवं कर्म योग साधक • vishal.kr.gupta@gmail.com
               </p>
               <div className="flex items-center space-x-3 mt-2 text-xs">
                 <span
                   onClick={() => progressService.triggerMilestoneCheckin()}
-                  className="flex items-center space-x-1 text-amber-500 font-bold cursor-pointer hover:opacity-80 transition-opacity"
+                  className="flex items-center space-x-1 font-bold cursor-pointer hover:opacity-80 transition-opacity text-amber-400"
                   title="Tap to celebrate streak milestone"
                 >
-                  <Flame className="w-3.5 h-3.5 fill-current animate-pulse text-orange-400" />
+                  <Flame className="w-3.5 h-3.5 fill-current animate-pulse text-amber-500" />
                   <span>{streakData.currentStreak || 4}-Day Streak</span>
                 </span>
                 <span style={{ color: textMuted }}>•</span>
@@ -679,7 +659,11 @@ export const MoreView: React.FC<MoreViewProps> = ({
           <button
             type="button"
             onClick={onOpenProfile}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 shadow hover:scale-105 active:scale-95 transition-all flex items-center justify-center space-x-1.5 cursor-pointer"
+            className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold shadow hover:brightness-105 active:scale-95 transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+              isLight
+                ? "bg-[#d9a441] hover:bg-[#b8801f] text-[#100e2b] border border-[#d9a441]"
+                : "bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950"
+            }`}
           >
             <User className="w-4 h-4" />
             <span>Open Sādhaka Profile</span>
@@ -689,7 +673,7 @@ export const MoreView: React.FC<MoreViewProps> = ({
 
       {/* 2. SACRED ATMOSPHERE THEMES (MATCHING DESIGN ASSET) */}
       <div
-        className="p-5 sm:p-6 rounded-3xl border shadow-lg space-y-4"
+        className="p-5 sm:p-6 rounded-3xl border shadow-xs space-y-4"
         style={{
           backgroundColor: cardBg,
           borderColor: cardBorder,
@@ -697,12 +681,12 @@ export const MoreView: React.FC<MoreViewProps> = ({
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Palette className="w-5 h-5 text-amber-500" />
+            <Palette className="w-5 h-5 text-amber-400" />
             <h2 className="font-serif-sacred text-base sm:text-lg font-bold" style={{ color: textPrimary }}>
               Sacred Atmosphere & Color Philosophy
             </h2>
           </div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-amber-500">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-amber-300">
             {theme === "light"
               ? "Parchment Dawn Active (☀️)"
               : "Golden Hour Active (🌅)"}
@@ -710,7 +694,13 @@ export const MoreView: React.FC<MoreViewProps> = ({
         </div>
 
         <p className="text-xs sm:text-sm leading-relaxed" style={{ color: textSecondary }}>
-          Per the active theme policy in <code className="text-[11px] font-mono px-1 py-0.5 rounded bg-black/20">config.json</code>, application themes are strictly restricted to the two canonical sacred atmospheres:
+          Per the active theme policy in{" "}
+          <code className={`text-[11px] font-mono px-1.5 py-0.5 rounded border ${
+            isLight ? "bg-black/40 text-amber-200 border-amber-500/30" : "bg-black/40 text-amber-200 border-stone-700"
+          }`}>
+            config.json
+          </code>
+          , application themes are strictly restricted to the two canonical sacred atmospheres:
         </p>
 
         {/* Whitelist Theme Cards Grid */}
@@ -720,32 +710,34 @@ export const MoreView: React.FC<MoreViewProps> = ({
             onClick={() => onSelectTheme && onSelectTheme("light")}
             className={`p-5 rounded-2xl border cursor-pointer transition-all relative overflow-hidden ${
               theme === "light"
-                ? "ring-2 ring-amber-500 shadow-xl scale-[1.01]"
+                ? "ring-2 ring-amber-500 shadow-md scale-[1.01]"
+                : isLight
+                ? "hover:border-[#DECB9F]"
                 : "opacity-85 hover:opacity-100 hover:border-amber-400"
             }`}
             style={{
-              backgroundColor: "#FFFBF5",
-              borderColor: theme === "light" ? "#D88916" : "#E6D7C3",
+              backgroundColor: "#FFFDF8",
+              borderColor: theme === "light" ? "#D88916" : "#E8DCC2",
             }}
           >
             {theme === "light" && (
-              <div className="absolute top-0 right-0 bg-amber-500 text-stone-950 font-bold text-[9.5px] uppercase tracking-wider px-3 py-1 rounded-bl-xl shadow flex items-center space-x-1">
+              <div className="absolute top-0 right-0 bg-gradient-to-r from-[#D88916] to-[#E67E22] text-white font-bold text-[9.5px] uppercase tracking-wider px-3 py-1 rounded-bl-xl shadow flex items-center space-x-1">
                 <Check className="w-3.5 h-3.5 stroke-[3]" />
                 <span>Active Atmosphere</span>
               </div>
             )}
             <div className="text-3xl mb-2">☀️</div>
-            <div className="font-bold text-base text-[#3A2818]">Parchment Dawn</div>
-            <div className="text-xs font-sanskrit text-amber-700">चन्दन एवं पत्र • Sandalwood Dawn</div>
-            <p className="text-xs text-[#6B5844] mt-1.5 leading-relaxed">
-              Clean, calm morning light. Soft ivory ground (#FFFBF5) with aged parchment warmth, gentle amber accents, and deep brown typography.
+            <div className="font-bold text-base text-[#261B12]">Parchment Dawn</div>
+            <div className="text-xs font-sanskrit text-[#874606] font-medium">चन्दन एवं पत्र • Sandalwood Dawn</div>
+            <p className="text-xs text-[#4A3A2F] mt-1.5 leading-relaxed">
+              Clean, calm morning light. Soft ivory ground (#FFFDF8) with aged parchment warmth, gentle amber accents, and deep brown typography.
             </p>
-            <div className="flex items-center space-x-2 mt-4 pt-3 border-t border-stone-200">
-              <span className="w-4 h-4 rounded-full bg-[#FFFBF5] border border-stone-300 shadow-xs" title="Soft Ivory #FFFBF5" />
+            <div className="flex items-center space-x-2 mt-4 pt-3 border-t border-[#E8DCC2]">
+              <span className="w-4 h-4 rounded-full bg-[#FFFDF8] border border-stone-300 shadow-xs" title="Soft Ivory #FFFDF8" />
               <span className="w-4 h-4 rounded-full bg-[#F6E8C9] border border-stone-300 shadow-xs" title="Sandalwood #F6E8C9" />
               <span className="w-4 h-4 rounded-full bg-[#D88916] shadow-xs" title="Saffron #D88916" />
-              <span className="w-4 h-4 rounded-full bg-[#3A2818] shadow-xs" title="Deep Brown #3A2818" />
-              <span className="text-[10px] text-stone-500 font-mono ml-auto">Canonical Light</span>
+              <span className="w-4 h-4 rounded-full bg-[#261B12] shadow-xs" title="Deep Brown #261B12" />
+              <span className="text-[10px] text-[#6E5C4E] font-mono ml-auto">Canonical Light</span>
             </div>
           </div>
 

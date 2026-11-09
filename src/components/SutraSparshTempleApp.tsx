@@ -926,7 +926,7 @@ ${reflections
   const isLightCanvas = isLight || isPrismPulse;
 
   const themeCardDark = isLight
-    ? "bg-[#FFFDF8] border border-[#E8DCC2] text-[#261B12] shadow-[0_4px_20px_-2px_rgba(80,50,20,0.06),0_0_0_1px_rgba(222,203,159,0.4)]"
+    ? "bg-white border border-[#cfcbe0] text-[#1d1b2e] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] hover:shadow-[0_10px_30px_-12px_rgb(27_23_64_/_0.28)] hover:border-[#d9a441] rounded-[20px] transition-all duration-200"
     : isPrismPulse
     ? "bg-white border border-stone-200 text-[#1E1B2E] shadow-md rounded-3xl"
     : isFestival
@@ -937,13 +937,13 @@ ${reflections
     ? "bg-gradient-to-b from-[#312318] to-[#1C140D] border border-[#C9822B]/40 text-[#FFF4D8]"
     : "bg-gradient-to-b from-[#2B1706] to-[#1D0F04] border border-[#78300C]/40 text-[#F5E4C8]";
 
-  const themeGold = isLight ? "#A64E04" : isPrismPulse ? "#936BFA" : isFestival ? "#FF8A00" : isAmethyst ? "#C4A8E6" : isGoldenHour ? "#C9822B" : "#E8921A";
-  const themeGoldLight = isLight ? "#D96500" : isPrismPulse ? "#6D28D9" : isFestival ? "#FFD54A" : isAmethyst ? "#D4BEF2" : isGoldenHour ? "#F6DFA6" : "#F4B24B";
-  const themeMist = isLight ? "#4A3A2F" : isPrismPulse ? "#4B5563" : isFestival ? "#FFDDB3" : isAmethyst ? "#B8A4CC" : isGoldenHour ? "#A89F94" : "#D4BC96";
-  const themeTextColor = isLight ? "text-[#261B12]" : isPrismPulse ? "text-[#1E1B2E]" : isFestival ? "text-[#FFF6E3]" : isAmethyst ? "text-[#EDE0F8]" : isGoldenHour ? "text-[#FFF4D8]" : "text-stone-100";
-  const themeSubTextColor = isLight ? "text-[#6E5C4E]" : isPrismPulse ? "text-stone-600" : isFestival ? "text-amber-200/80" : isAmethyst ? "text-purple-200/80" : isGoldenHour ? "text-[#F6DFA6]/80" : "text-stone-400";
+  const themeGold = isLight ? "#d9a441" : isPrismPulse ? "#936BFA" : isFestival ? "#FF8A00" : isAmethyst ? "#C4A8E6" : isGoldenHour ? "#C9822B" : "#E8921A";
+  const themeGoldLight = isLight ? "#b8801f" : isPrismPulse ? "#6D28D9" : isFestival ? "#FFD54A" : isAmethyst ? "#D4BEF2" : isGoldenHour ? "#F6DFA6" : "#F4B24B";
+  const themeMist = isLight ? "#55526b" : isPrismPulse ? "#4B5563" : isFestival ? "#FFDDB3" : isAmethyst ? "#B8A4CC" : isGoldenHour ? "#A89F94" : "#D4BC96";
+  const themeTextColor = isLight ? "text-[#1d1b2e]" : isPrismPulse ? "text-[#1E1B2E]" : isFestival ? "text-[#FFF6E3]" : isAmethyst ? "text-[#EDE0F8]" : isGoldenHour ? "text-[#FFF4D8]" : "text-stone-100";
+  const themeSubTextColor = isLight ? "text-[#55526b]" : isPrismPulse ? "text-stone-600" : isFestival ? "text-amber-200/80" : isAmethyst ? "text-purple-200/80" : isGoldenHour ? "text-[#F6DFA6]/80" : "text-stone-400";
   const themeCardBg = isLight
-    ? "#FFFDF8"
+    ? "#ffffff"
     : isPrismPulse
     ? "#FFFFFF"
     : isFestival
@@ -955,7 +955,7 @@ ${reflections
     : "linear-gradient(145deg, #fdf0d0, #f5e0a0)";
 
   const subScreenBg = isLight
-    ? "#FBF8EE"
+    ? "#f7f6fb"
     : isPrismPulse
     ? "#F9F9F9"
     : isFestival
@@ -967,7 +967,7 @@ ${reflections
     : "#120A04";
 
   const subScreenBarBg = isLight
-    ? "rgba(251, 248, 238, 0.96)"
+    ? "rgba(247, 246, 251, 0.96)"
     : isPrismPulse
     ? "rgba(249,249,249,0.96)"
     : isFestival
@@ -979,7 +979,7 @@ ${reflections
     : "rgba(18,10,4,0.96)";
 
   const subScreenBorder = isLight
-    ? "border-[#E8DCC2]"
+    ? "border-[#cfcbe0]"
     : isPrismPulse
     ? "border-stone-200"
     : isFestival
@@ -991,7 +991,7 @@ ${reflections
     : "border-white/10";
 
   const subScreenHeaderBorder = isLight
-    ? "border-[#E8DCC2]"
+    ? "border-[#cfcbe0]"
     : isFestival
     ? "border-[#FF8A00]/20"
     : isAmethyst
@@ -1451,7 +1451,7 @@ ${reflections
                   <span
                     className={`text-[10px] px-2 py-0.5 rounded-full font-mono border ${
                       isLight
-                        ? "bg-amber-100 text-amber-950 border-amber-300 font-bold"
+                        ? "bg-[#fbf0d6] text-[#b8801f] border-[#f0cf8a]/60 font-semibold"
                         : isPrismPulse
                         ? "bg-purple-100 text-purple-950 border-purple-200 font-bold"
                         : "bg-amber-500/20 text-amber-300 border-amber-500/30"
@@ -1461,7 +1461,9 @@ ${reflections
                   </span>
                   <span
                     className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
-                      isLightCanvas
+                      isLight
+                        ? "bg-[#efedf6] text-[#55526b] font-medium"
+                        : isLightCanvas
                         ? "bg-stone-200/80 text-stone-700 font-bold"
                         : "bg-white/10 text-stone-300"
                     }`}
@@ -1473,7 +1475,9 @@ ${reflections
                       handleOpenShare(currentDailyVerse);
                     }}
                     className={`px-2.5 py-0.5 rounded-full transition-colors cursor-pointer border flex items-center space-x-1 shadow-xs ${
-                      isLightCanvas
+                      isLight
+                        ? "bg-[#fbf0d6] hover:bg-[#f0cf8a] text-[#b8801f] border-[#f0cf8a] font-semibold"
+                        : isLightCanvas
                         ? "bg-amber-100/90 hover:bg-amber-200 text-amber-950 border-amber-300 font-bold"
                         : isPrismPulse
                         ? "bg-purple-100/90 hover:bg-purple-200 text-purple-950 border-purple-200 font-bold"
@@ -1482,7 +1486,7 @@ ${reflections
                     title={`Share ${currentDailyVerse.title} (${currentDailyVerse.source})`}
                     aria-label={`Share ${currentDailyVerse.title} - ${currentDailyVerse.source}`}
                   >
-                    <Share2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <Share2 className={`w-3.5 h-3.5 shrink-0 ${isLight ? "text-[#b8801f]" : "text-amber-500"}`} />
                     <span className="text-[10px] font-bold">Share</span>
                   </button>
                 </div>
@@ -1494,7 +1498,7 @@ ${reflections
                   <div
                     className={`font-sanskrit text-lg sm:text-xl leading-[2.2] text-center ${
                       isLight
-                        ? "text-[#1C0F05] font-semibold"
+                        ? "text-[#1b1740] font-semibold"
                         : isPrismPulse
                         ? "text-[#181326] font-bold"
                         : "text-stone-100"
@@ -1516,7 +1520,7 @@ ${reflections
                                 onClick={() => handleShlokaWordClick(chunk)}
                                 className={`group inline-block px-1.5 py-0.5 mx-0.5 my-0.5 rounded-lg transition-all cursor-pointer font-sanskrit hover:scale-[1.04] focus:outline-none focus:ring-1 focus:ring-amber-400 ${
                                   isLight
-                                    ? "hover:bg-amber-100/90 hover:text-amber-950 text-[#1C0F05]"
+                                    ? "hover:bg-[#d9a441]/15 hover:text-[#b8801f] text-[#1b1740]"
                                     : isPrismPulse
                                     ? "hover:bg-purple-100 hover:text-purple-950 text-[#181326]"
                                     : "hover:bg-amber-400/20 hover:text-amber-200 text-stone-100"
@@ -1536,7 +1540,7 @@ ${reflections
                   <div
                     className={`font-serif italic text-xs sm:text-sm leading-relaxed text-center px-2 ${
                       isLight
-                        ? "text-[#6E3B0A]"
+                        ? "text-[#55526b] font-medium"
                         : isPrismPulse
                         ? "text-[#6B46C1] font-medium"
                         : "text-amber-200/90"
@@ -1547,20 +1551,20 @@ ${reflections
                 )}
 
                 {/* Subtle Look Closer Helper Chip */}
-                <div className="flex items-center justify-center space-x-1.5 pt-0.5 text-[10.5px] font-medium text-amber-400/90 tracking-wide">
-                  <Sparkles className="w-3 h-3 text-amber-400 shrink-0 animate-pulse" />
+                <div className={`flex items-center justify-center space-x-1.5 pt-0.5 text-[10.5px] font-medium tracking-wide ${isLight ? "text-[#b8801f]" : "text-amber-400/90"}`}>
+                  <Sparkles className={`w-3 h-3 shrink-0 animate-pulse ${isLight ? "text-[#b8801f]" : "text-amber-400"}`} />
                   <span>Tap any word above to Look Closer · पदच्छेद & roots</span>
                 </div>
               </div>
 
               {/* Sacred Lotus Rule Divider */}
               <div className="flex items-center space-x-2.5 py-1">
-                <div className={`flex-1 h-[1px] ${isPrismPulse ? "bg-gradient-to-r from-transparent via-[#936BFA]/40 to-transparent" : "bg-gradient-to-r from-transparent via-amber-400/30 to-transparent"}`} />
+                <div className={`flex-1 h-[1px] ${isLight ? "bg-gradient-to-r from-transparent via-[#cfcbe0] to-transparent" : isPrismPulse ? "bg-gradient-to-r from-transparent via-[#936BFA]/40 to-transparent" : "bg-gradient-to-r from-transparent via-amber-400/30 to-transparent"}`} />
                 <div
                   className="w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: isPrismPulse ? "#936BFA" : themeGold }}
+                  style={{ backgroundColor: isLight ? "#d9a441" : isPrismPulse ? "#936BFA" : themeGold }}
                 />
-                <div className={`flex-1 h-[1px] ${isPrismPulse ? "bg-gradient-to-r from-transparent via-[#936BFA]/40 to-transparent" : "bg-gradient-to-r from-transparent via-amber-400/30 to-transparent"}`} />
+                <div className={`flex-1 h-[1px] ${isLight ? "bg-gradient-to-r from-transparent via-[#cfcbe0] to-transparent" : isPrismPulse ? "bg-gradient-to-r from-transparent via-[#936BFA]/40 to-transparent" : "bg-gradient-to-r from-transparent via-amber-400/30 to-transparent"}`} />
               </div>
 
               {/* Meaning & Commentary (Respecting prefLang) */}
@@ -1568,7 +1572,7 @@ ${reflections
                 {(prefLang === "dual" || prefLang === "en") && (
                   <p
                     className={`text-xs sm:text-sm italic leading-relaxed shloka-meaning-en ${
-                      isLight ? "text-[#2B1B10] font-normal" : isPrismPulse ? "text-[#2D3748] font-normal" : ""
+                      isLight ? "text-[#1d1b2e] font-normal" : isPrismPulse ? "text-[#2D3748] font-normal" : ""
                     }`}
                     style={{ color: isLight || isPrismPulse ? undefined : themeMist }}
                   >
@@ -1578,7 +1582,7 @@ ${reflections
                 {(prefLang === "dual" || prefLang === "hi") && currentDailyVerse.hindiMeaning && (
                   <p
                     className={`text-xs font-sanskrit leading-relaxed shloka-meaning-hi ${
-                      isLight ? "text-[#7A3800] font-medium" : isPrismPulse ? "text-[#9A3412] font-semibold" : "text-amber-300/80"
+                      isLight ? "text-[#b8801f] font-medium" : isPrismPulse ? "text-[#9A3412] font-semibold" : "text-amber-300/80"
                     }`}
                   >
                     "{currentDailyVerse.hindiMeaning}"
@@ -1589,13 +1593,13 @@ ${reflections
               {/* Reference */}
               <div
                 className="text-[11.5px] font-bold flex items-center justify-center space-x-2 pt-1"
-                style={{ color: isPrismPulse ? "#6D28D9" : themeGoldLight }}
+                style={{ color: isLight ? "#b8801f" : isPrismPulse ? "#6D28D9" : themeGoldLight }}
               >
-                <div className="w-4 h-[1px]" style={{ backgroundColor: isPrismPulse ? "#936BFA" : themeGold }} />
+                <div className="w-4 h-[1px]" style={{ backgroundColor: isLight ? "#d9a441" : isPrismPulse ? "#936BFA" : themeGold }} />
                 <span>
                   {currentDailyVerse.source} · {currentDailyVerse.title}
                 </span>
-                <div className="w-4 h-[1px]" style={{ backgroundColor: isPrismPulse ? "#936BFA" : themeGold }} />
+                <div className="w-4 h-[1px]" style={{ backgroundColor: isLight ? "#d9a441" : isPrismPulse ? "#936BFA" : themeGold }} />
               </div>
 
               {/* Action Buttons - 3 buttons in a single row */}
@@ -1604,7 +1608,9 @@ ${reflections
                 <button
                   onClick={() => openVerseScreen(currentDailyVerse.id)}
                   className={`w-full py-2 sm:py-2.5 px-1.5 sm:px-2 rounded-xl sm:rounded-full font-bold text-[11px] sm:text-xs shadow hover:scale-[1.02] transition-all text-center cursor-pointer flex items-center justify-center space-x-1 whitespace-nowrap overflow-hidden ${
-                    isPrismPulse
+                    isLight
+                      ? "bg-[#1b1740] hover:bg-[#100e2b] text-[#f4f2ff] shadow-md font-bold"
+                      : isPrismPulse
                       ? "bg-gradient-to-r from-[#FF9D2C] to-[#FA6BA7] text-white shadow-md font-extrabold"
                       : "bg-gradient-to-r from-amber-400 to-orange-500 text-stone-950"
                   }`}
@@ -1618,7 +1624,9 @@ ${reflections
                 <button
                   onClick={() => handleOpenLookCloser()}
                   className={`w-full py-2 sm:py-2.5 px-1.5 sm:px-2 rounded-xl sm:rounded-full font-bold text-[11px] sm:text-xs border transition-all flex items-center justify-center space-x-1 cursor-pointer whitespace-nowrap overflow-hidden shadow-xs hover:scale-[1.02] ${
-                    isLightCanvas
+                    isLight
+                      ? "bg-[#fbf0d6] hover:bg-[#f0cf8a] text-[#b8801f] border-[#f0cf8a] font-bold"
+                      : isLightCanvas
                       ? "bg-amber-100/80 hover:bg-amber-200/80 text-amber-950 border-amber-300"
                       : isPrismPulse
                       ? "bg-purple-100/90 hover:bg-purple-200/90 text-purple-950 border-purple-300"
@@ -1626,7 +1634,7 @@ ${reflections
                   }`}
                   title="Look Closer - Paninian Roots, Sandhi & Etymology"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <Sparkles className={`w-3.5 h-3.5 shrink-0 ${isLight ? "text-[#b8801f]" : "text-amber-400"}`} />
                   <span className="truncate">Look Closer</span>
                 </button>
 
@@ -1675,7 +1683,9 @@ ${reflections
                   <button
                     onClick={handlePlayDaily}
                     className={`w-full py-2 sm:py-2.5 px-1.5 sm:px-2 rounded-xl sm:rounded-full font-bold text-[11px] sm:text-xs border transition-all flex items-center justify-center space-x-1 cursor-pointer whitespace-nowrap overflow-hidden hover:scale-[1.02] ${
-                      isLightCanvas
+                      isLight
+                        ? "bg-[#d9a441] hover:bg-[#b8801f] text-[#100e2b] border-[#d9a441] shadow-xs"
+                        : isLightCanvas
                         ? "bg-stone-100 hover:bg-stone-200 text-stone-800 border-stone-300 shadow-xs"
                         : isPrismPulse
                         ? "bg-white/80 hover:bg-white text-purple-950 border-purple-200 shadow-xs"
@@ -2222,12 +2232,15 @@ ${reflections
               <div className="grid grid-cols-2 gap-2.5">
                 <div
                   onClick={() => openScriptureScreen("bhagavad_gita")}
-                  className="p-4 rounded-2xl cursor-pointer hover:scale-[1.02] transition-transform shadow-xs"
-                  style={{ background: "linear-gradient(145deg, #fdf0d0, #f5e0a0)" }}
+                  className={`p-4 rounded-[20px] cursor-pointer hover:scale-[1.02] transition-all shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] border ${
+                    isLightCanvas
+                      ? "bg-white border-[#cfcbe0] hover:border-[#d9a441]"
+                      : "bg-stone-900/60 border-amber-500/20 hover:border-amber-500/40"
+                  }`}
                 >
                   <span className="text-2xl block mb-1.5">📚</span>
-                  <div className="text-xs font-bold text-stone-950">Scriptures</div>
-                  <div className="text-[10.5px] text-stone-700">Gita, Upanishads & more</div>
+                  <div className={`text-xs font-bold ${isLightCanvas ? "text-[#1b1740]" : "text-stone-100"}`}>Scriptures</div>
+                  <div className={`text-[10.5px] ${isLightCanvas ? "text-[#55526b]" : "text-stone-400"}`}>Gita, Upanishads & more</div>
                 </div>
 
                 <div
@@ -2235,22 +2248,28 @@ ${reflections
                     setSearchQuery("Karma");
                     setActiveTab("search");
                   }}
-                  className="p-4 rounded-2xl cursor-pointer hover:scale-[1.02] transition-transform shadow-xs"
-                  style={{ background: "linear-gradient(145deg, #fad8ce, #f4b09a)" }}
+                  className={`p-4 rounded-[20px] cursor-pointer hover:scale-[1.02] transition-all shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] border ${
+                    isLightCanvas
+                      ? "bg-white border-[#cfcbe0] hover:border-[#d9a441]"
+                      : "bg-stone-900/60 border-amber-500/20 hover:border-amber-500/40"
+                  }`}
                 >
                   <span className="text-2xl block mb-1.5">🏷️</span>
-                  <div className="text-xs font-bold text-stone-950">Topics</div>
-                  <div className="text-[10.5px] text-stone-700">Karma, Dharma, Bhakti…</div>
+                  <div className={`text-xs font-bold ${isLightCanvas ? "text-[#1b1740]" : "text-stone-100"}`}>Topics</div>
+                  <div className={`text-[10.5px] ${isLightCanvas ? "text-[#55526b]" : "text-stone-400"}`}>Karma, Dharma, Bhakti…</div>
                 </div>
 
                 <div
                   onClick={() => openScriptureScreen("yoga_sutras")}
-                  className="p-4 rounded-2xl cursor-pointer hover:scale-[1.02] transition-transform shadow-xs"
-                  style={{ background: "linear-gradient(145deg, #c6ede0, #96d8c2)" }}
+                  className={`p-4 rounded-[20px] cursor-pointer hover:scale-[1.02] transition-all shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] border ${
+                    isLightCanvas
+                      ? "bg-white border-[#cfcbe0] hover:border-[#d9a441]"
+                      : "bg-stone-900/60 border-amber-500/20 hover:border-amber-500/40"
+                  }`}
                 >
                   <span className="text-2xl block mb-1.5">🗂️</span>
-                  <div className="text-xs font-bold text-stone-950">Yoga & Mind</div>
-                  <div className="text-[10.5px] text-stone-700">Patanjali's Sutras</div>
+                  <div className={`text-xs font-bold ${isLightCanvas ? "text-[#1b1740]" : "text-stone-100"}`}>Yoga & Mind</div>
+                  <div className={`text-[10.5px] ${isLightCanvas ? "text-[#55526b]" : "text-stone-400"}`}>Patanjali's Sutras</div>
                 </div>
 
                 <div
@@ -2258,12 +2277,15 @@ ${reflections
                     setSearchQuery("Advaita");
                     setActiveTab("search");
                   }}
-                  className="p-4 rounded-2xl cursor-pointer hover:scale-[1.02] transition-transform shadow-xs"
-                  style={{ background: "linear-gradient(145deg, #f5e4c8, #e8c88a)" }}
+                  className={`p-4 rounded-[20px] cursor-pointer hover:scale-[1.02] transition-all shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] border ${
+                    isLightCanvas
+                      ? "bg-white border-[#cfcbe0] hover:border-[#d9a441]"
+                      : "bg-stone-900/60 border-amber-500/20 hover:border-amber-500/40"
+                  }`}
                 >
                   <span className="text-2xl block mb-1.5">🕉️</span>
-                  <div className="text-xs font-bold text-stone-950">Traditions</div>
-                  <div className="text-[10.5px] text-stone-700">Vedanta, Yoga, Tantra…</div>
+                  <div className={`text-xs font-bold ${isLightCanvas ? "text-[#1b1740]" : "text-stone-100"}`}>Traditions</div>
+                  <div className={`text-[10.5px] ${isLightCanvas ? "text-[#55526b]" : "text-stone-400"}`}>Vedanta, Yoga, Tantra…</div>
                 </div>
               </div>
             </div>
@@ -2285,13 +2307,13 @@ ${reflections
                   <button
                     key={pill}
                     onClick={() => setExplorePill(pill)}
-                    className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
+                    className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                       explorePill === pill
                         ? isLightCanvas
-                          ? "bg-amber-500 text-stone-950 font-extrabold shadow-xs"
+                          ? "bg-[#1b1740] text-[#f4f2ff] shadow-xs"
                           : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
                         : isLightCanvas
-                        ? "bg-stone-200/70 text-stone-700 hover:bg-stone-200"
+                        ? "bg-white border border-[#cfcbe0] text-[#1d1b2e] hover:bg-[#fbf0d6] hover:border-[#d9a441]"
                         : "bg-white/5 text-stone-400 hover:text-stone-200"
                     }`}
                   >
@@ -2302,9 +2324,9 @@ ${reflections
 
               {/* Scriptures List */}
               <div
-                className={`rounded-3xl border overflow-hidden ${
+                className={`rounded-[20px] border overflow-hidden ${
                   isLightCanvas
-                    ? "bg-white border-stone-200 divide-y divide-stone-100 shadow-sm"
+                    ? "bg-white border-[#cfcbe0] divide-y divide-[#efedf6] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)]"
                     : "bg-stone-900/60 border-amber-500/20 divide-y divide-white/5"
                 }`}
               >
@@ -2315,33 +2337,33 @@ ${reflections
                       key={sc.id}
                       onClick={() => openScriptureScreen(sc.id)}
                       className={`p-4 flex items-center space-x-3.5 cursor-pointer transition-colors group ${
-                        isLightCanvas ? "hover:bg-amber-50/60" : "hover:bg-white/5"
+                        isLightCanvas ? "hover:bg-[#f7f6fb]" : "hover:bg-white/5"
                       }`}
                     >
                       <div
                         className={`w-11 h-11 rounded-2xl border flex items-center justify-center font-sanskrit text-lg flex-shrink-0 ${
                           isLightCanvas
-                            ? "bg-amber-100 text-amber-950 border-amber-300 font-bold"
+                            ? "bg-[#fbf0d6] text-[#b8801f] border-[#f0cf8a] font-bold"
                             : "bg-amber-500/10 border-amber-500/20 text-amber-300"
                         }`}
                       >
                         {sc.sanskritName.slice(0, 2)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className={`text-sm font-bold truncate ${isLightCanvas ? "text-stone-900" : "text-stone-100"}`}>
+                        <div className={`text-sm font-bold truncate ${isLightCanvas ? "text-[#1b1740]" : "text-stone-100"}`}>
                           {sc.name}
                         </div>
-                        <div className={`text-[11px] truncate mt-0.5 ${isLightCanvas ? "text-stone-600" : "text-stone-400"}`}>
+                        <div className={`text-[11px] truncate mt-0.5 ${isLightCanvas ? "text-[#55526b]" : "text-stone-400"}`}>
                           {sc.totalChapters} {sc.id === "yoga_sutras" ? "Padas" : "Chapters"} · {sc.totalVerses} Verses · {sc.category}
                         </div>
-                        <div className={`w-full h-1 rounded-full mt-2 overflow-hidden ${isLightCanvas ? "bg-stone-100" : "bg-stone-800"}`}>
+                        <div className={`w-full h-1 rounded-full mt-2 overflow-hidden ${isLightCanvas ? "bg-[#efedf6]" : "bg-stone-800"}`}>
                           <div
                             className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full"
                             style={{ width: sc.id === "bhagavad_gita" ? "62%" : "15%" }}
                           />
                         </div>
                       </div>
-                      <ChevronRight className={`w-4 h-4 group-hover:translate-x-0.5 transition-all ${isLightCanvas ? "text-stone-400 group-hover:text-amber-600" : "text-stone-500 group-hover:text-amber-400"}`} />
+                      <ChevronRight className={`w-4 h-4 group-hover:translate-x-0.5 transition-all ${isLightCanvas ? "text-[#55526b] group-hover:text-[#b8801f]" : "text-stone-500 group-hover:text-amber-400"}`} />
                     </div>
                   ))}
               </div>
@@ -2361,13 +2383,13 @@ ${reflections
             {/* Search Input Bar */}
             <div className="px-4 space-y-3">
               <div
-                className={`flex items-center space-x-2.5 p-3 rounded-2xl border ${
+                className={`flex items-center space-x-2.5 p-3 rounded-[20px] border ${
                   isLightCanvas
-                    ? "bg-white border-stone-300 shadow-xs"
+                    ? "bg-white border-[#cfcbe0] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)]"
                     : "bg-white/5 border-white/10"
                 }`}
               >
-                <Search className="w-4 h-4 text-amber-500" />
+                <Search className={`w-4 h-4 ${isLightCanvas ? "text-[#b8801f]" : "text-amber-500"}`} />
                 <input
                   type="text"
                   value={searchQuery}
@@ -2375,7 +2397,7 @@ ${reflections
                   placeholder="Type a Sanskrit shloka, keyword ('karma', 'atman', 'dharma')..."
                   className={`flex-1 bg-transparent text-xs outline-none ${
                     isLightCanvas
-                      ? "text-stone-900 placeholder-stone-400"
+                      ? "text-[#1d1b2e] placeholder-[#55526b]"
                       : "text-stone-100 placeholder-stone-500"
                   }`}
                 />
@@ -2383,7 +2405,7 @@ ${reflections
                   <button
                     onClick={() => setSearchQuery("")}
                     className={`text-xs font-bold px-1 cursor-pointer ${
-                      isLightCanvas ? "text-stone-500 hover:text-stone-700" : "text-stone-500 hover:text-stone-300"
+                      isLightCanvas ? "text-[#55526b] hover:text-[#1b1740]" : "text-stone-500 hover:text-stone-300"
                     }`}
                   >
                     ✕
@@ -2406,9 +2428,9 @@ ${reflections
 
                 {searchResults.length === 0 ? (
                   <div
-                    className={`p-6 rounded-2xl text-center text-xs border ${
+                    className={`p-6 rounded-[20px] text-center text-xs border ${
                       isLightCanvas
-                        ? "bg-white border-stone-200 text-stone-600 shadow-xs"
+                        ? "bg-white border-[#cfcbe0] text-[#55526b] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)]"
                         : "bg-white/5 border-white/5 text-stone-400"
                     }`}
                   >
@@ -2426,9 +2448,9 @@ ${reflections
                         <div
                           key={verse.id}
                           onClick={() => openVerseScreen(verse.id)}
-                          className={`p-4 rounded-2xl border cursor-pointer transition-all space-y-2.5 ${
+                          className={`p-4 rounded-[20px] border cursor-pointer transition-all space-y-2.5 ${
                             isLightCanvas
-                              ? "bg-white border-stone-200 hover:border-amber-400 shadow-sm text-stone-900"
+                              ? "bg-white border-[#cfcbe0] hover:border-[#d9a441] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] text-[#1d1b2e]"
                               : isFestival
                               ? "bg-[#480C14]/90 border-[#FF8A00]/30 hover:border-[#FF8A00]/60 text-[#FFF6E3]"
                               : isAmethyst
@@ -2439,7 +2461,7 @@ ${reflections
                           <div className="flex items-center justify-between">
                             <span
                               className={`text-xs font-bold ${
-                                isLightCanvas ? "text-amber-800" : "text-amber-400"
+                                isLightCanvas ? "text-[#b8801f]" : "text-amber-400"
                               }`}
                             >
                               {displaySource} · {verse.title}
@@ -2449,7 +2471,7 @@ ${reflections
                           {/* Full Sanskrit Verse - no line clamp */}
                           <div
                             className={`font-sanskrit text-sm leading-relaxed whitespace-pre-line ${
-                              isLightCanvas ? "text-[#1A0E05] font-semibold" : "text-stone-100"
+                              isLightCanvas ? "text-[#1b1740] font-semibold" : "text-stone-100"
                             }`}
                           >
                             {verse.sanskrit}
@@ -2458,7 +2480,7 @@ ${reflections
                           {verse.transliteration && (
                             <p
                               className={`font-serif italic text-xs sm:text-sm leading-relaxed ${
-                                isLightCanvas ? "text-[#6E3B0A]" : "text-amber-200/80"
+                                isLightCanvas ? "text-[#55526b]" : "text-amber-200/80"
                               }`}
                             >
                               {verse.transliteration}
@@ -2467,7 +2489,7 @@ ${reflections
                           {/* English Meaning - no line clamp */}
                           <p
                             className={`text-xs sm:text-sm leading-relaxed ${
-                              isLightCanvas ? "text-stone-700" : "text-stone-300"
+                              isLightCanvas ? "text-[#1d1b2e]" : "text-stone-300"
                             }`}
                           >
                             {verse.meaning}
@@ -2506,7 +2528,11 @@ ${reflections
                       <button
                         key={idx}
                         onClick={() => setSearchQuery(topic)}
-                        className="px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-colors"
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                          isLightCanvas
+                            ? "bg-[#fbf0d6] border border-[#f0cf8a] text-[#b8801f] hover:bg-[#f0cf8a]"
+                            : "bg-amber-500/10 border border-amber-500/20 text-amber-300 hover:bg-amber-500/20"
+                        }`}
                       >
                         {topic}
                       </button>
@@ -2524,9 +2550,9 @@ ${reflections
                       EXPLORE BY TRADITION
                     </span>
                   </div>
-                  <div className={`rounded-2xl border divide-y ${
+                  <div className={`rounded-[20px] border divide-y ${
                     isLightCanvas
-                      ? "bg-white border-stone-200 divide-stone-100 shadow-xs"
+                      ? "bg-white border-[#cfcbe0] divide-[#efedf6] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)]"
                       : "bg-stone-900/60 border-amber-500/20 divide-white/5"
                   }`}>
                     {[
@@ -2559,19 +2585,19 @@ ${reflections
                         key={idx}
                         onClick={trad.action}
                         className={`p-3.5 flex items-center space-x-3 cursor-pointer ${
-                          isLightCanvas ? "hover:bg-amber-50/60" : "hover:bg-white/5"
+                          isLightCanvas ? "hover:bg-[#f7f6fb]" : "hover:bg-white/5"
                         } transition-colors`}
                       >
                         <span className="text-xl">{trad.icon}</span>
                         <div className="flex-1">
-                          <div className={`text-xs font-bold ${isLightCanvas ? "text-stone-900" : "text-stone-100"}`}>
+                          <div className={`text-xs font-bold ${isLightCanvas ? "text-[#1b1740]" : "text-stone-100"}`}>
                             {trad.title}
                           </div>
-                          <div className={`text-[10.5px] ${isLightCanvas ? "text-stone-600" : "text-stone-400"}`}>
+                          <div className={`text-[10.5px] ${isLightCanvas ? "text-[#55526b]" : "text-stone-400"}`}>
                             {trad.sub}
                           </div>
                         </div>
-                        <ChevronRight className={`w-4 h-4 ${isLightCanvas ? "text-stone-400" : "text-stone-500"}`} />
+                        <ChevronRight className={`w-4 h-4 ${isLightCanvas ? "text-[#55526b]" : "text-stone-500"}`} />
                       </div>
                     ))}
                   </div>
@@ -2610,38 +2636,47 @@ ${reflections
                 onClick={() => {
                   progressService.triggerMilestoneCheckin();
                 }}
-                className="p-3.5 rounded-2xl text-center shadow-xs cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-transform select-none"
-                style={{ background: "linear-gradient(145deg, #fdf0d0, #f5e0a0)" }}
+                className={`p-3.5 rounded-[20px] text-center shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] border cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all select-none ${
+                  isLight
+                    ? "bg-white border-[#cfcbe0] hover:border-[#d9a441]"
+                    : "bg-stone-900/60 border-amber-500/20"
+                }`}
                 title="Tap to celebrate daily habit milestone"
               >
-                <div className="font-serif-sacred text-2xl font-bold text-amber-950 leading-none">
+                <div className={`font-serif-sacred text-2xl font-bold leading-none ${isLight ? "text-[#1b1740]" : "text-amber-400"}`}>
                   {streakData.currentStreak}
                 </div>
-                <div className="text-[10.5px] font-bold text-stone-900 mt-1">
+                <div className={`text-[10.5px] font-bold mt-1 ${isLight ? "text-[#b8801f]" : "text-stone-300"}`}>
                   Day Streak 🔥
                 </div>
               </div>
 
               <div
-                className="p-3.5 rounded-2xl text-center shadow-xs"
-                style={{ background: "linear-gradient(145deg, #fad8ce, #f4b09a)" }}
+                className={`p-3.5 rounded-[20px] text-center shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] border transition-all ${
+                  isLight
+                    ? "bg-white border-[#cfcbe0] hover:border-[#d9a441]"
+                    : "bg-stone-900/60 border-amber-500/20"
+                }`}
               >
-                <div className="font-serif-sacred text-2xl font-bold text-rose-950 leading-none">
+                <div className={`font-serif-sacred text-2xl font-bold leading-none ${isLight ? "text-[#1b1740]" : "text-amber-200"}`}>
                   {savedVerses.length}
                 </div>
-                <div className="text-[10.5px] font-bold text-stone-900 mt-1">
+                <div className={`text-[10.5px] font-bold mt-1 ${isLight ? "text-[#55526b]" : "text-stone-400"}`}>
                   Saved
                 </div>
               </div>
 
               <div
-                className="p-3.5 rounded-2xl text-center shadow-xs"
-                style={{ background: "linear-gradient(145deg, #c6ede0, #96d8c2)" }}
+                className={`p-3.5 rounded-[20px] text-center shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] border transition-all ${
+                  isLight
+                    ? "bg-white border-[#cfcbe0] hover:border-[#d9a441]"
+                    : "bg-stone-900/60 border-amber-500/20"
+                }`}
               >
-                <div className="font-serif-sacred text-2xl font-bold text-teal-950 leading-none">
+                <div className={`font-serif-sacred text-2xl font-bold leading-none ${isLight ? "text-[#1b1740]" : "text-amber-200"}`}>
                   {reflections.length}
                 </div>
-                <div className="text-[10.5px] font-bold text-stone-900 mt-1">
+                <div className={`text-[10.5px] font-bold mt-1 ${isLight ? "text-[#55526b]" : "text-stone-400"}`}>
                   Reflections
                 </div>
               </div>
@@ -2660,9 +2695,9 @@ ${reflections
               <div className="space-y-2">
                 {savedVerses.length === 0 ? (
                   <div
-                    className={`p-4 rounded-2xl text-center text-xs border ${
+                    className={`p-4 rounded-[20px] text-center text-xs border ${
                       isLight
-                        ? "bg-white border-stone-200 text-stone-600 shadow-xs"
+                        ? "bg-white border-[#cfcbe0] text-[#55526b] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)]"
                         : "bg-white/5 border-white/5 text-stone-400"
                     }`}
                   >
@@ -2673,25 +2708,25 @@ ${reflections
                     <div
                       key={item.id}
                       onClick={() => openVerseScreen(item.id)}
-                      className={`p-3.5 rounded-2xl border flex items-center space-x-3 cursor-pointer transition-colors ${
+                      className={`p-3.5 rounded-[20px] border flex items-center space-x-3 cursor-pointer transition-all ${
                         isLight
-                          ? "bg-white border-stone-200 hover:border-amber-400 shadow-xs"
+                          ? "bg-white border-[#cfcbe0] hover:border-[#d9a441] hover:bg-[#f7f6fb] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)]"
                           : "bg-white/5 border-white/5 hover:bg-white/10"
                       }`}
                     >
                       <span className="text-base text-rose-500">❤️</span>
                       <div className="flex-1 min-w-0">
-                        <div className={`font-sanskrit text-sm font-semibold truncate ${isLight ? "text-stone-900" : "text-stone-100"}`}>
+                        <div className={`font-sanskrit text-sm font-semibold truncate ${isLight ? "text-[#1b1740]" : "text-stone-100"}`}>
                           {item.title}
                         </div>
                         <div
-                          className="text-[11px] font-bold mt-0.5"
-                          style={{ color: themeGoldLight }}
+                          className={`text-[11px] font-bold mt-0.5 ${isLight ? "text-[#b8801f]" : ""}`}
+                          style={isLight ? undefined : { color: themeGoldLight }}
                         >
                           {item.ref}
                         </div>
                       </div>
-                      <ChevronRight className={`w-4 h-4 ${isLight ? "text-stone-400" : "text-stone-500"}`} />
+                      <ChevronRight className={`w-4 h-4 ${isLight ? "text-[#55526b]" : "text-stone-500"}`} />
                     </div>
                   ))
                 )}
@@ -2710,9 +2745,9 @@ ${reflections
               </div>
               {reflections.length === 0 ? (
                 <div
-                  className={`p-4 rounded-2xl text-center text-xs border ${
+                  className={`p-4 rounded-[20px] text-center text-xs border ${
                     isLight
-                      ? "bg-white border-stone-200 text-stone-600 shadow-xs"
+                      ? "bg-white border-[#cfcbe0] text-[#55526b] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)]"
                       : "bg-white/5 border-white/5 text-stone-400"
                   }`}
                 >
@@ -2722,10 +2757,16 @@ ${reflections
                 reflections.map((ref) => (
                   <div
                     key={ref.id}
-                    className="p-4 rounded-2xl space-y-2"
-                    style={{ background: themeCardBg, color: "#2B1A08" }}
+                    className={`p-4 rounded-[20px] border space-y-2 shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] ${
+                      isLight
+                        ? "bg-white border-[#cfcbe0] hover:border-[#d9a441] text-[#1d1b2e]"
+                        : "border-white/10 text-stone-100"
+                    }`}
+                    style={isLight ? undefined : { background: themeCardBg }}
                   >
-                    <div className="flex items-center justify-between text-[11px] font-bold text-amber-900 border-b border-amber-900/15 pb-1.5">
+                    <div className={`flex items-center justify-between text-[11px] font-bold border-b pb-1.5 ${
+                      isLight ? "text-[#b8801f] border-[#efedf6]" : "text-amber-400 border-white/10"
+                    }`}>
                       <span>
                         {ref.date} · {ref.verseRef}
                       </span>
@@ -2736,7 +2777,7 @@ ${reflections
                               setEditingRefId(ref.id);
                               setEditingRefText(ref.text);
                             }}
-                            className="p-1 text-stone-700 hover:text-stone-950"
+                            className={`p-1 cursor-pointer ${isLight ? "text-[#55526b] hover:text-[#1b1740]" : "text-stone-400 hover:text-stone-200"}`}
                             title="Edit Note"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
@@ -2744,7 +2785,7 @@ ${reflections
                         )}
                         <button
                           onClick={() => handleDeleteReflection(ref.id)}
-                          className="p-1 text-rose-700 hover:text-rose-900"
+                          className="p-1 text-rose-500 hover:text-rose-700 cursor-pointer"
                           title="Delete Note"
                         >
                           ✕
@@ -2758,25 +2799,35 @@ ${reflections
                           rows={3}
                           value={editingRefText}
                           onChange={(e) => setEditingRefText(e.target.value)}
-                          className="w-full p-2.5 rounded-xl bg-white/80 text-xs text-stone-950 border border-amber-900/30 outline-none resize-none"
+                          className={`w-full p-2.5 rounded-xl text-xs outline-none resize-none border ${
+                            isLight
+                              ? "bg-[#f7f6fb] text-[#1d1b2e] border-[#cfcbe0] focus:border-[#d9a441]"
+                              : "bg-white/10 text-stone-100 border-white/20"
+                          }`}
                         />
                         <div className="flex justify-end space-x-2">
                           <button
                             onClick={() => setEditingRefId(null)}
-                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-stone-200 text-stone-800"
+                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
+                              isLight ? "bg-[#efedf6] text-[#1b1740]" : "bg-stone-800 text-stone-200"
+                            }`}
                           >
                             Cancel
                           </button>
                           <button
                             onClick={() => handleSaveEditReflection(ref.id)}
-                            className="px-3 py-1 rounded-lg text-xs font-bold bg-amber-600 text-white shadow"
+                            className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer shadow ${
+                              isLight ? "bg-[#1b1740] hover:bg-[#2b2560] text-[#f4f2ff]" : "bg-amber-600 text-white"
+                            }`}
                           >
                             Save
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="text-sm sm:text-base leading-relaxed italic text-stone-900 whitespace-pre-wrap w-full flex-1">
+                      <div className={`text-sm sm:text-base leading-relaxed italic whitespace-pre-wrap w-full flex-1 ${
+                        isLight ? "text-[#1d1b2e]" : "text-stone-200"
+                      }`}>
                         "{ref.text}"
                       </div>
                     )}

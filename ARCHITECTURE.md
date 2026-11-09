@@ -79,31 +79,30 @@ SutraSparsh is built on four architectural pillars:
 
 ### 3.1 Component Hierarchy & State Management
 - **Root Entry Point (`src/main.tsx` & `src/App.tsx`)**:
-  - Initializes global error boundaries, React Query client, and top-level modals.
+  - Initializes the top-level **React `ErrorBoundary`** (`src/components/ErrorBoundary.tsx`), providing an authentic SutraSparsh recovery interface with instant reload and session clear buttons, preventing component exceptions from unmounting the page into a blank screen.
+  - Initial `index.html` markup pre-declares `data-theme="light"` and Parchment Dawn canvas tokens (`theme-light light-mode parchment-dawn bg-[#f7f6fb] text-[#1d1b2e]`) to eliminate cold-start dark flashes.
   - Houses the dynamic application router rendering either the Seeker Sanctuary or Admin Console based on active route and RBAC permissions.
 - **Seeker Sanctuary (`src/SutraSparshTempleApp.tsx`)**:
-  - Coordinates header navigation, the featured Morning Shloka card, quick access tiles, the primary content view, and the mobile bottom navigation bar (`MobileBottomNav.tsx`).
+  - Coordinates header navigation, the featured Daily Shloka Rotation card, quick access tiles, the primary content view, and the mobile bottom navigation bar (`MobileBottomNav.tsx`).
 - **State Management**:
-  - Modular Zustand stores manage persistent client state:
-    - `useAuthStore`: Seeker profile, guest identity, and authentication tokens.
-    - `useThemeStore`: Active theme selection, high-contrast flags, and typography preferences.
+  - Modular stores & custom hooks manage persistent client state:
+    - `authService`: Seeker profile, guest identity, and authentication tokens.
+    - `themeConfigService` & `themeObserver`: Whitelisted theme lifecycle (`light` / `golden-hour`) with instant DOM root synchronization across all browser navigation events.
     - `useAudioStore`: Active shloka audio, 432Hz drone volume, tempo scaling, and continuous loop state.
-    - `useProgressStore`: Daily reading minutes, completed verses, bookmarks, and streak calculations.
+    - `progressService`: Daily reading minutes, completed verses, bookmarks, and streak calculations.
     - `useFeatureFlags`: Phase 1 sanctuary lockdown vs Phase 2 dynamic monetization gates.
 
-### 3.2 Universal 6-Theme Palette & Contrast Engine
-SutraSparsh implements 6 contemplative themes:
-1. `sandstone`: Warm monastic earth with gold leaf accents and dark espresso sanctum ground.
-2. `amethyst`: Meditative deep violet dusk with radiant amber highlights.
-3. `parchment`: Crisp daylight readability on soft manuscript parchment (`#FFFBF5`) with sandalwood typography (`#3A2818`).
-4. `festival`: Royal temple vermilion, kumkum maroon (`#4B0E17`), and ceremonial gold.
-5. `golden-hour`: Butter cream, burnt honey, and ink black sanctum.
-6. `prism-pulse`: Electric purple, vivid orange, and emerald on crisp light canvas.
+### 3.2 Unified Parchment Dawn Design Constitution
+SutraSparsh enforces a 100% unified Parchment Dawn manuscript aesthetic matching the **Daily Shloka Rotation** design across all main views:
+1. **Explore View**: *Timeless Sanskrit Wisdom & Philosophical Heritage* hero card transformed to pure white surface (`#ffffff`, border `#cfcbe0`), Night Indigo title (`#1b1740`), Soft Ink body (`#55526b`), and Diya Gold eyebrow (`#b8801f`).
+2. **Search View**: *Intent-Driven Discovery • ज्ञान खोज* hero card with pure white surface, sunken ash search input bar (`#f7f6fb`), and Night Indigo buttons.
+3. **Community Board**: *Satsang Mandali • सत्संग मण्डली* hero card with pure white surface, Diya Gold badge, and high-contrast action toolbar.
+4. **Personal Sanctuary**: *Personal Sanctuary • मेरी साधना* hero card with pure white surface, gold compass badge, Night Indigo title, and unified navigation tabs.
 
 #### High-Specificity Contrast Guards & ModalPortal Synchronization
 - Detached DOM dialogs (`VerseModal`, `LookCloserModal`, `WordExplorerDrawer`) render into an isolated DOM portal (`ModalPortal.tsx`).
 - An active `MutationObserver` monitors `document.documentElement` for changes to `data-theme` or theme classes and synchronously propagates them to the portal subtree.
-- `src/styles/prism-pulse.css` enforces high-specificity CSS rules with `!important` fallbacks defending Devanagari headers, IAST transliterations, and morphological badges against contrast inversion.
+- Base tokens guarantee WCAG 2.1 AAA contrast (>16:1 ratio) on all body copy and liturgical Sanskrit verses.
 
 ### 3.3 High-Performance Infinite Scroll Architecture (`React.memo` & `useMemo`)
 - **`React.memo` Custom Comparator**: `VerseCard` is wrapped in an equality function that inspects verse identity (`prev.verse.id === next.verse.id`), verse text stability, active playback flag (`isPlaying`), bookmark presence (`isBookmarked`), and active theme token. This prevents unneeded re-rendering of non-active cards when audio status or unrelated state changes.

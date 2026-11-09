@@ -429,7 +429,9 @@ The application follows an architectural separation between:
 | **M52 (Phase 26)** | Audio Lifecycle | **Major** | ResilientAudioPlayer pre-validation, RIFF/WAV packaging, and deterministic URL.revokeObjectURL disposal | **COMPLETE ✅** |
 | **M53 (Phase 27)** | Design Constitution | **Major** | Parchment Dawn WCAG 2.1 AAA contrast unification across all sanctuary views, tabs, cards, and navigation | **COMPLETE ✅** |
 | **M54 (Phase 27)** | Performance | **Major** | React.memo custom equality comparator and useMemo collection memoization for 60fps infinite scroll | **COMPLETE ✅** |
+| **M55 (Phase 28)** | Sync & Affirmations | **Major** | Daily Spiritual Affirmations, Firestore sync indicator, streak flame glow, journal search | **COMPLETE ✅** |
+| **M56 (Phase 29)** | Runtime Hardening | **Major** | Parchment Dawn unified card surfaces (#ffffff), React ErrorBoundary, Vite module rate-limiter exemption, and CSP iframe embedding | **COMPLETE ✅** |
 
 ---
 
-*Document compiled and certified against production codebase v1.8.0 (Production Launch Certified).*
+*Document compiled and certified against production codebase v1.0.0-parchment-dawn (Production Launch Certified).*

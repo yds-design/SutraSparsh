@@ -35,10 +35,10 @@ export function securityHeadersMiddleware(
     "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
   );
 
-  // Content Security Policy: Allow AI Studio and Google origins to embed iframe
+  // Content Security Policy: Permit iframe embedding across AI Studio environments and allow audio/media streams
   res.setHeader(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https: ws: wss:; frame-ancestors 'self' https://aistudio.google.com https://*.google.com https://*.run.app https://ai.studio;"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https: blob:; media-src 'self' data: https: blob:; connect-src 'self' https: ws: wss:; frame-ancestors *;"
   );
 
   next();

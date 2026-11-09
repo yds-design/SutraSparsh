@@ -4,13 +4,14 @@
 > *"Take refuge in Him alone with all your being."* — Bhagavad Gita 18.62
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.8.0-gold.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-1.0.0--parchment--dawn-gold.svg)](package.json)
 [![Status](https://img.shields.io/badge/status-PRODUCTION_LAUNCH_CERTIFIED-success.svg)](TEST_RESULTS.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue.svg)](tsconfig.json)
 [![React](https://img.shields.io/badge/React-19.2-cyan.svg)](package.json)
 [![Express](https://img.shields.io/badge/Express-5.2-lightgrey.svg)](server.ts)
+[![Vite](https://img.shields.io/badge/Vite-8.2-purple.svg)](vite.config.ts)
 
-SutraSparsh is a digital sanctuary engineered for the study, contemplation, and sadhana of sacred Sanskrit literature. It unites authentic canonical texts (Bhagavad Gita, Patanjali Yoga Sutras, Principal Upanishads, and Vedic Chants) with modern Paninian linguistic tools, high-fidelity neural audio synthesis, structured spiritual habit tracking, community satsang, and verified Vedic Purohit services.
+SutraSparsh is a digital sanctuary engineered for the study, contemplation, and sadhana of sacred Sanskrit literature. It unites authentic canonical texts (Bhagavad Gita, Patanjali Yoga Sutras, Principal Upanishads, and Vedic Chants) with modern Paninian linguistic tools, high-fidelity neural audio synthesis, structured spiritual habit tracking, community satsang, verified Vedic Purohit services, and a unified Parchment Dawn design system.
 
 ---
 
@@ -65,14 +66,17 @@ SutraSparsh is a digital sanctuary engineered for the study, contemplation, and 
 - **Verse-Linked Dialogues**: Seekers can anchor contemplative insights directly to specific shlokas.
 - **Anumodana (Spiritual Upvoting)**: Uplifting community feedback mechanism supporting respectful discussion.
 
-### 8. Universal Six-Theme Sanctuary & Parchment Dawn Constitution
-- **Parchment Dawn (Light Mode)**: Authentic manuscript aesthetic on warm aged paper (`#FBF8EE`, card surface `#FFFDF8`) with roasted espresso typography (`#261B12` titles, `#4A3A2F` body) providing strict WCAG 2.1 AAA contrast (>16:1 ratio) with zero low-contrast amber text.
-- **Sandstone Temple (Default)**: Warm monastic earth, rich amber accents, gold leaf highlights, deep espresso sanctum ground.
-- **Amethyst Twilight**: Meditative deep violet dusk, radiant amber, moonlit cream typography.
-- **Festival Gold & Maroon**: Royal temple vermilion, kumkum maroon, and ceremonial gold ornamentation.
-- **Golden Hour Atmosphere**: Butter cream, burnt honey, ink black sanctum, and warm gray accents.
-- **Prism Pulse (Vivid Neo-Dash)**: Electric purple, vivid orange, cyan blue, and emerald with crisp light canvas foundation.
-- **ModalPortal Theme Observer**: Active `MutationObserver` synchronizing theme classes into detached DOM dialogs, guaranteeing zero theme leakage or contrast inversion.
+### 8. Universal Theme Sanctuary & Parchment Dawn Constitution
+- **Parchment Dawn (Light Mode)**: 100% unified manuscript aesthetic featuring pure white Restro-style card surfaces (`#ffffff`, border `#cfcbe0`) over a subtle ash canvas (`#f7f6fb`). Typography strictly adheres to Night Indigo titles (`#1b1740`), Soft Ink body copy (`#55526b`), and sacred Diya Gold eyebrow badges (`#b8801f`). Fully unified across:
+  - **Today**: *Daily Shloka Rotation* featured card and contemplation controls.
+  - **Explore**: *Timeless Sanskrit Wisdom & Philosophical Heritage* hero and scripture browser.
+  - **Search**: *Intent-Driven Discovery • ज्ञान खोज* hero and inverted index query console.
+  - **Community**: *Satsang Mandali • सत्संग मण्डली* community board and philosophical discussion threads.
+  - **Personal Sanctuary**: *Personal Sanctuary • मेरी साधना* daily streak and study goal tracker.
+- **Golden Hour Atmosphere**: Warm monastic earth, butter cream, burnt honey, and deep ink accents.
+- **Unified ThemeObserver Pattern**: Guarantees theme classes (`parchment-dawn`, `theme-light`, `golden-hour`) are applied globally to `<html>` and `<body>` on any navigation event (`pushState`, `replaceState`, `popstate`, `hashchange`).
+- **ModalPortal Theme Observer**: Active `MutationObserver` synchronizing theme tokens into detached DOM portals, guaranteeing zero theme leakage or contrast inversion.
+- **Fail-Safe React ErrorBoundary**: Top-level error boundary in `src/main.tsx` providing a soothing SutraSparsh recovery interface with one-tap reload and session cache reset.
 
 ### 9. High-Performance Infinite Scroll & Memoization
 - **React.memo Custom Comparison**: `VerseCard` memoization with custom predicate evaluating `id`, `isBookmarked`, and active recitation state, preventing unnecessary re-renders.
@@ -184,47 +188,187 @@ SutraSparsh is a digital sanctuary engineered for the study, contemplation, and 
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Complete Guide: GitHub Pull, Push, Build & Run Commands
 
-### Prerequisites
-- **Node.js**: v20+ or v22+
-- **npm**: v10+
+### 1. Prerequisites
+- **Node.js**: v20.x or v22.x LTS (`node -v`)
+- **npm**: v10.x or higher (`npm -v`)
+- **Git**: v2.30+ (`git --version`)
 
-### Installation
+---
+
+### 2. GitHub Repository Setup & Remote Commands
+
+#### Check Existing Remote Configuration
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/sutrasparsh.git
-cd sutrasparsh
-
-# Install all dependencies
-npm install
+git remote -v
 ```
 
-### Development
+#### Set Up or Update Remote Origin
 ```bash
-# Start the full-stack development server on http://localhost:3000
+# Using HTTPS
+git remote add origin https://github.com/<your-username>/<your-repo-name>.git
+
+# Or if origin already exists, update URL:
+git remote set-url origin https://github.com/<your-username>/<your-repo-name>.git
+
+# Using SSH (recommended if SSH keys configured)
+git remote set-url origin git@github.com:<your-username>/<your-repo-name>.git
+```
+
+#### Configure Git Identity
+```bash
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+```
+
+---
+
+### 3. Pulling Changes from GitHub
+
+#### Standard Pull (Main Branch)
+```bash
+# Fetch latest remote references and tags
+git fetch origin --tags
+
+# Pull with rebase to keep clean, linear commit history
+git pull origin main --rebase
+```
+
+#### Pulling with Uncommitted Local Work (Stash & Restore)
+```bash
+# 1. Stash uncommitted changes
+git stash save "wip-local-changes"
+
+# 2. Pull latest upstream commits
+git pull origin main --rebase
+
+# 3. Re-apply stashed changes
+git stash pop
+```
+
+#### Discard Local Working Directory & Match Remote Exactly (Hard Reset)
+```bash
+# CAUTION: Permanently discards local uncommitted changes
+git fetch origin
+git reset --hard origin/main
+```
+
+---
+
+### 4. Committing Changes & Applying Release Labels / Tags
+
+#### Stage & Commit Code
+```bash
+# Check working tree status
+git status
+
+# Stage all modified, created, and deleted files
+git add .
+
+# Create semantic commit with release labels
+git commit -m "feat(sutrasparsh): unify Parchment Dawn theme & harden full-stack dev runtime
+
+- Unify Parchment Dawn palette across Explore, Search, Community Board, and Personal Sanctuary views
+- Align hero banners with pure white cards (#ffffff), Night Indigo typography (#1b1740), Soft Ink body (#55526b), and Diya Gold accents (#b8801f)
+- Add resilient React ErrorBoundary with SutraSparsh recovery UI
+- Restrict rateLimiterMiddleware, query sanitizer, and timeout middleware strictly to /api/* endpoints
+- Resolve HTTP 429 throttling on Vite development modules
+- Add frame-ancestors * and full media-src to Content-Security-Policy for seamless AI Studio iframe preview and 432Hz audio chants
+- Set Parchment Dawn default theme-color and body styles in index.html to eliminate dark flash
+- Verified with 51/51 automated test suites and Phase 12 release gate
+
+Labels:
+- ui:parchment-dawn
+- theme:sutrasparsh
+- bugfix:vite-rate-limiting
+- security:csp-iframe-embed
+- resilience:error-boundary
+- status:production-ready
+- release:v1.0.0"
+```
+
+#### Apply Semantic Git Tags & Labels
+```bash
+# Create annotated release tag
+git tag -a v1.0.0-parchment-dawn -m "Release v1.0.0: Parchment Dawn Unified Theme & Full-Stack Runtime Hardening"
+
+# Create categorized component/infrastructure labels
+git tag -a label/ui-parchment-dawn -m "Label: Parchment Dawn pure white surfaces & typography hierarchy"
+git tag -a label/stabilization -m "Label: Vite dev asset throttling resolution & rate limiter scope"
+git tag -a label/security-hardening -m "Label: CSP frame-ancestors & media-src alignment"
+git tag -a label/release-ready -m "Label: 100% CI/CD verification & Phase 12 release gate green"
+
+# Verify all tags and labels
+git tag -l -n2
+```
+
+---
+
+### 5. Pushing Changes & Labels to GitHub
+
+```bash
+# Push commits to main branch
+git push origin main
+
+# Push all tags and labels to remote
+git push origin --tags
+
+# Push both branch and tags in a single operation
+git push origin main --follow-tags
+```
+
+---
+
+### 6. Installing Dependencies
+
+```bash
+# Standard dependency installation
+npm install
+
+# Or clean, deterministic install from package-lock.json (CI environments)
+npm ci
+```
+
+---
+
+### 7. Building the Application
+
+```bash
+# 1. Typecheck & Lint analysis (Zero TypeScript errors)
+npm run lint
+
+# 2. Compile full-stack production bundle:
+#    - Builds Vite client assets to dist/
+#    - Bundles Express backend into self-contained dist/server.cjs
+npm run build
+```
+
+---
+
+### 8. Running the Application
+
+#### Development Mode (Express 5 + Vite Dev Middleware)
+```bash
+# Starts the full-stack server on http://localhost:3000
+# (Rate limiting is bypassed in development mode to allow rapid local testing)
 npm run dev
 ```
 
-### Production Build
+#### Production Mode
 ```bash
-# Build Vite client assets and bundle Express backend
-npm run build
-
-# Start the compiled production server
+# Starts the compiled production bundle from dist/server.cjs on port 3000
 npm start
 ```
 
 ---
 
-## 🧪 Testing & Quality Assurance
+### 9. Testing & Quality Assurance Verification
 
-SutraSparsh features a comprehensive test automation suite with **381 verified assertions** across 10 distinct testing domains. All tests run headlessly in Node.js via `tsx`.
-
-For the complete testing report, view [TEST_RESULTS.md](TEST_RESULTS.md).
+SutraSparsh features a comprehensive test automation suite with **51 automated test suites** across 10 distinct testing domains. All tests run headlessly in Node.js via `tsx`.
 
 ```bash
-# Execute all 10 test suites sequentially (Master CI/CD Verification)
+# Execute master test verification suite
 npm test
 
 # Run individual test suites

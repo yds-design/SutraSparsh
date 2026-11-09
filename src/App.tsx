@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Filter, Sparkles, BookOpen, Sun, Activity, Bookmark, Flame, RefreshCw, Smartphone, Crown, Heart, Zap, ShieldCheck, Compass, Play, ArrowRight } from "lucide-react";
+import { Search, Filter, Sparkles, BookOpen, Sun, Activity, Bookmark, Flame, RefreshCw, Smartphone, Crown, Heart, Zap, ShieldCheck, Compass, Play, ArrowRight, AlertCircle } from "lucide-react";
 import type { ContentItem, ContentResponse, JournalEntry } from "./types";
 import { Header, type NavTab } from "./components/Header";
 import { VerseCard } from "./components/VerseCard";
+import { VerseCardSkeletonGrid } from "./components/VerseCardSkeleton";
 import { VerseModal } from "./components/VerseModal";
 import { DailySutra } from "./components/DailySutra";
 import { WisdomJournal } from "./components/WisdomJournal";
@@ -41,6 +42,63 @@ import {
 } from "./features/wordExplorer";
 
 const TRADITIONS = ["All", "Bhagavad Gita", "Patanjali", "Upanishads", "Vedas"];
+const INITIAL_VERSES: ContentItem[] = [
+  {
+    id: "gita-2-47",
+    title: "Bhagavad Gita 2.47",
+    subtitle: "The Law of Selfless Action (Nishkama Karma)",
+    body: "कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।\nमा कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि॥",
+    transliteration: "karmaṇy-evādhikāras te mā phaleṣu kadācana |\nmā karma-phala-hetur bhūr mā te saṅgo 'stvakarmaṇi ||",
+    meaning: "You have a right only to perform your prescribed duties, but you are never entitled to the fruits of your actions. Never consider yourself the cause of the results of your activities, and never be attached to inaction.",
+    commentary: "Lord Krishna counsels Arjuna that true freedom and peace of mind arise from dedicating oneself wholeheartedly to righteous duty without anxiety or craving for outcomes.",
+    metadata: {
+      language: "sa",
+      source: "Bhagavad Gita",
+      author: "Bhagavad Gita",
+      category: "Karma Yoga",
+      chapter: 2,
+      verse: 47,
+      tags: ["Gita", "Yoga", "Karma", "Wisdom", "Duty"],
+    },
+  },
+  {
+    id: "gita-2-48",
+    title: "Bhagavad Gita 2.48",
+    subtitle: "Equanimity is Yoga (Samatvam Yoga Ucyate)",
+    body: "योगस्थः कुरु कर्माणि सङ्गं त्यक्त्वा धनञ्जय।\nसिद्ध्यसिद्ध्योः समो भूत्वा समत्वं योग उच्यते॥",
+    transliteration: "yoga-sthaḥ kuru karmāṇi saṅgaṁ tyaktvā dhanañjaya |\nsiddhy-asiddhyoḥ samo bhūtvā samatvaṁ yoga ucyate ||",
+    meaning: "Perform your duty with an even mind, O Arjuna, abandoning all attachment to success or failure. Such equanimity of mind is called Yoga.",
+    commentary: "Yoga is not merely physical posture; it is an unshakeable poise in the midst of life's dualities — joy and sorrow, triumph and defeat.",
+    metadata: {
+      language: "sa",
+      source: "Bhagavad Gita",
+      author: "Bhagavad Gita",
+      category: "Karma Yoga",
+      chapter: 2,
+      verse: 48,
+      tags: ["Gita", "Yoga", "Equanimity", "Peace"],
+    },
+  },
+  {
+    id: "yoga-sutra-1-1",
+    title: "Yoga Sutra 1.1",
+    subtitle: "The Auspicious Commencement",
+    body: "अथ योगानुशासनम्॥",
+    transliteration: "atha yogānuśāsanam ||",
+    meaning: "Now, the sacred exposition and discipline of Yoga commences.",
+    commentary: "Patanjali begins the monumental Yoga Sutras with the word 'Atha' (Now), signaling readiness for supreme inner transformation.",
+    metadata: {
+      language: "sa",
+      source: "Patanjali Yoga Sutras",
+      author: "Patanjali",
+      category: "Raja Yoga",
+      chapter: 1,
+      verse: 1,
+      tags: ["Patanjali", "Yoga", "Sutra", "Discipline"],
+    },
+  },
+];
+
 const CATEGORIES = ["All", "Karma Yoga", "Raja Yoga", "Mind & Meditation", "Jnana / Vedanta", "Vedic Chants"];
 
 export default function App() {
@@ -82,8 +140,8 @@ export default function App() {
     }
     return "today";
   });
-  const [verses, setVerses] = useState<ContentItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [verses, setVerses] = useState<ContentItem[]>(INITIAL_VERSES);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTradition, setSelectedTradition] = useState("All");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -433,11 +491,11 @@ export default function App() {
 
   // Filter by tradition client side
   const filteredVerses = verses.filter((v) => {
+    if (!v) return false;
     if (selectedTradition === "All") return true;
-    return (
-      v.metadata.author?.toLowerCase().includes(selectedTradition.toLowerCase()) ||
-      v.title.toLowerCase().includes(selectedTradition.toLowerCase())
-    );
+    const authorMatch = v.metadata?.author?.toLowerCase().includes(selectedTradition.toLowerCase()) ?? false;
+    const titleMatch = v.title?.toLowerCase().includes(selectedTradition.toLowerCase()) ?? false;
+    return authorMatch || titleMatch;
   });
 
   // Reset lazy load limit when filters change
@@ -728,6 +786,59 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-24 md:pb-12 overflow-x-hidden">
+        {/* Offline Corpus Warning Banner with Retry Connection Action */}
+        {!backendOnline && (
+          <div
+            role="alert"
+            id="backend-offline-banner"
+            className={`mb-6 p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md animate-fadeIn transition-colors ${
+              theme === "light"
+                ? "bg-[#FFF4E5] border-[#E8C59A] text-[#261B12]"
+                : "bg-amber-950/40 border-amber-500/40 text-amber-100"
+            }`}
+          >
+            <div className="flex items-center space-x-3">
+              <div
+                className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  theme === "light"
+                    ? "bg-[#FBEFD3] text-[#A64E04]"
+                    : "bg-amber-500/20 text-amber-400"
+                }`}
+              >
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold font-serif-sacred">
+                  Sacred Corpus Offline • Sanctuary Cache Active
+                </h4>
+                <p
+                  className={`text-xs ${
+                    theme === "light" ? "text-[#6E5C4E]" : "text-stone-300"
+                  }`}
+                >
+                  The scripture API engine is currently offline or unreachable. You are viewing cached verses.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              id="btn-retry-backend-connection"
+              onClick={fetchContent}
+              disabled={loading}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center space-x-2 flex-shrink-0 cursor-pointer active:scale-95 disabled:opacity-50 ${
+                theme === "light"
+                  ? "bg-gradient-to-b from-[#E66020] to-[#D44E0E] text-white hover:brightness-105"
+                  : "bg-amber-500 hover:bg-amber-400 text-stone-950"
+              }`}
+            >
+              <RefreshCw
+                className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
+              />
+              <span>{loading ? "Reconnecting..." : "Retry Connection"}</span>
+            </button>
+          </div>
+        )}
+
         {/* 1. TODAY: Daily Habit & First Value Aha Moment */}
         {(activeTab === "today" || activeTab === "daily-app" || activeTab === "daily") && (
           <div className="space-y-8 animate-fadeIn">
@@ -745,31 +856,53 @@ export default function App() {
         {(activeTab === "explore" || activeTab === "explorer") && (
           <div className="space-y-8 animate-fadeIn">
             {/* Hero / Sacred Welcome Banner (FR-02 Point 2) */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#231C18] via-[#352B23] to-[#4D382A] border border-amber-500/25 p-8 sm:p-12 shadow-2xl">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+            <div
+              className={`relative overflow-hidden rounded-[28px] p-6 sm:p-10 transition-all ${
+                theme === "light"
+                  ? "bg-white border border-[#cfcbe0] text-[#1d1b2e] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] hover:shadow-[0_10px_30px_-12px_rgb(27_23_64_/_0.28)] hover:border-[#d9a441]"
+                  : "bg-gradient-to-br from-[#231C18] via-[#352B23] to-[#4D382A] border border-amber-500/25 shadow-2xl"
+              }`}
+            >
+              {theme !== "light" && (
+                <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+              )}
               
               <div className="max-w-2xl space-y-4 relative z-10">
-                <div className="flex items-center space-x-2 text-amber-300 text-xs font-semibold uppercase tracking-widest">
-                  <Sparkles className="w-4 h-4 text-amber-400" />
-                  <span>Timeless Sanskrit Wisdom & Philosophical Heritage</span>
+                <div className={`flex items-center space-x-2 text-[10.5px] font-extrabold tracking-widest uppercase ${
+                  theme === "light" ? "text-[#b8801f]" : "text-amber-300"
+                }`}>
+                  <Sparkles className={`w-3.5 h-3.5 ${theme === "light" ? "text-[#b8801f]" : "text-amber-400"}`} />
+                  <span>Timeless Sanskrit Wisdom &amp; Philosophical Heritage</span>
                 </div>
-                <h1 className="font-serif-sacred text-3xl sm:text-5xl font-bold tracking-tight text-[#FBE29D] leading-tight">
+                <h1 className={`font-serif-sacred text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight ${
+                  theme === "light" ? "text-[#1b1740]" : "text-[#FBE29D]"
+                }`}>
                   Touch the Sacred Essence of Ancient Sutras
                 </h1>
-                <p className="text-[#DAC5B0] text-sm sm:text-base leading-relaxed font-light">
+                <p className={`text-xs sm:text-sm leading-relaxed font-light ${
+                  theme === "light" ? "text-[#55526b]" : "text-[#DAC5B0]"
+                }`}>
                   Explore authentic verses from the Bhagavad Gita, Patanjali Yoga Sutras, and the Upanishads. Study transliterations, commentaries, and chant sacred mantras.
                 </p>
                 <div className="pt-2 flex flex-wrap items-center gap-3">
                   <button
                     onClick={() => setActiveTab("search")}
-                    className="px-4 py-2 bg-gradient-to-b from-[#E66020] to-[#D44E0E] text-white font-bold rounded-xl text-xs shadow-md hover:scale-105 transition-all flex items-center space-x-1.5 cursor-pointer"
+                    className={`px-5 py-2.5 font-bold rounded-full text-xs shadow-md hover:scale-105 transition-all flex items-center space-x-2 cursor-pointer ${
+                      theme === "light"
+                        ? "bg-[#d9a441] hover:bg-[#c99435] text-[#100e2b]"
+                        : "bg-gradient-to-b from-[#E66020] to-[#D44E0E] text-white"
+                    }`}
                   >
                     <Search className="w-3.5 h-3.5" />
                     <span>Search Sacred Corpus</span>
                   </button>
                   <button
                     onClick={() => setActiveTab("my-journey")}
-                    className="px-4 py-2 bg-stone-900/90 hover:bg-stone-800 border border-stone-700/80 text-[#DAC5B0] font-semibold rounded-xl text-xs transition-all flex items-center space-x-1.5 cursor-pointer"
+                    className={`px-5 py-2.5 font-bold rounded-full text-xs transition-all flex items-center space-x-2 cursor-pointer ${
+                      theme === "light"
+                        ? "bg-[#1b1740] hover:bg-[#2b2560] text-[#f4f2ff] shadow-sm"
+                        : "bg-stone-900/90 hover:bg-stone-800 border border-stone-700/80 text-[#DAC5B0]"
+                    }`}
                   >
                     <Compass className="w-3.5 h-3.5 text-amber-400" />
                     <span>My Sacred Sanctuary</span>
@@ -787,20 +920,20 @@ export default function App() {
 
             {/* Filter Bar */}
             <div
-              className={`space-y-4 rounded-3xl p-6 transition-colors ${
+              className={`space-y-4 rounded-[20px] p-6 transition-colors ${
                 theme === "light"
-                  ? "bg-[#FFFDF8] border border-[#E8DCC2] shadow-xs"
-                  : "bg-stone-900/60 border border-stone-800 shadow-lg"
+                  ? "bg-white border border-[#cfcbe0] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] text-[#1d1b2e]"
+                  : "bg-stone-900/60 border border-stone-800 shadow-lg text-stone-100"
               }`}
             >
               {/* Traditions / Authors Filter Chips */}
               <div className="flex flex-wrap items-center gap-2">
                 <span
                   className={`text-xs font-semibold mr-2 flex items-center gap-1 ${
-                    theme === "light" ? "text-[#261B12]" : "text-stone-400"
+                    theme === "light" ? "text-[#1b1740]" : "text-stone-400"
                   }`}
                 >
-                  <Filter className={`w-3.5 h-3.5 ${theme === "light" ? "text-[#A64E04]" : "text-amber-400"}`} />
+                  <Filter className={`w-3.5 h-3.5 ${theme === "light" ? "text-[#b8801f]" : "text-amber-400"}`} />
                   <span>Tradition:</span>
                 </span>
                 {TRADITIONS.map((tradition) => (
@@ -810,10 +943,10 @@ export default function App() {
                     className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                       selectedTradition === tradition
                         ? theme === "light"
-                          ? "bg-[#FBEFD3] text-[#874606] border border-[#DECB9F] font-bold shadow-xs"
+                          ? "bg-[#1b1740] text-[#f4f2ff] border border-[#1b1740] font-semibold shadow-xs"
                           : "bg-amber-500/25 text-amber-200 border border-amber-500/40 shadow-sm font-semibold"
                         : theme === "light"
-                        ? "bg-[#F5EEDB] text-[#4A3A2F] hover:text-[#261B12] hover:bg-[#EFE6D0] border border-[#E8DCC2]"
+                        ? "bg-white text-[#1d1b2e] hover:border-[#d9a441] hover:bg-[#fbf0d6] border border-[#cfcbe0]"
                         : "bg-stone-900 text-stone-400 hover:text-stone-200 border border-stone-800"
                     }`}
                   >
@@ -826,10 +959,10 @@ export default function App() {
               <div className="flex flex-wrap items-center gap-2 pt-1">
                 <span
                   className={`text-xs font-semibold mr-2 flex items-center gap-1 ${
-                    theme === "light" ? "text-[#261B12]" : "text-stone-400"
+                    theme === "light" ? "text-[#1b1740]" : "text-stone-400"
                   }`}
                 >
-                  <Flame className={`w-3.5 h-3.5 ${theme === "light" ? "text-[#A64E04]" : "text-amber-400"}`} />
+                  <Flame className={`w-3.5 h-3.5 ${theme === "light" ? "text-[#b8801f]" : "text-amber-400"}`} />
                   <span>Path / Yoga:</span>
                 </span>
                 {CATEGORIES.map((cat) => (
@@ -839,10 +972,10 @@ export default function App() {
                     className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                       selectedCategory === cat
                         ? theme === "light"
-                          ? "bg-[#FBEFD3] text-[#874606] border border-[#DECB9F] font-bold shadow-xs"
+                          ? "bg-[#1b1740] text-[#f4f2ff] border border-[#1b1740] font-semibold shadow-xs"
                           : "bg-amber-500/25 text-amber-200 border border-amber-500/40 shadow-sm font-semibold"
                         : theme === "light"
-                        ? "bg-[#F5EEDB] text-[#4A3A2F] hover:text-[#261B12] hover:bg-[#EFE6D0] border border-[#E8DCC2]"
+                        ? "bg-white text-[#1d1b2e] hover:border-[#d9a441] hover:bg-[#fbf0d6] border border-[#cfcbe0]"
                         : "bg-stone-900 text-stone-400 hover:text-stone-200 border border-stone-800"
                     }`}
                   >
@@ -857,14 +990,14 @@ export default function App() {
               <div className="flex items-center justify-between mb-6">
                 <h3
                   className={`font-serif-sacred text-xl font-bold flex items-center space-x-2 ${
-                    theme === "light" ? "text-[#261B12]" : "text-amber-100"
+                    theme === "light" ? "text-[#1b1740]" : "text-amber-100"
                   }`}
                 >
-                  <BookOpen className={`w-5 h-5 ${theme === "light" ? "text-[#A64E04]" : "text-amber-400"}`} />
+                  <BookOpen className={`w-5 h-5 ${theme === "light" ? "text-[#b8801f]" : "text-amber-400"}`} />
                   <span>Sacred Scripture Verses</span>
                   <span
                     className={`text-xs font-sans font-normal ml-2 ${
-                      theme === "light" ? "text-[#6E5C4E]" : "text-stone-500"
+                      theme === "light" ? "text-[#55526b]" : "text-stone-500"
                     }`}
                   >
                     ({filteredVerses.length} verses)
@@ -874,9 +1007,9 @@ export default function App() {
                 <button
                   onClick={fetchContent}
                   title="Reload verses"
-                  className={`p-2 transition-colors cursor-pointer ${
+                  className={`p-2 rounded-full transition-colors cursor-pointer ${
                     theme === "light"
-                      ? "text-[#6E5C4E] hover:text-[#A64E04]"
+                      ? "text-[#55526b] hover:text-[#1b1740] hover:bg-[#efedf6]"
                       : "text-stone-500 hover:text-amber-300"
                   }`}
                 >
@@ -885,54 +1018,86 @@ export default function App() {
               </div>
 
               {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[1, 2, 3, 4, 5, 6].map((n) => (
-                    <div
-                      key={n}
-                      className="bg-stone-900/40 border border-stone-800/60 rounded-2xl p-6 h-64 animate-pulse space-y-4"
-                    >
-                      <div className="h-4 bg-stone-800 rounded w-1/3" />
-                      <div className="h-6 bg-stone-800 rounded w-2/3" />
-                      <div className="h-16 bg-stone-950/60 rounded" />
-                      <div className="h-4 bg-stone-800 rounded w-full" />
-                    </div>
-                  ))}
-                </div>
+                <VerseCardSkeletonGrid count={6} theme={theme} />
               ) : filteredVerses.length === 0 ? (
-                <div className="text-center py-16 bg-stone-900/30 border border-stone-800/80 rounded-3xl p-8 space-y-4">
-                  <BookOpen className="w-12 h-12 text-stone-600 mx-auto" />
-                  <h4 className="text-base font-bold text-stone-300">
-                    No verses found for selected criteria
+                <div
+                  className={`text-center py-16 border rounded-[20px] p-8 space-y-4 shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] ${
+                    theme === "light"
+                      ? "bg-white border-[#cfcbe0] text-[#1d1b2e]"
+                      : "bg-stone-900/30 border-stone-800/80"
+                  }`}
+                >
+                  <BookOpen
+                    className={`w-12 h-12 mx-auto ${
+                      theme === "light" ? "text-[#b8801f]" : "text-stone-600"
+                    }`}
+                  />
+                  <h4
+                    className={`text-base font-bold font-serif-sacred ${
+                      theme === "light" ? "text-[#1b1740]" : "text-stone-300"
+                    }`}
+                  >
+                    {!backendOnline
+                      ? "Scripture API Engine Offline"
+                      : "No verses found for selected criteria"}
                   </h4>
-                  <p className="text-xs text-stone-500 max-w-sm mx-auto">
-                    Try broadening your search query or choosing "All" in the filters above.
+                  <p
+                    className={`text-xs max-w-sm mx-auto ${
+                      theme === "light" ? "text-[#55526b]" : "text-stone-500"
+                    }`}
+                  >
+                    {!backendOnline
+                      ? "The connection to the scripture backend was interrupted. Tap below to reconnect."
+                      : 'Try broadening your search query or choosing "All" in the filters above.'}
                   </p>
+                  {!backendOnline && (
+                    <button
+                      type="button"
+                      id="btn-retry-explore-empty"
+                      onClick={fetchContent}
+                      disabled={loading}
+                      className={`px-5 py-2.5 rounded-full text-xs font-bold shadow-xs hover:brightness-105 active:scale-95 transition-all inline-flex items-center space-x-2 cursor-pointer disabled:opacity-50 ${
+                        theme === "light"
+                          ? "bg-[#1b1740] hover:bg-[#100e2b] text-[#f4f2ff]"
+                          : "bg-amber-500 hover:bg-amber-400 text-stone-950"
+                      }`}
+                    >
+                      <RefreshCw
+                        className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
+                      />
+                      <span>Retry Connection</span>
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-6">
                   {/* Contextual My Journey Personal Tracking Bridge Banner in Explore */}
                   <div
                     id="explore-my-journey-bridge"
-                    className={`p-4 rounded-2xl border flex items-center justify-between gap-3 shadow-xs ${
+                    className={`p-5 rounded-[20px] border flex items-center justify-between gap-3 shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] ${
                       theme === "light"
-                        ? "bg-amber-50/80 border-amber-200 text-stone-900"
+                        ? "bg-white border-[#cfcbe0] text-[#1d1b2e]"
                         : "bg-amber-950/20 border-amber-500/30 text-stone-100"
                     }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center flex-shrink-0">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        theme === "light" ? "bg-[#fbf0d6] text-[#b8801f]" : "bg-amber-500/20 text-amber-400 rounded-xl"
+                      }`}>
                         <Compass className="w-5 h-5" />
                       </div>
                       <div>
                         <div className="flex items-center space-x-2">
-                          <h4 className="text-xs sm:text-sm font-bold font-serif leading-tight">
+                          <h4 className={`text-xs sm:text-sm font-bold font-serif-sacred leading-tight ${theme === "light" ? "text-[#1b1740]" : ""}`}>
                             Personal Study Sanctuary &amp; My Journey
                           </h4>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 font-semibold border border-amber-500/30">
+                          <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border ${
+                            theme === "light" ? "bg-[#fbf0d6] text-[#b8801f] border-[#f0cf8a]/60" : "bg-amber-500/15 text-amber-300 border-amber-500/30"
+                          }`}>
                             {bookmarks.length} Saved Verses
                           </span>
                         </div>
-                        <p className="text-[11px] text-stone-600 dark:text-stone-300 leading-normal mt-0.5">
+                        <p className={`text-[11px] leading-normal mt-0.5 ${theme === "light" ? "text-[#55526b]" : "text-stone-300"}`}>
                           Track contemplative reading streaks, habit milestones, and personal reflections across the Sanskrit corpus.
                         </p>
                       </div>
@@ -942,10 +1107,10 @@ export default function App() {
                       type="button"
                       id="btn-explore-open-journey"
                       onClick={() => setActiveTab("my-journey")}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 flex-shrink-0 cursor-pointer ${
+                      className={`px-4 py-2 rounded-full text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 flex-shrink-0 cursor-pointer ${
                         theme === "light"
-                          ? "bg-gradient-to-b from-[#E66020] to-[#D44E0E] text-white hover:brightness-105"
-                          : "bg-amber-500 hover:bg-amber-400 text-stone-950"
+                          ? "bg-[#1b1740] hover:bg-[#100e2b] text-[#f4f2ff] active:scale-95"
+                          : "bg-amber-500 hover:bg-amber-400 text-stone-950 active:scale-95"
                       }`}
                       aria-label="Open My Journey personal sanctuary"
                     >

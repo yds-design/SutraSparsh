@@ -1,0 +1,503 @@
+/* ==========================================================================
+   SutraSparsh Theme v1.0 — Canonical Implementation for Parchment Dawn
+   Spiritual Wisdom Platform: verses, commentaries, audios, categories, insights
+   Layout language borrowed from Restro (restro.prebuiltui.com):
+   pill buttons, rounded image-led cards, overlapping avatar stack, numbered
+   step list, testimonial cards, FAQ accordion, soft sectioned landing page.
+   Colour, type and motion are SutraSparsh's own.
+   ========================================================================== */
+
+/* 1. TOKENS ---------------------------------------------------------------- */
+:root {
+  /* Colour: Night Indigo, Diya Gold, Tulsi Green, Lotus */
+  --ss-indigo-950: #100e2b;
+  --ss-indigo-900: #1b1740;
+  --ss-indigo-700: #3a3478;
+  --ss-indigo-100: #e6e4f4;
+
+  --ss-gold-600: #b8801f;
+  --ss-gold-500: #d9a441;
+  --ss-gold-300: #f0cf8a;
+  --ss-gold-100: #fbf0d6;
+
+  --ss-tulsi-700: #24493f;
+  --ss-tulsi-500: #2f5d50;
+  --ss-tulsi-100: #dcebe6;
+
+  --ss-lotus-600: #b23c63;
+  --ss-lotus-100: #f8e1e9;
+
+  --ss-ash-50: #f7f6fb;
+  --ss-ash-100: #efedf6;
+  --ss-ash-300: #cfcbe0;
+  --ss-ink: #1d1b2e;
+  --ss-ink-soft: #55526b;
+
+  /* Semantic */
+  --bg: var(--ss-ash-50);
+  --surface: #ffffff;
+  --surface-sunk: var(--ss-ash-100);
+  --surface-inverse: var(--ss-indigo-900);
+  --text: var(--ss-ink);
+  --text-soft: var(--ss-ink-soft);
+  --text-inverse: #f4f2ff;
+  --accent: var(--ss-gold-500);
+  --accent-strong: var(--ss-gold-600);
+  --accent-soft: var(--ss-gold-100);
+  --brand: var(--ss-indigo-900);
+  --positive: var(--ss-tulsi-500);
+  --positive-soft: var(--ss-tulsi-100);
+  --danger: var(--ss-lotus-600);
+  --danger-soft: var(--ss-lotus-100);
+  --border: var(--ss-ash-300);
+  --focus: var(--ss-indigo-700);
+
+  /* Type */
+  --font-display: "Newsreader", "Times New Roman", serif;
+  --font-body: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sanskrit: "Tiro Devanagari Hindi", "Noto Serif Devanagari", serif;
+
+  --fs-xs: 0.8125rem;
+  --fs-sm: 0.9375rem;
+  --fs-md: 1.0625rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+  --fs-2xl: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+  --fs-hero: clamp(2.5rem, 1.6rem + 4vw, 4.5rem);
+
+  /* Space, radius, shadow */
+  --sp-1: 0.25rem; --sp-2: 0.5rem; --sp-3: 0.75rem; --sp-4: 1rem;
+  --sp-5: 1.5rem; --sp-6: 2rem; --sp-7: 3rem; --sp-8: 5rem;
+
+  --r-chip: 999px;
+  --r-btn: 999px;
+  --r-card: 20px;
+  --r-media: 28px;
+  --r-input: 12px;
+
+  --shadow-1: 0 1px 2px rgb(27 23 64 / 0.06);
+  --shadow-2: 0 10px 30px -12px rgb(27 23 64 / 0.28);
+  --shadow-glow: 0 0 0 6px rgb(217 164 65 / 0.18);
+
+  --ease: cubic-bezier(0.22, 0.8, 0.3, 1);
+  --t-fast: 140ms;
+  --t-med: 260ms;
+
+  --container: 1180px;
+  --measure: 62ch;
+}
+
+/* 2. PARCHMENT DAWN THEME SCOPE -------------------------------------------- */
+:root,
+[data-theme="light"],
+.theme-light,
+.light-mode,
+.theme-parchment-dawn,
+.parchment-dawn {
+  /* SutraSparsh Core Mapping */
+  --color-canvas-bg: var(--ss-ash-50);
+  --color-surface-card: #ffffff;
+  --color-surface-card-gradient: none;
+  --color-border-subtle: var(--ss-ash-300);
+  --color-border-highlight: var(--ss-gold-500);
+
+  --color-text-title: var(--ss-indigo-900);
+  --color-text-body: var(--ss-ink);
+  --color-text-muted: var(--ss-ink-soft);
+  --color-text-sacred-accent: var(--ss-gold-600);
+
+  --color-card-title: var(--ss-indigo-900);
+  --color-card-body: var(--ss-ink);
+  --color-card-accent: var(--ss-gold-600);
+
+  --color-action-primary: var(--ss-indigo-900);
+  --color-action-primary-hover: var(--ss-indigo-950);
+  --color-action-primary-text: #f4f2ff;
+  --color-action-secondary-bg: var(--ss-gold-100);
+  --color-action-secondary-text: var(--ss-gold-600);
+  --color-action-secondary-border: var(--ss-gold-300);
+
+  --shadow-parchment-card: var(--shadow-1);
+}
+
+/* Contextual Body for Parchment Dawn */
+body.theme-parchment-dawn,
+body.parchment-dawn,
+body.theme-light,
+body.light-mode,
+[data-theme="light"] body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+}
+
+/* Headings in Parchment Dawn */
+.theme-parchment-dawn h1,
+.theme-parchment-dawn h2,
+.theme-parchment-dawn h3,
+.theme-parchment-dawn h4,
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] h4,
+.theme-light h1,
+.theme-light h2,
+.theme-light h3,
+.theme-light h4 {
+  font-family: var(--font-display);
+  color: var(--brand);
+}
+
+/* 3. SUTRASPARSH UTILITY CLASSES ------------------------------------------- */
+.ss-sanskrit {
+  font-family: var(--font-sanskrit);
+  font-size: clamp(1.3rem, 1.1rem + 1vw, 1.85rem);
+  line-height: 1.85;
+  color: var(--brand);
+}
+
+.ss-transliteration {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--text-soft);
+}
+
+.ss-translation {
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  line-height: 1.6;
+  color: var(--text);
+}
+
+/* Restro-styled Card */
+.ss-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: var(--sp-5);
+  box-shadow: var(--shadow-1);
+}
+
+.ss-card--interactive {
+  transition: transform var(--t-med) var(--ease), box-shadow var(--t-med) var(--ease), border-color var(--t-fast);
+}
+
+.ss-card--interactive:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-2);
+  border-color: var(--accent);
+}
+
+/* Verse Card */
+.ss-verse-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: var(--sp-6) var(--sp-5) var(--sp-5);
+  box-shadow: var(--shadow-1);
+  transition: transform var(--t-med) var(--ease), box-shadow var(--t-med) var(--ease), border-color var(--t-fast);
+}
+
+.ss-verse-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-2);
+  border-color: var(--accent);
+}
+
+.ss-verse-card::before {
+  content: "॥";
+  position: absolute;
+  top: var(--sp-3);
+  right: var(--sp-5);
+  font-family: var(--font-sanskrit);
+  font-size: 1.5rem;
+  color: var(--ss-gold-500);
+}
+
+.ss-verse-card__ref {
+  display: inline-block;
+  margin-bottom: var(--sp-3);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--accent-strong);
+}
+
+.ss-verse-card__actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px dashed var(--border);
+}
+
+/* Commentary block */
+.ss-commentary {
+  background: var(--surface-sunk);
+  border-left: 3px solid var(--ss-tulsi-500);
+  border-radius: 0 var(--r-card) var(--r-card) 0;
+  padding: var(--sp-4) var(--sp-5);
+  color: var(--text);
+}
+
+.ss-commentary__author {
+  font-weight: 600;
+  color: var(--positive);
+  font-size: var(--fs-sm);
+}
+
+/* Insight / Callout */
+.ss-insight {
+  background: var(--accent-soft);
+  border: 1px solid var(--ss-gold-300);
+  border-radius: var(--r-card);
+  padding: var(--sp-5);
+  color: var(--text);
+}
+
+.ss-insight h4 {
+  color: var(--accent-strong);
+}
+
+/* Buttons */
+.ss-btn {
+  --_bg: var(--brand);
+  --_fg: var(--text-inverse);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 46px;
+  padding: 0.7rem 1.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--r-btn);
+  background: var(--_bg);
+  color: var(--_fg);
+  font: 600 var(--fs-sm)/1 var(--font-body);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--t-fast) var(--ease), box-shadow var(--t-med) var(--ease), background var(--t-fast);
+}
+
+.ss-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-2);
+  color: var(--_fg);
+}
+
+.ss-btn:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: none;
+}
+
+.ss-btn--gold {
+  --_bg: var(--ss-gold-500);
+  --_fg: var(--ss-indigo-950);
+}
+
+.ss-btn--gold:hover {
+  --_bg: var(--ss-gold-300);
+}
+
+.ss-btn--ghost {
+  --_bg: transparent;
+  --_fg: var(--brand);
+  border-color: var(--border);
+}
+
+.ss-btn--ghost:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.ss-btn--sm {
+  min-height: 36px;
+  padding: 0.45rem 1rem;
+}
+
+.ss-btn--lg {
+  min-height: 54px;
+  padding: 0.9rem 2rem;
+  font-size: var(--fs-md);
+}
+
+.ss-btn--icon {
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+}
+
+/* Chips & Badges */
+.ss-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--r-chip);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
+}
+
+.ss-chip:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.ss-chip[aria-pressed="true"],
+.ss-chip.is-active {
+  background: var(--brand);
+  color: var(--text-inverse);
+  border-color: var(--brand);
+}
+
+.ss-badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--r-chip);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  border: 1px solid rgba(217, 164, 65, 0.3);
+}
+
+.ss-badge--positive {
+  background: var(--positive-soft);
+  color: var(--positive);
+  border-color: rgba(47, 93, 80, 0.25);
+}
+
+.ss-badge--danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: rgba(178, 60, 99, 0.25);
+}
+
+/* Hero */
+.ss-hero {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 80% 0%, var(--ss-indigo-700) 0%, var(--ss-indigo-900) 45%, var(--ss-indigo-950) 100%);
+  color: var(--text-inverse);
+  padding: var(--sp-6) var(--sp-6);
+  border-radius: var(--r-media);
+}
+
+.ss-hero :is(h1, h2) {
+  color: var(--ss-gold-300);
+}
+
+.ss-hero .ss-lead {
+  color: #cfcbe8;
+}
+
+.ss-hero__verse {
+  margin-top: var(--sp-4);
+  padding-left: var(--sp-4);
+  border-left: 2px solid var(--ss-gold-500);
+}
+
+.ss-hero__verse .ss-sanskrit {
+  color: #ffffff;
+}
+
+/* Audio Player */
+.ss-audio {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--sp-4);
+  background: var(--surface-inverse);
+  color: var(--text-inverse);
+  border-radius: var(--r-card);
+  padding: var(--sp-4) var(--sp-5);
+}
+
+.ss-audio__play {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--ss-gold-500);
+  color: var(--ss-indigo-950);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform var(--t-fast) var(--ease);
+}
+
+.ss-audio__play:hover {
+  transform: scale(1.06);
+}
+
+.ss-audio__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  color: var(--ss-gold-300);
+}
+
+.ss-audio__bar {
+  height: 4px;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.18);
+  overflow: hidden;
+  margin-top: var(--sp-2);
+}
+
+.ss-audio__bar > span {
+  display: block;
+  height: 100%;
+  width: var(--progress, 0%);
+  background: var(--ss-gold-500);
+  transition: width 300ms linear;
+}
+
+/* Forms */
+.ss-input,
+.ss-select,
+.ss-textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.65rem 0.95rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--r-input);
+  font: inherit;
+  font-size: var(--fs-sm);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+
+.ss-input::placeholder,
+.ss-textarea::placeholder {
+  color: var(--text-soft);
+  opacity: 0.7;
+}
+
+.ss-input:hover,
+.ss-select:hover,
+.ss-textarea:hover {
+  border-color: var(--ss-indigo-700);
+}
+
+.ss-input:focus,
+.ss-select:focus,
+.ss-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-glow);
+}
+
+/* Legacy Card Class bridge to ensure zero breaking changes */
+.card-sacred-timber {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-1);
+  color: var(--text);
+}

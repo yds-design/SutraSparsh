@@ -109,7 +109,7 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
       data-testid="soundscape-selector"
       className={`rounded-2xl border p-4 sm:p-5 transition-all ${
         isLight
-          ? "bg-[#FFFDF8] border-[#E8DCC2] shadow-2xs"
+          ? "bg-white border-[#cfcbe0] shadow-xs"
           : "bg-white/5 border-white/10 hover:border-amber-500/20"
       } ${className}`}
     >
@@ -118,7 +118,7 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
         <div className="flex items-center space-x-3">
           <div
             className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-              isLight ? "bg-[#FDF3DF] text-[#874606] border border-[#E8CF9A]" : "bg-amber-500/20 text-amber-300"
+              isLight ? "bg-[#fbf0d6] text-[#b8801f] border border-[#f0cf8a]" : "bg-amber-500/20 text-amber-300"
             }`}
           >
             <Music className="w-4 h-4" />
@@ -127,7 +127,7 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
             <div className="flex items-center space-x-2">
               <span
                 className={`text-xs font-bold tracking-wider uppercase ${
-                  isLight ? "text-[#261B12]" : "text-amber-200"
+                  isLight ? "text-[#1b1740]" : "text-amber-200"
                 }`}
               >
                 Ambient Soundscapes & Atmosphere
@@ -135,14 +135,14 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
               <span
                 className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold ${
                   isLight
-                    ? "bg-[#FBEFD3] text-[#874606] border border-[#DECB9F]"
+                    ? "bg-[#fbf0d6] text-[#b8801f] border border-[#f0cf8a]"
                     : "bg-amber-500/15 text-amber-300 border border-amber-500/30"
                 }`}
               >
                 3 Audio Modes
               </span>
             </div>
-            <p className={`text-[11px] mt-0.5 ${isLight ? "text-[#4A3A2F]" : "text-stone-400"}`}>
+            <p className={`text-[11px] mt-0.5 ${isLight ? "text-[#55526b]" : "text-stone-400"}`}>
               Select your preferred sacred background audio: Temple Bell, Himalayan Breeze, or River Ganga
             </p>
           </div>
@@ -156,7 +156,7 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
             isDroneActive
               ? "bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 shadow-md shadow-amber-500/25 ring-2 ring-amber-400/50"
               : isLight
-              ? "bg-[#FBEFD3] hover:bg-[#F5EEDB] text-[#874606] border border-[#DECB9F]"
+              ? "bg-[#fbf0d6] hover:bg-[#f0cf8a] text-[#b8801f] border border-[#f0cf8a]"
               : "bg-white/10 hover:bg-white/15 text-stone-300 border border-white/10"
           }`}
           title="Start or pause ambient soundscape"
@@ -183,10 +183,10 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
         className={`my-3.5 p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 transition-all ${
           isTanpuraEnabled
             ? isLight
-              ? "bg-[#FDF7E7] border-amber-300"
+              ? "bg-[#fbf0d6] border-[#f0cf8a]"
               : "bg-amber-950/20 border-amber-500/30"
             : isLight
-            ? "bg-[#FAF7F0] border-[#E8DCC2]"
+            ? "bg-[#efedf6] border-[#cfcbe0]"
             : "bg-white/5 border-white/5"
         }`}
       >
@@ -196,7 +196,7 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
               isTanpuraEnabled
                 ? "bg-amber-500 text-stone-950 font-bold"
                 : isLight
-                ? "bg-stone-200 text-stone-600"
+                ? "bg-[#cfcbe0] text-[#1b1740]"
                 : "bg-stone-800 text-stone-400"
             }`}
           >
@@ -206,7 +206,7 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
             <div className="flex items-center space-x-2">
               <span
                 className={`text-xs font-bold ${
-                  isLight ? "text-[#261B12]" : "text-stone-200"
+                  isLight ? "text-[#1b1740]" : "text-stone-200"
                 }`}
               >
                 432Hz / 136.1Hz Tanpura Drone Layer
@@ -216,14 +216,14 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
                   isTanpuraEnabled
                     ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
                     : isLight
-                    ? "bg-stone-200/80 text-stone-600 border border-stone-300"
+                    ? "bg-[#cfcbe0]/60 text-[#55526b] border border-[#cfcbe0]"
                     : "bg-stone-800 text-stone-400 border border-stone-700"
                 }`}
               >
                 {isTanpuraEnabled ? "Active (Layered)" : "Disabled by default (Off)"}
               </span>
             </div>
-            <p className={`text-[11px] mt-0.5 ${isLight ? "text-[#5B493B]" : "text-stone-400"}`}>
+            <p className={`text-[11px] mt-0.5 ${isLight ? "text-[#55526b]" : "text-stone-400"}`}>
               {isTanpuraEnabled
                 ? "Synthesizing 136.1Hz Cosmic Om fundamental and 432Hz harmonics alongside your selected soundscape."
                 : "Disabled by default for clean, natural ambient listening. Toggle on anytime to layer the 136.1Hz Om Tanpura drone."}
@@ -257,10 +257,10 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
 
       {/* 3. Soundscape Quick-Switch Navigation Tabs */}
       <div className="flex items-center justify-between pt-1 pb-2">
-        <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? "text-[#874606]" : "text-amber-400"}`}>
+        <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? "text-[#b8801f]" : "text-amber-400"}`}>
           Switch Ambient Soundscape Audio
         </span>
-        <span className={`text-[10px] ${isLight ? "text-[#6E5C4E]" : "text-stone-400"}`}>
+        <span className={`text-[10px] ${isLight ? "text-[#55526b]" : "text-stone-400"}`}>
           Tap card or preview to listen
         </span>
       </div>
@@ -279,10 +279,10 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
               className={`group relative p-3.5 rounded-xl border text-left transition-all cursor-pointer select-none flex flex-col justify-between ${
                 isSelected
                   ? isLight
-                    ? "bg-[#FFFDF8] border-amber-500 ring-2 ring-amber-500/30 shadow-sm"
+                    ? "bg-white border-[#d9a441] ring-2 ring-[#d9a441]/30 shadow-xs"
                     : "bg-amber-500/15 border-amber-500 ring-1 ring-amber-400/40 shadow-sm shadow-amber-500/15"
                   : isLight
-                  ? "bg-[#FAF8F5] border-[#E8DCC2] hover:border-amber-400/60 hover:bg-white"
+                  ? "bg-[#f7f6fb] border-[#cfcbe0] hover:border-[#d9a441] hover:bg-white"
                   : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/15"
               }`}
             >
@@ -294,10 +294,10 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
                       className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-base ${
                         isSelected
                           ? isLight
-                            ? "bg-amber-100 border border-amber-300"
+                            ? "bg-[#fbf0d6] border border-[#f0cf8a]"
                             : "bg-amber-500/25 border border-amber-500/40"
                           : isLight
-                          ? "bg-stone-100"
+                          ? "bg-[#efedf6]"
                           : "bg-white/5"
                       }`}
                     >
@@ -310,10 +310,10 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
                         className={`text-xs font-bold ${
                           isSelected
                             ? isLight
-                              ? "text-amber-900"
+                              ? "text-[#1b1740]"
                               : "text-amber-300"
                             : isLight
-                            ? "text-[#261B12]"
+                            ? "text-[#1b1740]"
                             : "text-stone-200"
                         }`}
                       >
@@ -329,7 +329,7 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
                     <span
                       className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase flex items-center space-x-1 ${
                         isLight
-                          ? "bg-amber-500 text-stone-950 font-extrabold"
+                          ? "bg-[#d9a441] text-[#100e2b] font-extrabold"
                           : "bg-amber-400 text-stone-950 font-extrabold"
                       }`}
                     >
@@ -345,7 +345,7 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
                       }}
                       className={`text-[9px] font-bold px-1.5 py-0.5 rounded border transition-colors ${
                         isLight
-                          ? "border-[#E8DCC2] text-[#874606] hover:bg-amber-100"
+                          ? "border-[#cfcbe0] text-[#b8801f] hover:bg-[#fbf0d6]"
                           : "border-white/10 text-stone-400 hover:text-white hover:bg-white/10"
                       }`}
                     >
@@ -356,7 +356,7 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
 
                 <p
                   className={`text-[11px] leading-relaxed mb-2.5 ${
-                    isLight ? "text-[#4A3A2F]" : "text-stone-400"
+                    isLight ? "text-[#55526b]" : "text-stone-400"
                   }`}
                 >
                   {item.description}
@@ -369,7 +369,7 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
                       key={el}
                       className={`text-[9.5px] px-1.5 py-0.5 rounded ${
                         isLight
-                          ? "bg-[#F5EEDB] text-[#874606] border border-[#E8DCC2]"
+                          ? "bg-[#efedf6] text-[#55526b] border border-[#cfcbe0]"
                           : "bg-white/5 text-stone-400 border border-white/5"
                       }`}
                     >
@@ -381,7 +381,7 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
 
               {/* Card Bottom: Subtitle & Audition Preview Button */}
               <div className="pt-2 border-t border-amber-500/10 flex items-center justify-between">
-                <span className={`text-[10px] font-mono ${isLight ? "text-stone-500" : "text-stone-400"}`}>
+                <span className={`text-[10px] font-mono ${isLight ? "text-[#55526b]" : "text-stone-400"}`}>
                   {item.subtitle}
                 </span>
 
@@ -392,7 +392,7 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
                     isPreviewing
                       ? "bg-amber-500 text-stone-950 font-bold animate-pulse"
                       : isLight
-                      ? "bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-200"
+                      ? "bg-[#fbf0d6] hover:bg-[#f0cf8a] text-[#b8801f] border border-[#f0cf8a]"
                       : "bg-white/10 hover:bg-white/15 text-stone-300 border border-white/10"
                   }`}
                   title={`Preview ${item.name} for 4 seconds`}
@@ -410,9 +410,9 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
       <div className="mt-3.5 pt-2.5 border-t border-amber-500/10 flex flex-col sm:flex-row sm:items-center justify-between text-[11px] gap-1.5">
         <div className="flex items-center space-x-1.5">
           <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-          <span className={isLight ? "text-[#4A3A2F]" : "text-stone-400"}>
+          <span className={isLight ? "text-[#55526b]" : "text-stone-400"}>
             Selected Soundscape:{" "}
-            <strong className={isLight ? "text-[#261B12]" : "text-amber-300"}>
+            <strong className={isLight ? "text-[#1b1740]" : "text-amber-300"}>
               {SOUNDSCAPES.find((s) => s.id === selectedSoundscape)?.name || "Temple Bell"}
             </strong>
           </span>
@@ -431,7 +431,7 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
               </span>
             </span>
           ) : (
-            <span className={isLight ? "text-stone-500" : "text-stone-400"}>
+            <span className={isLight ? "text-[#55526b]" : "text-stone-400"}>
               Tap "Play Soundscape" above or header audio button to begin
             </span>
           )}

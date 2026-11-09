@@ -46,46 +46,46 @@ const getVerseModalThemeClasses = (theme?: string) => {
     case "light":
     case "prism-pulse":
       return {
-        overlay: "bg-stone-900/60",
-        container: "bg-[#FFFDF9] border border-stone-300 text-stone-900 shadow-2xl",
-        headerBg: "bg-[#F5EFEB] border-stone-200",
-        headerTag: "bg-amber-100 text-amber-900 border-amber-300",
-        headerCategory: "bg-stone-200 text-stone-800 border-stone-300",
-        headerBtn: "text-stone-600 hover:text-stone-950 hover:bg-stone-200",
-        headerCloseBtn: "text-stone-500 hover:text-stone-900 hover:bg-stone-200",
-        tabBar: "border-stone-200 bg-[#EFE7E0]",
-        tabActive: "border-amber-700 text-amber-950 font-bold",
-        tabInactive: "border-transparent text-stone-600 hover:text-stone-950",
-        heading: "text-stone-950 font-bold",
-        subHeading: "text-amber-800 font-semibold",
-        badgeAccent: "bg-amber-100 text-amber-900 border-amber-300",
-        verseBox: "bg-[#FAF6EE] border-stone-300 text-stone-950",
-        omWatermark: "text-stone-300/40",
-        verseHelperText: "text-stone-500",
-        wordStripBg: "bg-[#F4ECE2] border-stone-300",
-        wordStripLabel: "text-stone-600",
-        wordStripHint: "text-amber-800",
-        wordChipActive: "bg-amber-200/90 border-amber-600 text-amber-950 shadow-sm ring-1 ring-amber-500/40",
-        wordChipInactive: "bg-white border-stone-300 text-stone-800 hover:border-amber-500 hover:text-stone-950",
-        inspectorCard: "bg-white border-amber-400/70 shadow-lg",
-        inspectorHeaderBorder: "border-amber-200",
-        inspectorWord: "text-amber-900",
-        inspectorTranslit: "text-amber-800/90",
-        inspectorMeaning: "text-stone-800",
-        cardSubItemBg: "bg-stone-50 border-stone-200 text-stone-800",
-        cardSubLabel: "text-stone-600",
-        lookCloserStrip: "bg-amber-50/80 border-amber-300 text-amber-950",
-        lookCloserBtn: "bg-amber-200 hover:bg-amber-300 border-amber-400 text-amber-950 font-bold",
-        translitBox: "bg-[#FAF6EE] border-stone-300 text-stone-800",
-        meaningBox: "bg-amber-50/70 border-amber-200 text-stone-900",
-        sadhanaBox: "bg-[#FAF6EE] border-stone-300 text-stone-800",
-        sadhanaBtn: "bg-amber-200 hover:bg-amber-300 text-amber-950 border-amber-400",
-        commentaryBox: "bg-[#FAF6EE] border-stone-300 text-stone-900",
-        commentaryDivider: "border-stone-300 text-stone-600",
-        journalTextarea: "bg-white border-stone-300 text-stone-900 placeholder:text-stone-400 focus:border-amber-600",
-        journalSaveBtn: "bg-amber-600 hover:bg-amber-700 text-white font-bold",
-        footerBg: "bg-[#F5EFEB] border-stone-200",
-        footerCloseBtn: "bg-stone-200 hover:bg-stone-300 text-stone-800 font-semibold",
+        overlay: "bg-[#1b1740]/60 backdrop-blur-md",
+        container: "relative overflow-hidden rounded-none sm:rounded-[24px] bg-white border border-[#cfcbe0] text-[#1d1b2e] shadow-[0_10px_30px_-12px_rgb(27_23_64_/_0.28)]",
+        headerBg: "bg-[#f7f6fb] border-b border-[#cfcbe0]",
+        headerTag: "bg-[#fbf0d6] text-[#b8801f] border border-[#f0cf8a]/60 rounded-full font-semibold",
+        headerCategory: "bg-[#efedf6] text-[#55526b] border border-[#cfcbe0] rounded-full",
+        headerBtn: "text-[#55526b] hover:text-[#1b1740] hover:bg-[#efedf6] rounded-full",
+        headerCloseBtn: "text-[#55526b] hover:text-[#1b1740] hover:bg-[#efedf6] rounded-full",
+        tabBar: "border-b border-[#cfcbe0] bg-[#f7f6fb]",
+        tabActive: "border-b-2 border-[#1b1740] text-[#1b1740] font-bold",
+        tabInactive: "border-b-2 border-transparent text-[#55526b] hover:text-[#1b1740]",
+        heading: "text-[#1b1740] font-bold font-serif-sacred",
+        subHeading: "text-[#b8801f] font-semibold italic",
+        badgeAccent: "bg-[#fbf0d6] text-[#b8801f] border border-[#f0cf8a]/60 rounded-full font-semibold",
+        verseBox: "relative overflow-hidden rounded-[20px] bg-[#efedf6]/70 border border-[#cfcbe0] p-6 sm:p-10 shadow-xs text-[#1b1740]",
+        omWatermark: "text-[#1b1740]/5",
+        verseHelperText: "text-[#55526b]",
+        wordStripBg: "bg-[#f7f6fb] border border-[#cfcbe0] rounded-2xl",
+        wordStripLabel: "text-[#1d1b2e]",
+        wordStripHint: "text-[#b8801f]",
+        wordChipActive: "bg-[#1b1740] border-[#1b1740] text-[#f4f2ff] shadow-sm font-bold rounded-full",
+        wordChipInactive: "bg-white border-[#cfcbe0] text-[#1d1b2e] hover:border-[#d9a441] hover:bg-[#fbf0d6] rounded-full",
+        inspectorCard: "bg-white border border-[#cfcbe0] shadow-md rounded-[16px]",
+        inspectorHeaderBorder: "border-[#cfcbe0]",
+        inspectorWord: "text-[#1b1740] font-sanskrit font-bold",
+        inspectorTranslit: "text-[#b8801f] italic",
+        inspectorMeaning: "text-[#1d1b2e]",
+        cardSubItemBg: "bg-[#f7f6fb] border-[#cfcbe0] text-[#1d1b2e] rounded-xl",
+        cardSubLabel: "text-[#55526b]",
+        lookCloserStrip: "bg-[#f7f6fb] border border-[#cfcbe0] text-[#1d1b2e] rounded-xl",
+        lookCloserBtn: "bg-[#1b1740] hover:bg-[#100e2b] text-[#f4f2ff] font-bold border-transparent rounded-full shadow-xs",
+        translitBox: "bg-[#f7f6fb] border border-[#cfcbe0] text-[#55526b] rounded-xl",
+        meaningBox: "bg-[#f7f6fb] border border-[#cfcbe0] text-[#1d1b2e] rounded-xl",
+        sadhanaBox: "bg-[#f7f6fb] border border-[#cfcbe0] text-[#1d1b2e] rounded-xl",
+        sadhanaBtn: "bg-[#fbf0d6] hover:bg-[#f0cf8a] text-[#b8801f] border border-[#f0cf8a] rounded-full",
+        commentaryBox: "bg-[#efedf6] border-l-4 border-[#2f5d50] text-[#1d1b2e] rounded-r-xl",
+        commentaryDivider: "border-[#cfcbe0] text-[#55526b]",
+        journalTextarea: "bg-white border-[#cfcbe0] text-[#1d1b2e] placeholder:text-[#55526b] focus:border-[#d9a441] rounded-xl",
+        journalSaveBtn: "bg-[#1b1740] hover:bg-[#100e2b] text-[#f4f2ff] font-bold rounded-full shadow-xs",
+        footerBg: "bg-[#f7f6fb] border-t border-[#cfcbe0]",
+        footerCloseBtn: "bg-[#efedf6] hover:bg-[#cfcbe0] text-[#1d1b2e] border border-[#cfcbe0] font-medium rounded-full",
       };
     case "amethyst":
       return {
@@ -175,23 +175,23 @@ const getVerseModalThemeClasses = (theme?: string) => {
       };
     case "golden-hour":
       return {
-        overlay: "bg-stone-950/80",
-        container: "bg-[#24150A] border border-amber-600/40 text-amber-50 shadow-2xl",
-        headerBg: "bg-[#301C0D] border-amber-900/60",
-        headerTag: "bg-amber-500/20 text-amber-300 border-amber-500/40",
-        headerCategory: "bg-[#42250E] text-amber-200 border-amber-700/40",
+        overlay: "bg-stone-950/85 backdrop-blur-md",
+        container: "relative overflow-hidden rounded-none sm:rounded-3xl bg-gradient-to-r from-[#24150A] via-[#2A180C] to-[#3A2210] border border-[#C9822B]/40 text-[#FFF4D8] shadow-2xl",
+        headerBg: "bg-[#301C0D]/80 border-b border-amber-900/60",
+        headerTag: "bg-amber-500/20 text-amber-300 border border-amber-500/40",
+        headerCategory: "bg-[#42250E] text-amber-200 border border-amber-700/40",
         headerBtn: "text-amber-300 hover:text-white hover:bg-amber-900/40",
         headerCloseBtn: "text-amber-400 hover:text-white hover:bg-amber-900/40",
-        tabBar: "border-amber-900/60 bg-[#1B0F07]",
-        tabActive: "border-amber-400 text-amber-200 font-bold",
-        tabInactive: "border-transparent text-amber-300/70 hover:text-amber-100",
-        heading: "text-amber-100",
-        subHeading: "text-amber-300",
-        badgeAccent: "bg-amber-500/20 text-amber-300 border-amber-500/40",
-        verseBox: "bg-[#1A0E06] border-amber-900/40 text-amber-100",
-        omWatermark: "text-amber-950/40",
+        tabBar: "border-b border-amber-900/60 bg-[#1B0F07]",
+        tabActive: "border-b-2 border-amber-400 text-amber-200 font-bold",
+        tabInactive: "border-b-2 border-transparent text-amber-300/70 hover:text-amber-100",
+        heading: "text-amber-100 font-bold",
+        subHeading: "text-amber-300 font-semibold",
+        badgeAccent: "bg-amber-500/20 text-amber-300 border border-amber-500/40",
+        verseBox: "relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#28170B] via-[#2D1A0D] to-[#3C2413] border border-[#C9822B]/35 p-6 sm:p-10 shadow-2xl text-[#FFF4D8]",
+        omWatermark: "text-amber-500/15",
         verseHelperText: "text-amber-400/70",
-        wordStripBg: "bg-[#180D05] border-amber-900/50",
+        wordStripBg: "bg-[#180D05] border border-amber-900/50",
         wordStripLabel: "text-amber-300/80",
         wordStripHint: "text-amber-300",
         wordChipActive: "bg-amber-500/30 border-amber-400 text-amber-100 shadow ring-1 ring-amber-400/50",
@@ -205,38 +205,38 @@ const getVerseModalThemeClasses = (theme?: string) => {
         cardSubLabel: "text-amber-400",
         lookCloserStrip: "bg-amber-950/40 border-amber-500/30 text-amber-200",
         lookCloserBtn: "bg-amber-500/25 hover:bg-amber-500/40 border-amber-400 text-amber-100 font-bold",
-        translitBox: "bg-[#1A0E06] border-amber-900/50 text-amber-200",
-        meaningBox: "bg-amber-950/30 border-amber-700/30 text-amber-100",
-        sadhanaBox: "bg-[#1A0E06] border-amber-900/50 text-amber-200",
+        translitBox: "bg-[#1A0E06] border border-amber-900/50 text-amber-200",
+        meaningBox: "bg-amber-950/30 border border-amber-700/30 text-amber-100",
+        sadhanaBox: "bg-[#1A0E06] border border-amber-900/50 text-amber-200",
         sadhanaBtn: "bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border-amber-500/40",
-        commentaryBox: "bg-[#1A0E06] border-amber-900/50 text-amber-100",
+        commentaryBox: "bg-[#1A0E06] border border-amber-900/50 text-amber-100",
         commentaryDivider: "border-amber-900/50 text-amber-400",
         journalTextarea: "bg-[#160B04] border-amber-900/60 text-amber-100 placeholder:text-amber-400/40 focus:border-amber-400",
         journalSaveBtn: "bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold",
-        footerBg: "bg-[#301C0D] border-amber-900/60",
+        footerBg: "bg-[#301C0D] border-t border-amber-900/60",
         footerCloseBtn: "bg-[#42250E] hover:bg-[#522E12] text-amber-200 font-medium",
       };
     case "sandstone":
     default:
       return {
-        overlay: "bg-stone-950/80",
-        container: "bg-stone-900 border border-stone-700/80 text-stone-100 shadow-2xl",
-        headerBg: "bg-stone-950/50 border-stone-800",
-        headerTag: "bg-amber-500/10 text-amber-300 border-amber-500/20",
-        headerCategory: "bg-stone-800 text-stone-300 border-stone-700",
+        overlay: "bg-stone-950/85 backdrop-blur-md",
+        container: "relative overflow-hidden rounded-none sm:rounded-3xl bg-gradient-to-r from-stone-900 via-stone-900/90 to-amber-950/40 border border-stone-800 text-stone-100 shadow-2xl",
+        headerBg: "bg-stone-950/60 border-b border-stone-800",
+        headerTag: "bg-amber-500/10 text-amber-300 border border-amber-500/20",
+        headerCategory: "bg-stone-800 text-stone-300 border border-stone-700",
         headerBtn: "text-stone-400 hover:text-stone-100 hover:bg-stone-800",
         headerCloseBtn: "text-stone-400 hover:text-stone-100 hover:bg-stone-800",
-        tabBar: "border-stone-800 bg-stone-950/20",
-        tabActive: "border-amber-400 text-amber-300 font-bold",
-        tabInactive: "border-transparent text-stone-400 hover:text-stone-200",
-        heading: "text-amber-100",
-        subHeading: "text-amber-400/90",
-        badgeAccent: "bg-amber-500/10 text-amber-300 border-amber-500/25",
-        verseBox: "bg-stone-950/80 border-amber-900/30 text-amber-100",
-        omWatermark: "text-stone-800 opacity-40",
-        verseHelperText: "text-stone-500",
-        wordStripBg: "bg-stone-950/50 border-stone-800/80",
-        wordStripLabel: "text-stone-400",
+        tabBar: "border-b border-stone-800 bg-stone-950/30",
+        tabActive: "border-b-2 border-amber-400 text-amber-300 font-bold",
+        tabInactive: "border-b-2 border-transparent text-stone-400 hover:text-stone-200",
+        heading: "text-amber-100 font-bold",
+        subHeading: "text-amber-400/90 font-semibold",
+        badgeAccent: "bg-amber-500/10 text-amber-300 border border-amber-500/25",
+        verseBox: "relative overflow-hidden rounded-3xl bg-gradient-to-r from-stone-900 via-stone-900/90 to-amber-950/40 border border-stone-800 p-6 sm:p-10 shadow-2xl text-amber-100",
+        omWatermark: "text-amber-500/15",
+        verseHelperText: "text-stone-400",
+        wordStripBg: "bg-stone-950/60 border border-stone-800/80",
+        wordStripLabel: "text-stone-300",
         wordStripHint: "text-amber-400/80",
         wordChipActive: "bg-amber-500/25 border-amber-400 text-amber-100 shadow-md ring-1 ring-amber-400/50",
         wordChipInactive: "bg-stone-900/90 border-stone-800 text-stone-300 hover:border-amber-500/40 hover:text-amber-200",
@@ -249,15 +249,15 @@ const getVerseModalThemeClasses = (theme?: string) => {
         cardSubLabel: "text-stone-400",
         lookCloserStrip: "bg-gradient-to-r from-amber-950/30 via-stone-900 to-stone-950 border-amber-500/25 text-amber-200",
         lookCloserBtn: "bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/40 text-amber-200 font-bold",
-        translitBox: "bg-stone-950/40 border-stone-800/80 text-stone-300",
-        meaningBox: "bg-amber-950/10 border-amber-500/10 text-stone-200",
-        sadhanaBox: "bg-stone-950/60 border-stone-800 text-stone-300",
+        translitBox: "bg-stone-950/40 border border-stone-800/80 text-stone-300",
+        meaningBox: "bg-amber-950/15 border border-amber-500/20 text-stone-100",
+        sadhanaBox: "bg-stone-950/60 border border-stone-800 text-stone-300",
         sadhanaBtn: "bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border-amber-500/40",
-        commentaryBox: "bg-stone-950/60 border-stone-800 text-stone-200",
+        commentaryBox: "bg-stone-950/60 border border-stone-800 text-stone-200",
         commentaryDivider: "border-stone-800 text-stone-400",
         journalTextarea: "bg-stone-950/80 border-stone-800 text-stone-200 placeholder:text-stone-600 focus:border-amber-500/50",
         journalSaveBtn: "bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border-amber-500/40 font-medium",
-        footerBg: "bg-stone-950/80 border-stone-800",
+        footerBg: "bg-stone-950/80 border-t border-stone-800",
         footerCloseBtn: "bg-stone-800 hover:bg-stone-700 text-stone-200 font-medium",
       };
   }
@@ -367,8 +367,9 @@ export const VerseModal: React.FC<VerseModalProps> = ({
     <ModalPortal>
       <div className={`fixed inset-0 z-50 flex items-start sm:items-center justify-center overflow-y-auto overscroll-contain animate-fadeIn backdrop-blur-xl ${tc.overlay} p-0 sm:p-4 md:p-6 lg:p-8 xl:p-10 pt-0 sm:pt-4 md:pt-6 lg:pt-8 xl:pt-10 pb-24 sm:pb-6 md:pb-8 lg:pb-12`}>
         <div
+          key={item.id}
           id="verse-detail-modal"
-          className={`relative w-full max-w-full sm:max-w-2xl md:max-w-3xl min-h-dvh sm:min-h-0 sm:my-auto ${tc.container} rounded-none sm:rounded-2xl md:rounded-3xl overflow-hidden`}
+          className={`relative w-full max-w-full sm:max-w-2xl md:max-w-3xl min-h-dvh sm:min-h-0 sm:my-auto ${tc.container} animate-verseModalSlideIn overflow-hidden`}
         >
         {/* Top Header Bar */}
         <div className={`flex items-center justify-between px-6 py-5 border-b ${tc.headerBg}`}>
@@ -468,7 +469,7 @@ export const VerseModal: React.FC<VerseModalProps> = ({
         {/* Content Section */}
         <div className="p-6 max-h-[70vh] overflow-y-auto space-y-6">
           {activeSubTab === "verse" && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-slideUpFadeIn">
               <div>
                 <h2 className={`font-serif-sacred text-2xl font-bold ${tc.heading}`}>
                   {item.title}
@@ -755,7 +756,7 @@ export const VerseModal: React.FC<VerseModalProps> = ({
           )}
 
           {activeSubTab === "commentary" && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-slideUpFadeIn">
               <div>
                 <h3 className={`font-serif-sacred text-xl font-bold ${tc.heading}`}>
                   Commentary & Spiritual Insights
@@ -781,7 +782,7 @@ export const VerseModal: React.FC<VerseModalProps> = ({
           )}
 
           {activeSubTab === "journal" && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-slideUpFadeIn">
               <div>
                 <h3 className={`font-serif-sacred text-xl font-bold ${tc.heading}`}>
                   Reflect on this Verse
@@ -827,7 +828,7 @@ export const VerseModal: React.FC<VerseModalProps> = ({
           )}
 
           {activeSubTab === "words" && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-slideUpFadeIn">
               <div>
                 <span className={`text-[10px] font-bold uppercase tracking-widest ${tc.subHeading}`}>
                   Sanskrit Word Explorer • पद-ज्ञान

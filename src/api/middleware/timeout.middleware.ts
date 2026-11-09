@@ -7,6 +7,10 @@ import { ApiError } from "../errors/api.error.js";
  */
 export function timeoutMiddleware(timeoutMs = 30000) {
   return (req: Request, res: Response, next: NextFunction): void => {
+    // Only apply timeouts to API requests; do not abort long-lived Vite dev server sockets
+    if (!req.path.startsWith("/api")) {
+      return next();
+    }
     const timer = setTimeout(() => {
       if (!res.headersSent) {
         next(

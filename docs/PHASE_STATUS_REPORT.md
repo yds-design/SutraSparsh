@@ -39,6 +39,7 @@
 | **Phase 26**| Bhashini Voice & Audio Disposal | M51.1 – M52.5 | Bhashini ULCA Indic-TTS, Saraswati & Vyasa voices, Google failover, Blob disposal | **COMPLETED** ✅ | **PASSED** ✅ |
 | **Phase 27**| Parchment Dawn & Scroll Memo | M53.1 – M54.6 | Parchment Dawn WCAG 2.1 AAA contrast, React.memo & useMemo 60fps infinite scroll | **COMPLETED** ✅ | **PASSED** ✅ |
 | **Phase 28**| Daily Affirmations & Real-Time Sync | M55.1 – M55.4 | Daily Spiritual Affirmations, Firestore sync indicator, streak flame glow, journal search | **COMPLETED** ✅ | **PASSED** ✅ |
+| **Phase 29**| Parchment Dawn Theme & Runtime | M56.1 – M56.6 | Pure white card surfaces (#ffffff), React ErrorBoundary, rate limiter exemption for Vite, and CSP iframe embedding | **COMPLETED** ✅ | **PASSED** ✅ |
 
 ---
 
@@ -400,3 +401,11 @@
 ### How to Roll Back to Phase 1:
 1. In **Settings & Governance**, click **"Lock to Phase 1 (Disable Both)"**.
 2. Both features are immediately suppressed across all client interfaces, restoring the pristine Phase 1 sanctuary experience.
+
+---
+
+## 5. Developer Ergonomics & Build Stabilization Hotfix (v1.0.1)
+
+- **PostCSS @import Ordering Resolved**: Removed duplicate external Google Fonts `@import url(...)` lines from `src/index.css`. All sacred typography fonts (`Paytone One`, `Newsreader`, `Hanken Grotesk`, `Tiro Devanagari Hindi`) continue to load seamlessly via high-priority `<link rel="stylesheet">` preconnect tags in `index.html`. `npm run build` now compiles with 0 CSS optimization warnings.
+- **Local Dev Server Rate Limiting**: Added `process.env.NODE_ENV !== "production"` bypass in `rateLimiterMiddleware` (`src/api/middleware/rate-limiter.middleware.ts`), completely eliminating `[HTTP 429] TOO_MANY_REQUESTS` in local development and rapid-iteration workflows. Production rate limiting remains strictly enforced.
+

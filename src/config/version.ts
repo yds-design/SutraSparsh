@@ -18,8 +18,8 @@ export const APP_VERSION_METADATA: VersionMetadata = {
   name: "SutraSparsh",
   environment: process.env.NODE_ENV === "production" ? "production" : (process.env.APP_ENV || "development"),
   buildTime: new Date().toISOString(),
-  commitHash: "66d273b",
+  commitHash: "22cbb2a",
   framework: "React 19 + Express 5 + Vite 8",
   nodeVersion: process.version || "v22",
-  phaseStatus: "Phase 25 (All Phases 1–25 Certified; Purohit Directory & Journey Relocated; Phase 1 Lockdown Active)",
+  phaseStatus: "Phase 29 (Parchment Dawn Unified; Full-Stack Runtime Hardened; Production Release v1.0.0)",
 };

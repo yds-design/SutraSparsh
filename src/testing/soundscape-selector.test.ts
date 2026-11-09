@@ -108,7 +108,7 @@ async function runSuite() {
   assert("SoundscapeSelector highlights 'Disabled by default'", selectorSrc.includes("Disabled by default"));
   assert("SoundscapeSelector allows switching between soundscapes", selectorSrc.includes("soundEngine.setSoundscape"));
   assert("SoundscapeSelector renders preview buttons for listening", selectorSrc.includes("soundEngine.previewSoundscape(soundscape)"));
-  assert("SoundscapeSelector adheres to Parchment Dawn tokens (#E8DCC2, #261B12, #FFFDF8)", selectorSrc.includes("#E8DCC2") && selectorSrc.includes("#261B12"));
+  assert("SoundscapeSelector adheres to Parchment Dawn tokens", (selectorSrc.includes("#cfcbe0") || selectorSrc.includes("#E8DCC2")) && (selectorSrc.includes("#1b1740") || selectorSrc.includes("#261B12")));
 
   // --- Suite 5: Integration in Preferences Views ---
   console.log("\n--- 5. Testing Integration in TempleApp & MoreView Preferences ---");
