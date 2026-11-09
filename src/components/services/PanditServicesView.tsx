@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Search,
   Filter,
@@ -15,11 +15,13 @@ import {
   Building2,
   BookOpen,
   Info,
+  UserCheck,
 } from "lucide-react";
-import { PANDIT_CORPUS } from "../../data/panditCorpus";
+import { panditService } from "../../services/pandit.service";
 import type { PanditProfile } from "../../types/pandit";
 import { PanditProfileCard } from "./PanditProfileCard";
 import { PanditProfileModal } from "./PanditProfileModal";
+import { PanditOnboardingModal } from "./PanditOnboardingModal";
 import { type AppTheme } from "../../types";
 
 export interface PanditServicesViewProps {
@@ -32,6 +34,17 @@ export const PanditServicesView: React.FC<PanditServicesViewProps> = ({
   onNavigateTab,
 }) => {
   const isLight = theme === "light";
+
+  // Reactive Pandits state from panditService
+  const [pandits, setPandits] = useState<PanditProfile[]>(() => panditService.getAllPandits());
+  const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const unsub = panditService.subscribe(() => {
+      setPandits(panditService.getAllPandits());
+    });
+    return unsub;
+  }, []);
 
   // Filter States
   const [selectedTradition, setSelectedTradition] = useState<string>("All");
@@ -46,21 +59,21 @@ export const PanditServicesView: React.FC<PanditServicesViewProps> = ({
 
   // Unique Traditions & Languages
   const traditions = useMemo(() => {
-    const list = Array.from(new Set(PANDIT_CORPUS.map((p) => p.tradition)));
+    const list = Array.from(new Set(pandits.map((p) => p.tradition)));
     return ["All", ...list];
-  }, []);
+  }, [pandits]);
 
   const languages = useMemo(() => {
     const set = new Set<string>();
-    PANDIT_CORPUS.forEach((p) => p.languages.forEach((l) => set.add(l)));
+    pandits.forEach((p) => p.languages.forEach((l) => set.add(l)));
     return ["All", ...Array.from(set)];
-  }, []);
+  }, [pandits]);
 
   const ritualCategories = ["All", "Samskara", "Puja", "Homa"];
 
   // Filtered List
   const filteredPandits = useMemo(() => {
-    return PANDIT_CORPUS.filter((pandit) => {
+    return pandits.filter((pandit) => {
       // 1. Tradition filter
       if (selectedTradition !== "All" && pandit.tradition !== selectedTradition) {
         return false;
@@ -107,6 +120,7 @@ export const PanditServicesView: React.FC<PanditServicesViewProps> = ({
       return true;
     });
   }, [
+    pandits,
     selectedTradition,
     selectedLanguage,
     selectedRitualCategory,
@@ -193,6 +207,17 @@ export const PanditServicesView: React.FC<PanditServicesViewProps> = ({
               <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
               <span>Direct WhatsApp & Call Connect</span>
             </div>
+          </div>
+
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => setIsOnboardingModalOpen(true)}
+              className="py-2.5 px-4 rounded-xl font-bold text-xs bg-amber-500 hover:bg-amber-400 text-stone-950 transition-all flex items-center space-x-1.5 cursor-pointer shadow-md active:scale-95"
+            >
+              <UserCheck className="w-4 h-4" />
+              <span>Join as Verified Purohit • पुरोहित पंजीकरण</span>
+            </button>
           </div>
         </div>
       </section>
@@ -415,6 +440,13 @@ export const PanditServicesView: React.FC<PanditServicesViewProps> = ({
         pandit={selectedPanditForModal}
         isOpen={Boolean(selectedPanditForModal)}
         onClose={() => setSelectedPanditForModal(null)}
+        theme={theme}
+      />
+
+      {/* ════════════ 6. MODAL FOR PUROHIT ONBOARDING ════════════ */}
+      <PanditOnboardingModal
+        isOpen={isOnboardingModalOpen}
+        onClose={() => setIsOnboardingModalOpen(false)}
         theme={theme}
       />
     </div>

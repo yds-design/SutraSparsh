@@ -14,6 +14,7 @@ export type AdminRole =
 export type AdminDomain =
   | "dashboard"
   | "content"
+  | "services"
   | "imports"
   | "users"
   | "journey"

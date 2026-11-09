@@ -4,6 +4,7 @@ import { AdminHeader } from "./components/AdminHeader";
 import { AdminSidebar } from "./components/AdminSidebar";
 import { DashboardView } from "./views/DashboardView";
 import { ContentView } from "./views/ContentView";
+import { ServicesView } from "./views/ServicesView";
 import { DataImportsView } from "./views/DataImportsView";
 import { UsersView } from "./views/UsersView";
 import { JourneyView } from "./views/JourneyView";
@@ -16,6 +17,7 @@ import {
   X,
   Search,
   BookOpen,
+  UserCheck,
   Database,
   Users,
   CreditCard,
@@ -67,6 +69,7 @@ export const SutraSparshAdminApp: React.FC<SutraSparshAdminAppProps> = ({
   const commands = [
     { label: "Go to Dashboard", domain: "dashboard" as AdminDomain, icon: ShieldCheck },
     { label: "Manage Sacred Corpus & Scriptures", domain: "content" as AdminDomain, icon: BookOpen },
+    { label: "Manage Vedic Priests & Rituals", domain: "services" as AdminDomain, icon: UserCheck },
     { label: "Run Ingestion Collector Pipeline", domain: "imports" as AdminDomain, icon: Database },
     { label: "Seeker Directory & Scholarships", domain: "users" as AdminDomain, icon: Users },
     { label: "Journey Funnel & Content Intelligence", domain: "journey" as AdminDomain, icon: ShieldCheck },
@@ -103,6 +106,7 @@ export const SutraSparshAdminApp: React.FC<SutraSparshAdminAppProps> = ({
             <DashboardView onNavigateDomain={(dom) => setActiveDomain(dom)} />
           )}
           {activeDomain === "content" && <ContentView />}
+          {activeDomain === "services" && <ServicesView />}
           {activeDomain === "imports" && <DataImportsView />}
           {activeDomain === "users" && <UsersView />}
           {activeDomain === "journey" && <JourneyView />}

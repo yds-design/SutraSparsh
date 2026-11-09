@@ -102,7 +102,7 @@ const INITIAL_VERSES: ContentItem[] = [
 const CATEGORIES = ["All", "Karma Yoga", "Raja Yoga", "Mind & Meditation", "Jnana / Vedanta", "Vedic Chants"];
 
 export default function App() {
-  // App Mode Separation (Phase 22, M38-M46): 'user' (sutrasparsh.com) vs 'admin' (admin.sutrasparsh.com)
+  // App Mode Separation (Phase 22, M38-M46): 'user' (sutrasparsh.in) vs 'admin' (admin.sutrasparsh.in)
   const [appMode, setAppMode] = useState<"user" | "admin">(() => {
     if (typeof window !== "undefined") {
       const search = new URLSearchParams(window.location.search);
@@ -113,7 +113,8 @@ export default function App() {
         search.get("view") === "admin" ||
         search.get("admin") === "true" ||
         path.startsWith("/admin") ||
-        host.startsWith("admin.")
+        host.startsWith("admin.") ||
+        host.includes("admin.sutrasparsh")
       ) {
         return "admin";
       }
@@ -593,7 +594,8 @@ export default function App() {
         search.get("view") === "admin" ||
         search.get("admin") === "true" ||
         path.startsWith("/admin") ||
-        host.startsWith("admin.")
+        host.startsWith("admin.") ||
+        host.includes("admin.sutrasparsh")
       ) {
         setAppMode("admin");
       } else {

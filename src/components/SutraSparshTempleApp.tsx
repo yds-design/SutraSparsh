@@ -50,6 +50,7 @@ import {
   Square,
   Zap,
   ArrowRight,
+  UserCheck,
 } from "lucide-react";
 import { ShareModal } from "./ShareModal";
 import { ModalPortal } from "./ModalPortal";
@@ -58,6 +59,7 @@ import { MoreView } from "./MoreView";
 import { BrahmaMuhurtaTimer } from "./BrahmaMuhurtaTimer";
 import { ImportantTithisParv } from "./ImportantTithisParv";
 import { StreakFireCounter } from "./StreakFireCounter";
+import { PanditOnboardingModal } from "./services/PanditOnboardingModal";
 import { DailySpiritualAffirmation } from "./DailySpiritualAffirmation";
 import { SoundscapeSelector } from "./SoundscapeSelector";
 import { TtsAvailabilityIndicator } from "./TtsAvailabilityIndicator";
@@ -146,6 +148,7 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   const [subScreen, setSubScreen] = useState<
     "none" | "scripture" | "verse" | "glossary" | "paths" | "about" | "pref"
   >(initialSubScreen);
+  const [isPanditOnboardingOpen, setIsPanditOnboardingOpen] = useState(false);
 
   useEffect(() => {
     if (initialSubScreen && initialSubScreen !== "none") {
@@ -1739,6 +1742,80 @@ ${reflections
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
+              </div>
+            </div>
+
+            {/* 1b. VEDIC PUROHIT DIRECTORY & ONBOARDING BRIDGE (Main/Index Mobile Entry) */}
+            <div
+              className={`mx-4 p-5 sm:p-6 rounded-3xl border shadow-sm relative overflow-hidden transition-all group ${
+                isLightCanvas
+                  ? "bg-[#FFFDF8] border-[#E8DCC2]"
+                  : "bg-stone-900/90 border-amber-500/25"
+              }`}
+            >
+              <div className="relative z-10 space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                    <UserCheck className="w-3.5 h-3.5" />
+                    <span>Vedic Purohit Directory • ऋत्विक् सेवा</span>
+                  </div>
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
+                    0% Platform Fees · Direct WhatsApp
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  <h3
+                    className={`text-base sm:text-lg font-bold font-serif-sacred leading-tight ${
+                      isLightCanvas ? "text-[#261B12]" : "text-stone-100"
+                    }`}
+                  >
+                    Direct Connect with Verified Vedic Priests
+                  </h3>
+                  <p
+                    className={`text-xs leading-relaxed ${
+                      isLightCanvas ? "text-stone-600" : "text-stone-300"
+                    }`}
+                  >
+                    Consult authentic Purohits from Kashi, Ujjain, Haridwar & South Veda Pathashalas for Griha Pravesha, Rudrabhisheka, Vivaha, and Homas with zero middleman deductions.
+                  </p>
+                </div>
+
+                {/* Dual Sacred Actions: For Devotees and for Priests to Onboard */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  <button
+                    type="button"
+                    id="btn-home-services-explore"
+                    onClick={() => {
+                      if (onNavigateTab) {
+                        onNavigateTab("services");
+                      } else {
+                        setActiveTab("more");
+                      }
+                    }}
+                    className="w-full py-2.5 px-3.5 rounded-2xl font-bold text-xs bg-amber-500 hover:bg-amber-400 text-stone-950 transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-sm active:scale-95"
+                    title="Browse Verified Vedic Priests & Rituals"
+                  >
+                    <UserCheck className="w-4 h-4 shrink-0" />
+                    <span>Find a Purohit (ऋत्विक् खोजें)</span>
+                    <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+                  </button>
+
+                  <button
+                    type="button"
+                    id="btn-home-services-onboard"
+                    onClick={() => setIsPanditOnboardingOpen(true)}
+                    className={`w-full py-2.5 px-3.5 rounded-2xl font-bold text-xs border transition-all flex items-center justify-center space-x-2 cursor-pointer active:scale-95 ${
+                      isLightCanvas
+                        ? "bg-amber-50 hover:bg-amber-100/80 text-amber-950 border-amber-300"
+                        : "bg-stone-800/80 hover:bg-stone-700 text-amber-300 border-amber-500/30"
+                    }`}
+                    title="Vedic Priests: Join the Directory with 0% Commission"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <span>Join as Purohit (पुरोहित जुड़ें)</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -4695,6 +4772,13 @@ ${reflections
           onClose={() => setIsShareModalOpen(false)}
           content={shareableContent}
           appTheme={theme}
+        />
+
+        {/* ════════════ PUROHIT ONBOARDING MODAL ════════════ */}
+        <PanditOnboardingModal
+          isOpen={isPanditOnboardingOpen}
+          onClose={() => setIsPanditOnboardingOpen(false)}
+          theme={theme}
         />
 
         {/* ════════════ LOOK CLOSER INTERACTIVE MODAL ════════════ */}

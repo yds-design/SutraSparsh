@@ -2,6 +2,7 @@ import React from "react";
 import {
   LayoutDashboard,
   BookOpen,
+  UserCheck,
   Database,
   Users,
   Compass,
@@ -13,6 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { adminAuthService } from "../../services/admin-auth.service";
+import { panditService } from "../../services/pandit.service";
 import type { AdminDomain } from "../../types/admin";
 
 interface AdminSidebarProps {
@@ -43,6 +45,13 @@ const DOMAIN_NAV_ITEMS: DomainNavItem[] = [
     sanskritBadge: "ग्रन्थ",
     icon: BookOpen,
     description: "Sacred Corpus, Drafts & Validation",
+  },
+  {
+    id: "services",
+    label: "Priests & Services",
+    sanskritBadge: "ऋत्विक्",
+    icon: UserCheck,
+    description: "Purohits, Rituals & Onboarding",
   },
   {
     id: "imports",
@@ -158,7 +167,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 </div>
               </div>
 
-              <div>
+              <div className="flex items-center space-x-1.5">
+                {item.id === "services" && panditService.getPendingApplicationsCount() > 0 && (
+                  <span className="w-5 h-5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40 text-[10px] font-bold flex items-center justify-center animate-pulse">
+                    {panditService.getPendingApplicationsCount()}
+                  </span>
+                )}
                 {!hasAccess ? (
                   <Lock className="w-3.5 h-3.5 text-stone-600" />
                 ) : isSelected ? (
