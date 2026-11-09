@@ -138,8 +138,13 @@ export function rateLimiterMiddleware(
   res: Response,
   next: NextFunction
 ): void {
-  // In development mode (npm run dev / local developer environment), bypass rate limiting completely
-  if (process.env.NODE_ENV !== "production") {
+  // In development mode or local development/testing, bypass rate limiting completely
+  const isLocalhost =
+    req.hostname === "localhost" ||
+    req.ip === "127.0.0.1" ||
+    req.ip === "::1" ||
+    req.ip === "::ffff:127.0.0.1";
+  if (process.env.NODE_ENV !== "production" || isLocalhost) {
     return next();
   }
 
