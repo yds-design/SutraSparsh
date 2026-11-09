@@ -156,71 +156,73 @@ export const ContentView: React.FC = () => {
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-stone-900/60 border border-stone-800 p-6 rounded-3xl shadow-lg">
-        <div>
-          <div className="flex items-center space-x-2 text-amber-400 text-xs font-mono uppercase tracking-wider mb-1">
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Corpus & Scripture Administration (M40)</span>
+      <div className="ui-card">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="ui-badge ui-badge-info mb-1">
+              <BookOpen className="w-3.5 h-3.5 mr-1" />
+              <span>Corpus & Scripture Administration (M40)</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">
+              Sacred Content Studio
+            </h1>
+            <p className="text-slate-500 text-xs mt-1">
+              Curate Sanskrit verses, transliterations, word-by-word etymology, commentaries, and chants.
+            </p>
           </div>
-          <h1 className="font-serif-sacred text-2xl sm:text-3xl font-bold text-amber-100">
-            Sacred Content Studio
-          </h1>
-          <p className="text-stone-400 text-xs mt-1">
-            Curate Sanskrit verses, transliterations, word-by-word etymology, commentaries, and chants.
-          </p>
-        </div>
 
-        <div className="flex items-center space-x-3">
-          {canCreate && (
+          <div className="flex items-center space-x-3">
+            {canCreate && (
+              <button
+                onClick={() => {
+                  setEditingVerse({
+                    title: "",
+                    body: "",
+                    transliteration: "",
+                    meaning: "",
+                    category: "Karma Yoga",
+                    tradition: "Bhagavad Gita",
+                    source: "Srimad Bhagavad Gita",
+                  });
+                  setIsEditModalOpen(true);
+                }}
+                className="ui-button"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Sacred Verse</span>
+              </button>
+            )}
+
             <button
-              onClick={() => {
-                setEditingVerse({
-                  title: "",
-                  body: "",
-                  transliteration: "",
-                  meaning: "",
-                  category: "Karma Yoga",
-                  tradition: "Bhagavad Gita",
-                  source: "Srimad Bhagavad Gita",
-                });
-                setIsEditModalOpen(true);
-              }}
-              className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-bold text-xs shadow hover:scale-105 transition-all"
+              onClick={loadCorpus}
+              title="Refresh Corpus"
+              className="p-2 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-blue-600 transition-colors"
             >
-              <Plus className="w-4 h-4" />
-              <span>Add Sacred Verse</span>
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-blue-500" : ""}`} />
             </button>
-          )}
-
-          <button
-            onClick={loadCorpus}
-            title="Refresh Corpus"
-            className="p-2 rounded-xl bg-stone-950 border border-stone-800 text-stone-400 hover:text-amber-300 transition-colors"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-amber-400" : ""}`} />
-          </button>
+          </div>
         </div>
       </div>
 
       {notification && (
-        <div className="bg-emerald-950/60 border border-emerald-800/80 text-emerald-200 text-xs px-4 py-3 rounded-2xl flex items-center space-x-2 shadow-md animate-fadeIn">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="ui-alert ui-alert-info">
+          <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
           <span>{notification}</span>
         </div>
       )}
 
       {/* Filter and Search Controls */}
-      <div className="bg-stone-900/50 border border-stone-800 rounded-3xl p-5 shadow space-y-4">
+      <div className="ui-card">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Search Field */}
           <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-500" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
               placeholder="Search by Sanskrit, title, meaning..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-stone-950 border border-stone-800 rounded-xl pl-10 pr-3 py-2 text-xs text-stone-200 focus:outline-none focus:border-amber-500/60"
+              className="ui-input pl-10"
             />
           </div>
 
@@ -228,7 +230,7 @@ export const ContentView: React.FC = () => {
           <select
             value={selectedTradition}
             onChange={(e) => setSelectedTradition(e.target.value)}
-            className="bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-300 focus:outline-none focus:border-amber-500/60"
+            className="ui-select"
           >
             <option value="All">All Traditions (Bhagavad Gita, Yoga Sutras, Upanishads)</option>
             <option value="Bhagavad Gita">Bhagavad Gita</option>
@@ -241,7 +243,7 @@ export const ContentView: React.FC = () => {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-300 focus:outline-none focus:border-amber-500/60"
+            className="ui-select"
           >
             <option value="All">All Categories / Yogas</option>
             <option value="Karma Yoga">Karma Yoga</option>
@@ -254,22 +256,22 @@ export const ContentView: React.FC = () => {
 
         {/* Bulk Actions Bar (when items selected) */}
         {selectedIds.length > 0 && (
-          <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-2xl flex items-center justify-between animate-fadeIn">
-            <span className="text-xs text-amber-200 font-semibold">
+          <div className="bg-blue-50 border border-blue-200 p-3 rounded-2xl flex items-center justify-between mt-3 animate-fadeIn">
+            <span className="text-xs text-blue-800 font-semibold">
               {selectedIds.length} verses selected
             </span>
             <div className="flex items-center space-x-2">
               {canPublish && (
                 <button
                   onClick={handleBulkPublish}
-                  className="px-3 py-1.5 rounded-lg bg-amber-500 text-stone-950 text-xs font-bold hover:bg-amber-400 transition-colors"
+                  className="ui-button py-1 px-3 text-xs"
                 >
                   Bulk Verify & Publish
                 </button>
               )}
               <button
                 onClick={() => setSelectedIds([])}
-                className="px-3 py-1.5 rounded-lg bg-stone-900 text-stone-400 hover:text-stone-200 text-xs border border-stone-800"
+                className="ui-button-secondary py-1 px-3 text-xs rounded-lg"
               >
                 Deselect All
               </button>
@@ -278,33 +280,33 @@ export const ContentView: React.FC = () => {
         )}
       </div>
 
-      {/* Corpus Verses Table */}
-      <div className="bg-stone-900/50 border border-stone-800 rounded-3xl overflow-hidden shadow-lg">
-        <div className="p-4 border-b border-stone-800/80 flex items-center justify-between">
-          <div className="flex items-center space-x-2 text-xs text-stone-400">
+      {/* Corpus Verses Container */}
+      <div className="ui-table-container">
+        <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+          <div className="flex items-center space-x-2 text-xs text-slate-600">
             <input
               type="checkbox"
               checked={selectedIds.length > 0 && selectedIds.length === filteredVerses.length}
               onChange={handleSelectAll}
-              className="rounded bg-stone-950 border-stone-800 text-amber-500 focus:ring-0"
+              className="rounded bg-white border-slate-300 text-blue-600 focus:ring-0"
             />
-            <span className="font-semibold text-stone-300">
+            <span className="font-semibold text-slate-800">
               Showing {filteredVerses.length} Scriptures
             </span>
           </div>
-          <span className="text-[11px] font-mono text-stone-500">
+          <span className="text-[11px] font-mono text-slate-500">
             Canonical Corpus M40.1
           </span>
         </div>
 
-        <div className="divide-y divide-stone-800/60 overflow-x-auto">
+        <div className="divide-y divide-slate-100 overflow-x-auto">
           {filteredVerses.map((item) => {
             const isSelected = selectedIds.includes(item.id);
             return (
               <div
                 key={item.id}
-                className={`p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors hover:bg-stone-900/80 ${
-                  isSelected ? "bg-amber-500/5" : ""
+                className={`p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors hover:bg-slate-50 ${
+                  isSelected ? "bg-blue-50/50" : ""
                 }`}
               >
                 <div className="flex items-start space-x-3 max-w-3xl">
@@ -312,27 +314,27 @@ export const ContentView: React.FC = () => {
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => handleToggleSelect(item.id)}
-                    className="mt-1 rounded bg-stone-950 border-stone-800 text-amber-500 focus:ring-0"
+                    className="mt-1 rounded bg-white border-slate-300 text-blue-600 focus:ring-0"
                   />
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-serif-sacred font-bold text-amber-100 text-sm">
+                      <span className="font-bold text-slate-900 text-sm">
                         {item.title}
                       </span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                         {item.metadata?.author || "Sacred Text"}
                       </span>
                       {item.metadata?.category && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-950 text-stone-400 border border-stone-800">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                           {item.metadata.category}
                         </span>
                       )}
                     </div>
 
-                    <p className="font-sanskrit text-stone-300 text-xs sm:text-sm leading-relaxed whitespace-pre-line">
+                    <p className="font-sanskrit text-slate-800 text-xs sm:text-sm leading-relaxed whitespace-pre-line">
                       {item.body}
                     </p>
-                    <p className="text-stone-400 text-xs leading-relaxed italic font-light">
+                    <p className="text-slate-500 text-xs leading-relaxed italic font-light">
                       {item.meaning || item.transliteration}
                     </p>
                   </div>
@@ -355,7 +357,7 @@ export const ContentView: React.FC = () => {
                         });
                         setIsEditModalOpen(true);
                       }}
-                      className="p-2 rounded-xl bg-stone-950 border border-stone-800 hover:border-amber-500/40 text-stone-400 hover:text-amber-300 text-xs transition-colors flex items-center space-x-1"
+                      className="p-2 rounded-xl bg-slate-100 border border-slate-200 hover:border-blue-400 text-slate-700 hover:text-blue-600 text-xs transition-colors flex items-center space-x-1"
                     >
                       <Edit className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline">Edit</span>
@@ -371,15 +373,15 @@ export const ContentView: React.FC = () => {
       {/* Edit / Create Verse Modal */}
       {isEditModalOpen && (
         <ModalPortal>
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-stone-900 border border-stone-800 rounded-3xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl animate-fadeIn">
-              <div className="flex items-center justify-between border-b border-stone-800 pb-3">
-                <h3 className="font-serif-sacred text-lg font-bold text-amber-100">
+          <div className="ui-overlay">
+            <div className="ui-modal max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 className="text-lg font-bold text-slate-900">
                   {editingVerse?.id ? `Edit Verse: ${editingVerse.title}` : "Add New Scripture Verse"}
                 </h3>
                 <button
                   onClick={() => setIsEditModalOpen(false)}
-                  className="text-stone-500 hover:text-stone-300 text-xs"
+                  className="text-slate-400 hover:text-slate-600 text-xs"
                 >
                   ✕ Close
                 </button>
@@ -388,7 +390,7 @@ export const ContentView: React.FC = () => {
             <form onSubmit={handleSaveVerse} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-mono text-stone-400 block mb-1">
+                  <label className="text-[11px] font-mono text-slate-600 block mb-1">
                     Scripture Title / Ref *
                   </label>
                   <input
@@ -397,25 +399,25 @@ export const ContentView: React.FC = () => {
                     value={editingVerse?.title || ""}
                     onChange={(e) => setEditingVerse((prev) => prev ? { ...prev, title: e.target.value } : null)}
                     placeholder="e.g. Bhagavad Gita 2.47"
-                    className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-200 focus:outline-none focus:border-amber-500/60"
+                    className="ui-input"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-mono text-stone-400 block mb-1">
+                  <label className="text-[11px] font-mono text-slate-600 block mb-1">
                     Category / Yoga Path
                   </label>
                   <input
                     type="text"
                     value={editingVerse?.category || "Karma Yoga"}
                     onChange={(e) => setEditingVerse((prev) => prev ? { ...prev, category: e.target.value } : null)}
-                    className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-200 focus:outline-none focus:border-amber-500/60"
+                    className="ui-input"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-[11px] font-mono text-amber-300 block mb-1">
+                <label className="text-[11px] font-mono text-slate-700 font-bold block mb-1">
                   Primary Sanskrit Text (Devanagari) *
                 </label>
                 <textarea
@@ -424,12 +426,12 @@ export const ContentView: React.FC = () => {
                   value={editingVerse?.body || ""}
                   onChange={(e) => setEditingVerse((prev) => prev ? { ...prev, body: e.target.value } : null)}
                   placeholder="कर्मण्येवाधिकारस्ते मा फलेषु कदाचन..."
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-xs font-sanskrit text-amber-200 focus:outline-none focus:border-amber-500/60 leading-relaxed"
+                  className="ui-textarea font-sanskrit text-amber-900 leading-relaxed"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-mono text-stone-400 block mb-1">
+                <label className="text-[11px] font-mono text-slate-600 block mb-1">
                   IAST Transliteration (Romanized)
                 </label>
                 <input
@@ -437,12 +439,12 @@ export const ContentView: React.FC = () => {
                   value={editingVerse?.transliteration || ""}
                   onChange={(e) => setEditingVerse((prev) => prev ? { ...prev, transliteration: e.target.value } : null)}
                   placeholder="karmaṇy-evādhikāras te mā phaleṣu kadācana..."
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-200 focus:outline-none focus:border-amber-500/60"
+                  className="ui-input"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-mono text-stone-400 block mb-1">
+                <label className="text-[11px] font-mono text-slate-600 block mb-1">
                   English Philosophical Meaning & Purport
                 </label>
                 <textarea
@@ -450,21 +452,21 @@ export const ContentView: React.FC = () => {
                   value={editingVerse?.meaning || ""}
                   onChange={(e) => setEditingVerse((prev) => prev ? { ...prev, meaning: e.target.value } : null)}
                   placeholder="You have a right to perform your prescribed duties, but you are not entitled to the fruits of your actions..."
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-xs text-stone-300 focus:outline-none focus:border-amber-500/60 leading-relaxed"
+                  className="ui-textarea text-slate-700 leading-relaxed"
                 />
               </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-stone-800">
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-stone-950 border border-stone-800 text-stone-400 hover:text-stone-200 text-xs"
+                  className="ui-button ui-button-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-bold text-xs shadow hover:scale-105 transition-all"
+                  className="ui-button"
                 >
                   Save & Validate Scripture
                 </button>

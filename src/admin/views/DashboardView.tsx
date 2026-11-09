@@ -71,50 +71,51 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateDomain }
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Header & Quick Action Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-stone-900/60 border border-stone-800 p-6 rounded-3xl shadow-lg">
+      <div className="ui-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2 text-amber-400 text-xs font-mono uppercase tracking-wider mb-1">
+          <div className="flex items-center space-x-2 text-blue-600 text-xs font-mono uppercase tracking-wider mb-1 font-semibold">
             <Sparkles className="w-3.5 h-3.5" />
             <span>SutraSparsh Executive Command Center (M39.6)</span>
           </div>
-          <h1 className="font-serif-sacred text-2xl sm:text-3xl font-bold text-amber-100">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
             Platform Operations & Health
           </h1>
-          <p className="text-stone-400 text-xs mt-1">
+          <p className="text-slate-500 text-xs mt-1">
             Real-time overview of scripture corpus, ingestion pipelines, subscriber revenue, and cloud telemetry.
           </p>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 shrink-0">
           <button
+            type="button"
             onClick={handleRefresh}
-            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 hover:border-amber-500/40 text-stone-300 text-xs font-medium transition-all"
+            className="ui-button-secondary"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-blue-600 ${loading ? "animate-spin" : ""}`} />
             <span>Sync Live Telemetry</span>
           </button>
         </div>
       </div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="admin-stats-grid">
         {/* Content KPI */}
         <div
           onClick={() => onNavigateDomain("content")}
-          className="bg-stone-900/50 border border-stone-800 hover:border-amber-500/40 p-5 rounded-2xl cursor-pointer transition-all hover:scale-[1.01] group space-y-3"
+          className="stat-card cursor-pointer group space-y-3"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-stone-400">Total Scriptures</span>
-            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400 group-hover:bg-amber-500/20">
+            <span className="stat-card-title">Total Scriptures</span>
+            <div className="p-2 rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition-colors">
               <BookOpen className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-amber-100 font-mono">
+            <div className="stat-card-value font-mono">
               {metrics.totalScriptures.toLocaleString()}
             </div>
-            <div className="flex items-center space-x-1 text-[11px] text-emerald-400 mt-1">
-              <CheckCircle2 className="w-3 h-3" />
+            <div className="flex items-center space-x-1.5 text-xs text-emerald-600 mt-1 font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5" />
               <span>{metrics.publishedVerses} Published • {metrics.draftVerses} Drafts</span>
             </div>
           </div>
@@ -123,20 +124,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateDomain }
         {/* Users KPI */}
         <div
           onClick={() => onNavigateDomain("users")}
-          className="bg-stone-900/50 border border-stone-800 hover:border-amber-500/40 p-5 rounded-2xl cursor-pointer transition-all hover:scale-[1.01] group space-y-3"
+          className="stat-card cursor-pointer group space-y-3"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-stone-400">Registered Seekers</span>
-            <div className="p-2 rounded-lg bg-sky-500/10 text-sky-400 group-hover:bg-sky-500/20">
+            <span className="stat-card-title">Registered Seekers</span>
+            <div className="p-2 rounded-lg bg-sky-50 text-sky-600 group-hover:bg-sky-100 transition-colors">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-stone-100 font-mono">
+            <div className="stat-card-value font-mono">
               {metrics.totalUsers.toLocaleString()}
             </div>
-            <div className="flex items-center space-x-1 text-[11px] text-sky-400 mt-1">
-              <TrendingUp className="w-3 h-3" />
+            <div className="flex items-center space-x-1.5 text-xs text-sky-600 mt-1 font-medium">
+              <TrendingUp className="w-3.5 h-3.5" />
               <span>+142 this week • 89% mobile MAU</span>
             </div>
           </div>
@@ -145,20 +146,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateDomain }
         {/* Premium / Monetization KPI */}
         <div
           onClick={() => onNavigateDomain("monetization")}
-          className="bg-stone-900/50 border border-stone-800 hover:border-amber-500/40 p-5 rounded-2xl cursor-pointer transition-all hover:scale-[1.01] group space-y-3"
+          className="stat-card cursor-pointer group space-y-3"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-stone-400">Sādhaka / Rishi Plans</span>
-            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500/20">
+            <span className="stat-card-title">Sādhaka / Rishi Plans</span>
+            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 transition-colors">
               <CreditCard className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-amber-300 font-mono">
+            <div className="stat-card-value font-mono text-emerald-600">
               {metrics.activeSubscribers} Subscribed
             </div>
-            <div className="flex items-center space-x-1 text-[11px] text-amber-400/90 mt-1">
-              <Flame className="w-3 h-3" />
+            <div className="flex items-center space-x-1.5 text-xs text-slate-500 mt-1">
+              <Flame className="w-3.5 h-3.5 text-amber-500" />
               <span>₹{metrics.totalRevenueInr.toLocaleString()} MTD (Seva + Subscriptions)</span>
             </div>
           </div>
@@ -167,20 +168,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateDomain }
         {/* System Latency & SRE KPI */}
         <div
           onClick={() => onNavigateDomain("operations")}
-          className="bg-stone-900/50 border border-stone-800 hover:border-amber-500/40 p-5 rounded-2xl cursor-pointer transition-all hover:scale-[1.01] group space-y-3"
+          className="stat-card cursor-pointer group space-y-3"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-stone-400">System Latency & Uptime</span>
-            <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20">
+            <span className="stat-card-title">System Latency & Uptime</span>
+            <div className="p-2 rounded-lg bg-purple-50 text-purple-600 group-hover:bg-purple-100 transition-colors">
               <Activity className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-emerald-400 font-mono">
+            <div className="stat-card-value font-mono text-emerald-600">
               {metrics.apiLatencyMs}ms
             </div>
-            <div className="flex items-center space-x-1 text-[11px] text-emerald-400 mt-1">
-              <ShieldCheck className="w-3 h-3" />
+            <div className="flex items-center space-x-1.5 text-xs text-emerald-600 mt-1 font-medium">
+              <ShieldCheck className="w-3.5 h-3.5" />
               <span>{metrics.systemUptime} Uptime • 0 Outages</span>
             </div>
           </div>
@@ -190,15 +191,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateDomain }
       {/* Two-Column Section: Subsystem Health Matrix vs Recent Activity Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Subsystem Health Matrix (2 cols) */}
-        <div className="lg:col-span-2 bg-stone-900/50 border border-stone-800 rounded-3xl p-6 shadow-md space-y-4">
-          <div className="flex items-center justify-between border-b border-stone-800/80 pb-3">
+        <div className="lg:col-span-2 ui-card space-y-4">
+          <div className="ui-card-header">
             <div className="flex items-center space-x-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <h3 className="font-serif-sacred font-bold text-amber-100 text-sm sm:text-base">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <h3 className="ui-card-title">
                 Subsystem Health Matrix
               </h3>
             </div>
-            <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 px-2 py-0.5 rounded-full">
+            <span className="ui-badge ui-badge-success">
               All 6 Services Green
             </span>
           </div>
@@ -207,18 +208,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateDomain }
             {healthCards.map((card) => (
               <div
                 key={card.subsystem}
-                className="bg-stone-950/80 border border-stone-800/80 rounded-2xl p-4 flex items-center justify-between hover:border-stone-700 transition-colors"
+                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 flex items-center justify-between hover:border-slate-300 transition-colors"
               >
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-xs font-semibold text-stone-200">{card.subsystem}</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs font-semibold text-slate-800">{card.subsystem}</span>
                   </div>
-                  <div className="text-[11px] text-stone-500 font-mono">
+                  <div className="text-[11px] text-slate-500 font-mono">
                     Latency: {card.latencyMs}ms • Uptime: {card.uptimePct}%
                   </div>
                 </div>
-                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2 py-1 rounded-lg">
+                <span className="ui-badge ui-badge-success text-[10px]">
                   {card.status}
                 </span>
               </div>
@@ -227,25 +228,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateDomain }
         </div>
 
         {/* Live Admin Audit & Event Feed (1 col) */}
-        <div className="bg-stone-900/50 border border-stone-800 rounded-3xl p-6 shadow-md space-y-4">
-          <div className="flex items-center justify-between border-b border-stone-800/80 pb-3">
+        <div className="ui-card space-y-4">
+          <div className="ui-card-header">
             <div className="flex items-center space-x-2">
-              <Clock className="w-4 h-4 text-amber-400" />
-              <h3 className="font-serif-sacred font-bold text-amber-100 text-sm">
+              <Clock className="w-4 h-4 text-blue-600" />
+              <h3 className="ui-card-title">
                 Recent Operations Feed
               </h3>
             </div>
-            <span className="text-[10px] font-mono text-stone-500">Live</span>
+            <span className="ui-badge ui-badge-info">Live</span>
           </div>
 
           <div className="space-y-3">
             {recentActivity.map((act, idx) => (
-              <div key={idx} className="bg-stone-950/60 border border-stone-800/60 rounded-xl p-3 space-y-1">
+              <div key={idx} className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-amber-200">{act.title}</span>
-                  <span className="text-[10px] font-mono text-stone-500">{act.time}</span>
+                  <span className="text-xs font-semibold text-slate-800">{act.title}</span>
+                  <span className="text-[10px] font-mono text-slate-400">{act.time}</span>
                 </div>
-                <p className="text-[11px] text-stone-400 leading-snug">{act.detail}</p>
+                <p className="text-[11px] text-slate-600 leading-snug">{act.detail}</p>
               </div>
             ))}
           </div>

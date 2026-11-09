@@ -2,6 +2,7 @@
 @import "./styles/sutrasparsh-theme.css";
 @import "./styles/golden-hour.css";
 @import "./styles/prism-pulse.css";
+@import "./styles/admin.css";
 
 @layer base {
   body {

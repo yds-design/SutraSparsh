@@ -83,25 +83,25 @@ export const SutraSparshAdminApp: React.FC<SutraSparshAdminAppProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col font-sans selection:bg-amber-500/30 selection:text-amber-200">
-      {/* Admin Top Navigation Header */}
-      <AdminHeader
-        onToggleAuditDrawer={() => setIsAuditDrawerOpen(!isAuditDrawerOpen)}
-        onOpenQuickSearch={() => setIsCommandPaletteOpen(true)}
-        onSwitchToUserApp={onSwitchToUserApp}
-        onRoleChanged={handleRoleChanged}
+    <div className="admin-layout" data-theme="admin">
+      {/* Domain Navigation Sidebar */}
+      <AdminSidebar
+        activeDomain={activeDomain}
+        onSelectDomain={(dom) => setActiveDomain(dom)}
       />
 
-      {/* Main Admin Console Body (Sidebar + Domain Workspace) */}
-      <div className="flex-1 flex flex-col md:flex-row">
-        {/* Domain Navigation Sidebar */}
-        <AdminSidebar
-          activeDomain={activeDomain}
-          onSelectDomain={(dom) => setActiveDomain(dom)}
+      {/* Main Admin Console Body (Header + Dynamic Workspace) */}
+      <div className="admin-main">
+        {/* Admin Top Navigation Header */}
+        <AdminHeader
+          onToggleAuditDrawer={() => setIsAuditDrawerOpen(!isAuditDrawerOpen)}
+          onOpenQuickSearch={() => setIsCommandPaletteOpen(true)}
+          onSwitchToUserApp={onSwitchToUserApp}
+          onRoleChanged={handleRoleChanged}
         />
 
         {/* Dynamic Workspace Container */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto overflow-x-hidden">
+        <main className="admin-content">
           {activeDomain === "dashboard" && (
             <DashboardView onNavigateDomain={(dom) => setActiveDomain(dom)} />
           )}
@@ -118,49 +118,48 @@ export const SutraSparshAdminApp: React.FC<SutraSparshAdminAppProps> = ({
 
       {/* Audit Log Drawer (Slide-out) */}
       {isAuditDrawerOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden">
+        <div className="ui-overlay" onClick={() => setIsAuditDrawerOpen(false)}>
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
-            onClick={() => setIsAuditDrawerOpen(false)}
-          />
-          <div className="fixed inset-y-0 right-0 max-w-md w-full bg-stone-900 border-l border-stone-800 shadow-2xl p-6 flex flex-col space-y-4 animate-slideLeft z-50">
-            <div className="flex items-center justify-between border-b border-stone-800 pb-3">
-              <div className="flex items-center space-x-2 text-amber-400">
+            className="fixed inset-y-0 right-0 max-w-md w-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl p-6 flex flex-col space-y-4 animate-slideLeft z-50"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <div className="flex items-center space-x-2 text-blue-600 dark:text-blue-400">
                 <Activity className="w-4 h-4" />
-                <h3 className="font-serif-sacred font-bold text-amber-100 text-sm">
+                <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm">
                   Cryptographic Audit Trail (M45.6)
                 </h3>
               </div>
               <button
                 onClick={() => setIsAuditDrawerOpen(false)}
-                className="text-stone-400 hover:text-stone-200"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-md"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-[11px] text-stone-400">
+            <p className="text-[11px] text-slate-500">
               Immutable log of all administrative actions, role persona shifts, and corpus modifications.
             </p>
 
-            <div className="flex-1 overflow-y-auto space-y-2.5 divide-y divide-stone-800/40">
+            <div className="flex-1 overflow-y-auto space-y-2.5 divide-y divide-slate-100 dark:divide-slate-800">
               {auditLogs.map((entry) => (
                 <div key={entry.id} className="pt-2 text-xs space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="font-mono font-bold text-amber-300">
+                    <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
                       {entry.action}
                     </span>
-                    <span className="text-[10px] font-mono text-stone-500">
+                    <span className="text-[10px] font-mono text-slate-400">
                       {new Date(entry.timestamp).toLocaleTimeString()}
                     </span>
                   </div>
-                  <div className="flex items-center space-x-2 text-[11px] text-stone-400">
+                  <div className="flex items-center space-x-2 text-[11px] text-slate-500">
                     <span>{entry.actorName}</span>
                     <span>•</span>
-                    <span className="text-amber-500/80 font-mono">{entry.actorRole}</span>
+                    <span className="font-mono text-slate-600 dark:text-slate-300 font-semibold">{entry.actorRole}</span>
                   </div>
                   {Boolean(entry.details?.description) && (
-                    <p className="text-[11px] text-stone-400 leading-snug">
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-snug">
                       {String(entry.details?.description || "")}
                     </p>
                   )}
@@ -173,17 +172,20 @@ export const SutraSparshAdminApp: React.FC<SutraSparshAdminAppProps> = ({
 
       {/* Command Palette (Ctrl+K) */}
       {isCommandPaletteOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center pt-20 p-4">
-          <div className="bg-stone-900 border border-stone-800 rounded-3xl max-w-lg w-full p-4 shadow-2xl space-y-3 animate-fadeIn">
+        <div className="ui-overlay" onClick={() => setIsCommandPaletteOpen(false)}>
+          <div
+            className="ui-modal max-w-lg w-full p-4 space-y-3 animate-fadeIn"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-500" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 autoFocus
                 placeholder="Type a command or jump to workspace..."
                 value={commandQuery}
                 onChange={(e) => setCommandQuery(e.target.value)}
-                className="w-full bg-stone-950 border border-stone-800 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-stone-200 focus:outline-none focus:border-amber-500/60"
+                className="ui-input pl-10"
               />
             </div>
 
@@ -198,9 +200,9 @@ export const SutraSparshAdminApp: React.FC<SutraSparshAdminAppProps> = ({
                       setIsCommandPaletteOpen(false);
                       setCommandQuery("");
                     }}
-                    className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-stone-800/80 flex items-center space-x-2.5 text-stone-300 hover:text-amber-200 transition-colors"
+                    className="admin-nav-item"
                   >
-                    <Icon className="w-4 h-4 text-amber-400" />
+                    <Icon className="w-4 h-4 text-blue-500" />
                     <span>{cmd.label}</span>
                   </button>
                 );

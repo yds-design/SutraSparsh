@@ -1,0 +1,577 @@
+/* ==========================================================================
+   SUTRASPARSH ADMIN SYSTEM - COMPREHENSIVE UI THEME SYSTEM
+   Target Environment: http://localhost:3000/admin
+   Design Philosophy: Clean, accessible, modern light mode dashboard architecture
+   ========================================================================== */
+
+:root {
+  /* ------------------------------------------------------------------------
+     1. COLOR SCHEME & DESIGN TOKENS
+     ------------------------------------------------------------------------ */
+  color-scheme: light;
+
+  /* Surface & Background Colors */
+  --ui-bg-app: #f8fafc;          /* Application backdrop (Slate 50) */
+  --ui-bg-surface: #ffffff;      /* Cards, modals, sheets, and primary containers */
+  --ui-bg-muted: #f1f5f9;        /* Table headers, code blocks, inactive tabs */
+  --ui-bg-hover: #e2e8f0;        /* Hover backgrounds for interactive items */
+  --ui-bg-active: #cbd5e1;       /* Active state selection */
+  --ui-bg-overlay: rgba(15, 23, 42, 0.4); /* Backdrop for modals & drawers */
+
+  /* Sidebar Specific Tokens */
+  --admin-sidebar-bg: #ffffff;
+  --admin-sidebar-border: #e2e8f0;
+  --admin-sidebar-width: 260px;
+
+  /* Header & Top Bar Tokens */
+  --admin-header-height: 64px;
+  --admin-header-bg: #ffffff;
+
+  /* Typography Colors (WCAG AAA/AA Compliant) */
+  --ui-text-primary: #0f172a;    /* Headers, main text, high emphasis */
+  --ui-text-secondary: #475569;  /* Labels, subtext, medium emphasis */
+  --ui-text-muted: #94a3b8;      /* Captions, placeholders, disabled text */
+  --ui-text-on-primary: #ffffff; /* Text on top of primary branding backgrounds */
+
+  /* Borders & Dividers */
+  --ui-border-default: #e2e8f0;  /* Subtle standard line */
+  --ui-border-strong: #cbd5e1;   /* Focus indicators, active borders, inputs */
+  --ui-border-focus: #3b82f6;    /* Input focus glow color */
+
+  /* Brand / Action Colors */
+  --ui-primary: #3b82f6;         /* Primary brand action (Blue 500) */
+  --ui-primary-hover: #2563eb;   /* Primary hover state (Blue 600) */
+  --ui-primary-light: #eff6ff;   /* Soft primary accent background */
+  --ui-primary-border: #bfdbfe;  /* Accent border color */
+
+  /* Feedback & Status Colors */
+  --ui-success: #10b981;         /* Positive status / Completed */
+  --ui-success-hover: #059669;
+  --ui-success-light: #ecfdf5;
+  --ui-success-text: #065f46;
+
+  --ui-warning: #f59e0b;         /* Caution / Pending status */
+  --ui-warning-hover: #d97706;
+  --ui-warning-light: #fffbeb;
+  --ui-warning-text: #92400e;
+
+  --ui-error: #ef4444;           /* Destructive action / Error status */
+  --ui-error-hover: #dc2626;
+  --ui-error-light: #fef2f2;
+  --ui-error-text: #991b1b;
+
+  --ui-info: #06b6d4;            /* Informational banners */
+  --ui-info-light: #ecfeff;
+  --ui-info-text: #155e75;
+
+  /* Elevation / Shadows */
+  --ui-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --ui-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --ui-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+
+  /* Border Radii */
+  --ui-radius-sm: 6px;
+  --ui-radius-md: 8px;
+  --ui-radius-lg: 12px;
+  --ui-radius-full: 9999px;
+
+  /* Transitions */
+  --ui-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ui-transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Optional Adaptive Light/Dark Mode Toggle Support */
+@media (prefers-color-scheme: dark) {
+  :root.supports-native-dark {
+    color-scheme: light dark;
+    --ui-bg-app: light-dark(#f8fafc, #0f172a);
+    --ui-bg-surface: light-dark(#ffffff, #1e293b);
+    --ui-text-primary: light-dark(#0f172a, #f8fafc);
+    --ui-border-default: light-dark(#e2e8f0, #334155);
+  }
+}
+
+/* ------------------------------------------------------------------------
+   2. BASE & LAYOUT RESET
+   ------------------------------------------------------------------------ */
+.admin-layout *,
+.admin-layout *::before,
+.admin-layout *::after {
+  box-sizing: border-box;
+}
+
+/* Admin Dashboard Layout Wrapper */
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--ui-bg-app);
+  color: var(--ui-text-primary);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.admin-sidebar {
+  width: var(--admin-sidebar-width);
+  background-color: var(--admin-sidebar-bg);
+  border-right: 1px solid var(--admin-sidebar-border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+}
+
+.admin-main {
+  flex: 1;
+  margin-left: var(--admin-sidebar-width);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background-color: var(--ui-bg-app);
+}
+
+.admin-header {
+  height: var(--admin-header-height);
+  background-color: var(--admin-header-bg);
+  border-bottom: 1px solid var(--ui-border-default);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.admin-content {
+  padding: 2rem;
+  flex: 1;
+}
+
+/* Responsive adjustment for admin layout on smaller viewports */
+@media (max-width: 768px) {
+  .admin-sidebar {
+    position: static;
+    width: 100%;
+    min-height: auto;
+  }
+  .admin-main {
+    margin-left: 0;
+  }
+  .admin-layout {
+    flex-direction: column;
+  }
+  .admin-content {
+    padding: 1rem;
+  }
+}
+
+/* ------------------------------------------------------------------------
+   3. NAVIGATION & SIDEBAR COMPONENTS
+   ------------------------------------------------------------------------ */
+.admin-brand {
+  height: var(--admin-header-height);
+  display: flex;
+  align-items: center;
+  padding: 0 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ui-text-primary);
+  border-bottom: 1px solid var(--ui-border-default);
+  text-decoration: none;
+}
+
+.admin-nav {
+  padding: 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  color: var(--ui-text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  border-radius: var(--ui-radius-md);
+  transition: background-color var(--ui-transition-fast), color var(--ui-transition-fast);
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+
+.admin-nav-item:hover {
+  background-color: var(--ui-bg-muted);
+  color: var(--ui-text-primary);
+}
+
+.admin-nav-item.active {
+  background-color: var(--ui-primary-light);
+  color: var(--ui-primary);
+  border-color: var(--ui-primary-border);
+}
+
+/* ------------------------------------------------------------------------
+   4. CARDS & CONTAINERS
+   ------------------------------------------------------------------------ */
+.ui-card {
+  background-color: var(--ui-bg-surface);
+  border: 1px solid var(--ui-border-default);
+  border-radius: var(--ui-radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--ui-shadow-sm);
+  margin-bottom: 1.5rem;
+}
+
+.ui-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--ui-border-default);
+}
+
+.ui-card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--ui-text-primary);
+  margin: 0;
+}
+
+/* Dynamic Metric / KPI Cards */
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background-color: var(--ui-bg-surface);
+  border: 1px solid var(--ui-border-default);
+  border-radius: var(--ui-radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--ui-shadow-sm);
+  transition: box-shadow var(--ui-transition-fast), border-color var(--ui-transition-fast);
+}
+
+.stat-card:hover {
+  box-shadow: var(--ui-shadow-md);
+  border-color: var(--ui-border-strong);
+}
+
+.stat-card-title {
+  font-size: 0.875rem;
+  color: var(--ui-text-secondary);
+  margin: 0 0 0.5rem 0;
+}
+
+.stat-card-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--ui-text-primary);
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------------
+   5. FORM CONTROLS & INPUT ELEMENTS
+   ------------------------------------------------------------------------ */
+.ui-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-bottom: 1.25rem;
+}
+
+.ui-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ui-text-primary);
+}
+
+.ui-input,
+.ui-select,
+.ui-textarea {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  color: var(--ui-text-primary);
+  background-color: var(--ui-bg-surface);
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-radius-md);
+  outline: none;
+  transition: border-color var(--ui-transition-fast), box-shadow var(--ui-transition-fast);
+}
+
+.ui-input::placeholder,
+.ui-textarea::placeholder {
+  color: var(--ui-text-muted);
+}
+
+.ui-input:focus,
+.ui-select:focus,
+.ui-textarea:focus {
+  border-color: var(--ui-border-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.ui-input:disabled,
+.ui-select:disabled,
+.ui-textarea:disabled {
+  background-color: var(--ui-bg-muted);
+  color: var(--ui-text-muted);
+  cursor: not-allowed;
+}
+
+/* Checkbox & Radio Controls */
+.ui-checkbox,
+.ui-radio {
+  accent-color: var(--ui-primary);
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------------------
+   6. BUTTONS & ACTIONS
+   ------------------------------------------------------------------------ */
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--ui-primary);
+  color: var(--ui-text-on-primary);
+  font-weight: 500;
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--ui-radius-md);
+  cursor: pointer;
+  transition: background-color var(--ui-transition-fast), border-color var(--ui-transition-fast);
+  text-decoration: none;
+}
+
+.ui-button:hover {
+  background-color: var(--ui-primary-hover);
+}
+
+.ui-button-secondary {
+  background-color: var(--ui-bg-surface);
+  color: var(--ui-text-primary);
+  border: 1px solid var(--ui-border-strong);
+}
+
+.ui-button-secondary:hover {
+  background-color: var(--ui-bg-muted);
+}
+
+.ui-button-danger {
+  background-color: var(--ui-error);
+  color: var(--ui-text-on-primary);
+}
+
+.ui-button-danger:hover {
+  background-color: var(--ui-error-hover);
+}
+
+/* ------------------------------------------------------------------------
+   7. TABLES & DATA GRIDS
+   ------------------------------------------------------------------------ */
+.ui-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--ui-border-default);
+  border-radius: var(--ui-radius-lg);
+  background-color: var(--ui-bg-surface);
+}
+
+.ui-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.ui-table th {
+  background-color: var(--ui-bg-muted);
+  color: var(--ui-text-secondary);
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--ui-border-default);
+}
+
+.ui-table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--ui-border-default);
+  color: var(--ui-text-primary);
+}
+
+.ui-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ui-table tbody tr:hover {
+  background-color: var(--ui-bg-app);
+}
+
+/* ------------------------------------------------------------------------
+   8. BADGES & STATUS INDICATORS
+   ------------------------------------------------------------------------ */
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--ui-radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.ui-badge-success {
+  background-color: var(--ui-success-light);
+  color: var(--ui-success-text);
+}
+
+.ui-badge-warning {
+  background-color: var(--ui-warning-light);
+  color: var(--ui-warning-text);
+}
+
+.ui-badge-error {
+  background-color: var(--ui-error-light);
+  color: var(--ui-error-text);
+}
+
+.ui-badge-info {
+  background-color: var(--ui-info-light);
+  color: var(--ui-info-text);
+}
+
+/* ------------------------------------------------------------------------
+   9. MODALS, DRAWER OVERLAYS & ALERTS
+   ------------------------------------------------------------------------ */
+.ui-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: var(--ui-bg-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.ui-modal {
+  background-color: var(--ui-bg-surface);
+  border-radius: var(--ui-radius-lg);
+  box-shadow: var(--ui-shadow-lg);
+  width: 100%;
+  max-width: 500px;
+  padding: 1.5rem;
+  border: 1px solid var(--ui-border-default);
+}
+
+.ui-alert {
+  padding: 1rem;
+  border-radius: var(--ui-radius-md);
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.ui-alert-info {
+  background-color: var(--ui-info-light);
+  color: var(--ui-info-text);
+  border: 1px solid var(--ui-info);
+}
+
+.ui-alert-error {
+  background-color: var(--ui-error-light);
+  color: var(--ui-error-text);
+  border: 1px solid var(--ui-error);
+}
+
+/* ------------------------------------------------------------------------
+   10. SCOPED COMPONENT & THEME HARMONIZATION (.admin-layout)
+   Ensures complete visual consistency across all admin subviews & cards
+   ------------------------------------------------------------------------ */
+.admin-layout h1, .admin-layout h2, .admin-layout h3, .admin-layout h4 {
+  color: var(--ui-text-primary);
+}
+
+.admin-layout p, .admin-layout span, .admin-layout div {
+  color: inherit;
+}
+
+.admin-layout input:not([type="checkbox"]):not([type="radio"]),
+.admin-layout select,
+.admin-layout textarea {
+  background-color: var(--ui-bg-surface);
+  border: 1px solid var(--ui-border-strong);
+  color: var(--ui-text-primary);
+  border-radius: var(--ui-radius-md);
+  font-size: 0.875rem;
+  padding: 0.625rem 0.875rem;
+  outline: none;
+  transition: border-color var(--ui-transition-fast), box-shadow var(--ui-transition-fast);
+}
+
+.admin-layout input:focus,
+.admin-layout select:focus,
+.admin-layout textarea:focus {
+  border-color: var(--ui-border-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Map legacy dark container classes inside .admin-layout to light theme tokens */
+.admin-layout .bg-stone-950,
+.admin-layout .bg-stone-900,
+.admin-layout .bg-stone-900\/50,
+.admin-layout .bg-stone-900\/60,
+.admin-layout .bg-stone-900\/80,
+.admin-layout .bg-stone-900\/90 {
+  background-color: var(--ui-bg-surface) !important;
+  color: var(--ui-text-primary);
+}
+
+.admin-layout .bg-stone-800,
+.admin-layout .bg-stone-800\/50,
+.admin-layout .bg-stone-800\/60,
+.admin-layout .bg-stone-800\/80 {
+  background-color: var(--ui-bg-muted) !important;
+}
+
+.admin-layout .border-stone-800,
+.admin-layout .border-stone-700,
+.admin-layout .border-stone-800\/60,
+.admin-layout .border-stone-800\/80 {
+  border-color: var(--ui-border-default) !important;
+}
+
+.admin-layout .text-stone-100,
+.admin-layout .text-amber-100,
+.admin-layout .text-stone-200 {
+  color: var(--ui-text-primary) !important;
+}
+
+.admin-layout .text-stone-400,
+.admin-layout .text-stone-500 {
+  color: var(--ui-text-secondary) !important;
+}
+
+.admin-layout .text-stone-600 {
+  color: var(--ui-text-muted) !important;
+}
+

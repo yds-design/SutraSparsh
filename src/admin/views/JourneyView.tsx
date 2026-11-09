@@ -97,77 +97,80 @@ export const JourneyView: React.FC = () => {
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-stone-900/60 border border-stone-800 p-6 rounded-3xl shadow-lg">
-        <div>
-          <div className="flex items-center space-x-2 text-amber-400 text-xs font-mono uppercase tracking-wider mb-1">
-            <Compass className="w-3.5 h-3.5" />
-            <span>70% Spiritual UX / 30% Business Intelligence (M15.11 - M15.13)</span>
+      {/* Header */}
+      <div className="ui-card">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="ui-badge ui-badge-info mb-1">
+              <Compass className="w-3.5 h-3.5 mr-1" />
+              <span>70% Spiritual UX / 30% Business Intelligence (M15.11 - M15.13)</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">
+              Journey & Product Intelligence
+            </h1>
+            <p className="text-slate-500 text-xs mt-1">
+              Monitor the canonical user journey: Discover → Arrive → Experience → Reflect → Habit → Personalization → Value Recognition → Advocacy.
+            </p>
           </div>
-          <h1 className="font-serif-sacred text-2xl sm:text-3xl font-bold text-amber-100">
-            Journey & Product Intelligence
-          </h1>
-          <p className="text-stone-400 text-xs mt-1">
-            Monitor the canonical user journey: Discover → Arrive → Experience → Reflect → Habit → Personalization → Value Recognition → Advocacy.
-          </p>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 bg-stone-950 p-1.5 rounded-2xl border border-stone-800 text-xs">
-          <button
-            onClick={() => setActiveSubTab("funnel")}
-            className={`px-3 py-1.5 rounded-xl font-medium transition-all ${
-              activeSubTab === "funnel"
-                ? "bg-amber-500/20 text-amber-200 border border-amber-500/30"
-                : "text-stone-400 hover:text-stone-200"
-            }`}
-          >
-            Journey Funnel
-          </button>
-          <button
-            onClick={() => setActiveSubTab("content-performance")}
-            className={`px-3 py-1.5 rounded-xl font-medium transition-all ${
-              activeSubTab === "content-performance"
-                ? "bg-amber-500/20 text-amber-200 border border-amber-500/30"
-                : "text-stone-400 hover:text-stone-200"
-            }`}
-          >
-            Content Performance
-          </button>
-          <button
-            onClick={() => setActiveSubTab("social-distribution")}
-            className={`px-3 py-1.5 rounded-xl font-medium transition-all ${
-              activeSubTab === "social-distribution"
-                ? "bg-amber-500/20 text-amber-200 border border-amber-500/30"
-                : "text-stone-400 hover:text-stone-200"
-            }`}
-          >
-            Social Sharing (M37–M52)
-          </button>
-          <button
-            onClick={() => setActiveSubTab("resume-intelligence")}
-            className={`px-3 py-1.5 rounded-xl font-medium transition-all ${
-              activeSubTab === "resume-intelligence"
-                ? "bg-amber-500/20 text-amber-200 border border-amber-500/30"
-                : "text-stone-400 hover:text-stone-200"
-            }`}
-          >
-            Resume Progress (M53–M74)
-          </button>
-          <button
-            onClick={() => setActiveSubTab("personalization")}
-            className={`px-3 py-1.5 rounded-xl font-medium transition-all ${
-              activeSubTab === "personalization"
-                ? "bg-amber-500/20 text-amber-200 border border-amber-500/30"
-                : "text-stone-400 hover:text-stone-200"
-            }`}
-          >
-            Knowledge & Rules
-          </button>
+          <div className="flex flex-wrap items-center gap-1.5 bg-slate-50 p-1.5 rounded-2xl border border-slate-200 text-xs">
+            <button
+              onClick={() => setActiveSubTab("funnel")}
+              className={`px-3 py-1.5 rounded-xl font-medium transition-all cursor-pointer ${
+                activeSubTab === "funnel"
+                  ? "bg-blue-50 text-blue-700 border border-blue-200 font-semibold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Journey Funnel
+            </button>
+            <button
+              onClick={() => setActiveSubTab("content-performance")}
+              className={`px-3 py-1.5 rounded-xl font-medium transition-all cursor-pointer ${
+                activeSubTab === "content-performance"
+                  ? "bg-blue-50 text-blue-700 border border-blue-200 font-semibold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Content Performance
+            </button>
+            <button
+              onClick={() => setActiveSubTab("social-distribution")}
+              className={`px-3 py-1.5 rounded-xl font-medium transition-all cursor-pointer ${
+                activeSubTab === "social-distribution"
+                  ? "bg-blue-50 text-blue-700 border border-blue-200 font-semibold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Social Sharing (M37–M52)
+            </button>
+            <button
+              onClick={() => setActiveSubTab("resume-intelligence")}
+              className={`px-3 py-1.5 rounded-xl font-medium transition-all cursor-pointer ${
+                activeSubTab === "resume-intelligence"
+                  ? "bg-blue-50 text-blue-700 border border-blue-200 font-semibold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Resume Progress (M53–M74)
+            </button>
+            <button
+              onClick={() => setActiveSubTab("personalization")}
+              className={`px-3 py-1.5 rounded-xl font-medium transition-all cursor-pointer ${
+                activeSubTab === "personalization"
+                  ? "bg-blue-50 text-blue-700 border border-blue-200 font-semibold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Knowledge & Rules
+            </button>
+          </div>
         </div>
       </div>
 
       {notification && (
-        <div className="bg-emerald-950/60 border border-emerald-800/80 text-emerald-200 text-xs px-4 py-3 rounded-2xl flex items-center space-x-2 shadow-md animate-fadeIn">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="ui-alert ui-alert-info">
+          <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
           <span>{notification}</span>
         </div>
       )}

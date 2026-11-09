@@ -46,32 +46,18 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-stone-950 border-b border-stone-800/80 px-4 sm:px-6 py-3 flex items-center justify-between shadow-xl">
-      {/* Left: Brand Identity & Environment Marker */}
+    <header className="admin-header">
+      {/* Left: Environment Marker & Fast Overview */}
       <div className="flex items-center space-x-3">
-        <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-600/30 border border-amber-500/40 flex items-center justify-center text-amber-300 font-bold font-sanskrit text-sm">
-            ॐ
-          </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="font-serif-sacred text-base font-bold text-amber-100 tracking-wider">
-                SutraSparsh
-              </span>
-              <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30">
-                Admin Console
-              </span>
-            </div>
-            <p className="text-[10px] text-stone-500 font-mono hidden sm:block">
-              admin.sutrasparsh.com • Platform Operations Gateway
-            </p>
-          </div>
-        </div>
-
-        {/* Environment Badge */}
-        <div className="hidden lg:flex items-center space-x-1 px-2 py-0.5 rounded-full bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 text-[10px] font-mono">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span>PRODUCTION-READY (M38–M46)</span>
+        <div className="flex items-center space-x-2">
+          <span className="font-bold text-slate-900 text-sm tracking-wide">
+            Platform Gateway
+          </span>
+          <span className="text-slate-400 font-mono text-xs">•</span>
+          <span className="ui-badge ui-badge-success text-[10px]">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 inline-block animate-pulse" />
+            PRODUCTION-READY (M38–M46)
+          </span>
         </div>
       </div>
 
@@ -79,31 +65,33 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
       <div className="flex items-center space-x-2.5">
         {/* Quick Search Button */}
         <button
+          type="button"
           onClick={onOpenQuickSearch}
-          className="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-stone-900 border border-stone-800 text-stone-400 hover:text-stone-200 text-xs hover:border-stone-700 transition-colors"
+          className="ui-button-secondary py-1.5 px-3 text-xs"
           title="Quick Search Command Palette (Ctrl+K)"
         >
-          <Search className="w-3.5 h-3.5" />
-          <span className="text-[11px]">Command Palette</span>
-          <kbd className="text-[9px] bg-stone-950 px-1.5 py-0.5 rounded text-stone-500 font-mono">⌘K</kbd>
+          <Search className="w-3.5 h-3.5 text-slate-500" />
+          <span className="text-xs">Command Palette</span>
+          <kbd className="text-[10px] bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-slate-600 font-mono">⌘K</kbd>
         </button>
 
         {/* RBAC Role Persona Selector Dropdown */}
         <div className="relative">
           <button
+            type="button"
             onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-            className="flex items-center space-x-2 px-2.5 py-1.5 rounded-lg bg-stone-900/90 border border-stone-800 hover:border-amber-500/40 text-stone-200 text-xs transition-colors"
+            className="ui-button-secondary py-1.5 px-2.5 text-xs flex items-center space-x-1.5"
           >
-            <Shield className="w-3.5 h-3.5 text-amber-400" />
-            <span className="font-semibold text-amber-200 hidden sm:inline">{currentUser.role.replace("_", " ")}</span>
-            <span className="sm:hidden text-[11px] font-bold text-amber-300">{currentUser.role.split("_")[0]}</span>
-            <ChevronDown className="w-3 h-3 text-stone-500" />
+            <Shield className="w-3.5 h-3.5 text-blue-600" />
+            <span className="font-semibold text-slate-800 hidden sm:inline">{currentUser.role.replace("_", " ")}</span>
+            <span className="sm:hidden text-xs font-bold text-blue-600">{currentUser.role.split("_")[0]}</span>
+            <ChevronDown className="w-3 h-3 text-slate-400" />
           </button>
 
           {roleMenuOpen && (
-            <div className="absolute right-0 mt-2 w-72 bg-stone-900 border border-stone-800 rounded-2xl shadow-2xl p-2 z-50 animate-fadeIn space-y-1">
-              <div className="px-3 py-1.5 border-b border-stone-800/80 mb-1">
-                <span className="text-[10px] font-mono text-stone-400 uppercase tracking-wider">
+            <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 animate-fadeIn space-y-1">
+              <div className="px-3 py-1.5 border-b border-slate-100 mb-1">
+                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-semibold">
                   RBAC Persona Simulation (M38.5)
                 </span>
               </div>
@@ -112,18 +100,19 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 return (
                   <button
                     key={item.role}
+                    type="button"
                     onClick={() => handleSelectRole(item.role)}
                     className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all flex flex-col ${
                       isSelected
-                        ? "bg-amber-500/20 text-amber-200 border border-amber-500/40 font-bold"
-                        : "text-stone-300 hover:bg-stone-800/80"
+                        ? "bg-blue-50 text-blue-700 border border-blue-200 font-bold"
+                        : "text-slate-700 hover:bg-slate-50"
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span>{item.label}</span>
-                      {isSelected && <UserCheck className="w-3.5 h-3.5 text-amber-400" />}
+                      {isSelected && <UserCheck className="w-3.5 h-3.5 text-blue-600" />}
                     </div>
-                    <span className="text-[10px] text-stone-500 font-normal">{item.desc}</span>
+                    <span className="text-[10px] text-slate-400 font-normal">{item.desc}</span>
                   </button>
                 );
               })}
@@ -133,24 +122,26 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
         {/* Audit Log Drawer Trigger */}
         <button
+          type="button"
           onClick={onToggleAuditDrawer}
-          className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-stone-900 border border-stone-800 hover:border-stone-700 text-stone-300 hover:text-amber-300 text-xs transition-colors"
+          className="ui-button-secondary py-1.5 px-2.5 text-xs flex items-center space-x-1.5"
           title="Open Audit Trails & Activity Stream"
         >
-          <Activity className="w-3.5 h-3.5 text-amber-400" />
-          <span className="hidden sm:inline text-[11px]">Audit</span>
+          <Activity className="w-3.5 h-3.5 text-blue-600" />
+          <span className="hidden sm:inline text-xs">Audit</span>
         </button>
 
         {/* Switch to Consumer Web App */}
         {onSwitchToUserApp && (
           <button
+            type="button"
             onClick={onSwitchToUserApp}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 text-xs font-semibold transition-all"
+            className="ui-button py-1.5 px-3 text-xs flex items-center space-x-1.5 shadow-xs"
             title="Switch back to SutraSparsh User Experience"
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">sutrasparsh.com</span>
-            <span className="sm:hidden">App</span>
+            <span className="hidden sm:inline font-semibold">sutrasparsh.com</span>
+            <span className="sm:hidden font-semibold">App</span>
           </button>
         )}
       </div>

@@ -65,43 +65,43 @@ export const SettingsView: React.FC = () => {
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-stone-900/60 border border-stone-800 p-6 rounded-3xl shadow-lg">
-        <div>
-          <div className="flex items-center space-x-2 text-amber-400 text-xs font-mono uppercase tracking-wider mb-1">
-            <Settings className="w-3.5 h-3.5" />
-            <span>Platform Configuration & Security (Phase 1 & Phase 2 Gate)</span>
+      <div className="ui-card">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="ui-badge ui-badge-info mb-1">
+              <Settings className="w-3.5 h-3.5 mr-1" />
+              <span>Platform Configuration & Security (Phase 1 & Phase 2 Gate)</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">
+              Settings & Feature Flags
+            </h1>
+            <p className="text-slate-500 text-xs mt-1">
+              Configure system-wide feature flags, Phase 2 release gates, secret keys, and client device access controls.
+            </p>
           </div>
-          <h1 className="font-serif-sacred text-2xl sm:text-3xl font-bold text-amber-100">
-            Settings & Feature Flags
-          </h1>
-          <p className="text-stone-400 text-xs mt-1">
-            Configure system-wide feature flags, Phase 2 release gates, secret keys, and client device access controls.
-          </p>
         </div>
       </div>
 
       {notification && (
-        <div className="bg-emerald-950/60 border border-emerald-800/80 text-emerald-200 text-xs px-4 py-3 rounded-2xl flex items-center space-x-2 shadow-md animate-fadeIn">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="ui-alert ui-alert-info">
+          <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
           <span>{notification}</span>
         </div>
       )}
 
       {/* PHASE 2 ACTIVATION CONTROLS (Sādhaka Access & Gurudakshina) */}
-      <div className="bg-gradient-to-br from-stone-900 via-stone-900/90 to-stone-950 border border-amber-500/30 rounded-3xl p-6 sm:p-7 shadow-xl space-y-5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-800/80 pb-4 relative z-10">
+      <div className="ui-card">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
-              <span className="text-amber-400 font-mono text-xs uppercase font-bold tracking-wider">
+              <span className="text-blue-700 font-mono text-xs uppercase font-bold tracking-wider">
                 Phase 2 Monetization & Entitlements Gate
               </span>
               <span
                 className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
                   !isSadhakaEnabled && !isGurudakshinaEnabled
-                    ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
-                    : "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                    ? "bg-slate-100 text-slate-700 border-slate-200"
+                    : "bg-emerald-50 text-emerald-700 border-emerald-200"
                 }`}
               >
                 {!isSadhakaEnabled && !isGurudakshinaEnabled
@@ -109,10 +109,10 @@ export const SettingsView: React.FC = () => {
                   : "Phase 2 Active"}
               </span>
             </div>
-            <h2 className="font-serif-sacred text-lg sm:text-xl font-bold text-amber-100">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">
               Sādhaka Access & Gurudakshina Activation
             </h2>
-            <p className="text-stone-400 text-xs max-w-2xl leading-relaxed">
+            <p className="text-slate-500 text-xs max-w-2xl leading-relaxed">
               Per Phase 1 governance, Sādhaka Access and Gurudakshina portals are disabled across all client devices by default. Authorized administrators can activate either or both features below when launching Phase 2.
             </p>
           </div>
@@ -122,7 +122,7 @@ export const SettingsView: React.FC = () => {
               type="button"
               onClick={() => handlePhase2BulkToggle(false)}
               disabled={!canEdit}
-              className="px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 hover:border-amber-500/40 text-stone-300 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+              className="ui-button-secondary py-1.5 px-3 text-xs"
               title="Disable both Sādhaka and Gurudakshina across all devices"
             >
               Lock to Phase 1 (Disable Both)
@@ -131,7 +131,7 @@ export const SettingsView: React.FC = () => {
               type="button"
               onClick={() => handlePhase2BulkToggle(true)}
               disabled={!canEdit}
-              className="px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-bold text-xs shadow hover:scale-105 transition-all cursor-pointer disabled:opacity-50"
+              className="ui-button py-1.5 px-3 text-xs"
               title="Activate both for Phase 2"
             >
               Activate Phase 2 Both
@@ -254,37 +254,37 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* Feature Flags */}
-      <div className="bg-stone-900/50 border border-stone-800 rounded-3xl p-6 shadow space-y-4">
-        <div className="flex items-center justify-between border-b border-stone-800/80 pb-3">
+      <div className="ui-card">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
           <div className="flex items-center space-x-2">
-            <Sliders className="w-4 h-4 text-amber-400" />
-            <h3 className="font-serif-sacred font-bold text-amber-100 text-sm">
+            <Sliders className="w-4 h-4 text-blue-600" />
+            <h3 className="font-bold text-slate-900 text-sm">
               All Platform Feature Flags
             </h3>
           </div>
-          <span className="text-[11px] font-mono text-stone-500">Real-Time Evaluation Engine</span>
+          <span className="text-[11px] font-mono text-slate-500">Real-Time Evaluation Engine</span>
         </div>
 
-        <div className="divide-y divide-stone-800/60">
+        <div className="divide-y divide-slate-100">
           {flags.map((flag) => (
             <div key={flag.id} className="py-3.5 flex items-center justify-between gap-4">
               <div className="space-y-1 max-w-xl">
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs font-bold text-stone-200">{flag.name}</span>
-                  <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-stone-950 text-stone-400 border border-stone-800">
+                  <span className="text-xs font-bold text-slate-800">{flag.name}</span>
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
                     {flag.environment}
                   </span>
                   {flag.id.includes("phase") || flag.id === "flag-sadhaka-access" || flag.id === "flag-gurudakshina" ? (
-                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
                       Phase 2
                     </span>
                   ) : null}
                 </div>
-                <p className="text-[11px] text-stone-400">{flag.description}</p>
+                <p className="text-[11px] text-slate-500">{flag.description}</p>
                 <div className="flex items-center space-x-1.5 pt-0.5">
-                  <span className="text-[10px] text-stone-500 font-mono">Tiers:</span>
+                  <span className="text-[10px] text-slate-400 font-mono">Tiers:</span>
                   {flag.targetTiers.map((t) => (
-                    <span key={t} className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-300">
+                    <span key={t} className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-700">
                       {t}
                     </span>
                   ))}
@@ -294,17 +294,17 @@ export const SettingsView: React.FC = () => {
               <button
                 onClick={() => handleToggleFlag(flag.id)}
                 disabled={!canEdit}
-                className={`p-2 rounded-xl transition-all ${
+                className={`p-2 rounded-xl transition-all cursor-pointer ${
                   flag.enabled
-                    ? "text-emerald-400 hover:text-emerald-300"
-                    : "text-stone-600 hover:text-stone-400"
+                    ? "text-emerald-500 hover:text-emerald-600"
+                    : "text-slate-300 hover:text-slate-500"
                 } ${!canEdit ? "opacity-50 cursor-not-allowed" : ""}`}
                 title={flag.enabled ? "Disable Flag" : "Enable Flag"}
               >
                 {flag.enabled ? (
-                  <ToggleRight className="w-8 h-8 text-emerald-400" />
+                  <ToggleRight className="w-8 h-8 text-emerald-500" />
                 ) : (
-                  <ToggleLeft className="w-8 h-8 text-stone-600" />
+                  <ToggleLeft className="w-8 h-8 text-slate-300" />
                 )}
               </button>
             </div>
@@ -313,29 +313,29 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* Security & Admin Credentials */}
-      <div className="bg-stone-900/50 border border-stone-800 rounded-3xl p-6 shadow space-y-4">
-        <div className="flex items-center space-x-2 border-b border-stone-800/80 pb-3">
-          <Key className="w-4 h-4 text-amber-400" />
-          <h3 className="font-serif-sacred font-bold text-amber-100 text-sm">
+      <div className="ui-card">
+        <div className="flex items-center space-x-2 border-b border-slate-200 pb-3">
+          <Key className="w-4 h-4 text-blue-600" />
+          <h3 className="font-bold text-slate-900 text-sm">
             Admin API Security Key (X-Admin-Key)
           </h3>
         </div>
 
-        <form onSubmit={handleSaveKey} className="space-y-3 max-w-lg">
+        <form onSubmit={handleSaveKey} className="space-y-3 max-w-lg mt-3">
           <div>
-            <label className="text-[11px] font-mono text-stone-400 block mb-1">
+            <label className="text-[11px] font-mono text-slate-600 block mb-1">
               Active Security Key
             </label>
             <input
               type="password"
               value={adminKey}
               onChange={(e) => setAdminKey(e.target.value)}
-              className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-200 font-mono focus:outline-none focus:border-amber-500/60"
+              className="ui-input font-mono"
             />
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-stone-950 border border-stone-800 hover:border-amber-500/40 text-stone-200 text-xs font-semibold rounded-xl transition-colors"
+            className="ui-button"
           >
             Update Active Session Key
           </button>

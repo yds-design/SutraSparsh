@@ -312,19 +312,18 @@ export const ServicesView: React.FC = () => {
         </div>
       )}
 
-      {/* Header Banner */}
-      <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-7 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Header Card */}
+      <div className="ui-card">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-amber-500/15 text-amber-400 border border-amber-500/30">
-              <UserCheck className="w-3.5 h-3.5" />
+            <div className="ui-badge ui-badge-warning">
+              <UserCheck className="w-3.5 h-3.5 mr-1" />
               <span>Vedic Purohit Services • ऋत्विक् सेवा प्रबन्धन</span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold font-serif-sacred text-amber-100">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2">
               Vedic Priests, Ritual Services & Onboarding Governance
             </h1>
-            <p className="text-xs text-stone-400 max-w-2xl leading-relaxed">
+            <p className="text-xs text-slate-500 max-w-2xl leading-relaxed">
               Full CRUD management for verified Vedic priests, ritual cataloging, credentials verification,
               and review of mobile onboarding applications.
             </p>
@@ -334,7 +333,7 @@ export const ServicesView: React.FC = () => {
             <button
               type="button"
               onClick={handleOpenCreate}
-              className="py-2.5 px-4 rounded-xl font-bold text-xs bg-amber-500 hover:bg-amber-400 text-stone-950 transition-all flex items-center space-x-1.5 cursor-pointer shadow-lg active:scale-95"
+              className="ui-button"
             >
               <Plus className="w-4 h-4" />
               <span>Add New Purohit (पुरोहित जोड़ें)</span>
@@ -343,34 +342,26 @@ export const ServicesView: React.FC = () => {
         </div>
 
         {/* Metric Counters */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-stone-800">
-          <div className="bg-stone-950/60 p-3 rounded-2xl border border-stone-800/80">
-            <div className="text-[10.5px] text-stone-400 font-bold uppercase tracking-wider">
-              Active Priests
-            </div>
-            <div className="text-xl font-bold text-stone-100 mt-0.5">{pandits.length}</div>
-            <div className="text-[10px] text-emerald-400 font-medium">100% Zero-Commission</div>
+        <div className="admin-stats-grid mt-6 pt-6 border-t border-slate-200">
+          <div className="stat-card">
+            <div className="stat-card-title">Active Priests</div>
+            <div className="stat-card-value">{pandits.length}</div>
+            <div className="text-[11px] text-emerald-600 font-medium mt-1">100% Zero-Commission</div>
           </div>
-          <div className="bg-stone-950/60 p-3 rounded-2xl border border-stone-800/80">
-            <div className="text-[10.5px] text-stone-400 font-bold uppercase tracking-wider">
-              Verified Badges
-            </div>
-            <div className="text-xl font-bold text-amber-400 mt-0.5">{verifiedCount}</div>
-            <div className="text-[10px] text-stone-400 font-medium">Pathashala Certified</div>
+          <div className="stat-card">
+            <div className="stat-card-title">Verified Badges</div>
+            <div className="stat-card-value text-blue-600">{verifiedCount}</div>
+            <div className="text-[11px] text-slate-500 font-medium mt-1">Pathashala Certified</div>
           </div>
-          <div className="bg-stone-950/60 p-3 rounded-2xl border border-stone-800/80">
-            <div className="text-[10.5px] text-stone-400 font-bold uppercase tracking-wider">
-              Cataloged Rituals
-            </div>
-            <div className="text-xl font-bold text-stone-100 mt-0.5">{totalRitualsCount}</div>
-            <div className="text-[10px] text-stone-400 font-medium">Samskaras & Homas</div>
+          <div className="stat-card">
+            <div className="stat-card-title">Cataloged Rituals</div>
+            <div className="stat-card-value">{totalRitualsCount}</div>
+            <div className="text-[11px] text-slate-500 font-medium mt-1">Samskaras & Homas</div>
           </div>
-          <div className="bg-stone-950/60 p-3 rounded-2xl border border-stone-800/80">
-            <div className="text-[10.5px] text-stone-400 font-bold uppercase tracking-wider">
-              Pending Onboarding
-            </div>
-            <div className="text-xl font-bold text-orange-400 mt-0.5">{pendingAppsCount}</div>
-            <div className="text-[10px] text-orange-300 font-medium">Needs Admin Review</div>
+          <div className="stat-card">
+            <div className="stat-card-title">Pending Onboarding</div>
+            <div className="stat-card-value text-amber-600">{pendingAppsCount}</div>
+            <div className="text-[11px] text-amber-700 font-medium mt-1">Needs Admin Review</div>
           </div>
         </div>
       </div>
@@ -382,8 +373,8 @@ export const ServicesView: React.FC = () => {
           onClick={() => setActiveTab("directory")}
           className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
             activeTab === "directory"
-              ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-              : "text-stone-400 hover:text-stone-200"
+              ? "bg-blue-50 text-blue-600 border border-blue-200"
+              : "text-slate-600 hover:text-slate-900"
           }`}
         >
           <UserCheck className="w-4 h-4" />
@@ -395,14 +386,14 @@ export const ServicesView: React.FC = () => {
           onClick={() => setActiveTab("applications")}
           className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 relative ${
             activeTab === "applications"
-              ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-              : "text-stone-400 hover:text-stone-200"
+              ? "bg-blue-50 text-blue-600 border border-blue-200"
+              : "text-slate-600 hover:text-slate-900"
           }`}
         >
           <Award className="w-4 h-4" />
           <span>Onboarding Applications ({applications.length})</span>
           {pendingAppsCount > 0 && (
-            <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse ml-1" />
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse ml-1" />
           )}
         </button>
       </div>
@@ -411,15 +402,15 @@ export const ServicesView: React.FC = () => {
       {activeTab === "directory" && (
         <div className="space-y-4">
           {/* Search & Filter Toolbar */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-stone-900/60 p-3 rounded-2xl border border-stone-800">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3 top-2.5 text-stone-400" />
+              <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by priest name, city, ritual, or tradition..."
-                className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs bg-stone-950 border border-stone-800 text-stone-100 placeholder-stone-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
 
@@ -427,7 +418,7 @@ export const ServicesView: React.FC = () => {
               <select
                 value={selectedTradition}
                 onChange={(e) => setSelectedTradition(e.target.value)}
-                className="px-3 py-1.5 rounded-xl text-xs bg-stone-950 border border-stone-800 text-stone-200 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer"
+                className="px-3 py-1.5 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
               >
                 <option value="All">All Traditions</option>
                 {VEDIC_TRADITIONS.map((trad) => (
@@ -437,12 +428,12 @@ export const ServicesView: React.FC = () => {
                 ))}
               </select>
 
-              <label className="flex items-center space-x-1.5 text-xs text-stone-300 cursor-pointer px-2 select-none">
+              <label className="flex items-center space-x-1.5 text-xs text-slate-600 cursor-pointer px-2 select-none">
                 <input
                   type="checkbox"
                   checked={verifiedOnly}
                   onChange={(e) => setVerifiedOnly(e.target.checked)}
-                  className="rounded text-amber-500 focus:ring-amber-400 w-3.5 h-3.5"
+                  className="rounded text-blue-600 focus:ring-blue-400 w-3.5 h-3.5"
                 />
                 <span>Verified Only</span>
               </label>
@@ -453,7 +444,7 @@ export const ServicesView: React.FC = () => {
                   panditService.resetToDefaultCorpus();
                   showToast("Corpus reset to canonical seed data.");
                 }}
-                className="p-1.5 rounded-xl text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors cursor-pointer"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                 title="Reset to default seed corpus"
               >
                 <RefreshCw className="w-4 h-4" />
@@ -466,12 +457,12 @@ export const ServicesView: React.FC = () => {
             {filteredPandits.map((pandit) => (
               <div
                 key={pandit.id}
-                className="bg-stone-900 border border-stone-800 hover:border-amber-500/40 rounded-2xl p-4 flex flex-col justify-between transition-all group shadow-sm"
+                className="bg-white border border-slate-200 hover:border-blue-400 rounded-2xl p-4 flex flex-col justify-between transition-all group shadow-sm hover:shadow-md"
               >
                 <div className="space-y-3">
                   {/* Top Bar: Tradition + Verification Badge */}
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-bold">
                       {pandit.tradition}
                     </span>
                     <button
@@ -479,8 +470,8 @@ export const ServicesView: React.FC = () => {
                       onClick={() => handleToggleVerification(pandit)}
                       className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold border transition-colors cursor-pointer ${
                         pandit.isVerified
-                          ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25"
-                          : "bg-stone-800 text-stone-400 border-stone-700 hover:text-amber-300"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                          : "bg-slate-100 text-slate-600 border-slate-200 hover:text-slate-900"
                       }`}
                       title="Click to toggle verified status"
                     >
@@ -491,54 +482,54 @@ export const ServicesView: React.FC = () => {
 
                   {/* Name + Title */}
                   <div>
-                    <h3 className="font-bold text-sm text-stone-100 flex items-center space-x-1.5">
+                    <h3 className="font-bold text-sm text-slate-900 flex items-center space-x-1.5">
                       <span>{pandit.name}</span>
                       {pandit.sanskritName && (
-                        <span className="text-xs font-sanskrit text-amber-400/80 font-normal">
+                        <span className="text-xs font-sanskrit text-amber-700 font-normal">
                           ({pandit.sanskritName})
                         </span>
                       )}
                     </h3>
-                    <p className="text-[11px] text-amber-300/80 font-medium mt-0.5">{pandit.title}</p>
+                    <p className="text-[11px] text-blue-700 font-medium mt-0.5">{pandit.title}</p>
                   </div>
 
                   {/* City, Experience & Phone */}
-                  <div className="text-[11px] text-stone-400 space-y-1">
+                  <div className="text-[11px] text-slate-500 space-y-1">
                     <div className="flex items-center space-x-1.5">
-                      <MapPin className="w-3 h-3 text-amber-500 shrink-0" />
+                      <MapPin className="w-3 h-3 text-blue-500 shrink-0" />
                       <span>
                         {pandit.location.city}, {pandit.location.state}
                         {pandit.location.willingToTravel && " · Willing to travel"}
                       </span>
                     </div>
                     <div className="flex items-center space-x-1.5">
-                      <Building2 className="w-3 h-3 text-amber-500 shrink-0" />
+                      <Building2 className="w-3 h-3 text-blue-500 shrink-0" />
                       <span className="truncate">
                         {pandit.verificationDetails?.institution || "Independent Veda Practitioner"}
                       </span>
                     </div>
                     <div className="flex items-center space-x-1.5">
-                      <Phone className="w-3 h-3 text-amber-500 shrink-0" />
-                      <span className="font-mono text-stone-300">{pandit.phone}</span>
+                      <Phone className="w-3 h-3 text-blue-500 shrink-0" />
+                      <span className="font-mono text-slate-700">{pandit.phone}</span>
                     </div>
                   </div>
 
                   {/* Rituals Chips */}
-                  <div className="pt-2 border-t border-stone-800/80">
-                    <div className="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-1.5">
+                  <div className="pt-2 border-t border-slate-100">
+                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                       Rituals Offered ({pandit.rituals?.length || 0})
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {(pandit.rituals || []).slice(0, 3).map((r) => (
                         <span
                           key={r.id}
-                          className="text-[9.5px] px-1.5 py-0.5 rounded-md bg-stone-800 text-stone-300 border border-stone-700/60"
+                          className="text-[9.5px] px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200"
                         >
                           {r.name}
                         </span>
                       ))}
                       {(pandit.rituals || []).length > 3 && (
-                        <span className="text-[9.5px] px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-400">
+                        <span className="text-[9.5px] px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
                           +{pandit.rituals.length - 3} more
                         </span>
                       )}
@@ -547,15 +538,15 @@ export const ServicesView: React.FC = () => {
                 </div>
 
                 {/* Card Actions (CRUD) */}
-                <div className="flex items-center justify-between pt-4 mt-3 border-t border-stone-800">
-                  <div className="text-[11px] text-stone-400">
-                    ⭐ <span className="font-bold text-stone-200">{pandit.rating}</span> ({pandit.experienceYears}y exp)
+                <div className="flex items-center justify-between pt-4 mt-3 border-t border-slate-100">
+                  <div className="text-[11px] text-slate-500">
+                    ⭐ <span className="font-bold text-slate-800">{pandit.rating}</span> ({pandit.experienceYears}y exp)
                   </div>
                   <div className="flex items-center space-x-1.5">
                     <button
                       type="button"
                       onClick={() => handleOpenEdit(pandit)}
-                      className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-amber-300 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-blue-600 transition-colors cursor-pointer"
                       title="Edit Priest Profile"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
@@ -563,7 +554,7 @@ export const ServicesView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleDeletePandit(pandit.id, pandit.name)}
-                      className="p-1.5 rounded-lg bg-stone-800 hover:bg-red-500/20 text-stone-400 hover:text-red-400 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors cursor-pointer"
                       title="Delete / De-list Priest"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -581,17 +572,17 @@ export const ServicesView: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-stone-100">
+              <h3 className="text-sm font-bold text-slate-900">
                 Purohit Onboarding Applications ({applications.length})
               </h3>
-              <p className="text-xs text-stone-400">
+              <p className="text-xs text-slate-500">
                 Applications submitted by Vedic Priests via the mobile app interface. Review and 1-click certify.
               </p>
             </div>
           </div>
 
           {applications.length === 0 ? (
-            <div className="p-8 text-center rounded-2xl bg-stone-900 border border-stone-800 text-stone-400 text-xs">
+            <div className="p-8 text-center rounded-2xl bg-white border border-slate-200 text-slate-500 text-xs">
               No onboarding applications in the queue.
             </div>
           ) : (
@@ -601,35 +592,35 @@ export const ServicesView: React.FC = () => {
                   key={app.id}
                   className={`p-4 rounded-2xl border transition-all ${
                     app.status === "PENDING"
-                      ? "bg-stone-900 border-amber-500/40 shadow-sm"
+                      ? "bg-white border-blue-300 shadow-sm"
                       : app.status === "APPROVED"
-                      ? "bg-stone-900/60 border-emerald-500/30 opacity-75"
-                      : "bg-stone-900/40 border-stone-800 opacity-60"
+                      ? "bg-white border-emerald-300 opacity-90"
+                      : "bg-slate-50 border-slate-200 opacity-75"
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                     <div className="space-y-1.5">
                       <div className="flex items-center space-x-2">
-                        <span className="font-bold text-sm text-stone-100">{app.name}</span>
+                        <span className="font-bold text-sm text-slate-900">{app.name}</span>
                         {app.sanskritName && (
-                          <span className="text-xs font-sanskrit text-amber-400/80">
+                          <span className="text-xs font-sanskrit text-amber-700">
                             ({app.sanskritName})
                           </span>
                         )}
                         <span
                           className={`text-[9.5px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                             app.status === "PENDING"
-                              ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
+                              ? "ui-badge ui-badge-warning"
                               : app.status === "APPROVED"
-                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                              : "bg-red-500/20 text-red-400 border border-red-500/30"
+                              ? "ui-badge ui-badge-success"
+                              : "ui-badge ui-badge-error"
                           }`}
                         >
                           {app.status}
                         </span>
                       </div>
 
-                      <div className="text-xs text-stone-400 flex flex-wrap items-center gap-x-4 gap-y-1">
+                      <div className="text-xs text-slate-600 flex flex-wrap items-center gap-x-4 gap-y-1">
                         <span>
                           <strong>Tradition:</strong> {app.tradition}
                         </span>
@@ -644,16 +635,16 @@ export const ServicesView: React.FC = () => {
                         </span>
                       </div>
 
-                      <div className="text-xs text-stone-400">
+                      <div className="text-xs text-slate-600">
                         <strong>Veda Institution:</strong> {app.institution}
                         {app.lineageOrGuru && ` · Guru: ${app.lineageOrGuru}`}
                       </div>
 
-                      <div className="text-xs text-stone-400">
+                      <div className="text-xs text-slate-600">
                         <strong>Rituals:</strong> {app.rituals.join(", ")}
                       </div>
 
-                      <p className="text-xs text-stone-300 italic pt-1">"{app.bio}"</p>
+                      <p className="text-xs text-slate-700 italic pt-1">"{app.bio}"</p>
                     </div>
 
                     {/* Actions for Application */}
@@ -662,7 +653,7 @@ export const ServicesView: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleApproveApp(app)}
-                          className="py-1.5 px-3 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-stone-950 transition-all flex items-center space-x-1 cursor-pointer shadow"
+                          className="py-1.5 px-3 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white transition-all flex items-center space-x-1 cursor-pointer shadow"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>Approve & Certify</span>
@@ -670,7 +661,7 @@ export const ServicesView: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleRejectApp(app)}
-                          className="py-1.5 px-3 rounded-xl font-bold text-xs bg-stone-800 hover:bg-red-500/20 text-stone-300 hover:text-red-400 transition-all flex items-center space-x-1 cursor-pointer"
+                          className="py-1.5 px-3 rounded-xl font-bold text-xs bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-red-600 transition-all flex items-center space-x-1 cursor-pointer"
                         >
                           <XCircle className="w-3.5 h-3.5" />
                           <span>Reject</span>
@@ -687,21 +678,21 @@ export const ServicesView: React.FC = () => {
 
       {/* Create / Edit Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto bg-black/80 backdrop-blur-xs animate-fadeIn">
-          <div className="w-full max-w-2xl bg-stone-900 border border-stone-800 text-stone-100 rounded-3xl p-6 shadow-2xl space-y-4 my-auto relative">
+        <div className="ui-overlay animate-fadeIn">
+          <div className="ui-modal max-w-2xl max-h-[90vh] overflow-y-auto space-y-4 my-auto relative">
             <button
               type="button"
               onClick={() => setIsEditModalOpen(false)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-300 transition-colors cursor-pointer"
+              className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
 
             <div className="space-y-1 pr-8">
-              <h3 className="text-lg font-bold font-serif-sacred text-amber-100">
+              <h3 className="text-lg font-bold text-slate-900">
                 {editingPandit ? `Edit Purohit Profile: ${editingPandit.name}` : "Add New Vedic Purohit"}
               </h3>
-              <p className="text-xs text-stone-400">
+              <p className="text-xs text-slate-500">
                 Configure profile, Vedic lineage, contact coordinates, and ritual cataloging.
               </p>
             </div>
@@ -710,7 +701,7 @@ export const ServicesView: React.FC = () => {
               <div className="max-h-[60vh] overflow-y-auto pr-1 space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-bold text-stone-300 mb-1">
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
                       Full Name *
                     </label>
                     <input
@@ -718,31 +709,31 @@ export const ServicesView: React.FC = () => {
                       required
                       value={formName}
                       onChange={(e) => setFormName(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-xl text-xs bg-stone-950 border border-stone-800 text-stone-100 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      className="w-full px-3 py-1.5 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-stone-300 mb-1 font-sanskrit">
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1 font-sanskrit">
                       संस्कृत / देवनागरी नाम
                     </label>
                     <input
                       type="text"
                       value={formSanskritName}
                       onChange={(e) => setFormSanskritName(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-xl text-xs font-sanskrit bg-stone-950 border border-stone-800 text-stone-100 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      className="w-full px-3 py-1.5 rounded-xl text-xs font-sanskrit bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-[11px] font-bold text-stone-300 mb-1">
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
                       Veda Tradition *
                     </label>
                     <select
                       value={formTradition}
                       onChange={(e) => setFormTradition(e.target.value as any)}
-                      className="w-full px-3 py-1.5 rounded-xl text-xs bg-stone-950 border border-stone-800 text-stone-100 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      className="w-full px-3 py-1.5 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     >
                       {VEDIC_TRADITIONS.map((t) => (
                         <option key={t} value={t}>
@@ -752,26 +743,26 @@ export const ServicesView: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-stone-300 mb-1">
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
                       Experience (Years) *
                     </label>
                     <input
                       type="number"
                       value={formExpYears}
                       onChange={(e) => setFormExpYears(Number(e.target.value))}
-                      className="w-full px-3 py-1.5 rounded-xl text-xs bg-stone-950 border border-stone-800 text-stone-100 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      className="w-full px-3 py-1.5 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-stone-300 mb-1">
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
                       Verified Badge
                     </label>
-                    <label className="flex items-center space-x-2 text-xs text-stone-300 h-8 cursor-pointer select-none">
+                    <label className="flex items-center space-x-2 text-xs text-slate-700 h-8 cursor-pointer select-none">
                       <input
                         type="checkbox"
                         checked={formIsVerified}
                         onChange={(e) => setFormIsVerified(e.target.checked)}
-                        className="rounded text-amber-500 focus:ring-amber-400 w-4 h-4"
+                        className="rounded text-blue-600 focus:ring-blue-400 w-4 h-4"
                       />
                       <span>Pathashala Certified</span>
                     </label>
@@ -780,7 +771,7 @@ export const ServicesView: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-bold text-stone-300 mb-1">
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
                       Phone / WhatsApp Number *
                     </label>
                     <input
@@ -788,11 +779,11 @@ export const ServicesView: React.FC = () => {
                       required
                       value={formPhone}
                       onChange={(e) => setFormPhone(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-xl text-xs bg-stone-950 border border-stone-800 text-stone-100 focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono"
+                      className="w-full px-3 py-1.5 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-stone-300 mb-1">
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
                       City & State *
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -802,7 +793,7 @@ export const ServicesView: React.FC = () => {
                         placeholder="City"
                         value={formCity}
                         onChange={(e) => setFormCity(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-xl text-xs bg-stone-950 border border-stone-800 text-stone-100 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        className="w-full px-3 py-1.5 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                       <input
                         type="text"
@@ -810,14 +801,14 @@ export const ServicesView: React.FC = () => {
                         placeholder="State"
                         value={formState}
                         onChange={(e) => setFormState(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-xl text-xs bg-stone-950 border border-stone-800 text-stone-100 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        className="w-full px-3 py-1.5 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-stone-300 mb-1">
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
                     Pathashala / Gurukula Institution
                   </label>
                   <input
@@ -825,38 +816,38 @@ export const ServicesView: React.FC = () => {
                     value={formInstitution}
                     onChange={(e) => setFormInstitution(e.target.value)}
                     placeholder="e.g. Kashi Veda Pathashala, Sampurnanand"
-                    className="w-full px-3 py-1.5 rounded-xl text-xs bg-stone-950 border border-stone-800 text-stone-100 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    className="w-full px-3 py-1.5 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-stone-300 mb-1">
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
                     Bio & Expertise
                   </label>
                   <textarea
                     rows={2}
                     value={formBio}
                     onChange={(e) => setFormBio(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-xl text-xs bg-stone-950 border border-stone-800 text-stone-100 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    className="w-full px-3 py-1.5 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
 
                 {/* Rituals List inside edit */}
-                <div className="space-y-2 pt-2 border-t border-stone-800">
-                  <label className="block text-[11px] font-bold text-stone-300">
+                <div className="space-y-2 pt-2 border-t border-slate-200">
+                  <label className="block text-[11px] font-bold text-slate-700">
                     Rituals Catalog ({formRituals.length})
                   </label>
                   <div className="flex flex-wrap gap-1.5">
                     {formRituals.map((r) => (
                       <span
                         key={r.id}
-                        className="inline-flex items-center space-x-1.5 px-2 py-1 rounded-lg text-xs bg-stone-800 text-stone-200 border border-stone-700"
+                        className="inline-flex items-center space-x-1.5 px-2 py-1 rounded-lg text-xs bg-slate-100 text-slate-800 border border-slate-200"
                       >
                         <span>{r.name}</span>
                         <button
                           type="button"
                           onClick={() => handleRemoveRitual(r.id)}
-                          className="text-stone-400 hover:text-red-400 ml-1 cursor-pointer"
+                          className="text-slate-400 hover:text-red-500 ml-1 cursor-pointer"
                         >
                           ×
                         </button>
@@ -870,12 +861,12 @@ export const ServicesView: React.FC = () => {
                       value={newRitualName}
                       onChange={(e) => setNewRitualName(e.target.value)}
                       placeholder="Add ritual (e.g. Navagraha Homa)"
-                      className="flex-1 px-3 py-1.5 rounded-xl text-xs bg-stone-950 border border-stone-800 text-stone-100 focus:outline-none"
+                      className="flex-1 px-3 py-1.5 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={handleAddRitual}
-                      className="py-1.5 px-3 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-stone-950 transition-colors cursor-pointer"
+                      className="py-1.5 px-3 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-colors cursor-pointer"
                     >
                       Add Ritual
                     </button>
@@ -883,17 +874,17 @@ export const ServicesView: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-stone-800">
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="py-2 px-4 rounded-xl text-xs font-semibold bg-stone-800 hover:bg-stone-700 text-stone-300 transition-colors cursor-pointer"
+                  className="ui-button ui-button-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="py-2 px-5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-stone-950 transition-all cursor-pointer shadow-md"
+                  className="ui-button"
                 >
                   {editingPandit ? "Save Changes" : "Create Profile"}
                 </button>
