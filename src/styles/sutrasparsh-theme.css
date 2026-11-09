@@ -132,18 +132,18 @@ body.light-mode,
 }
 
 /* Headings in Parchment Dawn */
-.theme-parchment-dawn h1,
-.theme-parchment-dawn h2,
-.theme-parchment-dawn h3,
-.theme-parchment-dawn h4,
-[data-theme="light"] h1,
-[data-theme="light"] h2,
-[data-theme="light"] h3,
-[data-theme="light"] h4,
-.theme-light h1,
-.theme-light h2,
-.theme-light h3,
-.theme-light h4 {
+.theme-parchment-dawn h1:not([class*="text-"]),
+.theme-parchment-dawn h2:not([class*="text-"]),
+.theme-parchment-dawn h3:not([class*="text-"]),
+.theme-parchment-dawn h4:not([class*="text-"]),
+[data-theme="light"] h1:not([class*="text-"]),
+[data-theme="light"] h2:not([class*="text-"]),
+[data-theme="light"] h3:not([class*="text-"]),
+[data-theme="light"] h4:not([class*="text-"]),
+.theme-light h1:not([class*="text-"]),
+.theme-light h2:not([class*="text-"]),
+.theme-light h3:not([class*="text-"]),
+.theme-light h4:not([class*="text-"]) {
   font-family: var(--font-display);
   color: var(--brand);
 }

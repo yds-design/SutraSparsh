@@ -38,13 +38,13 @@ export const JourneyView: React.FC = () => {
 
   // Mock Funnel Data based on 70:30 strategy (Visitors -> First Value -> Habit -> Monetization -> Advocacy)
   const funnelStages = [
-    { stage: "1. Discover & Arrive", count: "12,450", subtext: "Unique Visitors", conversion: "100%", color: "border-sky-500/40 bg-sky-500/10 text-sky-300" },
-    { stage: "2. First Value (Aha Moment)", count: "9,840", subtext: "Read Sanskrit + Meaning", conversion: "79.0%", color: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" },
-    { stage: "3. Deepen & Reflect", count: "6,210", subtext: "Listened / Saved / Journaled", conversion: "63.1%", color: "border-amber-500/40 bg-amber-500/10 text-amber-300" },
-    { stage: "4. Return & Habit (7d+)", count: "3,750", subtext: "Active Sādhana Streaks", conversion: "60.4%", color: "border-orange-500/40 bg-orange-500/10 text-orange-300" },
-    { stage: "5. Personalization Activated", count: "2,480", subtext: "Continue Reading & History", conversion: "66.1%", color: "border-purple-500/40 bg-purple-500/10 text-purple-300" },
-    { stage: "6. Monetization (Sādhaka / Seva)", count: "742", subtext: "Subscribers & Donors", conversion: "29.9%", color: "border-rose-500/40 bg-rose-500/10 text-rose-300" },
-    { stage: "7. Organic Advocacy Loop", count: "418", subtext: "Wisdom Cards Shared", conversion: "56.3%", color: "border-teal-500/40 bg-teal-500/10 text-teal-300" },
+    { stage: "1. Discover & Arrive", count: "12,450", subtext: "Unique Visitors", conversion: "100%", color: "border-sky-200 bg-sky-50 text-sky-800" },
+    { stage: "2. First Value (Aha Moment)", count: "9,840", subtext: "Read Sanskrit + Meaning", conversion: "79.0%", color: "border-emerald-200 bg-emerald-50 text-emerald-800" },
+    { stage: "3. Deepen & Reflect", count: "6,210", subtext: "Listened / Saved / Journaled", conversion: "63.1%", color: "border-amber-200 bg-amber-50 text-amber-800" },
+    { stage: "4. Return & Habit (7d+)", count: "3,750", subtext: "Active Sādhana Streaks", conversion: "60.4%", color: "border-orange-200 bg-orange-50 text-orange-800" },
+    { stage: "5. Personalization Activated", count: "2,480", subtext: "Continue Reading & History", conversion: "66.1%", color: "border-purple-200 bg-purple-50 text-purple-800" },
+    { stage: "6. Monetization (Sādhaka / Seva)", count: "742", subtext: "Subscribers & Donors", conversion: "29.9%", color: "border-rose-200 bg-rose-50 text-rose-800" },
+    { stage: "7. Organic Advocacy Loop", count: "418", subtext: "Wisdom Cards Shared", conversion: "56.3%", color: "border-teal-200 bg-teal-50 text-teal-800" },
   ];
 
   const topPerformingVerses = [
@@ -179,14 +179,14 @@ export const JourneyView: React.FC = () => {
       {activeSubTab === "funnel" && (
         <div className="space-y-6 animate-fadeIn">
           {/* Key Principle Banner */}
-          <div className="bg-gradient-to-r from-amber-950/30 via-stone-900 to-stone-950 border border-amber-500/30 p-6 rounded-3xl space-y-2">
-            <div className="flex items-center space-x-2 text-amber-300 font-serif-sacred font-bold text-sm">
-              <Sparkles className="w-4 h-4 text-amber-400" />
+          <div className="bg-amber-50/90 border border-amber-200/90 p-6 rounded-2xl space-y-2 shadow-sm">
+            <div className="flex items-center space-x-2 text-amber-900 font-bold text-sm">
+              <Sparkles className="w-4 h-4 text-amber-700" />
               <span>The 70:30 Experience Principle</span>
             </div>
-            <p className="text-xs text-stone-300 leading-relaxed">
+            <p className="text-xs text-slate-800 leading-relaxed font-medium">
               Monetization appears naturally as a consequence of accumulated spiritual value and habit—never as an interruption to the arrival experience.
-              Target KPI Hierarchy: <strong>Value → Habit → Retention → Monetization → Advocacy</strong>.
+              Target KPI Hierarchy: <strong className="text-blue-900 font-bold">Value → Habit → Retention → Monetization → Advocacy</strong>.
             </p>
           </div>
 
@@ -195,53 +195,53 @@ export const JourneyView: React.FC = () => {
             {funnelStages.map((st, idx) => (
               <div
                 key={st.stage}
-                className={`p-5 rounded-3xl border ${st.color} space-y-3 relative overflow-hidden flex flex-col justify-between`}
+                className={`p-5 rounded-2xl border ${st.color} space-y-3 relative overflow-hidden flex flex-col justify-between shadow-sm`}
               >
                 <div>
-                  <div className="flex items-center justify-between text-[11px] font-mono opacity-80 mb-1">
+                  <div className="flex items-center justify-between text-[11px] font-mono opacity-90 mb-1">
                     <span>Stage {idx + 1}</span>
                     <span className="font-bold">{st.conversion} conversion</span>
                   </div>
-                  <h4 className="font-bold text-sm text-stone-100">{st.stage}</h4>
-                  <p className="text-xs opacity-75 mt-0.5">{st.subtext}</p>
+                  <h4 className="font-bold text-sm text-slate-900">{st.stage}</h4>
+                  <p className="text-xs text-slate-700 mt-0.5">{st.subtext}</p>
                 </div>
                 <div className="pt-3 border-t border-current/20 flex items-baseline justify-between">
-                  <span className="font-mono text-xl font-bold text-stone-100">{st.count}</span>
-                  <span className="text-[10px] uppercase font-mono tracking-wider opacity-75">Seekers</span>
+                  <span className="font-mono text-xl font-bold text-slate-900">{st.count}</span>
+                  <span className="text-[10px] uppercase font-mono tracking-wider text-slate-600">Seekers</span>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Habit Formation Signals */}
-          <div className="bg-stone-900/50 border border-stone-800 rounded-3xl p-6 shadow space-y-4">
-            <div className="flex items-center justify-between border-b border-stone-800/80 pb-3">
+          <div className="ui-card space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center space-x-2">
-                <Flame className="w-4 h-4 text-orange-400" />
-                <h3 className="font-serif-sacred font-bold text-amber-100 text-sm">
+                <Flame className="w-4 h-4 text-amber-600" />
+                <h3 className="font-bold text-slate-900 text-sm">
                   Active Habit Signals & Retention Indicators
                 </h3>
               </div>
-              <span className="text-xs font-mono text-emerald-400">Retention Health: 94.2%</span>
+              <span className="text-xs font-mono font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">Retention Health: 94.2%</span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              <div className="bg-stone-950/80 border border-stone-800 rounded-2xl p-4 space-y-2">
-                <span className="text-stone-400 font-semibold block">7-Day Sādhana Streaks</span>
-                <span className="font-mono text-2xl font-bold text-amber-300">1,890</span>
-                <p className="text-stone-500 text-[11px]">Seekers returning daily for consecutive week</p>
+              <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-4 space-y-2">
+                <span className="text-slate-700 font-semibold block text-xs">7-Day Sādhana Streaks</span>
+                <span className="font-mono text-2xl font-bold text-amber-700 block">1,890</span>
+                <p className="text-slate-600 text-[11px] leading-tight">Seekers returning daily for consecutive week</p>
               </div>
 
-              <div className="bg-stone-950/80 border border-stone-800 rounded-2xl p-4 space-y-2">
-                <span className="text-stone-400 font-semibold block">Contemplation Notes Logged</span>
-                <span className="font-mono text-2xl font-bold text-amber-300">4,620</span>
-                <p className="text-stone-500 text-[11px]">Personal reflection entries saved to user journals</p>
+              <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-4 space-y-2">
+                <span className="text-slate-700 font-semibold block text-xs">Contemplation Notes Logged</span>
+                <span className="font-mono text-2xl font-bold text-blue-700 block">4,620</span>
+                <p className="text-slate-600 text-[11px] leading-tight">Personal reflection entries saved to user journals</p>
               </div>
 
-              <div className="bg-stone-950/80 border border-stone-800 rounded-2xl p-4 space-y-2">
-                <span className="text-stone-400 font-semibold block">Natural Upgrade Triggers</span>
-                <span className="font-mono text-2xl font-bold text-emerald-300">32.4%</span>
-                <p className="text-stone-500 text-[11px]">Monetization conversion after 14 days active practice</p>
+              <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-4 space-y-2">
+                <span className="text-slate-700 font-semibold block text-xs">Natural Upgrade Triggers</span>
+                <span className="font-mono text-2xl font-bold text-emerald-700 block">32.4%</span>
+                <p className="text-slate-600 text-[11px] leading-tight">Monetization conversion after 14 days active practice</p>
               </div>
             </div>
           </div>

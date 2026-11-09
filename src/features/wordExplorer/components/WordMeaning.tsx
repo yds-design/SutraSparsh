@@ -4,18 +4,25 @@ import type { SanskritWord } from "../types/wordExplorer.types";
 
 interface WordMeaningProps {
   word: SanskritWord;
+  isLight?: boolean;
 }
 
-export const WordMeaning: React.FC<WordMeaningProps> = ({ word }) => {
+export const WordMeaning: React.FC<WordMeaningProps> = ({ word, isLight = false }) => {
   return (
     <div className="space-y-4">
       {/* General Meaning */}
       <div className="space-y-2">
-        <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-amber-400">
+        <div className={`flex items-center space-x-2 text-xs font-bold uppercase tracking-wider ${
+          isLight ? "text-[#874606]" : "text-amber-400"
+        }`}>
           <BookOpen className="w-3.5 h-3.5" />
           <span>General Lexical Meaning • शब्दार्थ</span>
         </div>
-        <div className="bg-stone-950/70 border border-stone-800 rounded-2xl p-4 sm:p-5 text-stone-100 leading-relaxed text-sm sm:text-base font-medium">
+        <div className={`rounded-2xl p-4 sm:p-5 leading-relaxed text-sm sm:text-base font-medium ${
+          isLight
+            ? "bg-[#FFFDF8] border border-[#E8DCC2] text-[#261B12] shadow-sm"
+            : "bg-stone-950/70 border border-stone-800 text-stone-100"
+        }`}>
           {word.generalMeaning}
         </div>
       </div>
@@ -23,11 +30,17 @@ export const WordMeaning: React.FC<WordMeaningProps> = ({ word }) => {
       {/* Contextual Meaning in this Verse (FR-07) */}
       {word.contextMeaning && (
         <div className="space-y-2">
-          <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-amber-300">
+          <div className={`flex items-center space-x-2 text-xs font-bold uppercase tracking-wider ${
+            isLight ? "text-[#874606]" : "text-amber-300"
+          }`}>
             <Compass className="w-3.5 h-3.5" />
             <span>Meaning in This Verse • प्रकृत-भावार्थ</span>
           </div>
-          <div className="bg-gradient-to-r from-amber-950/30 via-stone-900 to-stone-950 border border-amber-500/30 rounded-2xl p-4 sm:p-5 text-amber-100/95 leading-relaxed text-sm sm:text-base">
+          <div className={`rounded-2xl p-4 sm:p-5 leading-relaxed text-sm sm:text-base ${
+            isLight
+              ? "bg-[#FFF7E6] border border-[#D8A856] text-[#261B12] shadow-sm"
+              : "bg-gradient-to-r from-amber-950/30 via-stone-900 to-stone-950 border border-amber-500/30 text-amber-100/95"
+          }`}>
             <p className="italic">{word.contextMeaning}</p>
           </div>
         </div>
@@ -36,11 +49,17 @@ export const WordMeaning: React.FC<WordMeaningProps> = ({ word }) => {
       {/* Philosophical commentary note */}
       {word.philosophicalNote && (
         <div className="space-y-2">
-          <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-stone-400">
-            <Feather className="w-3.5 h-3.5 text-amber-400" />
+          <div className={`flex items-center space-x-2 text-xs font-bold uppercase tracking-wider ${
+            isLight ? "text-[#6E5C4E]" : "text-stone-400"
+          }`}>
+            <Feather className={`w-3.5 h-3.5 ${isLight ? "text-[#D96500]" : "text-amber-400"}`} />
             <span>Philosophical Depth • दार्शनिक तात्पर्य</span>
           </div>
-          <div className="bg-stone-900/60 border border-stone-800 rounded-2xl p-4 sm:p-5 text-stone-300 leading-relaxed text-xs sm:text-sm">
+          <div className={`rounded-2xl p-4 sm:p-5 leading-relaxed text-xs sm:text-sm ${
+            isLight
+              ? "bg-[#FBF8EE] border border-[#E8DCC2] text-[#3D3126] shadow-sm"
+              : "bg-stone-900/60 border border-stone-800 text-stone-300"
+          }`}>
             {word.philosophicalNote}
           </div>
         </div>

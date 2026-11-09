@@ -736,17 +736,17 @@ export const ProductionHardeningPanel: React.FC<ProductionHardeningPanelProps> =
   return (
     <div id="production-hardening-panel" className="space-y-6 animate-fadeIn">
       {/* Top Banner & Quick Trigger Controls */}
-      <div className="bg-stone-900/90 border border-stone-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl relative overflow-hidden">
+      <div className="bg-white dark:bg-stone-900/90 border border-slate-200 dark:border-stone-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm dark:shadow-xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-1.5">
-            <div className="flex items-center space-x-2 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+            <div className="flex items-center space-x-2 text-emerald-700 dark:text-emerald-400 text-xs font-semibold uppercase tracking-wider">
               <ShieldCheck className="w-4 h-4" />
               <span>Phase 13 Deployment Pipeline & Phase 14 / M21 Release Candidate</span>
             </div>
-            <h3 className="font-serif-sacred text-2xl font-bold text-amber-100">
+            <h3 className="font-serif-sacred text-2xl font-bold text-slate-900 dark:text-amber-100">
               Production Release & Operations Command
             </h3>
-            <p className="text-xs sm:text-sm text-stone-400 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-stone-400 max-w-2xl">
               End-to-end management of 7-stage deployment pipeline, multi-signer approvals, M20.3 database reconciliation, M20.4 smoke testing, and M21 Release Candidate validation.
             </p>
           </div>
@@ -756,12 +756,12 @@ export const ProductionHardeningPanel: React.FC<ProductionHardeningPanelProps> =
               id="run-full-certification-btn"
               onClick={runFullCertification}
               disabled={loading}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-stone-950 font-medium text-xs sm:text-sm transition-all shadow-lg flex items-center space-x-2 disabled:opacity-50"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white dark:text-stone-950 font-medium text-xs sm:text-sm transition-all shadow-md flex items-center space-x-2 disabled:opacity-50 cursor-pointer"
             >
               {loading ? (
-                <RotateCcw className="w-4 h-4 animate-spin text-stone-950" />
+                <RotateCcw className="w-4 h-4 animate-spin" />
               ) : (
-                <Sparkles className="w-4 h-4 text-stone-950" />
+                <Sparkles className="w-4 h-4" />
               )}
               <span>Run Full Release Candidate Certification</span>
             </button>
@@ -770,7 +770,7 @@ export const ProductionHardeningPanel: React.FC<ProductionHardeningPanelProps> =
               id="reload-status-btn"
               onClick={loadStatus}
               disabled={loading}
-              className="p-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 transition-colors"
+              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-slate-700 dark:text-stone-300 border border-slate-200 dark:border-stone-700 transition-colors cursor-pointer"
               title="Refresh Telemetry & Reports"
             >
               <RotateCcw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
@@ -779,73 +779,73 @@ export const ProductionHardeningPanel: React.FC<ProductionHardeningPanelProps> =
         </div>
 
         {actionFeedback && (
-          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-200 flex items-center space-x-2">
-            <Activity className="w-4 h-4 text-amber-400 shrink-0" />
+          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-800 dark:text-amber-200 flex items-center space-x-2">
+            <Activity className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <span>{actionFeedback}</span>
           </div>
         )}
 
         {/* Global Certification Status Badges */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-4 border-t border-stone-800">
-          <div className="bg-stone-950/70 p-3.5 rounded-2xl border border-stone-800/80 space-y-1">
-            <div className="text-[10px] text-stone-400 uppercase tracking-wider font-semibold">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-4 border-t border-slate-200 dark:border-stone-800">
+          <div className="bg-slate-50 dark:bg-stone-950/70 p-3.5 rounded-2xl border border-slate-200 dark:border-stone-800/80 space-y-1">
+            <div className="text-[10px] text-slate-600 dark:text-stone-400 uppercase tracking-wider font-semibold">
               #94 Launch Gate
             </div>
             <div className="flex items-center space-x-2">
               {launchGateData?.overallPassed ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
               ) : (
-                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
               )}
-              <span className="text-xs font-bold text-stone-200">
+              <span className="text-xs font-bold text-slate-900 dark:text-stone-200">
                 {launchGateData ? `${launchGateData.checklist.filter((c) => c.passed).length}/${launchGateData.checklist.length} Passed` : "10/10 Passed"}
               </span>
             </div>
           </div>
 
-          <div className="bg-stone-950/70 p-3.5 rounded-2xl border border-stone-800/80 space-y-1">
-            <div className="text-[10px] text-stone-400 uppercase tracking-wider font-semibold">
+          <div className="bg-slate-50 dark:bg-stone-950/70 p-3.5 rounded-2xl border border-slate-200 dark:border-stone-800/80 space-y-1">
+            <div className="text-[10px] text-slate-600 dark:text-stone-400 uppercase tracking-wider font-semibold">
               M21.7 Final Smoke
             </div>
             <div className="flex items-center space-x-2">
-              <Zap className="w-4 h-4 text-teal-400 shrink-0" />
-              <span className="text-xs font-bold text-stone-200">
+              <Zap className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+              <span className="text-xs font-bold text-slate-900 dark:text-stone-200">
                 {m21FinalSmokeData ? `${m21FinalSmokeData.passedSteps}/${m21FinalSmokeData.totalSteps} Nodes` : "8/8 Nodes"}
               </span>
             </div>
           </div>
 
-          <div className="bg-stone-950/70 p-3.5 rounded-2xl border border-stone-800/80 space-y-1">
-            <div className="text-[10px] text-stone-400 uppercase tracking-wider font-semibold">
+          <div className="bg-slate-50 dark:bg-stone-950/70 p-3.5 rounded-2xl border border-slate-200 dark:border-stone-800/80 space-y-1">
+            <div className="text-[10px] text-slate-600 dark:text-stone-400 uppercase tracking-wider font-semibold">
               M22 Deployment
             </div>
             <div className="flex items-center space-x-2">
-              <Rocket className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="text-xs font-bold text-stone-200">
+              <Rocket className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span className="text-xs font-bold text-slate-900 dark:text-stone-200">
                 {productionDeploymentData?.pipelineStage || "DEPLOYMENT_COMPLETED"}
               </span>
             </div>
           </div>
 
-          <div className="bg-stone-950/70 p-3.5 rounded-2xl border border-stone-800/80 space-y-1">
-            <div className="text-[10px] text-stone-400 uppercase tracking-wider font-semibold">
+          <div className="bg-slate-50 dark:bg-stone-950/70 p-3.5 rounded-2xl border border-slate-200 dark:border-stone-800/80 space-y-1">
+            <div className="text-[10px] text-slate-600 dark:text-stone-400 uppercase tracking-wider font-semibold">
               Rollback Ready
             </div>
             <div className="flex items-center space-x-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="text-xs font-bold text-stone-200">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span className="text-xs font-bold text-slate-900 dark:text-stone-200">
                 {rollbackData?.isRollbackReady ? "Verified Target" : "Ready"}
               </span>
             </div>
           </div>
 
-          <div className="bg-stone-950/70 p-3.5 rounded-2xl border border-stone-800/80 space-y-1">
-            <div className="text-[10px] text-stone-400 uppercase tracking-wider font-semibold">
+          <div className="bg-slate-50 dark:bg-stone-950/70 p-3.5 rounded-2xl border border-slate-200 dark:border-stone-800/80 space-y-1">
+            <div className="text-[10px] text-slate-600 dark:text-stone-400 uppercase tracking-wider font-semibold">
               M23 Stabilization
             </div>
             <div className="flex items-center space-x-2">
-              <TrendingUp className="w-4 h-4 text-amber-400 shrink-0" />
-              <span className="text-xs font-bold text-stone-200">
+              <TrendingUp className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span className="text-xs font-bold text-slate-900 dark:text-stone-200">
                 {bugsData.length} Tracked Issues
               </span>
             </div>
@@ -1563,63 +1563,63 @@ export const ProductionHardeningPanel: React.FC<ProductionHardeningPanelProps> =
       {activeSubView === "summary" && (
         <div className="space-y-6">
           {/* Phase 14 / M21 Certification Banner */}
-          <div className="bg-gradient-to-br from-amber-950/40 via-stone-900 to-stone-950 border border-amber-500/30 rounded-3xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="bg-amber-50/80 dark:bg-gradient-to-br dark:from-amber-950/40 dark:via-stone-900 dark:to-stone-950 border border-amber-200 dark:border-amber-500/30 rounded-3xl p-6 space-y-4 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center space-x-3">
-                <Award className="w-6 h-6 text-amber-400" />
+                <Award className="w-6 h-6 text-amber-700 dark:text-amber-400 shrink-0" />
                 <div>
-                  <h4 className="font-bold text-amber-100 text-base">
+                  <h4 className="font-bold text-slate-900 dark:text-amber-100 text-base">
                     Phase 14: Release Candidate Certification (M21.1 – M21.6)
                   </h4>
-                  <p className="text-xs text-stone-400">
+                  <p className="text-xs text-slate-600 dark:text-stone-400">
                     Feature freeze active, 6-pillar validation passing with automated isolated disaster recovery drill.
                   </p>
                 </div>
               </div>
-              <span className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono font-bold">
+              <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 text-amber-900 dark:text-amber-300 text-xs font-mono font-bold w-fit">
                 {rcReport?.overallStatus || "RELEASE_CANDIDATE_CERTIFIED"}
               </span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 pt-2">
-              <div className="p-3 bg-stone-950/80 rounded-2xl border border-stone-800 space-y-1">
-                <div className="text-[10px] text-stone-400 uppercase font-semibold">M21.1 Freeze</div>
-                <div className="text-xs font-bold text-emerald-400 flex items-center space-x-1">
+              <div className="p-3 bg-white dark:bg-stone-950/80 rounded-2xl border border-slate-200 dark:border-stone-800 space-y-1 shadow-sm">
+                <div className="text-[10px] text-slate-600 dark:text-stone-400 uppercase font-semibold">M21.1 Freeze</div>
+                <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400 flex items-center space-x-1">
                   <Check className="w-3.5 h-3.5" />
                   <span>Enforced</span>
                 </div>
               </div>
-              <div className="p-3 bg-stone-950/80 rounded-2xl border border-stone-800 space-y-1">
-                <div className="text-[10px] text-stone-400 uppercase font-semibold">M21.2 Regression</div>
-                <div className="text-xs font-bold text-emerald-400 flex items-center space-x-1">
+              <div className="p-3 bg-white dark:bg-stone-950/80 rounded-2xl border border-slate-200 dark:border-stone-800 space-y-1 shadow-sm">
+                <div className="text-[10px] text-slate-600 dark:text-stone-400 uppercase font-semibold">M21.2 Regression</div>
+                <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400 flex items-center space-x-1">
                   <Check className="w-3.5 h-3.5" />
                   <span>15/15 Pass</span>
                 </div>
               </div>
-              <div className="p-3 bg-stone-950/80 rounded-2xl border border-stone-800 space-y-1">
-                <div className="text-[10px] text-stone-400 uppercase font-semibold">M21.3 Security</div>
-                <div className="text-xs font-bold text-emerald-400 flex items-center space-x-1">
+              <div className="p-3 bg-white dark:bg-stone-950/80 rounded-2xl border border-slate-200 dark:border-stone-800 space-y-1 shadow-sm">
+                <div className="text-[10px] text-slate-600 dark:text-stone-400 uppercase font-semibold">M21.3 Security</div>
+                <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400 flex items-center space-x-1">
                   <Check className="w-3.5 h-3.5" />
                   <span>0 Blockers</span>
                 </div>
               </div>
-              <div className="p-3 bg-stone-950/80 rounded-2xl border border-stone-800 space-y-1">
-                <div className="text-[10px] text-stone-400 uppercase font-semibold">M21.4 Latency</div>
-                <div className="text-xs font-bold text-emerald-400 flex items-center space-x-1">
+              <div className="p-3 bg-white dark:bg-stone-950/80 rounded-2xl border border-slate-200 dark:border-stone-800 space-y-1 shadow-sm">
+                <div className="text-[10px] text-slate-600 dark:text-stone-400 uppercase font-semibold">M21.4 Latency</div>
+                <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400 flex items-center space-x-1">
                   <Check className="w-3.5 h-3.5" />
                   <span>&lt; 1ms P95</span>
                 </div>
               </div>
-              <div className="p-3 bg-stone-950/80 rounded-2xl border border-stone-800 space-y-1">
-                <div className="text-[10px] text-stone-400 uppercase font-semibold">M21.5 Integrity</div>
-                <div className="text-xs font-bold text-emerald-400 flex items-center space-x-1">
+              <div className="p-3 bg-white dark:bg-stone-950/80 rounded-2xl border border-slate-200 dark:border-stone-800 space-y-1 shadow-sm">
+                <div className="text-[10px] text-slate-600 dark:text-stone-400 uppercase font-semibold">M21.5 Integrity</div>
+                <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400 flex items-center space-x-1">
                   <Check className="w-3.5 h-3.5" />
                   <span>100% Match</span>
                 </div>
               </div>
-              <div className="p-3 bg-stone-950/80 rounded-2xl border border-stone-800 space-y-1">
-                <div className="text-[10px] text-stone-400 uppercase font-semibold">M21.6 DR Drill</div>
-                <div className="text-xs font-bold text-emerald-400 flex items-center space-x-1">
+              <div className="p-3 bg-white dark:bg-stone-950/80 rounded-2xl border border-slate-200 dark:border-stone-800 space-y-1 shadow-sm">
+                <div className="text-[10px] text-slate-600 dark:text-stone-400 uppercase font-semibold">M21.6 DR Drill</div>
+                <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400 flex items-center space-x-1">
                   <Check className="w-3.5 h-3.5" />
                   <span>RTO: 4.2m</span>
                 </div>
@@ -1629,45 +1629,45 @@ export const ProductionHardeningPanel: React.FC<ProductionHardeningPanelProps> =
 
           {/* 7-Stage Pipeline & Approvals Summary Card */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-stone-900/60 border border-stone-800 rounded-3xl p-6 space-y-4">
-              <div className="flex items-center space-x-2 text-emerald-400">
+            <div className="bg-white dark:bg-stone-900/60 border border-slate-200 dark:border-stone-800 rounded-3xl p-6 space-y-4 shadow-sm">
+              <div className="flex items-center space-x-2 text-emerald-700 dark:text-emerald-400">
                 <Workflow className="w-5 h-5" />
-                <h4 className="font-semibold text-stone-200 text-sm sm:text-base">
+                <h4 className="font-semibold text-slate-900 dark:text-stone-200 text-sm sm:text-base">
                   # 74 Deployment Pipeline (7 Stages)
                 </h4>
               </div>
-              <p className="text-xs text-stone-400">
+              <p className="text-xs text-slate-600 dark:text-stone-400">
                 Deterministic flow: Merge → CI → Staging → Staging Smoke → Multi-Signer Approval → Production → Production Smoke.
               </p>
               <div className="space-y-2 pt-2">
-                <div className="flex items-center justify-between p-2.5 bg-stone-950/60 rounded-xl border border-stone-800 text-xs">
-                  <span className="text-stone-300">Continuous Integration</span>
-                  <span className="text-emerald-400 font-medium">10/10 Stages Green</span>
+                <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-stone-950/60 rounded-xl border border-slate-200 dark:border-stone-800 text-xs">
+                  <span className="text-slate-700 dark:text-stone-300">Continuous Integration</span>
+                  <span className="text-emerald-700 dark:text-emerald-400 font-semibold">10/10 Stages Green</span>
                 </div>
-                <div className="flex items-center justify-between p-2.5 bg-stone-950/60 rounded-xl border border-stone-800 text-xs">
-                  <span className="text-stone-300">Production Smoke Tests (M20.4)</span>
-                  <span className="text-emerald-400 font-medium">6/6 Subsystems Active</span>
+                <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-stone-950/60 rounded-xl border border-slate-200 dark:border-stone-800 text-xs">
+                  <span className="text-slate-700 dark:text-stone-300">Production Smoke Tests (M20.4)</span>
+                  <span className="text-emerald-700 dark:text-emerald-400 font-semibold">6/6 Subsystems Active</span>
                 </div>
-                <div className="flex items-center justify-between p-2.5 bg-stone-950/60 rounded-xl border border-stone-800 text-xs">
-                  <span className="text-stone-300">Database Reconciliation</span>
-                  <span className="text-teal-300 font-medium">0 Discrepancies</span>
+                <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-stone-950/60 rounded-xl border border-slate-200 dark:border-stone-800 text-xs">
+                  <span className="text-slate-700 dark:text-stone-300">Database Reconciliation</span>
+                  <span className="text-teal-700 dark:text-teal-300 font-semibold">0 Discrepancies</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-stone-900/60 border border-stone-800 rounded-3xl p-6 space-y-4">
-              <div className="flex items-center space-x-2 text-amber-400">
+            <div className="bg-white dark:bg-stone-900/60 border border-slate-200 dark:border-stone-800 rounded-3xl p-6 space-y-4 shadow-sm">
+              <div className="flex items-center space-x-2 text-amber-700 dark:text-amber-400">
                 <ShieldCheck className="w-5 h-5" />
-                <h4 className="font-semibold text-stone-200 text-sm sm:text-base">
+                <h4 className="font-semibold text-slate-900 dark:text-stone-200 text-sm sm:text-base">
                   # 75 Multi-Signer Release Approvals
                 </h4>
               </div>
-              <p className="text-xs text-stone-400">
+              <p className="text-xs text-slate-600 dark:text-stone-400">
                 Mandatory sign-off across all 5 key critical operational domains before production rollout.
               </p>
               <div className="space-y-2 pt-2">
-                <div className="flex items-center justify-between p-2.5 bg-stone-950/60 rounded-xl border border-stone-800 text-xs">
-                  <span className="text-stone-300">Application & Backend Sign-off</span>
+                <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-stone-950/60 rounded-xl border border-slate-200 dark:border-stone-800 text-xs">
+                  <span className="text-slate-700 dark:text-stone-300">Application & Backend Sign-off</span>
                   <span className="text-emerald-400 font-medium">Approved</span>
                 </div>
                 <div className="flex items-center justify-between p-2.5 bg-stone-950/60 rounded-xl border border-stone-800 text-xs">

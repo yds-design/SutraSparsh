@@ -53,7 +53,13 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
   onSearch,
   theme,
 }) => {
-  const isLight = theme === "light";
+  const isLight =
+    theme === "light" ||
+    (typeof document !== "undefined" &&
+      (document.documentElement.getAttribute("data-theme") === "light" ||
+        document.body.getAttribute("data-theme") === "light" ||
+        document.body.classList.contains("light-mode") ||
+        document.body.classList.contains("theme-parchment-dawn")));
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
 
@@ -290,7 +296,7 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
           ) : (
             <>
               {/* Word Header */}
-              <WordHeader word={word} />
+              <WordHeader word={word} isLight={isLight} />
 
               {/* Tab 1: Overview & Meaning */}
               {activeTab === "overview" && (
@@ -302,22 +308,24 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
                       selectedComponentId={selectedComponentId}
                       onSelectComponent={onSelectComponent}
                       fullWordSurface={word.surfaceForm}
+                      isLight={isLight}
                     />
                   )}
 
                   {/* Active Component Card if selected */}
                   {activeComponent && word.components && word.components.length > 1 && (
-                    <WordComponentView component={activeComponent} />
+                    <WordComponentView component={activeComponent} isLight={isLight} />
                   )}
 
                   {/* General & Contextual Meaning */}
-                  <WordMeaning word={word} />
+                  <WordMeaning word={word} isLight={isLight} />
 
                   {/* Sources Transparency */}
                   <WordSources
                     sources={word.sources}
                     isVerified={word.isVerified}
                     unavailableReason={word.unavailableReason}
+                    isLight={isLight}
                   />
                 </div>
               )}
@@ -330,12 +338,13 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
                     selectedComponentId={selectedComponentId}
                     onSelectComponent={onSelectComponent}
                     fullWordSurface={word.surfaceForm}
+                    isLight={isLight}
                   />
 
                   {activeComponent ? (
-                    <WordComponentView component={activeComponent} />
+                    <WordComponentView component={activeComponent} isLight={isLight} />
                   ) : (
-                    <p className="text-xs text-stone-400 italic">
+                    <p className={`text-xs italic ${isLight ? "text-[#6E5C4E]" : "text-stone-400"}`}>
                       Select any constituent above to view its root and grammatical function.
                     </p>
                   )}
@@ -345,14 +354,14 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
               {/* Tab 3: Grammar & Dhatu */}
               {activeTab === "grammar" && (
                 <div className="space-y-6">
-                  <WordGrammar grammar={word.grammar} root={word.root} />
+                  <WordGrammar grammar={word.grammar} root={word.root} isLight={isLight} />
                 </div>
               )}
 
               {/* Tab 4: Sandhi Synthesis */}
               {activeTab === "sandhi" && (
                 <div className="space-y-6">
-                  <WordSandhi sandhi={word.sandhi} surfaceForm={word.surfaceForm} />
+                  <WordSandhi sandhi={word.sandhi} surfaceForm={word.surfaceForm} isLight={isLight} />
                 </div>
               )}
 
@@ -362,6 +371,7 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
                   <WordOccurrences
                     occurrences={word.occurrences}
                     wordSurface={word.surfaceForm}
+                    isLight={isLight}
                   />
                 </div>
               )}
@@ -370,9 +380,13 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
         </div>
 
         {/* ── Footer ── */}
-        <div className="px-5 py-3 border-t border-stone-800/80 bg-stone-950/70 flex flex-wrap items-center justify-between text-[11px] text-stone-400 gap-2">
+        <div className={`px-5 py-3 border-t flex flex-wrap items-center justify-between text-[11px] gap-2 ${
+          isLight
+            ? "border-[#E8DCC2] bg-[#F5EEDB] text-[#6E5C4E]"
+            : "border-stone-800/80 bg-stone-950/70 text-stone-400"
+        }`}>
           <span>SutraSparsh Lexicon • Paninian Morphological Analysis</span>
-          <span className="italic font-serif text-amber-300/80">
+          <span className={`italic font-serif ${isLight ? "text-[#874606]" : "text-amber-300/80"}`}>
             "Don't just read the translation. Explore the word."
           </span>
         </div>

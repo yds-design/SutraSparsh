@@ -5,12 +5,13 @@ import type { WordGrammar as IWordGrammar, WordRoot } from "../types/wordExplore
 interface WordGrammarProps {
   grammar?: IWordGrammar;
   root?: WordRoot;
+  isLight?: boolean;
 }
 
-export const WordGrammar: React.FC<WordGrammarProps> = ({ grammar, root }) => {
+export const WordGrammar: React.FC<WordGrammarProps> = ({ grammar, root, isLight = false }) => {
   if (!grammar && !root) {
     return (
-      <div className="text-center py-6 text-stone-400 text-xs italic">
+      <div className={`text-center py-6 text-xs italic ${isLight ? "text-[#6E5C4E]" : "text-stone-400"}`}>
         Detailed grammatical attributes are being indexed from the Paninian Dhatupatha.
       </div>
     );
@@ -18,97 +19,137 @@ export const WordGrammar: React.FC<WordGrammarProps> = ({ grammar, root }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-amber-400">
+      <div className={`flex items-center space-x-2 text-xs font-bold uppercase tracking-wider ${
+        isLight ? "text-[#874606]" : "text-amber-400"
+      }`}>
         <Award className="w-3.5 h-3.5" />
         <span>Grammatical Anatomy • व्याकरण विन्यास</span>
       </div>
 
       {/* Root card */}
       {root && (
-        <div className="bg-gradient-to-r from-amber-950/30 to-stone-900 border border-amber-500/25 rounded-2xl p-4 sm:p-5 space-y-2">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400">
+        <div className={`rounded-2xl p-4 sm:p-5 space-y-2 shadow-sm ${
+          isLight
+            ? "bg-[#FFF7E6] border border-[#D8A856] text-[#261B12]"
+            : "bg-gradient-to-r from-amber-950/30 to-stone-900 border border-amber-500/25"
+        }`}>
+          <span className={`text-[10px] font-bold uppercase tracking-widest ${
+            isLight ? "text-[#874606]" : "text-amber-400"
+          }`}>
             Dhatu (Verbal Root) • धातु निर्देश
           </span>
           <div className="flex flex-wrap items-baseline gap-3">
-            <span className="font-sanskrit text-3xl font-bold text-amber-200">
+            <span className={`font-sanskrit text-3xl font-bold ${
+              isLight ? "text-[#261B12]" : "text-amber-200"
+            }`}>
               {root.form}
             </span>
-            <span className="font-serif italic text-lg text-amber-300/80">
+            <span className={`font-serif italic text-lg ${
+              isLight ? "text-[#874606]" : "text-amber-300/80"
+            }`}>
               ({root.transliteration})
             </span>
             {root.gana && (
-              <span className="px-2.5 py-0.5 rounded-full text-xs bg-stone-800 text-stone-300 border border-stone-700">
+              <span className={`px-2.5 py-0.5 rounded-full text-xs border ${
+                isLight
+                  ? "bg-[#F5EEDB] text-[#6E5C4E] border-[#DECB9F]"
+                  : "bg-stone-800 text-stone-300 border border-stone-700"
+              }`}>
                 {root.gana}
               </span>
             )}
           </div>
-          <p className="text-xs sm:text-sm text-stone-300">
-            Root Meaning: <span className="font-medium text-amber-100">{root.meaning}</span>
+          <p className={`text-xs sm:text-sm ${isLight ? "text-[#3D3126]" : "text-stone-300"}`}>
+            Root Meaning: <span className={`font-medium ${isLight ? "text-[#261B12] font-semibold" : "text-amber-100"}`}>{root.meaning}</span>
           </p>
         </div>
       )}
 
       {/* Grammar attributes grid */}
       {grammar && (
-        <div className="bg-stone-950/70 border border-stone-800 rounded-2xl p-4 sm:p-5 space-y-4">
+        <div className={`rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm ${
+          isLight
+            ? "bg-[#FBF8EE] border border-[#E8DCC2]"
+            : "bg-stone-950/70 border border-stone-800"
+        }`}>
           {grammar.grammaticalForm && (
-            <div className="pb-3 border-b border-stone-800">
-              <span className="text-xs text-stone-400 block mb-0.5">Syntactic Structure</span>
-              <p className="text-sm font-semibold text-amber-200">{grammar.grammaticalForm}</p>
+            <div className={`pb-3 border-b ${isLight ? "border-[#E8DCC2]" : "border-stone-800"}`}>
+              <span className={`text-xs block mb-0.5 ${isLight ? "text-[#6E5C4E]" : "text-stone-400"}`}>Syntactic Structure</span>
+              <p className={`text-sm font-semibold ${isLight ? "text-[#261B12]" : "text-amber-200"}`}>{grammar.grammaticalForm}</p>
             </div>
           )}
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {grammar.case && (
-              <div className="bg-stone-900/80 border border-stone-800/80 rounded-xl p-3">
-                <span className="text-[10px] uppercase font-bold text-amber-400 block">
+              <div className={`rounded-xl p-3 border ${
+                isLight
+                  ? "bg-[#FFFDF8] border-[#E8DCC2]"
+                  : "bg-stone-900/80 border border-stone-800/80"
+              }`}>
+                <span className={`text-[10px] uppercase font-bold block ${isLight ? "text-[#874606]" : "text-amber-400"}`}>
                   Vibhakti / विभक्ति (Case)
                 </span>
-                <span className="text-xs sm:text-sm font-medium text-stone-200 mt-0.5 block">
+                <span className={`text-xs sm:text-sm font-medium mt-0.5 block ${isLight ? "text-[#261B12]" : "text-stone-200"}`}>
                   {grammar.case}
                 </span>
               </div>
             )}
 
             {grammar.number && (
-              <div className="bg-stone-900/80 border border-stone-800/80 rounded-xl p-3">
-                <span className="text-[10px] uppercase font-bold text-amber-400 block">
+              <div className={`rounded-xl p-3 border ${
+                isLight
+                  ? "bg-[#FFFDF8] border-[#E8DCC2]"
+                  : "bg-stone-900/80 border border-stone-800/80"
+              }`}>
+                <span className={`text-[10px] uppercase font-bold block ${isLight ? "text-[#874606]" : "text-amber-400"}`}>
                   Vachana / वचन (Number)
                 </span>
-                <span className="text-xs sm:text-sm font-medium text-stone-200 mt-0.5 block">
+                <span className={`text-xs sm:text-sm font-medium mt-0.5 block ${isLight ? "text-[#261B12]" : "text-stone-200"}`}>
                   {grammar.number}
                 </span>
               </div>
             )}
 
             {grammar.gender && (
-              <div className="bg-stone-900/80 border border-stone-800/80 rounded-xl p-3">
-                <span className="text-[10px] uppercase font-bold text-amber-400 block">
+              <div className={`rounded-xl p-3 border ${
+                isLight
+                  ? "bg-[#FFFDF8] border-[#E8DCC2]"
+                  : "bg-stone-900/80 border border-stone-800/80"
+              }`}>
+                <span className={`text-[10px] uppercase font-bold block ${isLight ? "text-[#874606]" : "text-amber-400"}`}>
                   Linga / लिङ्ग (Gender)
                 </span>
-                <span className="text-xs sm:text-sm font-medium text-stone-200 mt-0.5 block">
+                <span className={`text-xs sm:text-sm font-medium mt-0.5 block ${isLight ? "text-[#261B12]" : "text-stone-200"}`}>
                   {grammar.gender}
                 </span>
               </div>
             )}
 
             {grammar.person && (
-              <div className="bg-stone-900/80 border border-stone-800/80 rounded-xl p-3">
-                <span className="text-[10px] uppercase font-bold text-amber-400 block">
+              <div className={`rounded-xl p-3 border ${
+                isLight
+                  ? "bg-[#FFFDF8] border-[#E8DCC2]"
+                  : "bg-stone-900/80 border border-stone-800/80"
+              }`}>
+                <span className={`text-[10px] uppercase font-bold block ${isLight ? "text-[#874606]" : "text-amber-400"}`}>
                   Purusha / पुरुष (Person)
                 </span>
-                <span className="text-xs sm:text-sm font-medium text-stone-200 mt-0.5 block">
+                <span className={`text-xs sm:text-sm font-medium mt-0.5 block ${isLight ? "text-[#261B12]" : "text-stone-200"}`}>
                   {grammar.person}
                 </span>
               </div>
             )}
 
             {grammar.tense && (
-              <div className="bg-stone-900/80 border border-stone-800/80 rounded-xl p-3">
-                <span className="text-[10px] uppercase font-bold text-amber-400 block">
+              <div className={`rounded-xl p-3 border ${
+                isLight
+                  ? "bg-[#FFFDF8] border-[#E8DCC2]"
+                  : "bg-stone-900/80 border border-stone-800/80"
+              }`}>
+                <span className={`text-[10px] uppercase font-bold block ${isLight ? "text-[#874606]" : "text-amber-400"}`}>
                   Lakara / लकार (Tense/Mood)
                 </span>
-                <span className="text-xs sm:text-sm font-medium text-stone-200 mt-0.5 block">
+                <span className={`text-xs sm:text-sm font-medium mt-0.5 block ${isLight ? "text-[#261B12]" : "text-stone-200"}`}>
                   {grammar.tense}
                 </span>
               </div>
@@ -116,7 +157,9 @@ export const WordGrammar: React.FC<WordGrammarProps> = ({ grammar, root }) => {
           </div>
 
           {grammar.notes && (
-            <p className="text-xs text-stone-400 pt-2 border-t border-stone-850 italic">
+            <p className={`text-xs pt-2 border-t italic ${
+              isLight ? "border-[#E8DCC2] text-[#6E5C4E]" : "border-stone-850 text-stone-400"
+            }`}>
               Grammatical Note: {grammar.notes}
             </p>
           )}

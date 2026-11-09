@@ -4811,6 +4811,7 @@ ${reflections
           onSelectWord={wordExplorer.selectWord}
           onTabChange={wordExplorer.setActiveTab}
           onSearch={wordExplorer.search}
+          theme={theme}
         />
 
         {/* ════════════ FLOATING NOTIFICATION TOAST ════════════ */}
