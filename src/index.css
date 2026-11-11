@@ -194,4 +194,98 @@
   color: #1d1b2e;
 }
 
+/* ══════════════════════════════════════════════════════════════
+   Chip Design System Tokens [State=Selected/Active] (360° PRD Spec)
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  /* Default / Dark / Sandstone Mode */
+  --chip-glow-active: 0 0 12px 1px rgba(245, 158, 11, 0.40);
+  --chip-border-active: rgba(245, 158, 11, 0.55);
+  --chip-bg-active: rgba(245, 158, 11, 0.22);
+  --chip-text-active: #fef3c7;
+  --chip-transition: box-shadow 180ms cubic-bezier(0.4, 0, 0.2, 1),
+                     background-color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+                     border-color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+                     color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+                     transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Light Mode / Parchment Dawn */
+[data-theme="light"],
+.theme-light,
+.light-mode,
+.theme-parchment-dawn,
+.parchment-dawn,
+[data-app-theme="light"] {
+  /* Subtle multi-layer ambient shadow with low spread and warm or primary tint */
+  --chip-glow-active: 0 2px 8px 0 rgba(27, 23, 64, 0.25), 0 0 6px 1px rgba(217, 164, 65, 0.35);
+  --chip-border-active: #1b1740;
+  --chip-bg-active: #1b1740;
+  --chip-text-active: #f4f2ff;
+}
+
+/* Golden Hour Theme */
+[data-theme="golden-hour"],
+.theme-golden-hour,
+.golden-hour-mode,
+.theme-golden,
+.golden-hour {
+  --chip-glow-active: 0 0 12px 2px rgba(201, 130, 43, 0.48), 0 2px 6px rgba(225, 90, 46, 0.25);
+  --chip-border-active: rgba(246, 223, 166, 0.65);
+  --chip-bg-active: rgba(201, 130, 43, 0.32);
+  --chip-text-active: #fff4d8;
+}
+
+/* Amethyst Theme */
+[data-theme="amethyst"],
+.theme-amethyst {
+  --chip-glow-active: 0 0 12px 2px rgba(147, 107, 250, 0.45), 0 2px 6px rgba(109, 40, 217, 0.25);
+  --chip-border-active: rgba(147, 107, 250, 0.60);
+  --chip-bg-active: rgba(82, 41, 122, 0.45);
+  --chip-text-active: #ede0f8;
+}
+
+/* Festival Theme */
+[data-theme="festival"],
+.theme-festival {
+  --chip-glow-active: 0 0 12px 2px rgba(255, 138, 0, 0.45), 0 2px 6px rgba(230, 96, 32, 0.25);
+  --chip-border-active: rgba(255, 138, 0, 0.60);
+  --chip-bg-active: rgba(255, 138, 0, 0.25);
+  --chip-text-active: #fff6e3;
+}
+
+/* Core selected chip glow classes */
+.chip-glow-selected {
+  box-shadow: var(--chip-glow-active) !important;
+  will-change: box-shadow;
+  transition: var(--chip-transition);
+}
+
+.chip-suggestion-glow-selected {
+  box-shadow: 0 0 10px 1px rgba(217, 164, 65, 0.45), 0 2px 6px rgba(184, 128, 31, 0.25) !important;
+  will-change: box-shadow;
+  transition: var(--chip-transition);
+}
+
+/* Accessibility: prefers-reduced-motion: disable transition animations, apply glow instantly */
+@media (prefers-reduced-motion: reduce) {
+  .chip-glow-selected,
+  .chip-suggestion-glow-selected,
+  .chip-interactive {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Accessibility: prefers-contrast: more: replace diffused glow with solid 2px high-contrast outline */
+@media (prefers-contrast: more) {
+  .chip-glow-selected,
+  .chip-suggestion-glow-selected {
+    box-shadow: none !important;
+    outline: 2px solid currentColor !important;
+    outline-offset: 2px !important;
+  }
+}
+
+
 

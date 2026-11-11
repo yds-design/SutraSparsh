@@ -58,6 +58,7 @@ import { DynamicMetadata } from "./DynamicMetadata";
 import { MoreView } from "./MoreView";
 import { BrahmaMuhurtaTimer } from "./BrahmaMuhurtaTimer";
 import { ImportantTithisParv } from "./ImportantTithisParv";
+import { Chip } from "./Chip";
 import { StreakFireCounter } from "./StreakFireCounter";
 import { PanditOnboardingModal } from "./services/PanditOnboardingModal";
 import { DailySpiritualAffirmation } from "./DailySpiritualAffirmation";
@@ -155,6 +156,15 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
       setSubScreen(initialSubScreen);
     }
   }, [initialSubScreen]);
+
+  const handleTabNavigation = (tab: "home" | "explore" | "search" | "journey" | "more") => {
+    setSubScreen("none");
+    setActiveTab(tab);
+    if (onNavigateTab) {
+      const parentTab = tab === "home" ? "today" : tab === "journey" ? "my-journey" : tab;
+      onNavigateTab(parentTab);
+    }
+  };
 
   // Scripture & Reading Preferences state (persisted to localStorage)
   const [prefScript, setPrefScript] = useState<"both" | "devanagari" | "transliteration">(() => {
@@ -1351,10 +1361,7 @@ ${reflections
 
             {/* Search Button */}
             <button
-              onClick={() => {
-                setSubScreen("none");
-                setActiveTab("search");
-              }}
+              onClick={() => handleTabNavigation("search")}
               className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-stone-200 transition-colors"
             >
               <Search className="w-4 h-4" />
@@ -2023,7 +2030,7 @@ ${reflections
                           )}
                         </button>
                         <button
-                          onClick={() => setActiveTab("explore")}
+                          onClick={() => handleTabNavigation("explore")}
                           className={`text-xs font-bold transition-colors ${
                             isLightCanvas ? "text-amber-800 hover:text-amber-950" : "text-stone-400 hover:text-amber-300"
                           }`}
@@ -2272,7 +2279,7 @@ ${reflections
                 Explore Scriptures & Traditions
               </h2>
               <button
-                onClick={() => setActiveTab("search")}
+                onClick={() => handleTabNavigation("search")}
                 className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer ${
                   isLight ? "bg-stone-200/80 text-stone-700 hover:bg-stone-300" : "bg-white/5 text-stone-200 hover:bg-white/10"
                 }`}
@@ -2284,7 +2291,7 @@ ${reflections
             {/* Search Bar Input Trigger */}
             <div className="px-4">
               <div
-                onClick={() => setActiveTab("search")}
+                onClick={() => handleTabNavigation("search")}
                 className={`flex items-center space-x-2.5 p-3 rounded-2xl border cursor-pointer transition-colors ${
                   isLight
                     ? "bg-white border-stone-300 hover:border-amber-400 shadow-xs"
@@ -2323,7 +2330,7 @@ ${reflections
                 <div
                   onClick={() => {
                     setSearchQuery("Karma");
-                    setActiveTab("search");
+                    handleTabNavigation("search");
                   }}
                   className={`p-4 rounded-[20px] cursor-pointer hover:scale-[1.02] transition-all shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] border ${
                     isLightCanvas
@@ -2352,7 +2359,7 @@ ${reflections
                 <div
                   onClick={() => {
                     setSearchQuery("Advaita");
-                    setActiveTab("search");
+                    handleTabNavigation("search");
                   }}
                   className={`p-4 rounded-[20px] cursor-pointer hover:scale-[1.02] transition-all shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] border ${
                     isLightCanvas
@@ -2379,23 +2386,18 @@ ${reflections
               </div>
 
               {/* Filter Pills */}
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+              <div className="flex gap-2 overflow-x-auto py-2 px-1 scrollbar-none">
                 {["All", "Itihasa", "Darshana", "Upanishads", "Vedanta"].map((pill) => (
-                  <button
+                  <Chip
                     key={pill}
+                    size="sm"
+                    variant="filter"
+                    selected={explorePill === pill}
                     onClick={() => setExplorePill(pill)}
-                    className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                      explorePill === pill
-                        ? isLightCanvas
-                          ? "bg-[#1b1740] text-[#f4f2ff] shadow-xs"
-                          : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                        : isLightCanvas
-                        ? "bg-white border border-[#cfcbe0] text-[#1d1b2e] hover:bg-[#fbf0d6] hover:border-[#d9a441]"
-                        : "bg-white/5 text-stone-400 hover:text-stone-200"
-                    }`}
+                    theme={theme}
                   >
                     {pill}
-                  </button>
+                  </Chip>
                 ))}
               </div>
 
@@ -2589,7 +2591,7 @@ ${reflections
                       POPULAR TOPICS (TAP TO FILTER)
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 py-1 px-0.5">
                     {[
                       "Karma",
                       "Dharma",
@@ -2602,17 +2604,16 @@ ${reflections
                       "OM",
                       "Advaita",
                     ].map((topic, idx) => (
-                      <button
+                      <Chip
                         key={idx}
+                        size="sm"
+                        variant="topic"
+                        selected={searchQuery === topic}
                         onClick={() => setSearchQuery(topic)}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                          isLightCanvas
-                            ? "bg-[#fbf0d6] border border-[#f0cf8a] text-[#b8801f] hover:bg-[#f0cf8a]"
-                            : "bg-amber-500/10 border border-amber-500/20 text-amber-300 hover:bg-amber-500/20"
-                        }`}
+                        theme={theme}
                       >
                         {topic}
-                      </button>
+                      </Chip>
                     ))}
                   </div>
                 </div>
@@ -2933,10 +2934,10 @@ ${reflections
                   }
                   return;
                 }
-                if (tab === "today") setActiveTab("home");
-                else if (tab === "explore") setActiveTab("explore");
-                else if (tab === "search") setActiveTab("search");
-                else if (tab === "my-journey") setActiveTab("journey");
+                if (tab === "today") handleTabNavigation("home");
+                else if (tab === "explore") handleTabNavigation("explore");
+                else if (tab === "search") handleTabNavigation("search");
+                else if (tab === "my-journey") handleTabNavigation("journey");
                 else if (tab === "about") setSubScreen("about");
                 else if (tab === "glossary") setSubScreen("glossary");
                 else if (tab === "paths") setSubScreen("paths");
@@ -4749,8 +4750,7 @@ ${reflections
                 <button
                   key={tab.id}
                   onClick={() => {
-                    setSubScreen("none");
-                    setActiveTab(tab.id as any);
+                    handleTabNavigation(tab.id as any);
                   }}
                   className={`flex-1 flex flex-col items-center space-y-0.5 py-1 font-bold text-[10px] transition-all ${
                     isActive

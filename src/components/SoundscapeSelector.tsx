@@ -279,8 +279,8 @@ export const SoundscapeSelector: React.FC<SoundscapeSelectorProps> = ({
               className={`group relative p-3.5 rounded-xl border text-left transition-all cursor-pointer select-none flex flex-col justify-between ${
                 isSelected
                   ? isLight
-                    ? "bg-white border-[#d9a441] ring-2 ring-[#d9a441]/30 shadow-xs"
-                    : "bg-amber-500/15 border-amber-500 ring-1 ring-amber-400/40 shadow-sm shadow-amber-500/15"
+                    ? "bg-white border-[#d9a441] ring-2 ring-[#d9a441]/30 chip-glow-selected"
+                    : "bg-amber-500/15 border-amber-500 ring-1 ring-amber-400/40 chip-glow-selected"
                   : isLight
                   ? "bg-[#f7f6fb] border-[#cfcbe0] hover:border-[#d9a441] hover:bg-white"
                   : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/15"

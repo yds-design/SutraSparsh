@@ -145,10 +145,10 @@ export const ContentView: React.FC = () => {
       v.title.toLowerCase().includes(search.toLowerCase()) ||
       v.body.toLowerCase().includes(search.toLowerCase()) ||
       (v.meaning || "").toLowerCase().includes(search.toLowerCase());
-    const matchesCat = selectedCategory === "All" || v.metadata.category === selectedCategory;
+    const matchesCat = selectedCategory === "All" || (v.metadata?.category || (v as any).category) === selectedCategory;
     const matchesTrad =
       selectedTradition === "All" ||
-      (v.metadata.author || "").toLowerCase().includes(selectedTradition.toLowerCase()) ||
+      ((v.metadata?.author || (v as any).source || "").toLowerCase().includes(selectedTradition.toLowerCase())) ||
       v.title.toLowerCase().includes(selectedTradition.toLowerCase());
     return matchesSearch && matchesCat && matchesTrad;
   });

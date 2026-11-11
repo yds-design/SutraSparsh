@@ -102,7 +102,7 @@ ${entries
 
 ${bookmarkedVerses
   .map(
-    (v, idx) => `### ${idx + 1}. ${v.title} (${v.metadata.source})
+    (v, idx) => `### ${idx + 1}. ${v.title} (${v.metadata?.source || (v as any).source || "Scripture"})
 **Sanskrit:**
 ${v.body}
 
@@ -379,7 +379,7 @@ ${v.meaning || "—"}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold text-amber-400">
-                        {verse.metadata.author || verse.metadata.source || "Scripture"}
+                        {verse.metadata?.author || verse.metadata?.source || (verse as any).source || "Scripture"}
                       </span>
                       <button
                         onClick={(e) => {
@@ -407,7 +407,7 @@ ${v.meaning || "—"}
                   </div>
 
                   <div className="pt-2 border-t border-stone-800 flex items-center justify-between text-xs text-amber-400/90">
-                    <span className="text-[11px] text-stone-500">{verse.metadata.category || "Scripture"}</span>
+                    <span className="text-[11px] text-stone-500">{verse.metadata?.category || (verse as any).category || "Scripture"}</span>
                     <span className="font-bold">Study Verse →</span>
                   </div>
                 </div>

@@ -40,8 +40,10 @@ const VerseCardComponent: React.FC<VerseCardProps> = ({
 
   // Sanitize author and source so technical terms like "json" or "production" never show
   const cleanAuthor =
-    item.metadata.author && !["json", "production", "manual"].includes(item.metadata.author.toLowerCase())
+    item.metadata?.author && !["json", "production", "manual"].includes(item.metadata.author.toLowerCase())
       ? item.metadata.author
+      : (item as any).source && !["json", "production", "manual"].includes(String((item as any).source).toLowerCase())
+      ? (item as any).source
       : item.title.includes("Gita")
       ? "Bhagavad Gita"
       : item.title.includes("Yoga")
@@ -51,16 +53,21 @@ const VerseCardComponent: React.FC<VerseCardProps> = ({
       : "Scripture";
 
   // Sanitize tags: strictly authentic spiritual tags like Patanjali, Yoga, Gita
-  const displayTags = (item.metadata.tags || [])
+  const rawTags: string[] = Array.isArray(item.metadata?.tags)
+    ? item.metadata!.tags
+    : Array.isArray((item as any).tags)
+    ? (item as any).tags
+    : [];
+  const displayTags: string[] = rawTags
     .filter(
-      (t) =>
+      (t: string) =>
         !["json", "production", "manual", "publisher", "api", "database", "test"].includes(
           t.toLowerCase()
         )
     )
-    .map((t) => t.charAt(0).toUpperCase() + t.slice(1));
+    .map((t: string) => t.charAt(0).toUpperCase() + t.slice(1));
 
-  const spiritualTags =
+  const spiritualTags: string[] =
     displayTags.length > 0
       ? displayTags
       : item.title.includes("Gita")
@@ -102,7 +109,7 @@ const VerseCardComponent: React.FC<VerseCardProps> = ({
             >
               {cleanAuthor}
             </span>
-            {item.metadata.category && (
+            {(item.metadata?.category || (item as any).category) && (
               <span
                 className={`px-2 py-0.5 rounded-full text-[11px] border ${
                   isLight
@@ -112,7 +119,7 @@ const VerseCardComponent: React.FC<VerseCardProps> = ({
                     : "bg-stone-800 text-stone-300 border-stone-700"
                 }`}
               >
-                {item.metadata.category}
+                {item.metadata?.category || (item as any).category}
               </span>
             )}
           </div>
@@ -283,7 +290,7 @@ const VerseCardComponent: React.FC<VerseCardProps> = ({
         }`}
       >
         <div className="flex flex-wrap gap-1.5">
-          {spiritualTags.slice(0, 3).map((tag) => (
+          {spiritualTags.slice(0, 3).map((tag: string) => (
             <span
               key={tag}
               className={`text-[10.5px] font-semibold px-2.5 py-0.5 rounded-full border ${

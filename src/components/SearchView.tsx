@@ -14,6 +14,7 @@ import {
 import type { ContentItem } from "../types";
 import { soundEngine } from "../utils/audio";
 import { matchesSanskritQuery } from "../utils/sanskritSearch";
+import { Chip } from "./Chip";
 
 interface SearchViewProps {
   verses: ContentItem[];
@@ -72,22 +73,27 @@ export const SearchView: React.FC<SearchViewProps> = ({
   const isAmethyst = currentTheme === "amethyst";
 
   const filteredVerses = verses.filter((v) => {
+    if (!v) return false;
+    const authorStr = (v.metadata?.author || (v as any).source || v.title || "").toLowerCase();
+    const categoryStr = (v.metadata?.category || (v as any).category || "").toLowerCase();
+    const tagsList = Array.isArray(v.metadata?.tags) ? v.metadata.tags : [];
+
     const matchesTradition =
       selectedTradition === "All" ||
-      v.metadata.author?.toLowerCase().includes(selectedTradition.toLowerCase()) ||
-      v.title.toLowerCase().includes(selectedTradition.toLowerCase());
+      authorStr.includes(selectedTradition.toLowerCase()) ||
+      (v.title && v.title.toLowerCase().includes(selectedTradition.toLowerCase()));
 
     const matchesCategory =
       selectedCategory === "All" ||
-      v.metadata.category?.toLowerCase() === selectedCategory.toLowerCase();
+      categoryStr === selectedCategory.toLowerCase();
 
     const matchesSearch =
       !searchTerm.trim() ||
-      matchesSanskritQuery(v.title, searchTerm) ||
-      matchesSanskritQuery(v.body, searchTerm) ||
+      matchesSanskritQuery(v.title || "", searchTerm) ||
+      matchesSanskritQuery(v.body || "", searchTerm) ||
       (v.transliteration && matchesSanskritQuery(v.transliteration, searchTerm)) ||
       (v.meaning && matchesSanskritQuery(v.meaning, searchTerm)) ||
-      (v.metadata.tags && v.metadata.tags.some((t) => matchesSanskritQuery(t, searchTerm)));
+      tagsList.some((t) => matchesSanskritQuery(t, searchTerm));
 
     return matchesTradition && matchesCategory && matchesSearch;
   });
@@ -175,25 +181,21 @@ export const SearchView: React.FC<SearchViewProps> = ({
           >
             Suggested Contemplation Queries:
           </span>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 py-1 px-0.5">
             {POPULAR_SPIRITUAL_QUERIES.map((sq) => {
               const isSelected = searchTerm === sq.query;
               return (
-                <button
+                <Chip
                   key={sq.label}
+                  selected={isSelected}
                   onClick={() => setSearchTerm(sq.query)}
-                  className={`text-xs px-3.5 py-1.5 rounded-full border transition-all cursor-pointer ${
-                    isSelected
-                      ? isLight
-                        ? "bg-[#d9a441] text-[#100e2b] border-[#d9a441] font-bold shadow-xs"
-                        : "bg-amber-500/20 text-amber-200 border-amber-500/50 shadow-sm"
-                      : isLight
-                      ? "bg-[#efedf6] border-[#cfcbe0] text-[#55526b] hover:bg-white hover:text-[#1b1740] hover:border-[#d9a441]"
-                      : "bg-stone-950 border-stone-800/80 text-stone-300 hover:border-amber-500/40 hover:text-amber-300"
-                  }`}
+                  theme={currentTheme}
+                  variant="suggestion"
+                  size="md"
+                  dataTestId={`search-query-${sq.label.toLowerCase().replace(/\s+/g, "-")}`}
                 >
                   {sq.label}
-                </button>
+                </Chip>
               );
             })}
           </div>
@@ -205,7 +207,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
             isLight ? "border-[#efedf6]" : "border-stone-800"
           }`}
         >
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 py-1 px-0.5">
             <span className={`font-medium ${isLight ? "text-[#55526b]" : "text-stone-500"}`}>
               Tradition:
             </span>
@@ -213,27 +215,23 @@ export const SearchView: React.FC<SearchViewProps> = ({
               {TRADITIONS.map((t) => {
                 const isSelected = selectedTradition === t;
                 return (
-                  <button
+                  <Chip
                     key={t}
+                    selected={isSelected}
                     onClick={() => setSelectedTradition(t)}
-                    className={`px-3 py-1 rounded-full text-xs transition-colors border cursor-pointer ${
-                      isSelected
-                        ? isLight
-                          ? "bg-[#1b1740] text-[#f4f2ff] border-[#1b1740] font-bold shadow-xs"
-                          : "bg-amber-500/20 text-amber-200 border-amber-500/40"
-                        : isLight
-                        ? "bg-[#efedf6] text-[#55526b] border-[#cfcbe0] hover:bg-white hover:text-[#1b1740] hover:border-[#d9a441]"
-                        : "bg-stone-950 text-stone-400 border-stone-800 hover:text-stone-200"
-                    }`}
+                    theme={currentTheme}
+                    variant="filter"
+                    size="sm"
+                    dataTestId={`search-tradition-${t.toLowerCase().replace(/\s+/g, "-")}`}
                   >
                     {t}
-                  </button>
+                  </Chip>
                 );
               })}
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 py-1 px-0.5">
             <span className={`font-medium ${isLight ? "text-[#55526b]" : "text-stone-500"}`}>
               Category:
             </span>
@@ -241,21 +239,17 @@ export const SearchView: React.FC<SearchViewProps> = ({
               {CATEGORIES.map((c) => {
                 const isSelected = selectedCategory === c;
                 return (
-                  <button
+                  <Chip
                     key={c}
+                    selected={isSelected}
                     onClick={() => setSelectedCategory(c)}
-                    className={`px-3 py-1 rounded-full text-xs transition-colors border cursor-pointer ${
-                      isSelected
-                        ? isLight
-                          ? "bg-[#1b1740] text-[#f4f2ff] border-[#1b1740] font-bold shadow-xs"
-                          : "bg-amber-500/20 text-amber-200 border-amber-500/40"
-                        : isLight
-                        ? "bg-[#efedf6] text-[#55526b] border-[#cfcbe0] hover:bg-white hover:text-[#1b1740] hover:border-[#d9a441]"
-                        : "bg-stone-950 text-stone-400 border-stone-800 hover:text-stone-200"
-                    }`}
+                    theme={currentTheme}
+                    variant="filter"
+                    size="sm"
+                    dataTestId={`search-category-${c.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
                   >
                     {c}
-                  </button>
+                  </Chip>
                 );
               })}
             </div>
@@ -310,15 +304,18 @@ export const SearchView: React.FC<SearchViewProps> = ({
 
             // Clean source to never show "json" or "production"
             const cleanSource =
-              verse.metadata.source &&
+              verse.metadata?.source &&
               !["json", "production", "manual"].includes(verse.metadata.source.toLowerCase())
                 ? verse.metadata.source
-                : verse.metadata.author &&
+                : verse.metadata?.author &&
                   !["json", "production", "manual"].includes(verse.metadata.author.toLowerCase())
                 ? verse.metadata.author
-                : verse.title.includes("Gita")
+                : (verse as any).source &&
+                  !["json", "production", "manual"].includes(String((verse as any).source).toLowerCase())
+                ? (verse as any).source
+                : (verse.title || "").includes("Gita")
                 ? "Bhagavad Gita"
-                : verse.title.includes("Yoga")
+                : (verse.title || "").includes("Yoga")
                 ? "Patanjali Yoga Sutras"
                 : "Timeless Scripture";
 
@@ -337,7 +334,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
                           : "bg-amber-500/10 text-amber-400 border-amber-500/20"
                       }`}
                     >
-                      {verse.metadata.category || "Scripture"}
+                      {verse.metadata?.category || (verse as any).category || "Scripture"}
                     </span>
 
                     <div className="flex items-center space-x-1">

@@ -345,25 +345,25 @@ export class ContentRepository {
       );
     }
 
-    if (options.source) {
+    if (options.source && options.source.toLowerCase() !== "all") {
       const src = options.source.toLowerCase();
       items = items.filter((item) =>
         item.metadata?.source?.toLowerCase() === src
       );
     }
 
-    if (options.category) {
+    if (options.category && options.category.toLowerCase() !== "all") {
       const cat = options.category.toLowerCase();
       items = items.filter((item) =>
         item.metadata?.category?.toLowerCase() === cat
       );
     }
 
-    if (options.tag) {
+    if (options.tag && options.tag.toLowerCase() !== "all") {
       const tag = options.tag.toLowerCase();
       items = items.filter((item) =>
         Array.isArray(item.metadata?.tags) &&
-        item.metadata.tags.some((t: string) => t.toLowerCase() === tag)
+        item.metadata!.tags.some((t: string) => t.toLowerCase() === tag)
       );
     }
 

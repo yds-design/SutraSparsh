@@ -308,7 +308,7 @@ export const DailyGoalModal: React.FC<DailyGoalModalProps> = ({
                       onClick={() => handleMinutesChange(mins)}
                       className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all cursor-pointer relative ${
                         config.targetMinutes === mins
-                          ? "bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-black shadow-md border-amber-400"
+                          ? "bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-black chip-glow-selected border-amber-400"
                           : isLight
                           ? "bg-white border-stone-200 text-stone-700 hover:border-amber-400"
                           : "bg-stone-900 border-stone-800 text-stone-300 hover:border-stone-700"
@@ -343,7 +343,7 @@ export const DailyGoalModal: React.FC<DailyGoalModalProps> = ({
                       onClick={() => handleVersesChange(verses)}
                       className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all cursor-pointer relative ${
                         config.targetVerses === verses
-                          ? "bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-black shadow-md border-amber-400"
+                          ? "bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-black chip-glow-selected border-amber-400"
                           : isLight
                           ? "bg-white border-stone-200 text-stone-700 hover:border-amber-400"
                           : "bg-stone-900 border-stone-800 text-stone-300 hover:border-stone-700"

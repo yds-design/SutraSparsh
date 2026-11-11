@@ -40,6 +40,7 @@ import {
   LookCloserBanner,
   useWordExplorer,
 } from "./features/wordExplorer";
+import { Chip } from "./components/Chip";
 
 const TRADITIONS = ["All", "Bhagavad Gita", "Patanjali", "Upanishads", "Vedas"];
 const INITIAL_VERSES: ContentItem[] = [
@@ -368,14 +369,22 @@ export default function App() {
 
       if (res.ok) {
         const json: ContentResponse = await res.json();
-        setVerses(json.data || []);
+        if (json.data && json.data.length > 0) {
+          setVerses(json.data);
+        } else if (!searchTerm.trim() && selectedCategory === "All") {
+          setVerses(INITIAL_VERSES);
+        } else {
+          setVerses(json.data || []);
+        }
         setBackendOnline(true);
       } else {
         setBackendOnline(false);
+        setVerses((prev) => (prev && prev.length > 0 ? prev : INITIAL_VERSES));
       }
     } catch (err) {
       console.warn("Backend API fetch error:", err);
       setBackendOnline(false);
+      setVerses((prev) => (prev && prev.length > 0 ? prev : INITIAL_VERSES));
     } finally {
       setLoading(false);
     }
@@ -490,13 +499,23 @@ export default function App() {
     setIsPaywallOpen(true);
   };
 
-  // Filter by tradition client side
-  const filteredVerses = verses.filter((v) => {
+  // Filter by tradition and category client side
+  const activeVerses = verses && verses.length > 0 ? verses : INITIAL_VERSES;
+  const filteredVerses = activeVerses.filter((v) => {
     if (!v) return false;
-    if (selectedTradition === "All") return true;
-    const authorMatch = v.metadata?.author?.toLowerCase().includes(selectedTradition.toLowerCase()) ?? false;
-    const titleMatch = v.title?.toLowerCase().includes(selectedTradition.toLowerCase()) ?? false;
-    return authorMatch || titleMatch;
+    const authorStr = (v.metadata?.author || (v as any).source || "").toLowerCase();
+    const titleStr = (v.title || "").toLowerCase();
+    const matchesTradition =
+      selectedTradition === "All" ||
+      authorStr.includes(selectedTradition.toLowerCase()) ||
+      titleStr.includes(selectedTradition.toLowerCase());
+
+    const categoryStr = (v.metadata?.category || (v as any).category || "").toLowerCase();
+    const matchesCategory =
+      selectedCategory === "All" ||
+      categoryStr === selectedCategory.toLowerCase();
+
+    return matchesTradition && matchesCategory;
   });
 
   // Reset lazy load limit when filters change
@@ -929,7 +948,7 @@ export default function App() {
               }`}
             >
               {/* Traditions / Authors Filter Chips */}
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 py-1 px-0.5">
                 <span
                   className={`text-xs font-semibold mr-2 flex items-center gap-1 ${
                     theme === "light" ? "text-[#1b1740]" : "text-stone-400"
@@ -939,26 +958,22 @@ export default function App() {
                   <span>Tradition:</span>
                 </span>
                 {TRADITIONS.map((tradition) => (
-                  <button
+                  <Chip
                     key={tradition}
+                    selected={selectedTradition === tradition}
                     onClick={() => setSelectedTradition(tradition)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                      selectedTradition === tradition
-                        ? theme === "light"
-                          ? "bg-[#1b1740] text-[#f4f2ff] border border-[#1b1740] font-semibold shadow-xs"
-                          : "bg-amber-500/25 text-amber-200 border border-amber-500/40 shadow-sm font-semibold"
-                        : theme === "light"
-                        ? "bg-white text-[#1d1b2e] hover:border-[#d9a441] hover:bg-[#fbf0d6] border border-[#cfcbe0]"
-                        : "bg-stone-900 text-stone-400 hover:text-stone-200 border border-stone-800"
-                    }`}
+                    theme={theme}
+                    variant="filter"
+                    size="md"
+                    dataTestId={`filter-tradition-${tradition.toLowerCase().replace(/\s+/g, "-")}`}
                   >
                     {tradition}
-                  </button>
+                  </Chip>
                 ))}
               </div>
 
               {/* Categories Filter Chips */}
-              <div className="flex flex-wrap items-center gap-2 pt-1">
+              <div className="flex flex-wrap items-center gap-2 pt-1 py-1 px-0.5">
                 <span
                   className={`text-xs font-semibold mr-2 flex items-center gap-1 ${
                     theme === "light" ? "text-[#1b1740]" : "text-stone-400"
@@ -968,21 +983,17 @@ export default function App() {
                   <span>Path / Yoga:</span>
                 </span>
                 {CATEGORIES.map((cat) => (
-                  <button
+                  <Chip
                     key={cat}
+                    selected={selectedCategory === cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                      selectedCategory === cat
-                        ? theme === "light"
-                          ? "bg-[#1b1740] text-[#f4f2ff] border border-[#1b1740] font-semibold shadow-xs"
-                          : "bg-amber-500/25 text-amber-200 border border-amber-500/40 shadow-sm font-semibold"
-                        : theme === "light"
-                        ? "bg-white text-[#1d1b2e] hover:border-[#d9a441] hover:bg-[#fbf0d6] border border-[#cfcbe0]"
-                        : "bg-stone-900 text-stone-400 hover:text-stone-200 border border-stone-800"
-                    }`}
+                    theme={theme}
+                    variant="filter"
+                    size="md"
+                    dataTestId={`filter-category-${cat.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
                   >
                     {cat}
-                  </button>
+                  </Chip>
                 ))}
               </div>
             </div>
@@ -1163,7 +1174,7 @@ export default function App() {
         {/* 3. SEARCH: Intent-Driven Discovery */}
         {activeTab === "search" && (
           <SearchView
-            verses={verses}
+            verses={activeVerses}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             selectedTradition={selectedTradition}

@@ -65,7 +65,7 @@ const getVerseModalThemeClasses = (theme?: string) => {
         wordStripBg: "bg-[#f7f6fb] border border-[#cfcbe0] rounded-2xl",
         wordStripLabel: "text-[#1d1b2e]",
         wordStripHint: "text-[#b8801f]",
-        wordChipActive: "bg-[#1b1740] border-[#1b1740] text-[#f4f2ff] shadow-sm font-bold rounded-full",
+        wordChipActive: "bg-[#1b1740] border-[#1b1740] text-[#f4f2ff] chip-glow-selected font-bold rounded-full",
         wordChipInactive: "bg-white border-[#cfcbe0] text-[#1d1b2e] hover:border-[#d9a441] hover:bg-[#fbf0d6] rounded-full",
         inspectorCard: "bg-white border border-[#cfcbe0] shadow-md rounded-[16px]",
         inspectorHeaderBorder: "border-[#cfcbe0]",
@@ -108,7 +108,7 @@ const getVerseModalThemeClasses = (theme?: string) => {
         wordStripBg: "bg-[#140C26] border-[#3D2566]/60",
         wordStripLabel: "text-purple-300/80",
         wordStripHint: "text-purple-300",
-        wordChipActive: "bg-purple-600/30 border-purple-400 text-purple-100 shadow ring-1 ring-purple-400/50",
+        wordChipActive: "bg-purple-600/30 border-purple-400 text-purple-100 chip-glow-selected ring-1 ring-purple-400/50",
         wordChipInactive: "bg-[#1F143A] border-[#3D2566] text-purple-200 hover:border-purple-400 hover:text-white",
         inspectorCard: "bg-[#1D1338] border-purple-500/40 shadow-xl",
         inspectorHeaderBorder: "border-purple-500/25",
@@ -151,7 +151,7 @@ const getVerseModalThemeClasses = (theme?: string) => {
         wordStripBg: "bg-[#1C0803] border-orange-900/50",
         wordStripLabel: "text-orange-300/80",
         wordStripHint: "text-orange-300",
-        wordChipActive: "bg-orange-500/30 border-orange-400 text-orange-100 shadow ring-1 ring-orange-400/50",
+        wordChipActive: "bg-orange-500/30 border-orange-400 text-orange-100 chip-glow-selected ring-1 ring-orange-400/50",
         wordChipInactive: "bg-[#2D0F06] border-orange-900/60 text-orange-200 hover:border-orange-400 hover:text-white",
         inspectorCard: "bg-[#301007] border-orange-500/40 shadow-xl",
         inspectorHeaderBorder: "border-orange-500/25",
@@ -194,7 +194,7 @@ const getVerseModalThemeClasses = (theme?: string) => {
         wordStripBg: "bg-[#180D05] border border-amber-900/50",
         wordStripLabel: "text-amber-300/80",
         wordStripHint: "text-amber-300",
-        wordChipActive: "bg-amber-500/30 border-amber-400 text-amber-100 shadow ring-1 ring-amber-400/50",
+        wordChipActive: "bg-amber-500/30 border-amber-400 text-amber-100 chip-glow-selected ring-1 ring-amber-400/50",
         wordChipInactive: "bg-[#2E1B0D] border-amber-900/60 text-amber-200 hover:border-amber-400 hover:text-white",
         inspectorCard: "bg-[#2F1B0D] border-amber-500/40 shadow-xl",
         inspectorHeaderBorder: "border-amber-500/25",
@@ -238,7 +238,7 @@ const getVerseModalThemeClasses = (theme?: string) => {
         wordStripBg: "bg-stone-950/60 border border-stone-800/80",
         wordStripLabel: "text-stone-300",
         wordStripHint: "text-amber-400/80",
-        wordChipActive: "bg-amber-500/25 border-amber-400 text-amber-100 shadow-md ring-1 ring-amber-400/50",
+        wordChipActive: "bg-amber-500/25 border-amber-400 text-amber-100 chip-glow-selected ring-1 ring-amber-400/50",
         wordChipInactive: "bg-stone-900/90 border-stone-800 text-stone-300 hover:border-amber-500/40 hover:text-amber-200",
         inspectorCard: "bg-gradient-to-r from-amber-950/40 via-stone-900 to-stone-950 border-amber-500/35 shadow-xl",
         inspectorHeaderBorder: "border-amber-500/20",
@@ -375,11 +375,11 @@ export const VerseModal: React.FC<VerseModalProps> = ({
         <div className={`flex items-center justify-between px-6 py-5 border-b ${tc.headerBg}`}>
           <div className="flex items-center space-x-3">
             <span className={`px-3 py-1 rounded-full text-xs font-semibold ${tc.headerTag}`}>
-              {item.metadata.author || "Scripture"}
+              {item.metadata?.author || (item as any).source || "Scripture"}
             </span>
-            {item.metadata.category && (
+            {(item.metadata?.category || (item as any).category) && (
               <span className={`px-2.5 py-0.5 rounded-full text-xs ${tc.headerCategory}`}>
-                {item.metadata.category}
+                {item.metadata?.category || (item as any).category}
               </span>
             )}
           </div>
@@ -742,7 +742,7 @@ export const VerseModal: React.FC<VerseModalProps> = ({
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
-                  {item.metadata.tags?.map((t) => (
+                  {item.metadata?.tags?.map((t) => (
                     <span
                       key={t}
                       className={`text-xs px-2.5 py-1 rounded-md border ${tc.cardSubItemBg}`}

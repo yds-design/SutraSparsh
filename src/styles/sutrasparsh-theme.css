@@ -353,6 +353,8 @@ body.light-mode,
   background: var(--brand);
   color: var(--text-inverse);
   border-color: var(--brand);
+  box-shadow: var(--chip-glow-active, 0 2px 8px 0 rgba(27, 23, 64, 0.25), 0 0 6px 1px rgba(217, 164, 65, 0.35));
+  transition: box-shadow 180ms cubic-bezier(0.4, 0, 0.2, 1), background var(--t-fast), border-color var(--t-fast);
 }
 
 .ss-badge {
