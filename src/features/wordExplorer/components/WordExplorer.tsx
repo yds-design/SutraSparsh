@@ -55,11 +55,16 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
 }) => {
   const isLight =
     theme === "light" ||
+    theme === "parchment-dawn" ||
     (typeof document !== "undefined" &&
       (document.documentElement.getAttribute("data-theme") === "light" ||
+        document.documentElement.getAttribute("data-theme") === "parchment-dawn" ||
         document.body.getAttribute("data-theme") === "light" ||
+        document.body.getAttribute("data-theme") === "parchment-dawn" ||
         document.body.classList.contains("light-mode") ||
-        document.body.classList.contains("theme-parchment-dawn")));
+        document.body.classList.contains("theme-light") ||
+        document.body.classList.contains("theme-parchment-dawn") ||
+        document.body.classList.contains("parchment-dawn")));
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
 
@@ -77,19 +82,41 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
   return (
     <ModalPortal>
       <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-stone-950/80 backdrop-blur-md transition-opacity">
+        {/* Scoped High-Contrast & No-Scrollbar Rule Overrides */}
+        <style>{`
+          #word-explorer-drawer .font-sanskrit {
+            color: ${isLight ? "#1b1740" : "#fef3c7"} !important;
+          }
+          #word-explorer-drawer .transliteration-text {
+            color: ${isLight ? "#874606" : "#fde68a"} !important;
+          }
+          #word-explorer-drawer h3 {
+            color: ${isLight ? "#874606" : "#fbbf24"} !important;
+          }
+          #word-explorer-drawer * {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+          }
+          #word-explorer-drawer *::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
+        `}</style>
+
         {/* ── Main Container: Responsive Mobile Bottom-Sheet & Tablet/Desktop Elevated Panel ── */}
         <div
           id="word-explorer-drawer"
           role="dialog"
           aria-label="SutraSparsh Word Explorer"
-          className={`relative w-full sm:max-w-3xl lg:max-w-4xl max-h-[92vh] sm:max-h-[85vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slideUp sm:animate-fadeIn ${
+          className={`relative w-full sm:max-w-3xl lg:max-w-4xl max-h-[94vh] sm:max-h-[88vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slideUp sm:animate-fadeIn ${
             isLight
               ? "bg-[#FFFDF8] border-t sm:border border-[#E8DCC2] text-[#261B12]"
               : "bg-stone-900 border-t sm:border border-amber-900/40 dark:border-stone-800 text-stone-100"
           }`}
         >
         {/* Mobile Swipe / Drag Handle */}
-        <div className="sm:hidden flex justify-center pt-2.5 pb-1 cursor-grab">
+        <div className="sm:hidden flex justify-center pt-2 pb-0.5 cursor-grab">
           <div className={`w-12 h-1.5 rounded-full ${isLight ? "bg-[#DECB9F]" : "bg-stone-700/80"}`} />
         </div>
 
@@ -278,16 +305,16 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
           </div>
         )}
 
-        {/* ── Scrollable Body Content ── */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6">
+        {/* ── Scrollable Body Content (Zero Scrollbar, Responsive Density) ── */}
+        <div className="flex-1 overflow-y-auto no-scrollbar scrollbar-none p-3.5 sm:p-5 space-y-4">
           {isLoading ? (
-            <div className="py-16 text-center text-stone-400 space-y-3">
-              <div className="w-8 h-8 rounded-full border-2 border-amber-400 border-t-transparent animate-spin mx-auto" />
+            <div className="py-12 text-center text-stone-400 space-y-2">
+              <div className="w-7 h-7 rounded-full border-2 border-amber-400 border-t-transparent animate-spin mx-auto" />
               <p className="text-xs font-medium">Illuminating Sanskrit linguistic layers...</p>
             </div>
           ) : !word ? (
-            <div className="py-16 text-center text-stone-400 space-y-2">
-              <BookOpen className="w-10 h-10 text-amber-500/40 mx-auto" />
+            <div className="py-12 text-center text-stone-400 space-y-2">
+              <BookOpen className="w-9 h-9 text-amber-500/40 mx-auto" />
               <p className="text-sm font-semibold text-stone-200">No Sanskrit word selected</p>
               <p className="text-xs text-stone-500">
                 Tap any Sanskrit word in any verse, or search the verified lexicon above.
@@ -295,44 +322,48 @@ export const WordExplorer: React.FC<WordExplorerProps> = ({
             </div>
           ) : (
             <>
-              {/* Word Header */}
-              <WordHeader word={word} isLight={isLight} />
-
-              {/* Tab 1: Overview & Meaning */}
+              {/* Tab 1: Overview & Meaning - Responsive 2-Column Split to fit viewport cleanly */}
               {activeTab === "overview" && (
-                <div className="space-y-6">
-                  {/* Decomposition Strip */}
-                  {word.components && word.components.length > 0 && (
-                    <WordBreakdown
-                      components={word.components}
-                      selectedComponentId={selectedComponentId}
-                      onSelectComponent={onSelectComponent}
-                      fullWordSurface={word.surfaceForm}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 items-start">
+                  {/* Left Column: Word Header & Breakdown Decomposition */}
+                  <div className="lg:col-span-6 space-y-3.5">
+                    <WordHeader word={word} isLight={isLight} />
+
+                    {/* Decomposition Strip */}
+                    {word.components && word.components.length > 0 && (
+                      <WordBreakdown
+                        components={word.components}
+                        selectedComponentId={selectedComponentId}
+                        onSelectComponent={onSelectComponent}
+                        fullWordSurface={word.surfaceForm}
+                        isLight={isLight}
+                      />
+                    )}
+
+                    {/* Active Component Card if selected */}
+                    {activeComponent && word.components && word.components.length > 1 && (
+                      <WordComponentView component={activeComponent} isLight={isLight} />
+                    )}
+                  </div>
+
+                  {/* Right Column: Lexical & Contextual Meaning + Sources */}
+                  <div className="lg:col-span-6 space-y-3.5">
+                    <WordMeaning word={word} isLight={isLight} />
+
+                    <WordSources
+                      sources={word.sources}
+                      isVerified={word.isVerified}
+                      unavailableReason={word.unavailableReason}
                       isLight={isLight}
                     />
-                  )}
-
-                  {/* Active Component Card if selected */}
-                  {activeComponent && word.components && word.components.length > 1 && (
-                    <WordComponentView component={activeComponent} isLight={isLight} />
-                  )}
-
-                  {/* General & Contextual Meaning */}
-                  <WordMeaning word={word} isLight={isLight} />
-
-                  {/* Sources Transparency */}
-                  <WordSources
-                    sources={word.sources}
-                    isVerified={word.isVerified}
-                    unavailableReason={word.unavailableReason}
-                    isLight={isLight}
-                  />
+                  </div>
                 </div>
               )}
 
               {/* Tab 2: Components Deep Dive */}
               {activeTab === "components" && word.components && (
-                <div className="space-y-6">
+                <div className="space-y-4">
+                  <WordHeader word={word} isLight={isLight} />
                   <WordBreakdown
                     components={word.components}
                     selectedComponentId={selectedComponentId}

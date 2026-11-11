@@ -179,14 +179,14 @@ export const JourneyView: React.FC = () => {
       {activeSubTab === "funnel" && (
         <div className="space-y-6 animate-fadeIn">
           {/* Key Principle Banner */}
-          <div className="bg-amber-50/90 border border-amber-200/90 p-6 rounded-2xl space-y-2 shadow-sm">
-            <div className="flex items-center space-x-2 text-amber-900 font-bold text-sm">
+          <div className="bg-amber-50/95 border border-amber-300 p-6 rounded-2xl space-y-2 shadow-sm">
+            <div className="flex items-center space-x-2 font-bold text-sm text-amber-900" style={{ color: "#78350f" }}>
               <Sparkles className="w-4 h-4 text-amber-700" />
               <span>The 70:30 Experience Principle</span>
             </div>
-            <p className="text-xs text-slate-800 leading-relaxed font-medium">
+            <p className="text-xs leading-relaxed font-medium text-slate-900" style={{ color: "#0f172a" }}>
               Monetization appears naturally as a consequence of accumulated spiritual value and habit—never as an interruption to the arrival experience.
-              Target KPI Hierarchy: <strong className="text-blue-900 font-bold">Value → Habit → Retention → Monetization → Advocacy</strong>.
+              {" "}Target KPI Hierarchy: <strong className="font-bold text-blue-900" style={{ color: "#1e3a8a" }}>Value → Habit → Retention → Monetization → Advocacy</strong>.
             </p>
           </div>
 
@@ -218,7 +218,7 @@ export const JourneyView: React.FC = () => {
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center space-x-2">
                 <Flame className="w-4 h-4 text-amber-600" />
-                <h3 className="font-bold text-slate-900 text-sm">
+                <h3 className="font-bold text-slate-900 text-sm" style={{ color: "#0f172a" }}>
                   Active Habit Signals & Retention Indicators
                 </h3>
               </div>
@@ -227,21 +227,21 @@ export const JourneyView: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
               <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-4 space-y-2">
-                <span className="text-slate-700 font-semibold block text-xs">7-Day Sādhana Streaks</span>
-                <span className="font-mono text-2xl font-bold text-amber-700 block">1,890</span>
-                <p className="text-slate-600 text-[11px] leading-tight">Seekers returning daily for consecutive week</p>
+                <span className="font-bold block text-xs text-slate-900" style={{ color: "#0f172a" }}>7-Day Sādhana Streaks</span>
+                <span className="font-mono text-2xl font-bold block text-amber-700" style={{ color: "#b45309" }}>1,890</span>
+                <p className="text-[11px] leading-tight font-medium text-slate-700" style={{ color: "#334155" }}>Seekers returning daily for consecutive week</p>
               </div>
 
               <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-4 space-y-2">
-                <span className="text-slate-700 font-semibold block text-xs">Contemplation Notes Logged</span>
-                <span className="font-mono text-2xl font-bold text-blue-700 block">4,620</span>
-                <p className="text-slate-600 text-[11px] leading-tight">Personal reflection entries saved to user journals</p>
+                <span className="font-bold block text-xs text-slate-900" style={{ color: "#0f172a" }}>Contemplation Notes Logged</span>
+                <span className="font-mono text-2xl font-bold block text-blue-700" style={{ color: "#1d4ed8" }}>4,620</span>
+                <p className="text-[11px] leading-tight font-medium text-slate-700" style={{ color: "#334155" }}>Personal reflection entries saved to user journals</p>
               </div>
 
               <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-4 space-y-2">
-                <span className="text-slate-700 font-semibold block text-xs">Natural Upgrade Triggers</span>
-                <span className="font-mono text-2xl font-bold text-emerald-700 block">32.4%</span>
-                <p className="text-slate-600 text-[11px] leading-tight">Monetization conversion after 14 days active practice</p>
+                <span className="font-bold block text-xs text-slate-900" style={{ color: "#0f172a" }}>Natural Upgrade Triggers</span>
+                <span className="font-mono text-2xl font-bold block text-emerald-700" style={{ color: "#047857" }}>32.4%</span>
+                <p className="text-[11px] leading-tight font-medium text-slate-700" style={{ color: "#334155" }}>Monetization conversion after 14 days active practice</p>
               </div>
             </div>
           </div>

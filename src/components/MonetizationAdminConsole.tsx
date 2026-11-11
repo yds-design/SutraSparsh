@@ -20,6 +20,7 @@ import type {
   DonationRecord,
   UserEntitlementsRecord,
 } from "../types/monetization";
+import { adminAuthService } from "../services/admin-auth.service";
 
 export function MonetizationAdminConsole() {
   const [summary, setSummary] = useState<MonetizationAnalyticsSummary | null>(null);
@@ -36,7 +37,12 @@ export function MonetizationAdminConsole() {
   const fetchAnalytics = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/monetization/analytics");
+      const res = await fetch("/api/admin/monetization/analytics", {
+        headers: {
+          "x-admin-key": adminAuthService.getAdminKey(),
+          Authorization: `Bearer ${adminAuthService.getAdminKey()}`,
+        },
+      });
       const data = await res.json();
       if (data.success) {
         setSummary(data.summary);

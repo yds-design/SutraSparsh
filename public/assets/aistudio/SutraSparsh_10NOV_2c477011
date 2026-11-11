@@ -1,0 +1,16 @@
+﻿User Section: 
+Ensure there is no vertical scroll bar, so adjust text height section accordingly.  
+ensure "Important Tithis & Parv Dates • महत्वपूर्ण तिथियाँ एवं पर्व" section is always for current month and for next 30 days.
+
+
+Admin user:
+
+
+Sādhaka Access & Gurudakshina Activation
+1. Fix font color of Sādhaka Sacred Membership - make it contrast to background color
+  
+
+2. Operations & Threat Matrix Console - Production Release & Operations Command - font color of “overview” pill
+  
+
+3. Modify `src/admin/components/AdminHeader.tsx` to add a visually distinct badge next to the user's name showing their current `AdminRole` (e.g., 'SuperAdmin', 'Editor', 'Viewer').

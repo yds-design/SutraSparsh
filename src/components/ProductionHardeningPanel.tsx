@@ -743,7 +743,7 @@ export const ProductionHardeningPanel: React.FC<ProductionHardeningPanelProps> =
               <ShieldCheck className="w-4 h-4" />
               <span>Phase 13 Deployment Pipeline & Phase 14 / M21 Release Candidate</span>
             </div>
-            <h3 className="font-serif-sacred text-2xl font-bold text-slate-900 dark:text-amber-100">
+            <h3 className="font-serif-sacred text-2xl font-bold text-slate-900 dark:text-amber-100" style={{ color: "#0f172a" }}>
               Production Release & Operations Command
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-stone-400 max-w-2xl">
@@ -856,133 +856,133 @@ export const ProductionHardeningPanel: React.FC<ProductionHardeningPanelProps> =
         <div className="flex flex-wrap gap-2 pt-2">
           <button
             onClick={() => setActiveSubView("summary")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
               activeSubView === "summary"
-                ? "bg-amber-500/20 text-amber-200 border border-amber-500/40"
-                : "bg-stone-950/50 text-stone-400 border border-stone-800/60 hover:text-stone-200"
+                ? "bg-amber-100 text-amber-950 font-bold border border-amber-400 dark:bg-amber-500/25 dark:text-amber-200 dark:border-amber-500/40 shadow-xs"
+                : "bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 dark:bg-stone-950/50 dark:text-stone-300 dark:border-stone-800/60 dark:hover:text-stone-100"
             }`}
           >
             Overview
           </button>
           <button
             onClick={() => setActiveSubView("launchGate")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center space-x-1.5 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
               activeSubView === "launchGate"
-                ? "bg-emerald-500/20 text-emerald-200 border border-emerald-500/40"
-                : "bg-stone-950/50 text-stone-400 border border-stone-800/60 hover:text-stone-200"
+                ? "bg-emerald-100 text-emerald-950 font-bold border border-emerald-400 dark:bg-emerald-500/20 dark:text-emerald-200 dark:border-emerald-500/40 shadow-xs"
+                : "bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 dark:bg-stone-950/50 dark:text-stone-300 dark:border-stone-800/60 dark:hover:text-stone-100"
             }`}
           >
-            <Rocket className="w-3.5 h-3.5" />
+            <Rocket className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
             <span>#94 Launch Gate & M22 Deploy</span>
           </button>
           <button
             onClick={() => setActiveSubView("finalSmokeNotes")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center space-x-1.5 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
               activeSubView === "finalSmokeNotes"
-                ? "bg-teal-500/20 text-teal-200 border border-teal-500/40"
-                : "bg-stone-950/50 text-stone-400 border border-stone-800/60 hover:text-stone-200"
+                ? "bg-teal-100 text-teal-950 font-bold border border-teal-400 dark:bg-teal-500/20 dark:text-teal-200 dark:border-teal-500/40 shadow-xs"
+                : "bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 dark:bg-stone-950/50 dark:text-stone-300 dark:border-stone-800/60 dark:hover:text-stone-100"
             }`}
           >
-            <Zap className="w-3.5 h-3.5" />
+            <Zap className="w-3.5 h-3.5 text-teal-700 dark:text-teal-400" />
             <span>M21.7 Smoke & M21.8 Notes</span>
           </button>
           <button
             onClick={() => setActiveSubView("monitoring")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center space-x-1.5 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
               activeSubView === "monitoring"
-                ? "bg-amber-500/20 text-amber-200 border border-amber-500/40"
-                : "bg-stone-950/50 text-stone-400 border border-stone-800/60 hover:text-stone-200"
+                ? "bg-amber-100 text-amber-950 font-bold border border-amber-400 dark:bg-amber-500/20 dark:text-amber-200 dark:border-amber-500/40 shadow-xs"
+                : "bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 dark:bg-stone-950/50 dark:text-stone-300 dark:border-stone-800/60 dark:hover:text-stone-100"
             }`}
           >
-            <Radio className="w-3.5 h-3.5" />
+            <Radio className="w-3.5 h-3.5 text-amber-800 dark:text-amber-400" />
             <span>M22.2 Telemetry & Ingestion</span>
           </button>
           <button
             onClick={() => setActiveSubView("rollbackUserFlow")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center space-x-1.5 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
               activeSubView === "rollbackUserFlow"
-                ? "bg-indigo-500/20 text-indigo-200 border border-indigo-500/40"
-                : "bg-stone-950/50 text-stone-400 border border-stone-800/60 hover:text-stone-200"
+                ? "bg-indigo-100 text-indigo-950 font-bold border border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-200 dark:border-indigo-500/40 shadow-xs"
+                : "bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 dark:bg-stone-950/50 dark:text-stone-300 dark:border-stone-800/60 dark:hover:text-stone-100"
             }`}
           >
-            <Eye className="w-3.5 h-3.5" />
+            <Eye className="w-3.5 h-3.5 text-indigo-700 dark:text-indigo-400" />
             <span>M22.5 Flow & M22.6 Rollback</span>
           </button>
           <button
             onClick={() => setActiveSubView("stabilization")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center space-x-1.5 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
               activeSubView === "stabilization"
-                ? "bg-rose-500/20 text-rose-200 border border-rose-500/40"
-                : "bg-stone-950/50 text-stone-400 border border-stone-800/60 hover:text-stone-200"
+                ? "bg-rose-100 text-rose-950 font-bold border border-rose-400 dark:bg-rose-500/20 dark:text-rose-200 dark:border-rose-500/40 shadow-xs"
+                : "bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 dark:bg-stone-950/50 dark:text-stone-300 dark:border-stone-800/60 dark:hover:text-stone-100"
             }`}
           >
-            <LifeBuoy className="w-3.5 h-3.5" />
+            <LifeBuoy className="w-3.5 h-3.5 text-rose-700 dark:text-rose-400" />
             <span>Phase 15 (M23) Stabilization</span>
           </button>
           <button
             onClick={() => setActiveSubView("pipeline")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center space-x-1.5 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
               activeSubView === "pipeline"
-                ? "bg-emerald-500/20 text-emerald-200 border border-emerald-500/40"
-                : "bg-stone-950/50 text-stone-400 border border-stone-800/60 hover:text-stone-200"
+                ? "bg-emerald-100 text-emerald-950 font-bold border border-emerald-400 dark:bg-emerald-500/20 dark:text-emerald-200 dark:border-emerald-500/40 shadow-xs"
+                : "bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 dark:bg-stone-950/50 dark:text-stone-300 dark:border-stone-800/60 dark:hover:text-stone-100"
             }`}
           >
-            <Workflow className="w-3.5 h-3.5" />
+            <Workflow className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
             <span>#74 Pipeline & #75 Approvals</span>
           </button>
           <button
             onClick={() => setActiveSubView("reconciliation")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center space-x-1.5 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
               activeSubView === "reconciliation"
-                ? "bg-amber-500/20 text-amber-200 border border-amber-500/40"
-                : "bg-stone-950/50 text-stone-400 border border-stone-800/60 hover:text-stone-200"
+                ? "bg-amber-100 text-amber-950 font-bold border border-amber-400 dark:bg-amber-500/20 dark:text-amber-200 dark:border-amber-500/40 shadow-xs"
+                : "bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 dark:bg-stone-950/50 dark:text-stone-300 dark:border-stone-800/60 dark:hover:text-stone-100"
             }`}
           >
-            <Database className="w-3.5 h-3.5" />
+            <Database className="w-3.5 h-3.5 text-amber-800 dark:text-amber-400" />
             <span>#76 / #77 Data Reconciliation</span>
           </button>
           <button
             onClick={() => setActiveSubView("smoke")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center space-x-1.5 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
               activeSubView === "smoke"
-                ? "bg-teal-500/20 text-teal-200 border border-teal-500/40"
-                : "bg-stone-950/50 text-stone-400 border border-stone-800/60 hover:text-stone-200"
+                ? "bg-teal-100 text-teal-950 font-bold border border-teal-400 dark:bg-teal-500/20 dark:text-teal-200 dark:border-teal-500/40 shadow-xs"
+                : "bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 dark:bg-stone-950/50 dark:text-stone-300 dark:border-stone-800/60 dark:hover:text-stone-100"
             }`}
           >
-            <Zap className="w-3.5 h-3.5" />
+            <Zap className="w-3.5 h-3.5 text-teal-700 dark:text-teal-400" />
             <span>#78 (M20.4) Smoke Tests</span>
           </button>
           <button
             onClick={() => setActiveSubView("releaseCandidate")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center space-x-1.5 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
               activeSubView === "releaseCandidate"
-                ? "bg-amber-500/20 text-amber-200 border border-amber-500/40"
-                : "bg-stone-950/50 text-stone-400 border border-stone-800/60 hover:text-stone-200"
+                ? "bg-amber-100 text-amber-950 font-bold border border-amber-400 dark:bg-amber-500/20 dark:text-amber-200 dark:border-amber-500/40 shadow-xs"
+                : "bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 dark:bg-stone-950/50 dark:text-stone-300 dark:border-stone-800/60 dark:hover:text-stone-100"
             }`}
           >
-            <Award className="w-3.5 h-3.5" />
+            <Award className="w-3.5 h-3.5 text-amber-800 dark:text-amber-400" />
             <span>Phase 14 / M21 RC</span>
           </button>
           <button
             onClick={() => setActiveSubView("releaseGate")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center space-x-1.5 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
               activeSubView === "releaseGate"
-                ? "bg-emerald-500/20 text-emerald-200 border border-emerald-500/40"
-                : "bg-stone-950/50 text-stone-400 border border-stone-800/60 hover:text-stone-200"
+                ? "bg-emerald-100 text-emerald-950 font-bold border border-emerald-400 dark:bg-emerald-500/20 dark:text-emerald-200 dark:border-emerald-500/40 shadow-xs"
+                : "bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 dark:bg-stone-950/50 dark:text-stone-300 dark:border-stone-800/60 dark:hover:text-stone-100"
             }`}
           >
-            <CheckCircle2 className="w-3.5 h-3.5" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
             <span>Phase 12 Gates</span>
           </button>
           <button
             onClick={() => setActiveSubView("deployment")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center space-x-1.5 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
               activeSubView === "deployment"
-                ? "bg-stone-800 text-stone-200"
-                : "bg-stone-950/50 text-stone-400 border border-stone-800/60 hover:text-stone-200"
+                ? "bg-blue-100 text-blue-950 font-bold border border-blue-400 dark:bg-blue-500/20 dark:text-blue-200 dark:border-blue-500/40 shadow-xs"
+                : "bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 dark:bg-stone-950/50 dark:text-stone-300 dark:border-stone-800/60 dark:hover:text-stone-100"
             }`}
           >
-            <Globe className="w-3.5 h-3.5" />
+            <Globe className="w-3.5 h-3.5 text-blue-700 dark:text-blue-400" />
             <span>Environments</span>
           </button>
         </div>
@@ -1568,7 +1568,7 @@ export const ProductionHardeningPanel: React.FC<ProductionHardeningPanelProps> =
               <div className="flex items-center space-x-3">
                 <Award className="w-6 h-6 text-amber-700 dark:text-amber-400 shrink-0" />
                 <div>
-                  <h4 className="font-bold text-slate-900 dark:text-amber-100 text-base">
+                  <h4 className="font-bold text-slate-900 dark:text-amber-100 text-base" style={{ color: "#0f172a" }}>
                     Phase 14: Release Candidate Certification (M21.1 – M21.6)
                   </h4>
                   <p className="text-xs text-slate-600 dark:text-stone-400">
@@ -1668,15 +1668,15 @@ export const ProductionHardeningPanel: React.FC<ProductionHardeningPanelProps> =
               <div className="space-y-2 pt-2">
                 <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-stone-950/60 rounded-xl border border-slate-200 dark:border-stone-800 text-xs">
                   <span className="text-slate-700 dark:text-stone-300">Application & Backend Sign-off</span>
-                  <span className="text-emerald-400 font-medium">Approved</span>
+                  <span className="text-emerald-600 font-medium">Approved</span>
                 </div>
-                <div className="flex items-center justify-between p-2.5 bg-stone-950/60 rounded-xl border border-stone-800 text-xs">
-                  <span className="text-stone-300">Database & Security Rules</span>
-                  <span className="text-emerald-400 font-medium">Approved</span>
+                <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-stone-950/60 rounded-xl border border-slate-200 dark:border-stone-800 text-xs">
+                  <span className="text-slate-700 dark:text-stone-300">Database & Security Rules</span>
+                  <span className="text-emerald-600 font-medium">Approved</span>
                 </div>
-                <div className="flex items-center justify-between p-2.5 bg-stone-950/60 rounded-xl border border-stone-800 text-xs">
-                  <span className="text-stone-300">Sacred Corpus & Security Review</span>
-                  <span className="text-emerald-400 font-medium">Approved</span>
+                <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-stone-950/60 rounded-xl border border-slate-200 dark:border-stone-800 text-xs">
+                  <span className="text-slate-700 dark:text-stone-300">Sacred Corpus & Security Review</span>
+                  <span className="text-emerald-600 font-medium">Approved</span>
                 </div>
               </div>
             </div>

@@ -511,7 +511,9 @@
   color: var(--ui-text-primary);
 }
 
-.admin-layout p, .admin-layout span, .admin-layout div {
+.admin-layout p:not([class*="text-"]),
+.admin-layout span:not([class*="text-"]):not([class*="font-"]),
+.admin-layout div:not([class*="text-"]) {
   color: inherit;
 }
 

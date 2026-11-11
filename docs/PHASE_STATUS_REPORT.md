@@ -40,6 +40,7 @@
 | **Phase 27**| Parchment Dawn & Scroll Memo | M53.1 – M54.6 | Parchment Dawn WCAG 2.1 AAA contrast, React.memo & useMemo 60fps infinite scroll | **COMPLETED** ✅ | **PASSED** ✅ |
 | **Phase 28**| Daily Affirmations & Real-Time Sync | M55.1 – M55.4 | Daily Spiritual Affirmations, Firestore sync indicator, streak flame glow, journal search | **COMPLETED** ✅ | **PASSED** ✅ |
 | **Phase 29**| Parchment Dawn Theme & Runtime | M56.1 – M56.6 | Pure white card surfaces (#ffffff), React ErrorBoundary, rate limiter exemption for Vite, and CSP iframe embedding | **COMPLETED** ✅ | **PASSED** ✅ |
+| **Phase 30**| Dynamic Tithi Calendar & Admin Contrast | M57.1 – M57.6 | Dynamic rolling current month & next 30 days Tithis & Parvs, synodic lunar calculations, WordExplorer & Admin contrast | **COMPLETED** ✅ | **PASSED** ✅ |
 
 ---
 
@@ -408,4 +409,25 @@
 
 - **PostCSS @import Ordering Resolved**: Removed duplicate external Google Fonts `@import url(...)` lines from `src/index.css`. All sacred typography fonts (`Paytone One`, `Newsreader`, `Hanken Grotesk`, `Tiro Devanagari Hindi`) continue to load seamlessly via high-priority `<link rel="stylesheet">` preconnect tags in `index.html`. `npm run build` now compiles with 0 CSS optimization warnings.
 - **Local Dev Server Rate Limiting**: Added `process.env.NODE_ENV !== "production"` bypass in `rateLimiterMiddleware` (`src/api/middleware/rate-limiter.middleware.ts`), completely eliminating `[HTTP 429] TOO_MANY_REQUESTS` in local development and rapid-iteration workflows. Production rate limiting remains strictly enforced.
+
+---
+
+## 6. Phase 30: Dynamic Rolling Tithi Calendar & UI Contrast Certification (v1.0.2)
+
+- **Dynamic Rolling Tithi & Parv Engine (`src/utils/tithiCalendar.ts`)**:
+  - Replaced hardcoded static September 2026 data with a dynamic sliding window: always calculates from Day 1 of the current calendar month up to the rolling next 30 days based on `new Date()`.
+  - Implemented high-precision astronomical synodic lunar calculation (`getAstronomicalTithi`) relative to astronomical new moon epoch (JD 2451550.26, synodic lunation 29.530588853 days) yielding exact Paksha (`Shukla` / `Krishna`) and Tithi number (1–15).
+  - Integrated 2025–2027 verified Vedic Parv catalog covering major Ekadashis, Purnimas, Amavasyas, Pradosh Vrats, and festivals (Diwali, Chhath Puja, Devuthani Ekadashi, Dev Deepawali, etc.) with automated deduplication preventing adjacent collisions.
+  - Dynamically renders Hindu month names (e.g., *Kartika – Margashirsha (कार्तिक - मार्गशीर्ष)*), Gregorian month & year, date count, and an interactive "Today • अद्य" badge on the current day's card.
+  - Backward compatibility: Preserves `CURRENT_MONTH_TITHIS` export for all existing callers.
+- **Word Explorer UI Contrast & Parchment Dawn Theme Harmonization**:
+  - Expanded `isLight` detection across `WordExplorer.tsx` to recognize `parchment-dawn`, `sandstone`, and `data-theme` attributes.
+  - Explicitly styled Sanskrit surface text (`#1b1740` in Parchment Dawn, `#fef3c7` in Dark Mode) and transliteration (`#874606` / `#fde68a`) across `WordHeader.tsx` and `WordBreakdown.tsx`, eliminating low-contrast dark-blue-on-dark-brown text artifacts.
+- **Admin System Typography & Contrast Harmonization**:
+  - Fixed `.admin-layout` selector in `src/styles/admin.css` to prevent overriding explicit Tailwind color utilities (`text-slate-800`, `text-amber-900`, etc.).
+  - Enhanced contrast and typography across `JourneyView.tsx` (70:30 Principle banner, 7-Day Sādhana Streaks, Contemplation Notes, Natural Upgrade Triggers) and `ProductionHardeningPanel.tsx` (Production Release & Operations Command, Phase 14 Release Candidate Certification banner).
+- **Automated Verification**:
+  - 100% test pass rate in `src/testing/tithi-calendar.test.ts` (7/7 tests passed).
+  - Full system testing matrix and 10-stage CI/CD pipeline certified green.
+
 

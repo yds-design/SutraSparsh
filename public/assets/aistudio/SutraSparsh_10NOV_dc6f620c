@@ -1,0 +1,38 @@
+﻿User Section: 
+Ensure there is no vertical scroll bar, so adjust text height section accordingly.  
+ 
+
+
+Admin user:
+
+
+Sādhaka Access & Gurudakshina Activation
+1. Fix font color of Sādhaka Sacred Membership - make it contrast to background color
+  
+
+2. Operations & Threat Matrix Console - Production Release & Operations Command - font color of “overview” pill
+  
+
+3. Modify `src/admin/components/AdminHeader.tsx` to add a visually distinct badge next to the user's name showing their current `AdminRole` (e.g., 'SuperAdmin', 'Editor', 'Viewer').
+
+
+Console error message
+PS C:\Users\Vishal\Projects\SutraSparsh> npm run dev
+
+
+> sutrasparsh@1.0.0 dev
+> tsx server.ts
+
+
+
+
+================================
+ SutraSparsh Full-Stack Platform
+================================
+Server listening on http://0.0.0.0:3000
+
+
+[HTTP 401] UNAUTHORIZED: Invalid or missing Admin API Key. Please provide 'x-admin-key' header or 'Authorization: Bearer <key>'.
+[HTTP 401] UNAUTHORIZED: Invalid or missing Admin API Key. Please provide 'x-admin-key' header or 'Authorization: Bearer <key>'.
+[HTTP 401] UNAUTHORIZED: Invalid or missing Admin API Key. Please provide 'x-admin-key' header or 'Authorization: Bearer <key>'.
+[HTTP 401] UNAUTHORIZED: Invalid or missing Admin API Key. Please provide 'x-admin-key' header or 'Authorization: Bearer <key>'.

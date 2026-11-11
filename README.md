@@ -90,6 +90,12 @@ SutraSparsh is a digital sanctuary engineered for the study, contemplation, and 
 - **PWA Ready**: Web App Manifest (`manifest.webmanifest`), standalone display mode, home screen installability, and offline caching.
 - **Complete SEO**: Dynamic head metadata injection, canonical URLs, multilingual hreflang (`en`, `sa`, `hi`), OpenGraph social cards, Twitter cards, Schema.org JSON-LD `@graph`, `/robots.txt`, and `/sitemap.xml`.
 
+### 12. Dynamic Rolling Tithi Calendar & Panchang (महत्वपूर्ण तिथियाँ एवं पर्व)
+- **Dynamic 30-Day Sliding Window**: Computes all sacred tithis from day 1 of the current calendar month and rolls forward through the next 30 days based on `new Date()`.
+- **Astronomical Synodic Moon Calculations**: Deterministic calculation of lunar phase, Paksha (*Shukla* / *Krishna*), and Tithi index ($1$ to $15$) using astronomical epoch JD $2451550.26$.
+- **Vedic Festival Catalog (2025–2027)**: Complete coverage of Ekadashis, Purnimas, Amavasyas, Pradosh Vrats, and major festivals (Diwali, Chhath Puja, Devuthani, Dev Deepawali).
+- **Interactive Reminders & Today Badge**: Sound-engine integrated bell reminder with persistent storage, and an animated "Today • अद्य" indicator for the current date.
+
 ---
 
 ## 🏗️ Technical Architecture

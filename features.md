@@ -25,6 +25,7 @@
    - [2.13 Consolidated Seeker Journey, Community Board & 15-Min Milestone Engine](#213-consolidated-seeker-journey-community-board--15-min-milestone-engine)
    - [2.14 Bhashini ULCA Indic-TTS & Voice Intelligence Module](#214-bhashini-ulca-indic-tts--voice-intelligence-module)
    - [2.15 Parchment Dawn WCAG 2.1 AAA Design Constitution & Infinite Scroll Optimization](#215-parchment-dawn-wcag-21-aaa-design-constitution--infinite-scroll-optimization)
+   - [2.16 Dynamic Astronomical & Canonical Tithi & Parv Engine](#216-dynamic-astronomical--canonical-tithi--parv-engine-महत्वपूर्ण-तिथियाँ-एवं-पर्व)
 3. [Minor Features & Supporting Capabilities](#3-minor-features--supporting-capabilities)
    - [3.1 Sacred UI & Visual Ambience](#31-sacred-ui--visual-ambience)
    - [3.2 Audio & Acoustic Nuances](#32-audio--acoustic-nuances)
@@ -313,6 +314,27 @@ The application follows an architectural separation between:
 - **High-Performance Infinite Scroll Optimization**:
   - **`React.memo` Custom Equality Comparator**: Wrapped `VerseCard` in an equality comparator evaluating verse identifier, text content, active playback state, bookmark state, and current theme token to prevent redundant re-renders.
   - **`useMemo` Derived Collections**: Pre-computed `bookmarkedIdsSet` and memoized verse card elements in `src/App.tsx`, maintaining a rock-solid 60 FPS frame rate during high-velocity infinite scrolling across thousands of verses.
+
+---
+
+### 2.16 Dynamic Astronomical & Canonical Tithi & Parv Engine (महत्वपूर्ण तिथियाँ एवं पर्व)
+*Milestones: Phase 30, M57.1 – M57.6, Release v1.9.0*
+
+- **Dynamic Rolling Current Month & Next 30 Days Window**:
+  - Automatically calculates sacred tithis and festivals from Day 1 of the current calendar month up to the rolling next 30 days based on `new Date()`.
+  - Replaces static dated lists with a live, evergreen Vedic panchang timeline adapting across every calendar month and year.
+- **Astronomical Synodic Lunar Calculations**:
+  - Implemented `getAstronomicalTithi` based on astronomical synodic lunation ($29.530588853$ days) relative to astronomical new moon epoch (JD $2451550.26$).
+  - Accurately computes exact lunar phase ($0.00$ to $1.00$), Paksha (*Shukla* / *Krishna*), and Tithi number ($1$ to $15$).
+- **Curated Multi-Year Verified Vedic Parv Catalog**:
+  - Covers authentic dates for 2025–2027 including *Rama Ekadashi*, *Dhanteras*, *Naraka Chaturdashi*, *Diwali*, *Govardhan Puja*, *Bhai Dooj*, *Chhath Puja*, *Gopashtami*, *Devuthani Ekadashi (Prabodhini)*, *Tulsi Vivah*, *Vaikuntha Chaturdashi*, *Dev Deepawali / Kartika Purnima*, and all Ekadashi, Purnima, Amavasya, and Pradosh dates.
+  - Intelligent deduplication algorithm preventing adjacent collision between catalog items and algorithmic tithi calculations.
+- **Interactive Tithi Experience**:
+  - **Filter Tabs**: Instant filtering by *All Tithis*, *Ekadashi Vrat (एकादशी)*, *Purnima & Amavasya*, and *Utsav & Parv (पर्व)*.
+  - **Dynamic Subtitle & Count**: Displays current Hindu month pair (e.g. *Kartika – Margashirsha (कार्तिक - मार्गशीर्ष)*), Gregorian month & year, and total active dates.
+  - **"Today • अद्य" Highlight Indicator**: Animated badge highlighting any tithi matching today's date.
+  - **Sacred Audio Reminders**: Interactive reminder bell with temple chime playback (`soundEngine.playTempleBell(440)`) and persistent `localStorage` storage.
+  - **Collapsible Drawer with Upcoming Preview**: Collapsible header with preview ticker showing next upcoming tithis.
 
 ---
 

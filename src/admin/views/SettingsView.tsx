@@ -145,30 +145,30 @@ export const SettingsView: React.FC = () => {
           <div
             className={`p-5 rounded-2xl border transition-all ${
               isSadhakaEnabled
-                ? "bg-amber-950/20 border-amber-500/50 shadow-md"
-                : "bg-stone-950/60 border-stone-800/80 opacity-90"
+                ? "bg-amber-50/90 border-amber-300 shadow-sm"
+                : "bg-slate-50 border-slate-200"
             }`}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-1.5 flex-1">
                 <div className="flex items-center space-x-2">
-                  <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center">
                     <Zap className="w-4 h-4 fill-current" />
                   </div>
-                  <span className="text-sm font-bold text-stone-100">
+                  <span className="text-sm font-bold text-slate-900" style={{ color: "#0f172a" }}>
                     Sādhaka Sacred Membership
                   </span>
                 </div>
-                <p className="text-[11px] text-stone-400 leading-relaxed">
+                <p className="text-[11px] text-slate-600 leading-relaxed font-medium" style={{ color: "#334155" }}>
                   Controls visibility of Sādhaka header button, quick access portal 8, membership upgrade cards in More view, and pricing modal triggers across all devices.
                 </p>
                 <div className="pt-2 flex items-center space-x-2">
-                  <span className="text-[10px] font-mono text-stone-500">Live Status:</span>
+                  <span className="text-[10px] font-mono text-slate-500">Live Status:</span>
                   <span
                     className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
                       isSadhakaEnabled
-                        ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
-                        : "bg-stone-900 text-stone-400 border border-stone-800"
+                        ? "bg-emerald-50 text-emerald-800 border border-emerald-300"
+                        : "bg-slate-100 text-slate-700 border border-slate-300"
                     }`}
                   >
                     {isSadhakaEnabled ? "ENABLED (Phase 2 Active)" : "DISABLED (Phase 1 Default)"}
@@ -182,15 +182,15 @@ export const SettingsView: React.FC = () => {
                 disabled={!canEdit}
                 className={`p-1.5 rounded-xl transition-all ${
                   isSadhakaEnabled
-                    ? "text-emerald-400 hover:text-emerald-300"
-                    : "text-stone-600 hover:text-stone-400"
+                    ? "text-emerald-600 hover:text-emerald-700"
+                    : "text-slate-400 hover:text-slate-600"
                 } ${!canEdit ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 title={isSadhakaEnabled ? "Click to Disable Sādhaka Access" : "Click to Activate Sādhaka Access"}
               >
                 {isSadhakaEnabled ? (
-                  <ToggleRight className="w-9 h-9 text-emerald-400" />
+                  <ToggleRight className="w-9 h-9 text-emerald-600" />
                 ) : (
-                  <ToggleLeft className="w-9 h-9 text-stone-600" />
+                  <ToggleLeft className="w-9 h-9 text-slate-400" />
                 )}
               </button>
             </div>
@@ -200,30 +200,30 @@ export const SettingsView: React.FC = () => {
           <div
             className={`p-5 rounded-2xl border transition-all ${
               isGurudakshinaEnabled
-                ? "bg-rose-950/20 border-rose-500/50 shadow-md"
-                : "bg-stone-950/60 border-stone-800/80 opacity-90"
+                ? "bg-rose-50/90 border-rose-300 shadow-sm"
+                : "bg-slate-50 border-slate-200"
             }`}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-1.5 flex-1">
                 <div className="flex items-center space-x-2">
-                  <div className="w-7 h-7 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-lg bg-rose-500/20 text-rose-700 flex items-center justify-center">
                     <Heart className="w-4 h-4 fill-current" />
                   </div>
-                  <span className="text-sm font-bold text-stone-100">
+                  <span className="text-sm font-bold text-slate-900" style={{ color: "#0f172a" }}>
                     Sacred Gurudakshina & Seva (80G)
                   </span>
                 </div>
-                <p className="text-[11px] text-stone-400 leading-relaxed">
+                <p className="text-[11px] text-slate-600 leading-relaxed font-medium" style={{ color: "#334155" }}>
                   Controls visibility of Gurudakshina heart icon in header, quick access portal 7, Seva card in More view, and donation modal triggers across all devices.
                 </p>
                 <div className="pt-2 flex items-center space-x-2">
-                  <span className="text-[10px] font-mono text-stone-500">Live Status:</span>
+                  <span className="text-[10px] font-mono text-slate-500">Live Status:</span>
                   <span
                     className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
                       isGurudakshinaEnabled
-                        ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
-                        : "bg-stone-900 text-stone-400 border border-stone-800"
+                        ? "bg-emerald-50 text-emerald-800 border border-emerald-300"
+                        : "bg-slate-100 text-slate-700 border border-slate-300"
                     }`}
                   >
                     {isGurudakshinaEnabled ? "ENABLED (Phase 2 Active)" : "DISABLED (Phase 1 Default)"}

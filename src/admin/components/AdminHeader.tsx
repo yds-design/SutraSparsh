@@ -39,6 +39,43 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const currentUser = adminAuthService.getCurrentUser();
 
+  const getRoleBadge = (role: AdminRole) => {
+    switch (role) {
+      case "SUPER_ADMIN":
+        return {
+          label: "SuperAdmin",
+          classes: "bg-purple-100 text-purple-900 border-purple-300 shadow-xs font-bold",
+          dot: "bg-purple-600",
+        };
+      case "CONTENT_ADMIN":
+        return {
+          label: "Editor",
+          classes: "bg-blue-100 text-blue-900 border-blue-300 shadow-xs font-bold",
+          dot: "bg-blue-600",
+        };
+      case "OPERATIONS_ADMIN":
+        return {
+          label: "OpsAdmin",
+          classes: "bg-teal-100 text-teal-900 border-teal-300 shadow-xs font-bold",
+          dot: "bg-teal-600",
+        };
+      case "MONETIZATION_ADMIN":
+        return {
+          label: "MonetizationAdmin",
+          classes: "bg-amber-100 text-amber-950 border-amber-300 shadow-xs font-bold",
+          dot: "bg-amber-600",
+        };
+      default:
+        return {
+          label: "Viewer",
+          classes: "bg-slate-100 text-slate-800 border-slate-300 shadow-xs font-bold",
+          dot: "bg-slate-500",
+        };
+    }
+  };
+
+  const roleBadge = getRoleBadge(currentUser.role);
+
   const handleSelectRole = (role: AdminRole) => {
     adminAuthService.switchAdminRole(role);
     setRoleMenuOpen(false);
@@ -61,8 +98,22 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         </div>
       </div>
 
-      {/* Right Controls: Role Persona Switcher, Audit Trail Trigger, User App Switcher */}
+      {/* Right Controls: User Name & Role Badge, Role Persona Switcher, Audit Trail Trigger, User App Switcher */}
       <div className="flex items-center space-x-2.5">
+        {/* User Identity & Current AdminRole Badge */}
+        <div className="flex items-center space-x-2 px-2 py-1 rounded-xl bg-slate-50 border border-slate-200">
+          <span className="text-xs font-bold text-slate-800 hidden sm:inline">
+            {currentUser.name}
+          </span>
+          <span
+            className={`inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs border ${roleBadge.classes}`}
+            title={`Current Admin Role: ${currentUser.role}`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${roleBadge.dot}`} />
+            <span>{roleBadge.label}</span>
+          </span>
+        </div>
+
         {/* Quick Search Button */}
         <button
           type="button"
@@ -71,7 +122,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           title="Quick Search Command Palette (Ctrl+K)"
         >
           <Search className="w-3.5 h-3.5 text-slate-500" />
-          <span className="text-xs">Command Palette</span>
+          <span className="text-xs hidden md:inline">Command Palette</span>
           <kbd className="text-[10px] bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-slate-600 font-mono">⌘K</kbd>
         </button>
 
@@ -83,8 +134,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             className="ui-button-secondary py-1.5 px-2.5 text-xs flex items-center space-x-1.5"
           >
             <Shield className="w-3.5 h-3.5 text-blue-600" />
-            <span className="font-semibold text-slate-800 hidden sm:inline">{currentUser.role.replace("_", " ")}</span>
-            <span className="sm:hidden text-xs font-bold text-blue-600">{currentUser.role.split("_")[0]}</span>
+            <span className="font-semibold text-slate-800 hidden sm:inline">Switch Role</span>
             <ChevronDown className="w-3 h-3 text-slate-400" />
           </button>
 

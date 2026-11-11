@@ -23,12 +23,12 @@ export const WordHeader: React.FC<WordHeaderProps> = ({ word, isLight = false })
   };
 
   return (
-    <div className={`space-y-3 pb-5 border-b ${isLight ? "border-[#E8DCC2]" : "border-amber-900/20 dark:border-stone-800"}`}>
+    <div className={`space-y-2.5 pb-3 border-b ${isLight ? "border-[#E8DCC2]" : "border-amber-900/20 dark:border-stone-800"}`}>
       {/* Top badges */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-wrap items-center justify-between gap-1.5">
+        <div className="flex items-center space-x-1.5">
           {word.isVerified ? (
-            <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium ${
+            <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
               isLight
                 ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
                 : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
@@ -37,7 +37,7 @@ export const WordHeader: React.FC<WordHeaderProps> = ({ word, isLight = false })
               <span>Verified Linguistic Analysis</span>
             </span>
           ) : (
-            <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium ${
+            <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
               isLight
                 ? "bg-amber-50 text-amber-800 border border-amber-200"
                 : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
@@ -61,7 +61,7 @@ export const WordHeader: React.FC<WordHeaderProps> = ({ word, isLight = false })
 
         <button
           onClick={handleCopy}
-          className={`text-[11px] px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+          className={`text-[10px] px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
             isLight
               ? "bg-[#F5EEDB] hover:bg-[#E8DCC2] text-[#261B12] border border-[#DECB9F]"
               : "bg-stone-800/80 hover:bg-stone-700 text-stone-300"
@@ -73,37 +73,43 @@ export const WordHeader: React.FC<WordHeaderProps> = ({ word, isLight = false })
       </div>
 
       {/* Main Sanskrit Surface Form */}
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h1 className={`font-sanskrit text-3xl sm:text-4xl font-bold tracking-wide ${
-            isLight ? "text-[#261B12]" : "text-amber-100"
-          }`}>
+          <h1
+            className={`font-sanskrit text-2xl sm:text-3xl font-bold tracking-wide ${
+              isLight ? "text-[#1b1740]" : "text-amber-100"
+            }`}
+            style={{ color: isLight ? "#1b1740" : "#fef3c7" }}
+          >
             {word.surfaceForm}
           </h1>
-          <p className={`font-serif italic text-base sm:text-lg mt-1 ${
-            isLight ? "text-[#874606]" : "text-amber-300/90"
-          }`}>
+          <p
+            className={`transliteration-text font-serif italic text-sm sm:text-base mt-0.5 ${
+              isLight ? "text-[#874606]" : "text-amber-300/90"
+            }`}
+            style={{ color: isLight ? "#874606" : "#fde68a" }}
+          >
             {word.transliteration}
           </p>
         </div>
 
         <button
           onClick={handlePronounce}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer ${
+          className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer ${
             isLight
               ? "bg-[#FFF7E6] hover:bg-[#FBEFD3] border border-[#D8A856] text-[#783C00]"
               : "bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300"
           }`}
           title="Listen to resonant pronunciation"
         >
-          <Volume2 className={`w-4 h-4 ${isLight ? "text-[#D96500]" : "text-amber-400"}`} />
+          <Volume2 className={`w-3.5 h-3.5 ${isLight ? "text-[#D96500]" : "text-amber-400"}`} />
           <span>Chant Form</span>
         </button>
       </div>
 
       {/* Root quick tag if available */}
       {word.root && (
-        <div className={`flex items-center space-x-2 text-xs rounded-xl px-3 py-1.5 w-fit ${
+        <div className={`flex items-center space-x-1.5 text-[11px] rounded-lg px-2.5 py-1 w-fit ${
           isLight
             ? "bg-[#FBF8EE] border border-[#E8DCC2] text-[#261B12]"
             : "text-stone-300 bg-stone-900/60 border border-stone-800"
@@ -111,8 +117,6 @@ export const WordHeader: React.FC<WordHeaderProps> = ({ word, isLight = false })
           <span className={`font-semibold font-sanskrit ${isLight ? "text-[#874606]" : "text-amber-400"}`}>धातु (Root):</span>
           <span className={`font-bold ${isLight ? "text-[#261B12]" : "text-amber-200"}`}>{word.root.form}</span>
           <span className={`italic ${isLight ? "text-[#6E5C4E]" : "text-stone-400"}`}>({word.root.transliteration})</span>
-          <span className={isLight ? "text-[#DECB9F]" : "text-stone-500"}>•</span>
-          <span className={isLight ? "text-[#3D3126]" : "text-stone-300"}>{word.root.meaning}</span>
         </div>
       )}
     </div>

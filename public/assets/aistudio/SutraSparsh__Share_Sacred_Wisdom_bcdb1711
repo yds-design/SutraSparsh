@@ -1,0 +1,83 @@
+﻿TASK: Simplify the "Share Sacred Wisdom" modal on sutrasparsh.com into a single-screen "Share this shloka" dialog.
+
+
+CONTEXT
+The current modal has two tabs ("Quick Share & Channels" and "Wisdom Card Generator"), six channel buttons, an optional personal-note field, a long scrolling body, and a footer with "Done". It is overcomplicated. Merge everything into ONE view with no tabs and no scrolling on desktop.
+
+
+STEP 0 - DISCOVER
+Find the existing share modal and its related code first. Detect the stack, styling approach, and design tokens (colors, fonts, radii) already used in the project, and reuse them. Keep the existing card-rendering logic (the code that produces the shloka image). Only change the UI around it. Do not rewrite the rendering engine.
+
+
+LAYOUT
+- Dialog max-width about 560px, centered. On mobile (<640px) render it as a bottom sheet with the sections stacked.
+- Header: title "Share this shloka", subtitle = shloka reference (e.g. "Isha Upanishad, Mantra 1"), close (X) button top right. Remove the old two-part subtitle and the footer ("Preserves exact verse canonical deep-link" and "Done").
+- Body: two columns on desktop (preview left, controls right), stacked on mobile.
+  - Left: live card preview in a neutral surface container, fixed height about 260px, card centered and scaled to fit.
+  - Right (top to bottom): Format control, Theme control, Action buttons.
+
+
+CONTROLS
+1. Format: a 3-option segmented control: Story (default), Square, Banner.
+   - Story = 9:16 (export 1080x1920), Square = 1:1 (1080x1080), Banner = 16:9 (export 1200x630, keep the existing export size).
+   - Do NOT show pixel dimensions or platform hints in the UI. Optionally show them as a tooltip or title attribute.
+   - Changing the format updates the preview aspect ratio immediately.
+2. Theme: a row of circular color swatches (about 28px) with a visible selected ring, plus a label above showing the selected theme's name, e.g. "Theme: Sacred Ivory".
+   - Keep at most 4-5 themes: Sacred Ivory, Surya Saffron, Amethyst Twilight, Deep Stillness (plus one more only if one already exists and is essential).
+   - Each swatch needs an aria-label with the theme name.
+   - Changing the theme updates the preview immediately.
+   - Default theme: the one matching the user's current app theme if that logic already exists. Drop the "Synced with App" badge from the UI but keep the behavior.
+3. Actions (vertical stack):
+   - "Share image" (primary, full width). On supported browsers use navigator.canShare({files}) and navigator.share({ files: [cardPng], text: "<verse reference>", url: canonicalShlokaUrl }). Fallback when file sharing is unsupported (most desktops): download the image and copy the link, then show a short toast, "Image saved. Link copied."
+   - "Save" (secondary, half width): downloads the PNG at the export resolution for the selected format.
+   - "Copy link" (secondary, half width): copies the canonical shloka deep link (keep the existing URL builder that preserves the exact verse). On success, change the label to "Copied" for about 2 seconds.
+
+
+REMOVE
+- The two tabs and the "9:16 STORY" badge
+- The "Add a personal thought (optional)" field
+- The channel grid (WhatsApp, Telegram, X, Facebook, Email, System Share) and the "SELECT CHANNEL" label
+- The separate "Copy Exact Shloka Link" bar
+- The footer text and "Done" button
+- The "Synced with App" badge, the "Default: Story (9:16)" hint, and the pixel-dimension subtext
+- The horizontally scrolling theme pill list
+
+
+STYLE
+- Match the existing sutraSparsh palette and fonts (warm ivory/saffron look). Use neutral surfaces for buttons and controls, with ONE primary button ("Share image"). No tinted per-channel colors.
+- Sentence-case labels. Flat design, with a 0.5-1px hairline border and no heavy shadows.
+- Respect dark mode if the site supports it. The card preview colors come from the theme, not the mode.
+
+
+BEHAVIOR AND PERSISTENCE
+- Remember the last chosen format and theme in localStorage (wrapped in try/catch) and restore them on open.
+- Generate the PNG lazily, on Share or Save, not on every control change. The preview itself can be a lightweight scaled render.
+- Show a brief loading state on the Share and Save buttons while the image generates.
+- If generation fails, show an inline error: "Couldn't create the image. Try again." Keep Copy link working regardless.
+- Keep the canonical deep link on every share, either as the share url/text or in the clipboard.
+
+
+ACCESSIBILITY
+- role="dialog" with aria-modal, labelled by the title. Focus is trapped inside, Esc closes it, and focus returns to the trigger on close.
+- The segmented control uses radio semantics (role="radiogroup" with arrow-key navigation). The swatches do the same.
+- Icon-only buttons need aria-labels. Every control must be keyboard-operable.
+
+
+ACCEPTANCE CRITERIA
+- One screen, no tabs, and no vertical scroll on desktop at 1280x720.
+- Preview updates instantly when format or theme changes.
+- Share image opens the native share sheet with the image on mobile Chrome and Safari. Desktop falls back to save and copy with a toast.
+- Save downloads a PNG at the correct export size for each format.
+- Copy link copies the exact canonical verse URL.
+- No leftover code, CSS, or translations for the removed elements.
+- Existing tests pass, and the project builds and lints cleanly.
+
+
+DELIVER
+Make the changes in the repo, then give a short summary of the files changed and anything you were unsure about.
+  
+  
+
+
+
+Some sample share card could be:

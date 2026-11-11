@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Calendar,
   Moon,
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { soundEngine } from "../utils/audio";
 import type { AppTheme } from "../types";
+import { getTithisForCurrentMonthAndNext30Days } from "../utils/tithiCalendar";
 
 export interface TithiItem {
   id: string;
@@ -30,174 +31,43 @@ export interface TithiItem {
   observance: string;
   recommendedVerseId?: string;
   recommendedVerseTitle?: string;
+  dateIso?: string;
+  isUpcoming?: boolean;
 }
 
-// Authentic Tithis & Parvs for the current month (Bhadrapada - Ashvina / September 2026)
-export const CURRENT_MONTH_TITHIS: TithiItem[] = [
-  {
-    id: "janmashtami-2026",
-    nameEn: "Krishna Janmashtami",
-    nameHi: "श्रीकृष्ण जन्माष्टमी",
-    tithi: "Ashtami (अष्टमी)",
-    paksha: "Krishna",
-    dateFormatted: "Sep 4, 2026",
-    dayOfWeek: "Friday",
-    category: "festival",
-    significance: "The supreme advent of Bhagavan Sri Krishna, speaker of the sacred Bhagavad Gita.",
-    observance: "Nirjala/Phalahar fast, midnight Krishna Dhyana, recitation of Gita Chapter 12 & 15.",
-    recommendedVerseId: "gita-2-47",
-    recommendedVerseTitle: "Gita 2.47 · Karma Yoga",
-  },
-  {
-    id: "aja-ekadashi-2026",
-    nameEn: "Aja Ekadashi",
-    nameHi: "अजा एकादशी",
-    tithi: "Ekadashi (एकादशी)",
-    paksha: "Krishna",
-    dateFormatted: "Sep 8, 2026",
-    dayOfWeek: "Tuesday",
-    category: "ekadashi",
-    significance: "Sacred Krishna Paksha Ekadashi destroying past obstacles and cultivating deep dispassion.",
-    observance: "Grain-free fasting, unbroken Om Namo Bhagavate Vasudevaya japa, evening reflection.",
-    recommendedVerseId: "gita-2-47",
-    recommendedVerseTitle: "Gita 2.47 · Duty & Detachment",
-  },
-  {
-    id: "pradosh-krishna-2026",
-    nameEn: "Bhadrapada Pradosh Vrat",
-    nameHi: "प्रदोष व्रत (कृष्ण)",
-    tithi: "Trayodashi (त्रयोदशी)",
-    paksha: "Krishna",
-    dateFormatted: "Sep 9, 2026",
-    dayOfWeek: "Wednesday",
-    category: "pradosh",
-    significance: "Sacred twilight hour dedicated to Mahadeva Shiva for emotional equilibrium and peaceful mind.",
-    observance: "Twilight meditation during sandhya period, chanting Om Namah Shivaya.",
-    recommendedVerseId: "mandukya-mantra-1",
-    recommendedVerseTitle: "Mandukya 1 · Sound of OM",
-  },
-  {
-    id: "bhadrapada-amavasya-2026",
-    nameEn: "Bhadrapada Amavasya (Darsha)",
-    nameHi: "भाद्रपद अमावस्या",
-    tithi: "Amavasya (अमावस्या)",
-    paksha: "Krishna",
-    dateFormatted: "Sep 11, 2026",
-    dayOfWeek: "Friday",
-    category: "purnima_amavasya",
-    significance: "Stillness of the cosmic lunar cycle, deep inward contemplation and ancestral gratefulness.",
-    observance: "Silent contemplation, breath awareness, Sattvic mindfulness.",
-    recommendedVerseId: "yoga-sutra-1-2",
-    recommendedVerseTitle: "Yoga Sutra 1.2 · Chitta Vritti",
-  },
-  {
-    id: "ganesh-chaturthi-2026",
-    nameEn: "Ganesh Chaturthi (Vinayaka)",
-    nameHi: "गणेश चतुर्थी",
-    tithi: "Shukla Chaturthi (चतुर्थी)",
-    paksha: "Shukla",
-    dateFormatted: "Sep 14, 2026",
-    dayOfWeek: "Monday",
-    category: "festival",
-    significance: "Advent of Sri Vighnaharta Ganesha, deity of auspicious intellect, discrimination, and wisdom.",
-    observance: "Modak offerings, study of sacred mantras, contemplation on removal of inner doubts.",
-    recommendedVerseId: "isha-upanishad-1",
-    recommendedVerseTitle: "Isha Upanishad 1 · Divine Presence",
-  },
-  {
-    id: "rishi-panchami-2026",
-    nameEn: "Rishi Panchami",
-    nameHi: "ऋषि पंचमी",
-    tithi: "Shukla Panchami (पंचमी)",
-    paksha: "Shukla",
-    dateFormatted: "Sep 16, 2026",
-    dayOfWeek: "Wednesday",
-    category: "festival",
-    significance: "Reverence to the ancient Vedic Saptarishis whose realizations form the Upanishads and Shrutis.",
-    observance: "Scripture study, meditation on Rishi lineage and eternal Dharma.",
-    recommendedVerseId: "yoga-sutra-2-46",
-    recommendedVerseTitle: "Yoga Sutra 2.46 · Sthira Sukham",
-  },
-  {
-    id: "parivartini-ekadashi-2026",
-    nameEn: "Parivartini / Parsva Ekadashi",
-    nameHi: "परिवर्तिनी एकादशी",
-    tithi: "Shukla Ekadashi (एकादशी)",
-    paksha: "Shukla",
-    dateFormatted: "Sep 22, 2026",
-    dayOfWeek: "Tuesday",
-    category: "ekadashi",
-    significance: "The cosmic turn of Mahavishnu in Yoga Nidra. Bestows spiritual elevation and mental clarity.",
-    observance: "Complete/partial fast, continuous awareness of divine presence, Gita recitation.",
-    recommendedVerseId: "gita-2-47",
-    recommendedVerseTitle: "Gita 2.47 · Nishkama Karma",
-  },
-  {
-    id: "anant-chaturdashi-2026",
-    nameEn: "Anant Chaturdashi",
-    nameHi: "अनंत चतुर्दशी",
-    tithi: "Shukla Chaturdashi (चतुर्दशी)",
-    paksha: "Shukla",
-    dateFormatted: "Sep 25, 2026",
-    dayOfWeek: "Friday",
-    category: "festival",
-    significance: "Worship of the Boundless Infinite Reality (Ananta Brahman) and holy conclusion of Ganeshotsav.",
-    observance: "Tying sacred protective cord, meditation on timeless consciousness.",
-    recommendedVerseId: "mandukya-mantra-1",
-    recommendedVerseTitle: "Mandukya 1 · Eternal Brahman",
-  },
-  {
-    id: "bhadrapada-purnima-2026",
-    nameEn: "Bhadrapada Purnima (Satyanarayan)",
-    nameHi: "भाद्रपद पूर्णिमा (महालया प्रारंभ)",
-    tithi: "Purnima (पूर्णिमा)",
-    paksha: "Shukla",
-    dateFormatted: "Sep 26, 2026",
-    dayOfWeek: "Saturday",
-    category: "purnima_amavasya",
-    significance: "Radiant Full Moon illumination, Satyanarayan Vrat, and commencement of holy Pitru Paksha.",
-    observance: "Moonlight Dhyana, offering of pure gratitude, Satyanarayan katha reflection.",
-    recommendedVerseId: "isha-upanishad-1",
-    recommendedVerseTitle: "Isha Upanishad 1 · All is Divine",
-  },
-  {
-    id: "indira-ekadashi-2026",
-    nameEn: "Indira Ekadashi (Pitru Paksha)",
-    nameHi: "इन्दिरा एकादशी",
-    tithi: "Krishna Ekadashi (एकादशी)",
-    paksha: "Krishna",
-    dateFormatted: "Oct 7, 2026",
-    dayOfWeek: "Wednesday",
-    category: "ekadashi",
-    significance: "Ekadashi occurring during Pitru Paksha. Dedicated to peace of all living and departed beings.",
-    observance: "Strict fasting, selfless charity, prayers for universal liberation.",
-    recommendedVerseId: "gita-2-47",
-    recommendedVerseTitle: "Gita 2.47 · Selfless Surrender",
-  },
-];
+// Dynamically generated Tithis & Parvs for the current month and next 30 days
+export const CURRENT_MONTH_TITHIS: TithiItem[] = getTithisForCurrentMonthAndNext30Days().tithis;
 
 interface ImportantTithisParvProps {
   theme?: AppTheme;
   onSelectVerse?: (verseId: string) => void;
   defaultCollapsed?: boolean;
+  referenceDate?: Date;
 }
 
 export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
   theme = "sandstone",
   onSelectVerse,
   defaultCollapsed = true,
+  referenceDate,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(defaultCollapsed);
   const [activeFilter, setActiveFilter] = useState<"all" | "ekadashi" | "purnima_amavasya" | "festival">("all");
   const [savedReminders, setSavedReminders] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem("sutrasparsh_tithi_reminders");
-      return saved ? JSON.parse(saved) : ["aja-ekadashi-2026", "parivartini-ekadashi-2026", "janmashtami-2026"];
+      return saved ? JSON.parse(saved) : ["diwali-2026", "devuthani-ekadashi-2026", "kartika-purnima-2026"];
     } catch {
-      return ["aja-ekadashi-2026", "parivartini-ekadashi-2026"];
+      return ["diwali-2026", "devuthani-ekadashi-2026"];
     }
   });
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Compute live current month + next 30 days window
+  const calendarData = useMemo(
+    () => getTithisForCurrentMonthAndNext30Days(referenceDate || new Date()),
+    [referenceDate]
+  );
 
   const isLight = theme === "light";
   const isFestival = theme === "festival";
@@ -210,13 +80,33 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
     setIsCollapsed((prev) => !prev);
   };
 
-  const filteredItems = CURRENT_MONTH_TITHIS.filter((item) => {
-    if (activeFilter === "all") return true;
-    if (activeFilter === "ekadashi") return item.category === "ekadashi";
-    if (activeFilter === "purnima_amavasya") return item.category === "purnima_amavasya" || item.category === "pradosh";
-    if (activeFilter === "festival") return item.category === "festival";
-    return true;
-  });
+  const filteredItems = useMemo(() => {
+    return calendarData.tithis.filter((item) => {
+      if (activeFilter === "all") return true;
+      if (activeFilter === "ekadashi") return item.category === "ekadashi";
+      if (activeFilter === "purnima_amavasya") return item.category === "purnima_amavasya" || item.category === "pradosh";
+      if (activeFilter === "festival") return item.category === "festival";
+      return true;
+    });
+  }, [calendarData.tithis, activeFilter]);
+
+  const todayIso = useMemo(() => {
+    const d = referenceDate || new Date();
+    return d.toISOString().slice(0, 10);
+  }, [referenceDate]);
+
+  // Compute preview for collapsed summary strip
+  const upcomingSummary = useMemo(() => {
+    const upcoming = calendarData.tithis.filter((item) => item.isUpcoming);
+    const previewList = upcoming.length > 0 ? upcoming.slice(0, 3) : calendarData.tithis.slice(0, 3);
+    return previewList
+      .map((t) => {
+        const icon = t.category === "ekadashi" ? "🌿" : t.category === "purnima_amavasya" ? "🌕" : "🪔";
+        const shortDate = t.dateFormatted.split(",")[0];
+        return `${icon} ${t.nameEn} (${shortDate})`;
+      })
+      .join(" • ");
+  }, [calendarData.tithis]);
 
   const handleToggleReminder = (id: string, name: string) => {
     const isSaved = savedReminders.includes(id);
@@ -270,11 +160,11 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
                 <span className="hidden sm:inline">Important Tithis & Parv Dates • महत्वपूर्ण तिथियाँ एवं पर्व</span>
               </h3>
               <span className="text-[10px] sm:text-[10.5px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-300 font-semibold whitespace-nowrap flex-shrink-0">
-                10 Dates
+                {filteredItems.length} Dates
               </span>
             </div>
             <p className="text-xs text-stone-500 truncate">
-              Bhadrapada – Ashvina (भाद्रपद - आश्विन) • September 2026
+              {calendarData.currentMonthEn} ({calendarData.currentMonthHi}) • {calendarData.gregorianMonthYear} & Next 30 Days
             </p>
           </div>
         </div>
@@ -315,7 +205,7 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
         >
           <div className="flex items-center space-x-2 truncate">
             <span className="text-amber-400 font-bold flex-shrink-0">Upcoming:</span>
-            <span className="truncate">🌿 Aja Ekadashi (Sep 8) • 🪔 Parivartini Ekadashi (Sep 22) • 🌕 Ananta Chaturdashi (Sep 24)</span>
+            <span className="truncate">{upcomingSummary}</span>
           </div>
           <span className="p-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center ml-2 flex-shrink-0">
             <ChevronDown className="w-3.5 h-3.5" />
@@ -391,6 +281,19 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
                   >
                     {item.paksha} · {item.tithi}
                   </span>
+
+                  {/* Today Highlight Indicator */}
+                  {item.dateIso === todayIso && (
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md border whitespace-nowrap flex-shrink-0 animate-pulse ${
+                        isLight
+                          ? "bg-emerald-100 text-emerald-950 border-emerald-300 font-bold"
+                          : "bg-emerald-500/25 text-emerald-300 border-emerald-500/40 font-bold"
+                      }`}
+                    >
+                      Today • अद्य
+                    </span>
+                  )}
                 </div>
 
                 {/* Reminder Notification Button */}
