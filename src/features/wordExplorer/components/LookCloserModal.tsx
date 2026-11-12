@@ -208,7 +208,8 @@ export const LookCloserModal: React.FC<LookCloserModalProps> = ({
     grammar: flagshipWord.grammar,
   };
 
-  const sanskritLines = activeVerse.sanskrit.split("\n").filter((l) => l.trim().length > 0);
+  const rawSanskrit: string = (activeVerse?.sanskrit as string) || ((activeVerse as any)?.body as string) || "";
+  const sanskritLines: string[] = rawSanskrit.split("\n").filter((l: string) => l.trim().length > 0);
 
   const getThemeClasses = () => {
     if (isLight) {

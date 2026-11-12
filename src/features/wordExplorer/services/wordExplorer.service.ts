@@ -1273,9 +1273,10 @@ export const WordExplorerService = {
    * Every Sanskrit word is identified as actionable with full linguistic analysis.
    */
   tokenizeVerse(verseText: string): VerseToken[] {
+    if (!verseText) return [];
     // Regex splits by whitespace while preserving Devanagari words and punctuation
     const tokens: VerseToken[] = [];
-    const parts = verseText.split(/(\s+|[।॥,\.!\?;:\n]+)/);
+    const parts = (verseText || "").split(/(\s+|[।॥,\.!\?;:\n]+)/);
 
     parts.forEach((raw, idx) => {
       if (!raw) return;

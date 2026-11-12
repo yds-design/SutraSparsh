@@ -2024,7 +2024,7 @@ export const ProductionHardeningPanel: React.FC<ProductionHardeningPanelProps> =
                       <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                     </div>
                     <p className="text-xs text-stone-400">
-                      System frozen since {rcReport.featureFreeze.freezeDate.split("T")[0]}. Zero open architectural experiments or refactoring PRs.
+                      System frozen since {(rcReport?.featureFreeze?.freezeDate || "").split("T")[0] || "2026-11-12"}. Zero open architectural experiments or refactoring PRs.
                     </p>
                   </div>
 

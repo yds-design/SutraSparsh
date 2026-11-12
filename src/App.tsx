@@ -1264,9 +1264,9 @@ export default function App() {
         todayVerse={(() => {
           const currentDayShloka = getDailyShlokaForDate();
           return {
-            devanagari: currentDayShloka.sanskrit.split("\n")[0] || currentDayShloka.title,
-            translation: currentDayShloka.meaning,
-            source: `${currentDayShloka.source} · ${currentDayShloka.chapterName} • प्रातः स्मरण`,
+            devanagari: (currentDayShloka?.sanskrit || "").split("\n")[0] || currentDayShloka?.title || "",
+            translation: currentDayShloka?.meaning || "",
+            source: `${currentDayShloka?.source || "SutraSparsh"} · ${currentDayShloka?.chapterName || ""} • प्रातः स्मरण`,
           };
         })()}
       />

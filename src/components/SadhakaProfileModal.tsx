@@ -192,7 +192,7 @@ export const SadhakaProfileModal: React.FC<SadhakaProfileModalProps> = ({
                   className="font-serif-sacred text-xl font-bold truncate"
                   style={{ color: isLight ? "#1b1740" : "#F4E9D2" }}
                 >
-                  {currentUser ? currentUser.displayName : "Guest Sādhaka"}
+                  {currentUser ? (currentUser.displayName || currentUser.email || "Sādhaka Seeker") : "Guest Sādhaka"}
                 </h2>
                 <span
                   className="text-[10px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0 uppercase tracking-wider"

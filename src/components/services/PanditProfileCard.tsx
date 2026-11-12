@@ -72,7 +72,7 @@ export const PanditProfileCard: React.FC<PanditProfileCardProps> = ({
   };
 
   // Avatar initials and color
-  const initials = pandit.name
+  const initials = (pandit?.name || "Pandit")
     .replace(/^Pandit\s+|^Acharya\s+/i, "")
     .split(" ")
     .map((w) => w[0])

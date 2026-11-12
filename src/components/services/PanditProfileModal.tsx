@@ -84,7 +84,7 @@ export const PanditProfileModal: React.FC<PanditProfileModalProps> = ({
     });
   };
 
-  const initials = pandit.name
+  const initials = (pandit?.name || "Pandit")
     .replace(/^Pandit\s+|^Acharya\s+/i, "")
     .split(" ")
     .map((w) => w[0])

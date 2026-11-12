@@ -481,17 +481,17 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
                 title={
                   currentUser
-                    ? `Signed in as ${currentUser.displayName} (${currentUser.email}). Click to manage or Sign Off.`
+                    ? `Signed in as ${currentUser.displayName || currentUser.email || "Seeker"} (${currentUser.email || ""}). Click to manage or Sign Off.`
                     : "Sign In via Gmail / Firebase or Email ID"
                 }
               >
                 {currentUser ? (
                   <>
                     <div className="w-4 h-4 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 font-bold text-[9px] flex items-center justify-center">
-                      {currentUser.displayName.charAt(0).toUpperCase()}
+                      {(currentUser.displayName || currentUser.email || "S").charAt(0).toUpperCase()}
                     </div>
                     <span className="hidden md:inline font-mono text-[11px] truncate max-w-[90px]">
-                      {currentUser.displayName.split(" ")[0]}
+                      {(currentUser.displayName || currentUser.email || "Seeker").split(" ")[0]}
                     </span>
                   </>
                 ) : (

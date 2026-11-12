@@ -72,7 +72,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
     setIsSubmitting(true);
 
-    const tags = tagsInput
+    const tags = (tagsInput || "")
       .split(",")
       .map((t) => t.trim().replace(/^#/, ""))
       .filter(Boolean);

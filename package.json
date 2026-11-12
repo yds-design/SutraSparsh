@@ -1,6 +1,6 @@
 {
   "name": "sutrasparsh",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "SutraSparsh - Spiritual Wisdom Platform",
   "private": true,
   "type": "module",
@@ -10,8 +10,9 @@
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
     "lint": "tsc --noEmit",
-    "test": "npx tsx src/testing/system-testing-matrix.test.ts && npx tsx src/testing/api-endpoints.test.ts && npx tsx src/testing/journey-relocation.test.ts && npx tsx src/testing/pandit-services.test.ts && npx tsx src/testing/theme-restriction-and-community.test.ts && npx tsx src/testing/community-board.test.ts && npx tsx src/testing/daily-goal-celebration.test.ts && npx tsx src/testing/seo-compliance.test.ts && npx tsx src/testing/soundscape-selector.test.ts && npx tsx src/testing/theme-observer.test.ts && npx tsx src/testing/chip-glow.test.ts && npx tsx src/testing/phase12-release-gate.ts && npx tsx scripts/ci-verify.ts",
+    "test": "npx tsx src/testing/system-testing-matrix.test.ts && npx tsx src/testing/api-endpoints.test.ts && npx tsx src/testing/journey-relocation.test.ts && npx tsx src/testing/pandit-services.test.ts && npx tsx src/testing/theme-restriction-and-community.test.ts && npx tsx src/testing/community-board.test.ts && npx tsx src/testing/daily-goal-celebration.test.ts && npx tsx src/testing/seo-compliance.test.ts && npx tsx src/testing/soundscape-selector.test.ts && npx tsx src/testing/theme-observer.test.ts && npx tsx src/testing/chip-glow.test.ts && npx tsx src/testing/split-null-safety.test.ts && npx tsx src/testing/phase12-release-gate.ts && npx tsx scripts/ci-verify.ts",
     "test:system": "npx tsx src/testing/system-testing-matrix.test.ts",
+    "test:split-safety": "npx tsx src/testing/split-null-safety.test.ts",
     "test:api": "npx tsx src/testing/api-endpoints.test.ts",
     "test:relocation": "npx tsx src/testing/journey-relocation.test.ts",
     "test:services": "npx tsx src/testing/pandit-services.test.ts",

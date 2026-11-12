@@ -213,11 +213,11 @@ export class SharingService {
         return `https://api.whatsapp.com/send?text=${encodedText}`;
       case "telegram":
         return `https://t.me/share/url?url=${encodedUrl}&text=${encodeURIComponent(
-          `✨ ${content.sanskritText.split("\n")[0] || ""}\n"${content.meaning || ""}" — ${content.title}`
+          `✨ ${(content.sanskritText || "").split("\n")[0] || ""}\n"${content.meaning || ""}" — ${content.title || ""}`
         )}`;
       case "x": {
         const xText = encodeURIComponent(
-          `✨ ${content.sanskritText.split("\n")[0] || ""}\n\n"${content.meaning?.slice(0, 140) || ""}"\n\n— ${content.title}\n`
+          `✨ ${(content.sanskritText || "").split("\n")[0] || ""}\n\n"${content.meaning?.slice(0, 140) || ""}"\n\n— ${content.title || ""}\n`
         );
         return `https://twitter.com/intent/tweet?text=${xText}&url=${encodedUrl}&hashtags=SutraSparsh,Gita,SanatanaDharma`;
       }
@@ -362,7 +362,7 @@ export class SharingService {
     ctx.fill();
 
     // 5. Sanskrit Shloka Block
-    const verseLines = content.sanskritText.split("\n").filter(Boolean).slice(0, 6);
+    const verseLines = (content.sanskritText || "").split("\n").filter(Boolean).slice(0, 6);
     ctx.fillStyle = style.sanskritColor;
     
     // Calculate shloka font size dynamically based on line count and canvas dimensions
@@ -408,7 +408,7 @@ export class SharingService {
       ctx.font = `italic ${meaningFontSize}px 'Manrope', sans-serif`;
 
       const meaningLineHeight = Math.round(meaningFontSize * (isLandscape ? 1.45 : 1.6));
-      const words = `"${content.meaning}"`.split(" ");
+      const words = `"${content.meaning || ""}"`.split(" ");
       let currentLine = "";
       const maxLineWidth = baseW - inset * 2 - Math.round(baseW * 0.12);
 

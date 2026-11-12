@@ -300,12 +300,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             >
               <div className="flex items-center space-x-3.5">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-stone-950 flex items-center justify-center font-bold text-lg shadow">
-                  {currentUser.displayName.charAt(0).toUpperCase()}
+                  {(currentUser.displayName || currentUser.email || "S").charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2">
                     <span className="font-serif-sacred font-bold text-sm truncate">
-                      {currentUser.displayName}
+                      {currentUser.displayName || currentUser.email || "Sādhaka"}
                     </span>
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                       Active

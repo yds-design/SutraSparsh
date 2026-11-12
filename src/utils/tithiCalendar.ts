@@ -582,8 +582,8 @@ function createAlgorithmicTithiItem(date: Date, tithiData: ReturnType<typeof get
   const dateFormatted = formatDate(date);
 
   const monthIdx = date.getMonth();
-  const hinduMonth = HINDU_MONTHS_MAP[monthIdx]?.nameEn.split("–")[0].trim() || "Masa";
-  const hinduMonthHi = HINDU_MONTHS_MAP[monthIdx]?.nameHi.split("-")[0].trim() || "मास";
+  const hinduMonth = (HINDU_MONTHS_MAP[monthIdx]?.nameEn || "Masa").split("–")[0].trim() || "Masa";
+  const hinduMonthHi = (HINDU_MONTHS_MAP[monthIdx]?.nameHi || "मास").split("-")[0].trim() || "मास";
 
   // Focus only on significant Tithis: Ekadashi (11), Trayodashi / Pradosh (13), Purnima (15 Shukla), Amavasya (15 Krishna), Chaturthi (4)
   if (tithiNumber === 11) {
@@ -704,7 +704,7 @@ export function getTithisForCurrentMonthAndNext30Days(referenceDate: Date = new 
 
   // 1. First, harvest all verified catalog items that fall within this window
   for (const [isoDate, item] of Object.entries(VERIFIED_TITHIS_CATALOG)) {
-    const [y, m, d] = isoDate.split("-").map(Number);
+    const [y, m, d] = (isoDate || "").split("-").map(Number);
     const itemDate = new Date(y, m - 1, d, 12, 0, 0);
     const time = itemDate.getTime();
 

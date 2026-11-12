@@ -724,9 +724,9 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
       setSavedVerses((prev) => [
         {
           id: selectedVerseData.id,
-          title: selectedVerseData.sanskrit.split("\n")[0] + "…",
-          ref: selectedVerseData.title,
-          snippet: selectedVerseData.meaning.slice(0, 50) + "...",
+          title: (selectedVerseData?.sanskrit || selectedVerseData?.title || "").split("\n")[0] + "…",
+          ref: selectedVerseData?.title || "",
+          snippet: (selectedVerseData?.meaning || "").slice(0, 50) + "...",
         },
         ...prev,
       ]);
@@ -1042,12 +1042,12 @@ ${reflections
   // Dynamic SEO Metadata for search engine indexing based on active page or tool
   const seoMetadata = React.useMemo(() => {
     if (subScreen === "verse") {
-      const firstLine = selectedVerseData.sanskrit.split("\n")[0] || "";
+      const firstLine = (selectedVerseData?.sanskrit || "").split("\n")[0] || "";
       const verseCanonical = `https://sutrasparsh.com/?scripture=${encodeURIComponent(activeScriptureData.id)}&verse=${encodeURIComponent(selectedVerseData.id)}`;
       return {
-        title: `${selectedVerseData.source} · ${selectedVerseData.title} (${firstLine})`,
-        description: `Study ${selectedVerseData.source} ${selectedVerseData.title}: "${selectedVerseData.meaning.slice(0, 135)}..." Detailed Sanskrit shloka with word-by-word padaccheda, audio recitation, and commentary.`,
-        keywords: `${selectedVerseData.title}, ${selectedVerseData.source}, ${selectedVerseData.sanskrit.replace(/\n/g, " ")}, Sanskrit recitation, shloka meaning, padaccheda, Vedanta, Gita`,
+        title: `${selectedVerseData?.source || "SutraSparsh"} · ${selectedVerseData?.title || ""} (${firstLine})`,
+        description: `Study ${selectedVerseData?.source || ""} ${selectedVerseData?.title || ""}: "${(selectedVerseData?.meaning || "").slice(0, 135)}..." Detailed Sanskrit shloka with word-by-word padaccheda, audio recitation, and commentary.`,
+        keywords: `${selectedVerseData?.title || ""}, ${selectedVerseData?.source || ""}, ${(selectedVerseData?.sanskrit || "").replace(/\n/g, " ")}, Sanskrit recitation, shloka meaning, padaccheda, Vedanta, Gita`,
         ogType: "article" as const,
         canonicalUrl: verseCanonical,
         structuredData: {
@@ -1514,8 +1514,8 @@ ${reflections
                         : "text-stone-100"
                     }`}
                   >
-                    {currentDailyVerse.sanskrit.split("\n").map((line, lineIdx) => {
-                      const chunks = line.split(/(\s+|[।॥,]+)/);
+                    {(currentDailyVerse?.sanskrit || "").split("\n").map((line, lineIdx) => {
+                      const chunks = (line || "").split(/(\s+|[।॥,]+)/);
                       return (
                         <div key={lineIdx} className="flex flex-wrap items-center justify-center">
                           {chunks.map((chunk, chunkIdx) => {
@@ -3039,7 +3039,7 @@ ${reflections
                     {activeScriptureData.totalChapters}
                   </div>
                   <div className={`text-[10.5px] font-bold ${isLight ? "text-stone-600" : "text-stone-400"}`}>
-                    {activeScriptureData.sectionType?.split(" ")[0] || (activeScriptureData.id === "yoga_sutras" ? "Pādas" : activeScriptureData.id.includes("upanishad") ? "Khaṇḍas" : "Chapters")}
+                    {activeScriptureData.sectionType ? activeScriptureData.sectionType.split(" ")[0] : (activeScriptureData.id === "yoga_sutras" ? "Pādas" : activeScriptureData.id.includes("upanishad") ? "Khaṇḍas" : "Chapters")}
                   </div>
                 </div>
                 <div>
@@ -3191,8 +3191,8 @@ ${reflections
               {/* Sanskrit Shloka */}
               {(prefScript === "both" || prefScript === "devanagari") && (
                 <div className={`font-sanskrit text-2xl leading-[2.2] py-2 select-text ${isLight ? "text-stone-950 font-bold" : "text-stone-100"}`}>
-                  {selectedVerseData.sanskrit.split("\n").map((line, lineIdx) => {
-                    const chunks = line.split(/(\s+|[।॥,]+)/);
+                  {(selectedVerseData?.sanskrit || "").split("\n").map((line, lineIdx) => {
+                    const chunks = (line || "").split(/(\s+|[।॥,]+)/);
                     return (
                       <div key={lineIdx} className="flex flex-wrap items-center justify-center">
                         {chunks.map((chunk, chunkIdx) => {

@@ -158,7 +158,7 @@ export class AuthService {
       const user: SeekerUser = {
         uid: fbUser.uid,
         email: fbUser.email || _customEmail || "seeker@sutrasparsh.com",
-        displayName: fbUser.displayName || fbUser.email?.split("@")[0] || "Sanskrit Seeker",
+        displayName: fbUser.displayName || (fbUser.email ? fbUser.email.split("@")[0] : "") || "Sanskrit Seeker",
         photoURL: fbUser.photoURL || undefined,
         provider: "google",
         spiritualTitle: "Sādhaka (साधक)",
@@ -203,8 +203,8 @@ export class AuthService {
       throw new Error("Please enter a valid personal email address.");
     }
 
-    const namePart = email.split("@")[0].replace(/\./g, " ");
-    const formattedName = namePart
+    const namePart = (email || "").split("@")[0].replace(/\./g, " ");
+    const formattedName = (namePart || "")
       .split(" ")
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(" ");
@@ -244,7 +244,7 @@ export class AuthService {
     const user: SeekerUser = {
       uid: "email_" + Date.now().toString(36),
       email,
-      displayName: displayName.trim() || email.split("@")[0],
+      displayName: (displayName || "").trim() || (email || "").split("@")[0] || "Sādhaka",
       provider: "password",
       spiritualTitle: "New Seeker (आरम्भक)",
       traditionFocus,

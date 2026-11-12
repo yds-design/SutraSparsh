@@ -121,7 +121,7 @@ export const WordBreakdown: React.FC<WordBreakdownProps> = ({
                         ? "bg-[#F5EEDB] text-[#6E5C4E] border-[#DECB9F]"
                         : "bg-stone-800 text-stone-400 border border-stone-700/60"
                     }`}>
-                      {comp.type.split("/")[0].trim()}
+                      {(comp.type || "").split("/")[0].trim()}
                     </span>
                   )}
                 </button>

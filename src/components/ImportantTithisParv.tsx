@@ -102,7 +102,7 @@ export const ImportantTithisParv: React.FC<ImportantTithisParvProps> = ({
     return previewList
       .map((t) => {
         const icon = t.category === "ekadashi" ? "🌿" : t.category === "purnima_amavasya" ? "🌕" : "🪔";
-        const shortDate = t.dateFormatted.split(",")[0];
+        const shortDate = (t.dateFormatted || "").split(",")[0];
         return `${icon} ${t.nameEn} (${shortDate})`;
       })
       .join(" • ");

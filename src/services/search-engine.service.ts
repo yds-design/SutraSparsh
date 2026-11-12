@@ -22,8 +22,8 @@ export class SearchEngineService {
   }
 
   public tokenize(text: string): string[] {
-    const norm = this.normalize(text);
-    return norm.split(/\s+/).filter((t) => t.length > 1);
+    const norm = this.normalize(text || "");
+    return (norm || "").split(/\s+/).filter((t) => t.length > 1);
   }
 
   public indexAll(items: ContentItem[]): void {
@@ -47,7 +47,7 @@ export class SearchEngineService {
       for (const tag of item.metadata.tags) this.titlesAndKeywords.add(tag);
     }
     if (item.metadata?.devanagari) {
-      const devWords = item.metadata.devanagari.split(/\s+/).filter((w) => w.length > 1);
+      const devWords = (item.metadata.devanagari || "").split(/\s+/).filter((w) => w.length > 1);
       for (const w of devWords.slice(0, 10)) this.titlesAndKeywords.add(w);
     }
 

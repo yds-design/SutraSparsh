@@ -44,11 +44,11 @@ const VerseCardComponent: React.FC<VerseCardProps> = ({
       ? item.metadata.author
       : (item as any).source && !["json", "production", "manual"].includes(String((item as any).source).toLowerCase())
       ? (item as any).source
-      : item.title.includes("Gita")
+      : (item.title || "").includes("Gita")
       ? "Bhagavad Gita"
-      : item.title.includes("Yoga")
+      : (item.title || "").includes("Yoga")
       ? "Patanjali"
-      : item.title.includes("Upanishad")
+      : (item.title || "").includes("Upanishad")
       ? "Upanishads"
       : "Scripture";
 
@@ -70,11 +70,14 @@ const VerseCardComponent: React.FC<VerseCardProps> = ({
   const spiritualTags: string[] =
     displayTags.length > 0
       ? displayTags
-      : item.title.includes("Gita")
+      : (item.title || "").includes("Gita")
       ? ["Gita", "Yoga", "Karma"]
-      : item.title.includes("Yoga")
+      : (item.title || "").includes("Yoga")
       ? ["Patanjali", "Yoga", "Mind"]
       : ["Wisdom", "Sutra", "Vedanta"];
+
+  const verseBodyText: string = (item.body as string) || (item.metadata?.devanagari as string) || ((item as any)?.sanskrit as string) || "";
+  const verseLines: string[] = verseBodyText.split("\n");
 
   const cardBgClass = isLight
     ? "bg-white hover:bg-[#faf9fd] border-[#cfcbe0] hover:border-[#d9a441] text-[#1d1b2e] shadow-[0_1px_2px_rgb(27_23_64_/_0.06)] hover:shadow-[0_10px_30px_-12px_rgb(27_23_64_/_0.28)]"
@@ -216,11 +219,11 @@ const VerseCardComponent: React.FC<VerseCardProps> = ({
                 : "text-amber-200/90"
             }`}
           >
-            {item.body.split("\n").map((line, lIdx) => {
-              const chunks = line.split(/(\s+|[।॥,]+)/);
+            {verseLines.map((line: string, lIdx: number) => {
+              const chunks: string[] = line.split(/(\s+|[।॥,]+)/);
               return (
                 <div key={lIdx} className="flex flex-wrap items-center justify-center">
-                  {chunks.map((chunk, cIdx) => {
+                  {chunks.map((chunk: string, cIdx: number) => {
                     const isWord = !/^[\s।॥,]+$/.test(chunk) && chunk.trim().length > 0;
                     if (!isWord) return <span key={cIdx}>{chunk}</span>;
                     return (
@@ -229,7 +232,7 @@ const VerseCardComponent: React.FC<VerseCardProps> = ({
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          recitationEngine.play(item.id, item.body, 0.85);
+                          recitationEngine.play(item.id, verseBodyText, 0.85);
                         }}
                         className={`group inline-block px-1 py-0.5 mx-0.5 rounded cursor-pointer hover:scale-[1.04] transition-all focus:outline-none ${
                           isLight

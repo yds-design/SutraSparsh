@@ -297,7 +297,7 @@ export const AdminOperationsConsole: React.FC<AdminOperationsConsoleProps> = ({ 
         source: formData.source,
         author: formData.author,
         category: formData.category,
-        tags: formData.tags
+        tags: (formData.tags || "")
           .split(",")
           .map((t) => t.trim())
           .filter(Boolean),
