@@ -92,6 +92,7 @@ import {
   type ScriptureData,
   type DetailedVerse,
 } from "../data/scriptureCorpus";
+import { useDailyWisdom, dailyWisdomService } from "../services/daily-wisdom.service";
 
 export type AppTheme = "sandstone" | "amethyst" | "light" | "festival" | "golden-hour" | "prism-pulse";
 
@@ -210,13 +211,12 @@ export const SutraSparshTempleApp: React.FC<SutraSparshTempleAppProps> = ({
   });
   const [themeToast, setThemeToast] = useState<string | null>(null);
 
-  // Daily Shloka Date Navigation (Rotation Engine)
-  const [selectedDateOffset, setSelectedDateOffset] = useState<number>(0);
-  const currentDailyVerse = React.useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + selectedDateOffset);
-    return getDailyShlokaForDate(d);
-  }, [selectedDateOffset]);
+  // Daily Shloka Date Navigation (Rotation Engine connected to SSOT DailyWisdomService)
+  const {
+    dailyWisdom: currentDailyVerse,
+    dateOffset: selectedDateOffset,
+    setOffset: setSelectedDateOffset,
+  } = useDailyWisdom();
 
   // Selected Scripture / Verse state — initialized to currentDailyVerse for complete state synchrony
   const [selectedScriptureId, setSelectedScriptureId] = useState<string>("bhagavad_gita");

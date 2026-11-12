@@ -12,6 +12,7 @@ import testingRoutes from "./routes/testing.routes.js";
 import billingRoutes from "./routes/billing.routes.js";
 import donationsRoutes from "./routes/donations.routes.js";
 import ttsRoutes from "./routes/tts.routes.js";
+import wisdomRoutes from "./routes/wisdom.routes.js";
 
 import { telemetryMiddleware } from "./middleware/telemetry.middleware.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
@@ -70,6 +71,7 @@ export function createApiApp(): Express {
   app.use("/api", billingRoutes);
   app.use("/api", donationsRoutes);
   app.use("/api", ttsRoutes);
+  app.use("/api", wisdomRoutes);
 
   // ----------------------------------------------------------
   // 404 handling for /api routes

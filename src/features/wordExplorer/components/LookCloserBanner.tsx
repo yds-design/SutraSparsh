@@ -1,15 +1,20 @@
 import React from "react";
 import { Sparkles, Layers, BookOpen, Compass } from "lucide-react";
 
+import type { DetailedVerse } from "../../../data/scriptureCorpus";
+import type { ContentItem } from "../../../types";
+
 interface LookCloserBannerProps {
-  onOpenLookCloser: () => void;
+  onOpenLookCloser: (verse?: DetailedVerse | ContentItem) => void;
   onOpenExplorer: () => void;
+  currentVerse?: DetailedVerse | ContentItem;
   theme?: string;
 }
 
 export const LookCloserBanner: React.FC<LookCloserBannerProps> = ({
   onOpenLookCloser,
   onOpenExplorer,
+  currentVerse,
   theme = "sandstone",
 }) => {
   const isLight = theme === "light";
@@ -144,7 +149,7 @@ export const LookCloserBanner: React.FC<LookCloserBannerProps> = ({
         <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 w-full md:w-auto shrink-0">
           <button
             onClick={() => {
-              onOpenLookCloser();
+              onOpenLookCloser(currentVerse);
             }}
             className={`w-full sm:w-auto px-6 py-3 rounded-full font-bold text-xs sm:text-sm shadow-md flex items-center justify-center space-x-2 transition-all hover:scale-105 active:scale-95 cursor-pointer ${
               isLight

@@ -40,6 +40,7 @@ import {
   LookCloserBanner,
   useWordExplorer,
 } from "./features/wordExplorer";
+import { useDailyWisdom } from "./services/daily-wisdom.service";
 import { Chip } from "./components/Chip";
 
 const TRADITIONS = ["All", "Bhagavad Gita", "Patanjali", "Upanishads", "Vedas"];
@@ -151,7 +152,8 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [backendOnline, setBackendOnline] = useState(true);
 
-  // SutraSparsh Word Explorer & Look Closer Discovery State
+  // SutraSparsh Word Explorer & Look Closer Discovery State (SSOT synchronized)
+  const { dailyWisdom } = useDailyWisdom();
   const wordExplorer = useWordExplorer();
   const [isLookCloserOpen, setIsLookCloserOpen] = useState(false);
 
@@ -800,7 +802,10 @@ export default function App() {
         onOpenDonation={() => setIsDonationOpen(true)}
         onOpenAdminConsole={isScreenDevice ? handleOpenAdminConsole : undefined}
         onOpenAuth={() => setIsAuthOpen(true)}
-        onOpenLookCloser={() => setIsLookCloserOpen(true)}
+        onOpenLookCloser={() => {
+          setSelectedVerse(null);
+          setIsLookCloserOpen(true);
+        }}
         onOpenWordExplorer={() => wordExplorer.openWord("कर्मण्येवाधिकारस्ते")}
         onManualSync={handleManualSync}
       />
@@ -934,7 +939,15 @@ export default function App() {
 
             {/* SutraSparsh Discovery: Look Closer Feature Banner (FR-02) */}
             <LookCloserBanner
-              onOpenLookCloser={() => setIsLookCloserOpen(true)}
+              onOpenLookCloser={(verse) => {
+                if (verse && "body" in verse) {
+                  setSelectedVerse(verse as ContentItem);
+                } else {
+                  setSelectedVerse(null);
+                }
+                setIsLookCloserOpen(true);
+              }}
+              currentVerse={dailyWisdom}
               onOpenExplorer={() => wordExplorer.openWord("कर्मण्येवाधिकारस्ते")}
               theme={theme}
             />
@@ -1344,11 +1357,11 @@ export default function App() {
       <LookCloserModal
         isOpen={isLookCloserOpen}
         onClose={() => setIsLookCloserOpen(false)}
-        verse={selectedVerse || undefined}
+        verse={selectedVerse || dailyWisdom}
         theme={theme}
         onOpenWordExplorer={(word) => {
           setIsLookCloserOpen(false);
-          wordExplorer.selectWord(word, selectedVerse || undefined);
+          wordExplorer.selectWord(word, selectedVerse || dailyWisdom);
         }}
       />
 

@@ -15,6 +15,7 @@ import { ModalPortal } from "../../../components/ModalPortal";
 import type { SanskritWord } from "../types/wordExplorer.types";
 import { VERSES_DATABASE, type DetailedVerse } from "../../../data/scriptureCorpus";
 import type { ContentItem } from "../../../types";
+import { dailyWisdomService } from "../../../services/daily-wisdom.service";
 
 interface LookCloserModalProps {
   isOpen: boolean;
@@ -75,7 +76,8 @@ export const LookCloserModal: React.FC<LookCloserModalProps> = ({
         hindiMeaning: "",
       };
     }
-    const defaultV = VERSES_DATABASE["bg_18_65"] || VERSES_DATABASE["bg_2_47"];
+    // Single Source of Truth: Fallback to the active synchronized daily wisdom shloka
+    const defaultV = dailyWisdomService.getActiveWisdom();
     return {
       id: defaultV.id,
       source: defaultV.source,

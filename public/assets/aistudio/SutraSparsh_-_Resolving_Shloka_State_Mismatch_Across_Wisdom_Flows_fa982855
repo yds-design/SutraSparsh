@@ -1,0 +1,28 @@
+﻿To fix the inconsistency where clicking into "SutraSparsh Discovery • Look Closer" surfaces a different shloka than the one presented in "Take a moment with today's wisdom", we need a comprehensive, 360-degree business case prompt. This prompt will align product, engineering, QA, and design teams to prioritize and resolve the state-management gap.
+360-Degree Business Case Prompt: Resolving Shloka State Mismatch Across Wisdom Flows
+1. Executive Summary & Problem Statement
+* Current State: Users are served a daily wisdom shloka on the home view ("Take a moment with today's wisdom"). However, when they tap or click into the deep-dive module ("SutraSparsh Discovery • Look Closer"), the application re-fetches or recalculates the daily content, resulting in a completely different shloka being displayed.
+* The Gap: This state mismatch breaks context, disrupts the contemplative user journey, erodes trust in the daily personalization algorithm, and creates friction for users wanting to explore that specific wisdom more deeply.
+* Objective: Ensure state persistence and data synchronization so that "Look Closer" seamlessly inherits and displays the exact same shloka presented in the initial "Take a moment with today's wisdom" card.
+2. User Impact & Experience (UX) Analysis
+* Cognitive Disruption: Users engaging with contemplative, philosophical, or spiritual content require emotional and thematic continuity. Encountering a new verse abruptly jars the user out of reflection.
+* Trust & Reliability: A mismatch signals to the user that the app is buggy or that "daily wisdom" is generated randomly on the fly rather than curated for the day.
+* Desired UX Flow:
+   1. User opens app  Views Shloka  on the home widget.
+   2. User taps "Look Closer"  Deep-dive view opens directly with Shloka , accompanied by its commentary, word meanings, and reflections.
+3. Product & Functional Requirements
+   * Single Source of Truth (SSOT): The daily wisdom payload fetched or generated for the user's session/day must be stored in a centralized local state or session store (e.g., Redux, Context API, or local caching layer).
+   * Navigation State Passing: When navigating from the home widget to the "Look Closer" route, the route parameters or global state store must pass the unique identifier (shloka_id or date-anchored key) rather than triggering a fresh, unseeded fetch.
+   * Fallback & Offline Resilience: If a user accesses "Look Closer" offline or deep-links directly, the app must fall back to the cached daily shloka for the current local date (YYYY-MM-DD).
+4. Technical Architecture & Engineering Considerations
+   * Frontend State Management:
+   * Define a global or module-level state slice: currentDailyWisdom.
+   * Ensure the home card and the "Look Closer" screen consume from this exact same selector/hook.
+   * API / Backend Alignment:
+   * Verify whether the backend endpoint /api/v1/wisdom/daily and /api/v1/wisdom/discovery use independent seed generation logic.
+   * Refactor backend controllers so that discovery/look-closer accepts an optional shloka_id query parameter. If no ID is passed, it defaults to the active daily shloka, ensuring both views stay synchronized.
+   * Caching Strategy: Implement localStorage or persistent client-side caching keyed by the user's local timezone date so the daily shloka remains sticky across app restarts and view switches.
+5. Business Value & Success Metrics
+   * Increased Engagement: Higher completion and read rates for "Look Closer" sessions since users are exploring content they are already emotionally invested in.
+   * Reduced Bounce Rate: Lower drop-off rates between the initial home card interaction and the deep-dive discovery module.
+   * Engineering Efficiency: Eliminating redundant API calls and state bugs reduces technical debt and support tickets related to content mismatch.
