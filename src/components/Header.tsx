@@ -62,6 +62,7 @@ interface HeaderProps {
   onOpenLookCloser?: () => void;
   onOpenWordExplorer?: () => void;
   onManualSync?: () => void;
+  showLookCloserInToolbar?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -80,6 +81,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenLookCloser,
   onOpenWordExplorer,
   onManualSync,
+  showLookCloserInToolbar = false,
 }) => {
   const { isSadhakaEnabled, isGurudakshinaEnabled } = useFeatureFlags();
   const [currentUser, setCurrentUser] = React.useState<SeekerUser | null>(() =>
@@ -342,8 +344,8 @@ export const Header: React.FC<HeaderProps> = ({
               <span className={`text-[10px] font-sanskrit hidden 2xl:inline ${isLight ? "text-[#874606]" : "text-amber-400/80"}`}>सेवा</span>
             </button>
 
-            {/* WORD EXPLORER / LOOK CLOSER */}
-            {(onOpenLookCloser || onOpenWordExplorer) && (
+            {/* WORD EXPLORER / LOOK CLOSER (Visible = false from top toolbar per design requirements) */}
+            {showLookCloserInToolbar && (onOpenLookCloser || onOpenWordExplorer) && (
               <button
                 id="btn-nav-look-closer"
                 type="button"

@@ -807,6 +807,7 @@ export default function App() {
           setIsLookCloserOpen(true);
         }}
         onOpenWordExplorer={() => wordExplorer.openWord("कर्मण्येवाधिकारस्ते")}
+        showLookCloserInToolbar={false}
         onManualSync={handleManualSync}
       />
 
