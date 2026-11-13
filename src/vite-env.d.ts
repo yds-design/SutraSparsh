@@ -7,11 +7,7 @@ declare module "*.css" {
 }
 
 interface ImportMetaEnv {
-  readonly VITE_BHASHINI_USER_ID?: string;
-  readonly VITE_BHASHINI_UDYAT_KEY?: string;
-  readonly VITE_BHASHINI_API_KEY?: string;
-  readonly VITE_BHASHINI_INFERENCE_KEY?: string;
-  readonly VITE_BHASHINI_PIPELINE_ID?: string;
+  readonly VITE_GA4_MEASUREMENT_ID?: string;
   readonly VITE_FIREBASE_PROJECT_ID?: string;
   readonly VITE_FIREBASE_APP_ID?: string;
   readonly VITE_FIREBASE_API_KEY?: string;

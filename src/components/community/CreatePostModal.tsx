@@ -20,6 +20,7 @@ import {
   type CommunityCategory,
   type ScriptureRef,
 } from "../../services/community.service";
+import { validateSubmissionGuard } from "../../utils/spamProtection";
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -53,8 +54,12 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   const [errorMessage, setErrorMessage] = useState("");
   const [crisisAlert, setCrisisAlert] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
 
   if (!isOpen) return null;
+
+  const titleTooShort = title.length > 0 && title.trim().length < 5;
+  const bodyTooShort = body.length > 0 && body.trim().length < 15;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +72,19 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     }
     if (body.trim().length < 15) {
       setErrorMessage("Reflection must be at least 15 characters long.");
+      return;
+    }
+
+    const spamGuard = validateSubmissionGuard({
+      actionKey: "community_create_post",
+      honeypotValue: honeypot,
+      maxRequests: 5,
+      windowMs: 60_000,
+      text: `${title} ${body}`,
+      maxUrls: 3,
+    });
+    if (!spamGuard.ok) {
+      setErrorMessage(spamGuard.error || "Please wait before posting again.");
       return;
     }
 
@@ -162,9 +180,27 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
           </div>
 
           {/* Form Content */}
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5" noValidate>
+            {/* Hidden Honeypot Anti-Spam Field (#18) */}
+            <div className="sr-only" aria-hidden="true">
+              <label htmlFor="post-website-hp">Leave this field empty</label>
+              <input
+                id="post-website-hp"
+                name="website_url"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+            </div>
+
             {errorMessage && (
-              <div className="p-3.5 rounded-2xl bg-red-950/40 border border-red-500/50 text-red-200 text-xs flex items-center space-x-2">
+              <div
+                role="alert"
+                aria-live="assertive"
+                className="p-3.5 rounded-2xl bg-red-950/60 border border-red-500/60 text-red-100 text-xs flex items-center space-x-2"
+              >
                 <AlertTriangle className="w-4 h-4 shrink-0 text-red-400" />
                 <span>{errorMessage}</span>
               </div>
@@ -228,17 +264,27 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 id="post-title-input"
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  if (errorMessage) setErrorMessage("");
+                }}
                 maxLength={150}
+                aria-invalid={titleTooShort}
+                aria-describedby="post-title-hint"
                 placeholder="e.g. How do you practice Nishkāma Karma during deadline crunches?"
                 className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-all focus:outline-hidden ${
-                  isLight
+                  titleTooShort
+                    ? "border-red-500 focus:border-red-400"
+                    : isLight
                     ? "bg-white border-stone-300 focus:border-amber-500 text-stone-900"
                     : "bg-stone-900 border-stone-800 focus:border-amber-400 text-stone-100"
                 }`}
               />
-              <div className="flex justify-end text-[10px] text-stone-500 font-mono mt-1">
-                {title.length}/150
+              <div id="post-title-hint" className="flex justify-between text-[10px] font-mono mt-1">
+                <span className={titleTooShort ? "text-red-400 font-semibold" : "text-stone-500"}>
+                  {titleTooShort ? "Minimum 5 characters required" : "Clear, respectful title"}
+                </span>
+                <span className="text-stone-500">{title.length}/150</span>
               </div>
             </div>
 
@@ -326,18 +372,29 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 id="post-body-input"
                 rows={6}
                 value={body}
-                onChange={(e) => setBody(e.target.value)}
+                onChange={(e) => {
+                  setBody(e.target.value);
+                  if (errorMessage) setErrorMessage("");
+                }}
                 maxLength={2000}
+                aria-invalid={bodyTooShort}
+                aria-describedby="post-body-hint"
                 placeholder="Share your contemplation, question on meditation, commentary insight, or practical application of the verse..."
                 className={`w-full px-4 py-3 rounded-xl border text-sm leading-relaxed transition-all focus:outline-hidden resize-none ${
-                  isLight
+                  bodyTooShort
+                    ? "border-red-500 focus:border-red-400"
+                    : isLight
                     ? "bg-white border-stone-300 focus:border-amber-500 text-stone-900"
                     : "bg-stone-900 border-stone-800 focus:border-amber-400 text-stone-100"
                 }`}
               />
-              <div className="flex justify-between items-center text-[10px] text-stone-500 font-mono mt-1">
-                <span>Markdown supported (*italics*, **bold**)</span>
-                <span className={body.length > 1900 ? "text-amber-400 font-bold" : ""}>
+              <div id="post-body-hint" className="flex justify-between items-center text-[10px] font-mono mt-1">
+                <span className={bodyTooShort ? "text-red-400 font-semibold" : "text-stone-500"}>
+                  {bodyTooShort
+                    ? "Minimum 15 characters required"
+                    : "Markdown supported (*italics*, **bold**)"}
+                </span>
+                <span className={body.length > 1900 ? "text-amber-400 font-bold" : "text-stone-500"}>
                   {body.length}/2000
                 </span>
               </div>

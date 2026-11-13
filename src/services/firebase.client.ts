@@ -7,15 +7,15 @@ import firebaseConfig from "../../firebase-applet-config.json";
 const env = (import.meta as any).env || {};
 
 export const resolvedFirebaseConfig = {
-  projectId: env.VITE_FIREBASE_PROJECT_ID || firebaseConfig.projectId || "sutrasparsh-17a55",
-  appId: env.VITE_FIREBASE_APP_ID || firebaseConfig.appId || "1:805535850231:android:dd002bc488298a2fea3df2",
-  apiKey: env.VITE_FIREBASE_API_KEY || firebaseConfig.apiKey || "AIzaSyD9uoTvdu5ghfzMlfemdCCUrcG-Kn_mRkc",
-  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfig.authDomain || "sutrasparsh-17a55.firebaseapp.com",
+  projectId: env.VITE_FIREBASE_PROJECT_ID || firebaseConfig.projectId || "",
+  appId: env.VITE_FIREBASE_APP_ID || firebaseConfig.appId || "",
+  apiKey: env.VITE_FIREBASE_API_KEY || firebaseConfig.apiKey || "",
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfig.authDomain || "",
   firestoreDatabaseId: env.VITE_FIREBASE_DATABASE_ID || firebaseConfig.firestoreDatabaseId || "(default)",
-  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfig.storageBucket || "sutrasparsh-17a55.firebasestorage.app",
-  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfig.messagingSenderId || "805535850231",
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfig.storageBucket || "",
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfig.messagingSenderId || "",
   measurementId: env.VITE_FIREBASE_MEASUREMENT_ID || firebaseConfig.measurementId || "",
-  oAuthClientId: env.VITE_FIREBASE_OAUTH_CLIENT_ID || firebaseConfig.oAuthClientId || "805535850231-tlainhshod83bkpakigt3qj46p3ohpvc.apps.googleusercontent.com",
+  oAuthClientId: env.VITE_FIREBASE_OAUTH_CLIENT_ID || firebaseConfig.oAuthClientId || "",
 };
 
 // Initialize Firebase App

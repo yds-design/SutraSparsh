@@ -6,10 +6,15 @@ User-agent: *
 Allow: /
 Allow: /assets/
 Allow: /icon*.png
+Allow: /og-image.png
+Allow: /apple-touch-icon.png
 Allow: /logo.svg
 Allow: /favicon.*
 Allow: /golden-hour.css
 Allow: /manifest.webmanifest
+Allow: /site.webmanifest
+Allow: /privacy-policy
+Allow: /terms
 Allow: /privacy.html
 Allow: /terms.html
 

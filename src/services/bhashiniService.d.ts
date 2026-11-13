@@ -35,20 +35,16 @@ export declare const SUPPORTED_INDIC_LANGUAGES: Record<
 
 export declare class BhashiniService {
   constructor();
-  getCredentials(): BhashiniCredentials;
+  getProxyConfig(): {
+    mode: "server-proxy";
+    proxyEndpoint: string;
+    pipelineId: string;
+  };
   isConfigured(): {
     isConfigured: boolean;
-    hasUserId: boolean;
-    hasUdyatKey: boolean;
-    hasInferenceKey: boolean;
+    mode: "server-proxy";
+    secretsExposedOnClient: boolean;
   };
-  getAuthHeaders(
-    type?: "discovery" | "inference",
-    overrideInferenceKey?: string
-  ): Record<string, string>;
-  getPipelineConfig(
-    sourceLanguage?: string
-  ): Promise<{ callbackUrl: string; inferenceApiKey: string; serviceId: string }>;
   synthesizeSpeech(request: BhashiniTTSRequest): Promise<BhashiniTTSResponse>;
   playAudio(
     audioUrlOrBase64: string,

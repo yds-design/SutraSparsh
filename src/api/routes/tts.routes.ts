@@ -21,6 +21,10 @@ router.post("/tts/synthesize", async (req: Request, res: Response): Promise<void
     throw ApiError.badRequest("Sanskrit verse text is required for synthesis.");
   }
 
+  if (text.trim().length > 1000) {
+    throw ApiError.badRequest("TTS synthesis text exceeds the 1,000-character safety limit.");
+  }
+
   const defaultProvider = (process.env.TTS_PROVIDER || "bhashini").toLowerCase();
   const requestedProvider = typeof provider === "string" ? provider.toLowerCase() : defaultProvider;
   const isBhashini =
@@ -554,15 +558,12 @@ router.get("/api/tts/bhashini/config", (_req: Request, res: Response): void => {
 /**
  * POST /api/tts/bhashini/config
  *
- * Updates runtime Bhashini ULCA configuration and credentials.
+ * Updates non-secret runtime Bhashini TTS voice preferences only.
+ * Credentials are strictly managed via server environment variables.
  */
 router.post("/api/tts/bhashini/config", (req: Request, res: Response): void => {
-  const { userId, apiKey, inferenceKey, pipelineId, defaultLanguage, defaultGender, pace, sampleRate } = req.body;
+  const { defaultLanguage, defaultGender, pace, sampleRate } = req.body || {};
   bhashiniTtsService.updateConfig({
-    userId,
-    apiKey,
-    inferenceKey,
-    pipelineId,
     defaultLanguage,
     defaultGender,
     pace,
@@ -571,7 +572,7 @@ router.post("/api/tts/bhashini/config", (req: Request, res: Response): void => {
 
   res.status(200).json({
     success: true,
-    message: "Bhashini credentials and configuration updated successfully.",
+    message: "Bhashini voice preferences updated successfully.",
     data: bhashiniTtsService.getConfig(),
   });
 });

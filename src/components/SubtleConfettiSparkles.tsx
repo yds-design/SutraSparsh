@@ -106,6 +106,7 @@ export const SubtleConfettiSparkles: React.FC<SubtleConfettiSparklesProps> = ({
           >
             {p.shape === "sparkle" && (
               <svg
+                aria-hidden="true"
                 viewBox="0 0 24 24"
                 width={p.size * 2.2}
                 height={p.size * 2.2}

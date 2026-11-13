@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <rect width="1024" height="1024" rx="220" fill="#1C120B"/>
+  <rect x="32" y="32" width="960" height="960" rx="196" fill="none" stroke="#E05A1B" stroke-width="18" stroke-opacity="0.5"/>
+  <g id="brand-emblem">
+    <path d="M 272 560 L 272 472 L 442 503 L 298 406 L 389 318 L 480 464 L 452 292 L 572 292 L 544 464 L 635 318 L 726 406 L 582 503 L 752 472 L 752 560 Z" fill="#FF6E14"/>
+  </g>
+  <g id="brand-text" fill="#FBF8EE" font-family="Georgia, serif" font-weight="700" text-anchor="middle">
+    <text x="512" y="705" font-size="112" letter-spacing="8">SUTRA</text>
+    <text x="512" y="810" font-size="96" letter-spacing="4" fill="#F3C068">SPARSH</text>
+  </g>
+</svg>

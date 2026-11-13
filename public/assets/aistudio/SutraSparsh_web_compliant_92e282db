@@ -1,0 +1,68 @@
+﻿To ensure SutraSparsh (sutrasparsh.ai.studio) is completely production-ready, secure, and compliant before launch, use the comprehensive prompt below inside your IDE (like VS Code) or AI coding assistant.
+This prompt is structured with an Audit-First Gate: it forces the AI to inspect your codebase, check what is already enabled or missing, and provide a gap-analysis report before modifying a single line of code.
+Comprehensive AI Audit & Implementation Prompt for SutraSparsh
+Copy and paste the entire block below into your AI coding assistant:
+# ROLE & OBJECTIVE
+Act as a Principal Full-Stack Architect, DevSecOps Engineer, and Technical SEO Specialist. Your objective is to audit and bring the **SutraSparsh** web application (`sutrasparsh.ai.studio`) into 100% compliance with our 19-point Production Launch & Compliance Checklist.
+
+# PROJECT CONTEXT
+- **Product:** SutraSparsh (Multilingual Text-to-Speech recitation web and Android platform utilizing Bhashini and Google Speech APIs).
+- **Architecture:** Single-Page Application (React / TypeScript / Vite / Tailwind CSS).
+- **Core Requirement:** Zero-knowledge/privacy-conscious handling of user text inputs and strict API key security.
+
+# MANDATORY EXECUTION PROTOCOL (2-PHASE GATE)
+**PHASE 1: AUDIT & GAP ANALYSIS (DO NOT WRITE CODE YET)**
+Before modifying or creating any files, thoroughly scan the entire repository (`package.json`, `vite.config.*`, `index.html`, `public/`, `src/`, `.env*`, routing configurations, and hosting/server configs). 
+
+Generate a structured **Pre-Implementation Audit Table** covering all 19 items below with these exact columns:
+1. `#` & Checklist Item
+2. `Current Status` (`[ENABLED]`, `[PARTIAL]`, `[MISSING]`, or `[N/A - Verify]`)
+3. `Evidence / File Location` (e.g., exact file path, missing config, or exposed key risk)
+4. `Proposed Action Plan` (specific technical fix tailored to SutraSparsh)
+
+**STOP after outputting the Audit Table and wait for my explicit approval ("Proceed with Phase 2") before implementing any changes.**
+
+---
+
+# THE 19-POINT LAUNCH & COMPLIANCE CHECKLIST
+
+### Group A: Security & Infrastructure (Critical Priority)
+5. **Secrets off the frontend:** Scan `src/`, `index.html`, and `vite.config.*` for hardcoded API keys, Bhashini credentials, Google Speech API keys, or `VITE_` prefixed secrets that should be proxied via a secure backend/edge function. Verify `.env` is in `.gitignore`.
+7. **Force HTTPS:** Check hosting config (`vercel.json`, `netlify.toml`, `.htaccess`, or Firebase/Hostinger headers) for HTTP-to-HTTPS 301 redirects and Strict-Transport-Security (HSTS) headers.
+18. **Spam protection:** Check all public forms (feedback, contact, recitation request, waitlist) for rate-limiting, honeypot fields, or CAPTCHA/Turnstile integration.
+
+### Group B: Legal & Privacy Compliance
+2. **Privacy policy page:** Verify a dedicated `/privacy-policy` route/page exists, explicitly detailing how user text inputs are processed via Bhashini and Google Speech APIs, data retention policies, and user rights.
+3. **Terms & conditions page:** Verify a dedicated `/terms` route/page exists covering acceptable use for TTS generation, intellectual property/audio rights, and service disclaimers.
+4. **Cookie consent banner:** Check for a non-intrusive, GDPR/DPDP-compliant cookie consent banner that blocks non-essential analytics scripts until explicit user opt-in.
+
+### Group C: Technical SEO & Indexing
+1. **Sitemap + robots.txt:** Verify `public/robots.txt` exists (allowing crawlers and pointing to the sitemap) and `public/sitemap.xml` (or automated Vite build plugin) dynamically includes all public routes (`/`, `/privacy-policy`, `/terms`, etc.).
+6. **Social preview image:** Check `index.html` for Open Graph (`og:title`, `og:description`, `og:image`, `og:url`) and Twitter Card (`twitter:card`, `twitter:image`) meta tags pointing to a valid `1200x630px` preview banner.
+9. **Meta titles & descriptions:** Verify dynamic or route-specific `<title>` (50–60 chars) and `<meta name="description">` (150–160 chars) tags across all views (e.g., using `react-helmet-async` or native document head management).
+10. **Custom 404 page:** Verify the router has a wildcard catch-all (`path="*"`) rendering a branded, helpful 404 page with navigation back to the TTS studio—not a blank screen or host default.
+15. **Favicon:** Check `index.html` and `public/` for complete favicon support (`favicon.ico`, `favicon.svg`, `apple-touch-icon.png`, and `site.webmanifest`).
+16. **Fix broken links:** Audit all internal `<Link>`/`<a>` routes, footer links, audio asset URLs, and external documentation/API links for 404s or dead anchors.
+
+### Group D: UX, Accessibility & Frontend Quality
+8. **Mobile responsiveness:** Audit Tailwind CSS breakpoints (`sm:`, `md:`, `lg:`) across the TTS input box, language selectors, audio player controls, and navigation drawers to ensure zero horizontal overflow on 360px–414px viewports.
+11. **Alt text for images:** Scan all `<img>` and `<svg>` elements for descriptive `alt` attributes (or `aria-hidden="true"` for purely decorative icons).
+14. **Color contrast ratio:** Check Tailwind color combinations (text vs. background, disabled buttons, audio waveform/progress indicators) against WCAG AA standards (minimum 4.5:1 for normal text).
+17. **Form validation:** Check TTS text input fields (character limits, unsupported script/character warnings, empty state handling) and contact/feedback forms for real-time client-side validation and accessible error messages.
+
+### Group E: Performance & Telemetry
+12. **Image compression:** Audit `public/` and `src/assets/` for uncompressed PNG/JPG files; flag any assets over 150KB for WebP/AVIF conversion.
+13. **Check page load speed:** Audit bundle size, lazy loading (`React.lazy` / `Suspense` for secondary pages like Privacy/Terms), font loading (`font-display: swap`), and unused dependencies in `package.json`.
+19. **Set-up analytics:** Check `index.html` or analytics utility modules for privacy-friendly analytics (e.g., GA4 with IP anonymization or Plausible/Umami) gated behind the Cookie Consent state, plus custom events for TTS generation triggers.
+
+# PHASE 2 INSTRUCTIONS (ONLY AFTER APPROVAL)
+Once I approve the Audit Table:
+- Implement fixes grouped logically by commit/module.
+- Ensure TypeScript builds cleanly (`npm run build`) with zero lint or type errors.
+- Provide a final verification checklist confirming how to test each item locally and in production.
+
+Key SutraSparsh-Specific Risks to Watch During the Audit
+1. API Key Exposure (#5): Because SutraSparsh integrates Bhashini and Google Speech APIs, make sure your audit strictly flags any VITE_BHASHINI_API_KEY or VITE_GOOGLE_SPEECH_KEY variables. Anything prefixed with VITE_ is compiled directly into your public JavaScript bundle. If those keys are currently in the frontend, move the TTS API calls to a lightweight serverless proxy (e.g., Cloudflare Worker, Vercel Edge Function, or Firebase Cloud Function) before launch.
+2. DPDP Act & Speech Data Disclosure (#2 & #4): Since SutraSparsh processes Indian regional languages and operates out of India, your Privacy Policy should explicitly state whether user-entered text and synthesized audio are processed transiently in memory or logged by third-party APIs (Bhashini/Google).
+3. SPA Routing vs. Crawlers (#1 & #10): In a Vite/React SPA, search engines sometimes struggle to index client-side routes unless robots.txt, sitemap.xml, and server-side fallback rewrites (routing all traffic to index.html while serving a proper 404 UI for unknown paths) are configured together.
+For a practical walkthrough on auditing these exact pre-launch essentials, see this website launch checklist guide or review standard technical SEO and compliance steps before going live.

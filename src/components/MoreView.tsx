@@ -51,6 +51,8 @@ import { TtsAvailabilityIndicator } from "./TtsAvailabilityIndicator";
 import { SoundscapeSelector } from "./SoundscapeSelector";
 import { themeConfigService } from "../services/theme-config.service";
 import { resilientAudioPlayer, type ActiveAudioHandle } from "../utils/resilientAudioPlayer";
+import { validateSubmissionGuard } from "../utils/spamProtection";
+import { analyticsService } from "../services/analytics.service";
 
 interface MoreViewProps {
   theme?: "sandstone" | "amethyst" | "light" | "festival" | "golden-hour" | "prism-pulse";
@@ -152,8 +154,12 @@ export const MoreView: React.FC<MoreViewProps> = ({
 
   const [showBhashiniPortal, setShowBhashiniPortal] = useState(false);
   const [isTestingBhashini, setIsTestingBhashini] = useState(false);
-  const [bhashiniUdyatKey, setBhashiniUdyatKey] = useState(bhashiniPrefs.apiKey || "");
-  const [bhashiniInferenceKey, setBhashiniInferenceKey] = useState(bhashiniPrefs.inferenceKey || "");
+
+  // Custom Shloka TTS Studio state (#17 real-time validation & #18 spam protection)
+  const [customTtsText, setCustomTtsText] = useState("ॐ शान्तिः शान्तिः शान्तिः॥");
+  const [customTtsHoneypot, setCustomTtsHoneypot] = useState("");
+  const [customTtsError, setCustomTtsError] = useState<string | null>(null);
+  const [isSynthesizingCustom, setIsSynthesizingCustom] = useState(false);
 
   // TTS Diagnostics & Failsafe Test state
   const [ttsTestResult, setTtsTestResult] = useState<{
@@ -312,26 +318,88 @@ export const MoreView: React.FC<MoreViewProps> = ({
     setBhashiniPrefs(refreshed);
   };
 
-  const handleSaveBhashiniCredentials = async () => {
-    handleBhashiniPrefUpdate({
-      apiKey: bhashiniUdyatKey.trim(),
-      inferenceKey: bhashiniInferenceKey.trim(),
+  const validateCustomTtsInput = (value: string): string | null => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return "Please enter a Sanskrit, Hindi, or transliterated verse to recite.";
+    }
+    if (trimmed.length < 3) {
+      return "Recitation text must be at least 3 characters long.";
+    }
+    if (trimmed.length > 1000) {
+      return "Recitation text cannot exceed 1,000 characters per synthesis request.";
+    }
+    return null;
+  };
+
+  const handleCustomTtsChange = (value: string) => {
+    setCustomTtsText(value);
+    setCustomTtsError(validateCustomTtsInput(value));
+  };
+
+  const handleSynthesizeCustomTts = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const validationError = validateCustomTtsInput(customTtsText);
+    if (validationError) {
+      setCustomTtsError(validationError);
+      return;
+    }
+
+    const guard = validateSubmissionGuard({
+      actionKey: "tts_studio_synthesize",
+      honeypotValue: customTtsHoneypot,
+      maxRequests: 6,
+      windowMs: 60_000,
+      text: customTtsText,
+      maxUrls: 0,
     });
 
-    // Also inform server endpoint if available
-    try {
-      await fetch("/api/tts/bhashini/config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          apiKey: bhashiniUdyatKey.trim(),
-          inferenceKey: bhashiniInferenceKey.trim(),
-        }),
-      });
-    } catch {}
+    if (!guard.ok) {
+      setCustomTtsError(guard.error || "Please wait briefly before synthesizing again.");
+      return;
+    }
 
-    showToast("Bhashini credentials saved successfully.");
-    setShowBhashiniPortal(false);
+    setCustomTtsError(null);
+    resilientAudioPlayer.unlockAudio();
+    setIsSynthesizingCustom(true);
+
+    try {
+      if (activeTestAudio) {
+        if ("stop" in activeTestAudio && typeof activeTestAudio.stop === "function") {
+          activeTestAudio.stop();
+        } else if ("pause" in activeTestAudio && typeof activeTestAudio.pause === "function") {
+          activeTestAudio.pause();
+        }
+      }
+
+      const trimmed = customTtsText.trim();
+      const result = await ttsService.synthesizeVerse(`studio-${trimmed.length}`, trimmed, {
+        provider: activeTtsProvider,
+        language: bhashiniPrefs.language,
+        gender: bhashiniPrefs.gender,
+        speed: bhashiniPrefs.pace,
+      });
+
+      const handle = await resilientAudioPlayer.play(result.audioUrl, {
+        playbackRate: activeTtsProvider === "bhashini" ? bhashiniPrefs.pace : prefChantSpeed,
+        ariaLabel: "Custom Shloka TTS Recitation",
+        onEnd: () => {
+          analyticsService.trackTtsPlaybackComplete({
+            provider: result.provider,
+            language: bhashiniPrefs.language,
+            durationMs: result.durationMs,
+          });
+        },
+      });
+      setActiveTestAudio(handle);
+      showToast(`Chanting custom verse (${result.characterCount} chars) via ${result.provider}`);
+    } catch (err: any) {
+      const msg = err?.message || "Unable to synthesize custom verse right now.";
+      setCustomTtsError(msg);
+      showToast(msg);
+    } finally {
+      setIsSynthesizingCustom(false);
+    }
   };
 
   const handleTestBhashiniVoice = async () => {
@@ -1195,8 +1263,8 @@ export const MoreView: React.FC<MoreViewProps> = ({
                           : "bg-stone-800/80 hover:bg-stone-700/80 text-stone-300 border border-white/10"
                       }`}
                     >
-                      <Key className={`w-3 h-3 ${isLightCanvas ? "text-[#874606]" : "text-amber-400"}`} />
-                      <span>{showBhashiniPortal ? "Hide Portal Keys" : "ULCA Portal Keys"}</span>
+                      <Key className={`w-3 h-3 ${isLightCanvas ? "text-[#874606]" : "text-amber-400"}`} aria-hidden="true" />
+                      <span>{showBhashiniPortal ? "Hide Proxy Info" : "Proxy Security Info"}</span>
                     </button>
                   </div>
                 </div>
@@ -1391,109 +1459,38 @@ export const MoreView: React.FC<MoreViewProps> = ({
                   </div>
                 </div>
 
-                {/* Bhashini Portal Credentials Drawer */}
+                {/* Server-Side Security Proxy Readout (No secrets exposed in client UI) */}
                 {showBhashiniPortal && (
                   <div
-                    className={`mt-3 p-3 rounded-xl border space-y-2.5 ${
+                    className={`mt-3 p-3.5 rounded-xl border space-y-2 ${
                       isLightCanvas
                         ? "bg-[#FFFDF8] border-[#DECB9F]"
                         : "bg-stone-950/60 border-amber-500/30"
                     }`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2">
                       <span
-                        className={`text-xs font-bold ${
+                        className={`text-xs font-bold flex items-center gap-1.5 ${
                           isLightCanvas ? "text-[#874606]" : "text-amber-300"
                         }`}
                       >
-                        Bhashini ULCA Portal Credentials
+                        <ShieldCheck className="w-4 h-4" aria-hidden="true" />
+                        <span>Server-Side Security Proxy Active</span>
                       </span>
-                      <span className="text-[9px] font-mono" style={{ color: textMuted }}>
-                        Pipeline: 64392f96...
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-500 font-bold">
+                        Zero Client Secrets
                       </span>
                     </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px]" style={{ color: textMuted }}>
-                        User ID (VITE_BHASHINI_USER_ID)
-                      </label>
-                      <input
-                        type="text"
-                        readOnly
-                        value={bhashiniPrefs.userId}
-                        className={`w-full text-xs font-mono px-2.5 py-1.5 rounded-lg border ${
-                          isLightCanvas
-                            ? "bg-[#FBF8EE] border-[#E8DCC2] text-[#261B12]"
-                            : "bg-stone-900 border-stone-700 text-stone-300"
-                        }`}
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px]" style={{ color: textMuted }}>
-                        Pipeline ID (VITE_BHASHINI_PIPELINE_ID)
-                      </label>
-                      <input
-                        type="text"
-                        readOnly
-                        value={bhashiniPrefs.pipelineId}
-                        className={`w-full text-xs font-mono px-2.5 py-1.5 rounded-lg border ${
-                          isLightCanvas
-                            ? "bg-[#FBF8EE] border-[#E8DCC2] text-[#261B12]"
-                            : "bg-stone-900 border-stone-700 text-stone-300"
-                        }`}
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px]" style={{ color: textMuted }}>
-                        Udyat API Key (VITE_BHASHINI_API_KEY)
-                      </label>
-                      <input
-                        type="password"
-                        placeholder="PASTE_COPIED_UDYAT_KEY_HERE"
-                        value={bhashiniUdyatKey}
-                        onChange={(e) => setBhashiniUdyatKey(e.target.value)}
-                        className={`w-full text-xs font-mono px-2.5 py-1.5 rounded-lg border focus:outline-hidden ${
-                          isLightCanvas
-                            ? "bg-[#FBF8EE] border-[#E8DCC2] text-[#261B12] focus:border-[#D96500]"
-                            : "bg-stone-900 border-stone-700 text-stone-200 focus:border-amber-500"
-                        }`}
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px]" style={{ color: textMuted }}>
-                        Inference Key (VITE_BHASHINI_INFERENCE_KEY)
-                      </label>
-                      <input
-                        type="password"
-                        placeholder="PASTE_COPIED_INFERENCE_KEY_HERE"
-                        value={bhashiniInferenceKey}
-                        onChange={(e) => setBhashiniInferenceKey(e.target.value)}
-                        className={`w-full text-xs font-mono px-2.5 py-1.5 rounded-lg border focus:outline-hidden ${
-                          isLightCanvas
-                            ? "bg-[#FBF8EE] border-[#E8DCC2] text-[#261B12] focus:border-[#D96500]"
-                            : "bg-stone-900 border-stone-700 text-stone-200 focus:border-amber-500"
-                        }`}
-                      />
-                    </div>
-
-                    <div className="flex justify-end pt-1">
-                      <button
-                        type="button"
-                        onClick={handleSaveBhashiniCredentials}
-                        className="px-3 py-1.5 rounded-lg bg-[#D96500] hover:bg-[#B85300] text-white font-bold text-xs transition-all cursor-pointer shadow-xs"
-                      >
-                        Save & Apply Credentials
-                      </button>
-                    </div>
+                    <p className="text-[11px] leading-relaxed" style={{ color: textSecondary }}>
+                      All Bhashini ULCA and Google Cloud Speech API keys are isolated strictly on the backend server via{" "}
+                      <code>/api/tts/synthesize</code> environment configuration and are never stored or exposed in the browser.
+                    </p>
                   </div>
                 )}
 
                 <div className="text-[10px] flex items-center justify-between pt-1 px-1" style={{ color: textMuted }}>
                   <span>Audio Format: WAV (22,050 Hz) • AI4Bharat Coqui Indo-Aryan</span>
-                  <span>Deterministic Resonant Fallback Ready</span>
+                  <span>Server Proxy + Harmonic Fallback Ready</span>
                 </div>
               </div>
             ) : (
@@ -1597,6 +1594,98 @@ export const MoreView: React.FC<MoreViewProps> = ({
                 </button>
               </div>
             )}
+
+            {/* Interactive Custom Shloka TTS Studio (#17 Real-time Validation + #18 Spam Guard) */}
+            <form
+              onSubmit={handleSynthesizeCustomTts}
+              noValidate
+              className={`mt-4 p-4 rounded-2xl border space-y-3 ${
+                isLightCanvas
+                  ? "bg-[#FAF6EE] border-[#DECB9F]"
+                  : "bg-black/25 border-amber-500/20"
+              }`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label
+                  htmlFor="custom-tts-studio-input"
+                  className="text-xs font-bold flex items-center gap-1.5"
+                  style={{ color: textPrimary }}
+                >
+                  <Volume2 className="w-4 h-4 text-amber-500" aria-hidden="true" />
+                  <span>Custom Shloka Recitation Studio (Live TTS)</span>
+                </label>
+                <span
+                  className={`text-[10.5px] font-mono ${
+                    customTtsText.trim().length > 900 ? "text-rose-500 font-bold" : ""
+                  }`}
+                  style={{ color: customTtsText.trim().length > 900 ? undefined : textMuted }}
+                >
+                  {customTtsText.trim().length}/1000 chars
+                </span>
+              </div>
+
+              {/* Hidden anti-bot honeypot field */}
+              <div className="sr-only" aria-hidden="true">
+                <label htmlFor="tts-studio-website">Leave empty</label>
+                <input
+                  id="tts-studio-website"
+                  name="website"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={customTtsHoneypot}
+                  onChange={(e) => setCustomTtsHoneypot(e.target.value)}
+                />
+              </div>
+
+              <textarea
+                id="custom-tts-studio-input"
+                rows={2}
+                value={customTtsText}
+                onChange={(e) => handleCustomTtsChange(e.target.value)}
+                maxLength={1050}
+                aria-invalid={Boolean(customTtsError)}
+                aria-describedby={customTtsError ? "custom-tts-error" : "custom-tts-hint"}
+                placeholder="Enter Sanskrit Devanagari, Hindi, or IAST verse (e.g. ॐ नमः शिवाय)..."
+                className={`w-full px-3 py-2 rounded-xl border text-xs sm:text-sm font-sanskrit focus:outline-none focus:ring-2 ${
+                  customTtsError
+                    ? "border-rose-500 focus:ring-rose-500"
+                    : isLightCanvas
+                    ? "bg-white border-[#DECB9F] focus:ring-[#D96500] text-[#261B12]"
+                    : "bg-stone-900 border-stone-700 focus:ring-amber-500 text-stone-100"
+                }`}
+              />
+
+              {customTtsError ? (
+                <p
+                  id="custom-tts-error"
+                  role="alert"
+                  className="text-[11px] font-semibold text-rose-500 flex items-center gap-1"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  <span>{customTtsError}</span>
+                </p>
+              ) : (
+                <p id="custom-tts-hint" className="text-[10.5px]" style={{ color: textMuted }}>
+                  Processed transiently via our encrypted backend proxy (max 1,000 characters, rate-protected).
+                </p>
+              )}
+
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={isSynthesizingCustom || Boolean(customTtsError)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 ${
+                    isLightCanvas
+                      ? "bg-[#1b1740] hover:bg-[#100e2b] text-white"
+                      : "bg-amber-500 hover:bg-amber-400 text-stone-950"
+                  }`}
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" aria-hidden="true" />
+                  <span>{isSynthesizingCustom ? "Synthesizing..." : "Recite Custom Verse"}</span>
+                </button>
+              </div>
+            </form>
 
             {/* TTS Engine Verification & Failsafe Diagnostic Console */}
             <div

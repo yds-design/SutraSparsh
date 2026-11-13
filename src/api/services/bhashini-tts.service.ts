@@ -116,12 +116,12 @@ export class BhashiniTtsService {
     timestamp: number;
   } | null = null;
 
-  // In-memory runtime configuration with fallback to environment variables
+  // Server-side environment configuration (never read from VITE_ client vars)
   private config: BhashiniConfig = {
-    userId: process.env.BHASHINI_USER_ID || process.env.VITE_BHASHINI_USER_ID || "89125c11d7c54f38b3428cce7114effe",
-    apiKey: process.env.BHASHINI_API_KEY || process.env.VITE_BHASHINI_API_KEY || "PASTE_COPIED_UDYAT_KEY_HERE",
-    inferenceKey: process.env.BHASHINI_INFERENCE_KEY || process.env.VITE_BHASHINI_INFERENCE_KEY || "PASTE_COPIED_INFERENCE_KEY_HERE",
-    pipelineId: process.env.BHASHINI_PIPELINE_ID || process.env.VITE_BHASHINI_PIPELINE_ID || "64392f96daac500b55c543d6",
+    userId: process.env.BHASHINI_USER_ID || "",
+    apiKey: process.env.BHASHINI_API_KEY || process.env.BHASHINI_UDYAT_KEY || "",
+    inferenceKey: process.env.BHASHINI_INFERENCE_KEY || "",
+    pipelineId: process.env.BHASHINI_PIPELINE_ID || "64392f96daac500b55c543d6",
     defaultLanguage: (process.env.TTS_DEFAULT_LANGUAGE as "sa" | "hi") || "sa",
     defaultGender: (process.env.TTS_DEFAULT_GENDER as "female" | "male") || "female",
     audioFormat: "wav",

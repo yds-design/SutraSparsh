@@ -7,8 +7,8 @@
  * Indic Text-to-Speech (TTS) synthesis, chanting recitation, and localization.
  *
  * Requirements Met:
- * - FR-01: Secure Credential Initialization & Auth Handshake (VITE_BHASHINI_USER_ID, VITE_BHASHINI_UDYAT_KEY, VITE_BHASHINI_INFERENCE_KEY)
- * - FR-02: Pipeline Compute Service Integration (TTS / Translation) with ULCA payloads
+ * - FR-01: Secure Server-Proxy Initialization (Zero Client Secrets)
+ * - FR-02: Pipeline Compute Service Integration (TTS / Translation) via /api/tts/synthesize
  * - FR-03: Error Handling & Graceful Fallbacks (401/403 alerts, exponential backoff for 502/504)
  */
 
@@ -72,14 +72,10 @@ export const SUPPORTED_INDIC_LANGUAGES = Object.freeze({
   en: { code: "en", name: "English (Indian)", native: "English", script: "Latin" },
 });
 
-// Default Pipeline & Model configuration
+// Proxy & Cache configuration (all API credentials remain strictly server-side)
+const PROXY_SYNTHESIZE_ENDPOINT = "/api/tts/synthesize";
 const DEFAULT_PIPELINE_ID = "64392f96daac500b55c543d6";
-const DEFAULT_INFERENCE_ENDPOINT = "https://dhruva-api.bhashini.gov.in/services/inference/pipeline";
-const PIPELINE_DISCOVERY_ENDPOINT = "https://meity-auth.ulcacontrib.org/ulca/apis/v0/model/getModelsPipeline";
-const DEFAULT_TTS_SERVICE_ID = "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4";
-
 const CACHE_PREFIX = "sutrasparsh_bhashini_tts_";
-const PIPELINE_CACHE_KEY = "sutrasparsh_bhashini_pipeline_cache";
 
 /**
  * Custom Error Class for Bhashini Operations
@@ -105,11 +101,11 @@ export class BhashiniServiceError extends Error {
 }
 
 /**
- * Bhashini Service Architecture Utility
+ * Bhashini Service Architecture Utility (Server-Proxy Architecture)
  */
 class BhashiniService {
   /**
-   * Initializes internal state, in-memory caches, and dynamic config.
+   * Initializes internal state and in-memory audio caches.
    */
   constructor() {
     /** @type {Map<string, { audioBase64: string, mimeType: string, timestamp: number }>} */
@@ -118,229 +114,49 @@ class BhashiniService {
     /** @type {Map<string, string>} */
     this.blobCache = new Map();
 
-    /** @type {{ callbackUrl: string, inferenceApiKey: string, serviceId: string, timestamp: number } | null} */
-    this.cachedPipelineConfig = null;
-
     /** @type {HTMLAudioElement | null} */
     this.currentAudioElement = null;
-
-    // Load any existing pipeline cache from localStorage
-    this._loadPipelineCache();
   }
 
   // =========================================================================
-  // FR-01: SECURE CREDENTIAL INITIALIZATION & AUTH HEADERS
+  // FR-01: SERVER-SIDE PROXY STATUS (ZERO CLIENT CREDENTIALS)
   // =========================================================================
 
   /**
-   * Retrieves active credentials with priority:
-   * 1. Vite environment variables (import.meta.env)
-   * 2. localStorage runtime overrides (for manual UI testing in MoreView)
-   * 3. Sensible non-secret defaults
+   * Returns non-secret proxy routing configuration.
+   * All Bhashini ULCA / Google Cloud Speech keys are kept exclusively server-side.
    *
-   * @returns {BhashiniCredentials}
+   * @returns {{ mode: "server-proxy", proxyEndpoint: string, pipelineId: string }}
    */
-  getCredentials() {
-    const env = (typeof import.meta !== "undefined" && import.meta.env) || {};
-
-    let localUserId = "";
-    let localUdyatKey = "";
-    let localInferenceKey = "";
-    let localPipelineId = "";
-
-    if (typeof window !== "undefined" && window.localStorage) {
-      try {
-        localUserId = window.localStorage.getItem("sutrasparsh_bhashini_user_id") || "";
-        localUdyatKey =
-          window.localStorage.getItem("sutrasparsh_bhashini_udyat_key") ||
-          window.localStorage.getItem("sutrasparsh_bhashini_api_key") ||
-          "";
-        localInferenceKey = window.localStorage.getItem("sutrasparsh_bhashini_inference_key") || "";
-        localPipelineId = window.localStorage.getItem("sutrasparsh_bhashini_pipeline_id") || "";
-      } catch {
-        // Ignore localStorage read errors
-      }
-    }
-
-    const userId =
-      localUserId.trim() ||
-      env.VITE_BHASHINI_USER_ID ||
-      "89125c11d7c54f38b3428cce7114effe";
-
-    const udyatKey =
-      localUdyatKey.trim() ||
-      env.VITE_BHASHINI_UDYAT_KEY ||
-      env.VITE_BHASHINI_API_KEY ||
-      "067fe8c17c-1ce8-406e-b4b2-e3666689d1dc";
-
-    const inferenceKey =
-      localInferenceKey.trim() ||
-      env.VITE_BHASHINI_INFERENCE_KEY ||
-      "jSdE5OsFhqgtwgK5yGp56pwR0WZGGM4MIVCfanQ-cUAm-YlI_9pWBFVPzz1UjJoA";
-
-    const pipelineId =
-      localPipelineId.trim() ||
-      env.VITE_BHASHINI_PIPELINE_ID ||
-      DEFAULT_PIPELINE_ID;
-
+  getProxyConfig() {
     return {
-      userId: userId.trim(),
-      udyatKey: udyatKey.trim(),
-      inferenceKey: inferenceKey.trim(),
-      pipelineId: pipelineId.trim(),
+      mode: "server-proxy",
+      proxyEndpoint: PROXY_SYNTHESIZE_ENDPOINT,
+      pipelineId: DEFAULT_PIPELINE_ID,
     };
   }
 
   /**
-   * Verifies if Bhashini credentials are configured.
+   * Verifies that the server-proxy TTS architecture is active and zero secrets
+   * are stored in frontend state.
    *
-   * @returns {{ isConfigured: boolean, hasUdyatKey: boolean, hasInferenceKey: boolean, hasUserId: boolean }}
+   * @returns {{ isConfigured: boolean, mode: "server-proxy", secretsExposedOnClient: boolean }}
    */
   isConfigured() {
-    const creds = this.getCredentials();
-    const isPlaceholder = (val) =>
-      !val ||
-      val.includes("PASTE_COPIED") ||
-      val.includes("YOUR_") ||
-      val.trim().length === 0;
-
-    const hasUserId = !isPlaceholder(creds.userId);
-    const hasUdyatKey = !isPlaceholder(creds.udyatKey);
-    const hasInferenceKey = !isPlaceholder(creds.inferenceKey);
-
     return {
-      isConfigured: hasUserId && hasUdyatKey && hasInferenceKey,
-      hasUserId,
-      hasUdyatKey,
-      hasInferenceKey,
-    };
-  }
-
-  /**
-   * Constructs standardized authentication and content headers for Bhashini API calls.
-   *
-   * @param {"discovery" | "inference"} [type="inference"] - Type of operation
-   * @param {string} [overrideInferenceKey] - Optional dynamic token from pipeline discovery
-   * @returns {Record<string, string>} Request headers object
-   */
-  getAuthHeaders(type = "inference", overrideInferenceKey = "") {
-    const creds = this.getCredentials();
-
-    if (type === "discovery") {
-      // Bhashini ULCA Discovery Endpoint Headers
-      return {
-        "Content-Type": "application/json",
-        userID: creds.userId,
-        ulcaApiKey: creds.udyatKey,
-      };
-    }
-
-    // Pipeline Compute Inference Endpoint Headers
-    const token = overrideInferenceKey || creds.inferenceKey || creds.udyatKey;
-    return {
-      "Content-Type": "application/json",
-      Authorization: token,
-      ulcaApiKey: creds.udyatKey,
+      isConfigured: true,
+      mode: "server-proxy",
+      secretsExposedOnClient: false,
     };
   }
 
   // =========================================================================
-  // FR-02: PIPELINE COMPUTE & DISCOVERY INTEGRATION
+  // FR-02: SERVER PROXY PIPELINE COMPUTE INTEGRATION
   // =========================================================================
 
   /**
-   * Performs the initial discovery handshake with Bhashini's ULCA catalog
-   * to resolve the optimal serviceId, inference endpoint, and auth tokens.
-   * Results are cached for 30 minutes to satisfy the < 1.5s latency requirement.
-   *
-   * @param {string} [sourceLanguage="sa"]
-   * @returns {Promise<{ callbackUrl: string, inferenceApiKey: string, serviceId: string }>}
-   */
-  async getPipelineConfig(sourceLanguage = "sa") {
-    const creds = this.getCredentials();
-    const now = Date.now();
-    const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
-
-    if (
-      this.cachedPipelineConfig &&
-      now - this.cachedPipelineConfig.timestamp < CACHE_TTL_MS
-    ) {
-      return this.cachedPipelineConfig;
-    }
-
-    // Default configuration fallback
-    let resolvedConfig = {
-      callbackUrl: DEFAULT_INFERENCE_ENDPOINT,
-      inferenceApiKey: creds.inferenceKey,
-      serviceId: DEFAULT_TTS_SERVICE_ID,
-      timestamp: now,
-    };
-
-    const status = this.isConfigured();
-    if (!status.hasUserId || !status.hasUdyatKey) {
-      return resolvedConfig;
-    }
-
-    try {
-      const discoveryPayload = {
-        pipelineTasks: [
-          {
-            taskType: "tts",
-            config: {
-              language: {
-                sourceLanguage,
-              },
-            },
-          },
-        ],
-        pipelineRequestConfig: {
-          pipelineId: creds.pipelineId || DEFAULT_PIPELINE_ID,
-        },
-      };
-
-      const res = await this._fetchWithTimeout(
-        PIPELINE_DISCOVERY_ENDPOINT,
-        {
-          method: "POST",
-          headers: this.getAuthHeaders("discovery"),
-          body: JSON.stringify(discoveryPayload),
-        },
-        8000
-      );
-
-      if (res.ok) {
-        const data = await res.json();
-        const apiEndpoint = data?.pipelineInferenceAPIEndPoint;
-
-        if (apiEndpoint?.callbackUrl) {
-          resolvedConfig.callbackUrl = apiEndpoint.callbackUrl;
-        }
-
-        if (apiEndpoint?.inferenceApiKey?.value) {
-          resolvedConfig.inferenceApiKey = apiEndpoint.inferenceApiKey.value;
-        }
-
-        const task = data?.pipelineResponseConfig?.[0]?.config?.[0];
-        if (task?.serviceId) {
-          resolvedConfig.serviceId = task.serviceId;
-        }
-
-        this.cachedPipelineConfig = resolvedConfig;
-        this._savePipelineCache(resolvedConfig);
-      }
-    } catch (err) {
-      // Log notice non-blockingly and use cached or default endpoints
-      console.warn(
-        "[BhashiniService] Pipeline discovery handshake bypassed; using direct inference endpoint:",
-        err?.message || err
-      );
-    }
-
-    return resolvedConfig;
-  }
-
-  /**
-   * Synthesizes Indic speech / Sanskrit shloka chanting via Bhashini ULCA Pipeline.
+   * Synthesizes Indic speech / Sanskrit shloka chanting via SutraSparsh's
+   * server-side `/api/tts/synthesize` proxy (which holds Bhashini ULCA & Google TTS secrets securely).
    *
    * @param {BhashiniTTSRequest} request
    * @returns {Promise<BhashiniTTSResponse>}
@@ -357,6 +173,13 @@ class BhashiniService {
     }
 
     const text = request.text.trim();
+    if (text.length > 1000) {
+      throw new BhashiniServiceError("Text input exceeds 1,000 character synthesis limit.", {
+        code: "VALIDATION_TEXT_TOO_LONG",
+        isRetryable: false,
+      });
+    }
+
     const sourceLanguage = this.validateLanguageCode(request.sourceLanguage || "sa");
     const gender = request.gender === "male" ? "male" : "female";
     const samplingRate = Number(request.samplingRate) || 22050;
@@ -378,143 +201,88 @@ class BhashiniService {
       }
     }
 
-    // 3. Check Credential Availability
-    const configStatus = this.isConfigured();
+    // 3. Call Secure Server Proxy with Exponential Backoff
     let audioBase64 = null;
     let provider = "bhashini-live";
     let notice = undefined;
 
-    if (configStatus.isConfigured) {
-      // 4. Resolve Pipeline Endpoints with Handshake Caching
-      const pipelineConfig = await this.getPipelineConfig(sourceLanguage);
-      const serviceId = request.serviceId || pipelineConfig.serviceId || DEFAULT_TTS_SERVICE_ID;
-
-      // 5. Construct Bhashini ULCA Pipeline Payload
-      const computePayload = {
-        pipelineTasks: [
-          {
-            taskType: "tts",
-            config: {
-              language: {
-                sourceLanguage,
-              },
-              serviceId,
-              gender,
-              samplingRate,
-            },
-          },
-        ],
-        inputData: {
-          input: [
+    try {
+      const proxyResult = await this._executeWithExponentialBackoff(
+        async () => {
+          const response = await this._fetchWithTimeout(
+            PROXY_SYNTHESIZE_ENDPOINT,
             {
-              source: text,
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                text,
+                language: sourceLanguage,
+                gender,
+                speed: pace,
+                sampleRate: samplingRate,
+                verseId: request.verseId,
+                provider: "bhashini",
+              }),
             },
-          ],
-        },
-      };
+            request.timeoutMs || 15000
+          );
 
-      const inferenceHeaders = this.getAuthHeaders("inference", pipelineConfig.inferenceApiKey);
-
-      // 6. Execute Compute Request with Exponential Backoff
-      try {
-        audioBase64 = await this._executeWithExponentialBackoff(
-          async () => {
-            const response = await this._fetchWithTimeout(
-              pipelineConfig.callbackUrl,
-              {
-                method: "POST",
-                headers: inferenceHeaders,
-                body: JSON.stringify(computePayload),
-              },
-              request.timeoutMs || 15000
-            );
-
-            // Handle HTTP status codes according to FR-03
-            if (!response.ok) {
-              const status = response.status;
-
-              // FR-03: 401/403 Unauthorized / Forbidden
-              if (status === 401 || status === 403) {
-                this._handleAuthFailure(status);
-                throw new BhashiniServiceError(
-                  `Bhashini authorization rejected (HTTP ${status}). Language service temporarily unavailable.`,
-                  {
-                    code: `HTTP_${status}`,
-                    status,
-                    isRetryable: false,
-                  }
-                );
-              }
-
-              // 502/504 / 503 / 429: Mark as retryable for exponential backoff
-              const isTransient = status === 502 || status === 504 || status === 503 || status === 429;
+          if (!response.ok) {
+            const status = response.status;
+            if (status === 401 || status === 403) {
+              this._handleAuthFailure(status);
               throw new BhashiniServiceError(
-                `Bhashini gateway error HTTP ${status}`,
-                {
-                  code: `HTTP_${status}`,
-                  status,
-                  isRetryable: isTransient,
-                }
+                `Bhashini proxy authorization rejected (HTTP ${status}).`,
+                { code: `HTTP_${status}`, status, isRetryable: false }
               );
             }
+            const isTransient = status === 502 || status === 504 || status === 503 || status === 429;
+            throw new BhashiniServiceError(`TTS proxy error HTTP ${status}`, {
+              code: `HTTP_${status}`,
+              status,
+              isRetryable: isTransient,
+            });
+          }
 
-            const data = await response.json();
-            const rawAudio = data?.pipelineResponse?.[0]?.audio?.[0]?.audioContent;
+          const data = await response.json();
+          const rawAudio = data?.data?.audioBase64;
+          if (!rawAudio || typeof rawAudio !== "string" || rawAudio.length < 50) {
+            throw new BhashiniServiceError("TTS proxy returned empty audio payload.", {
+              code: "EMPTY_AUDIO_RESPONSE",
+              isRetryable: true,
+            });
+          }
 
-            if (!rawAudio || typeof rawAudio !== "string" || rawAudio.length < 50) {
-              throw new BhashiniServiceError("Bhashini returned empty audio payload.", {
-                code: "EMPTY_AUDIO_RESPONSE",
-                isRetryable: true,
-              });
-            }
-
-            return rawAudio;
+          return {
+            audioBase64: rawAudio,
+            provider: data?.data?.provider || "bhashini-live",
+          };
+        },
+        {
+          maxRetries,
+          baseDelayMs: 600,
+          onRetry: (attempt, delayMs, err) => {
+            console.warn(
+              `[BhashiniService] Retrying transient proxy error (${err.message}). Attempt ${attempt}/${maxRetries} after ${delayMs}ms`
+            );
           },
-          {
-            maxRetries,
-            baseDelayMs: 600,
-            onRetry: (attempt, delayMs, err) => {
-              console.warn(
-                `[BhashiniService] Retrying transient error (${err.message}). Attempt ${attempt}/${maxRetries} after ${delayMs}ms`
-              );
-            },
-          }
-        );
-      } catch (liveErr) {
-        console.warn(
-          `[BhashiniService] Direct ULCA compute pipeline failed (${liveErr.message}). Activating failsafe fallback.`,
-          liveErr
-        );
-
-        if (!failsafeFallback) {
-          throw liveErr;
         }
+      );
 
-        // Trigger graceful failsafe
-        const fallback = await this._triggerFailsafeFallback(text, sourceLanguage, gender, pace, request.verseId);
-        audioBase64 = fallback.audioBase64;
-        provider = fallback.provider;
-        notice = fallback.notice;
-      }
-    } else {
-      // Credentials not configured; execute failsafe directly
+      audioBase64 = proxyResult.audioBase64;
+      provider = proxyResult.provider;
+    } catch (liveErr) {
       if (!failsafeFallback) {
-        throw new BhashiniServiceError(
-          "Bhashini credentials are unconfigured or incomplete. Please check .env.local.",
-          {
-            code: "UNCONFIGURED_CREDENTIALS",
-            isRetryable: false,
-          }
-        );
+        throw liveErr;
       }
 
       const fallback = await this._triggerFailsafeFallback(text, sourceLanguage, gender, pace, request.verseId);
       audioBase64 = fallback.audioBase64;
       provider = fallback.provider;
-      notice = fallback.notice || "Synthesized via SutraSparsh offline Vedic harmonic engine.";
+      notice = fallback.notice;
     }
 
-    // 7. Process Base64 Audio to Blob URL & Metadata
+    // 4. Process Base64 Audio to Blob URL & Metadata
     const audioUrl = this.base64ToBlobUrl(audioBase64, "audio/wav");
     const estimatedDurationMs = Math.max(3000, Math.round((text.length / 8.5) * (1 / pace) * 1000));
 
@@ -533,7 +301,7 @@ class BhashiniService {
       notice,
     };
 
-    // 8. Save into persistent memory and localStorage cache
+    // 5. Save into persistent memory and localStorage cache
     if (enableCache && audioBase64) {
       this._saveToCache(cacheKey, responsePayload, request.verseId);
     }
@@ -1008,40 +776,6 @@ class BhashiniService {
       } catch {
         // LocalStorage may exceed quota; memory cache retains it
       }
-    }
-  }
-
-  /**
-   * Loads cached pipeline config from storage.
-   *
-   * @private
-   */
-  _loadPipelineCache() {
-    if (typeof window === "undefined" || !window.localStorage) return;
-    try {
-      const raw = window.localStorage.getItem(PIPELINE_CACHE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && Date.now() - parsed.timestamp < 30 * 60 * 1000) {
-          this.cachedPipelineConfig = parsed;
-        }
-      }
-    } catch {
-      // Ignore
-    }
-  }
-
-  /**
-   * Saves pipeline config to storage.
-   *
-   * @private
-   */
-  _savePipelineCache(config) {
-    if (typeof window === "undefined" || !window.localStorage) return;
-    try {
-      window.localStorage.setItem(PIPELINE_CACHE_KEY, JSON.stringify(config));
-    } catch {
-      // Ignore
     }
   }
 

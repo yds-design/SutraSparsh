@@ -1,0 +1,35 @@
+{
+  "name": "SutraSparsh - Spiritual Wisdom Platform",
+  "short_name": "SutraSparsh",
+  "description": "Explore sacred Sanskrit verses, commentaries, 432Hz audio chants, and track daily study goals on SutraSparsh.",
+  "theme_color": "#1c1917",
+  "background_color": "#0c0a09",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-1024.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    }
+  ]
+}

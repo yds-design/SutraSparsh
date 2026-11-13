@@ -10,7 +10,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.png', 'assets/*', 'assets/favicon.png', 'assets/icon.png'],
+      includeAssets: ['favicon.svg', 'favicon.png', 'apple-touch-icon.png', 'og-image.png', 'assets/favicon.png', 'assets/icon.png'],
       manifest: {
         name: 'SutraSparsh - Spiritual Wisdom Platform',
         short_name: 'SutraSparsh',
@@ -44,6 +44,7 @@ export default defineConfig({
       workbox: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff,woff2}'],
+        globIgnores: ['**/assets/aistudio/**'],
         runtimeCaching: [
           {
             // Google Fonts Style sheets

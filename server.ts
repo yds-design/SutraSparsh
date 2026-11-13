@@ -2,11 +2,30 @@ import express from "express";
 import path from "node:path";
 import { createServer as createViteServer } from "vite";
 import { createApiApp } from "./src/api/app.js";
+import { securityHeadersMiddleware } from "./src/api/middleware/security-headers.middleware.js";
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
   const HOST = "0.0.0.0";
+
+  app.disable("x-powered-by");
+  app.set("trust proxy", true);
+
+  // Force HTTPS in production behind reverse proxy (non-localhost)
+  app.use((req, res, next) => {
+    const proto = req.header("x-forwarded-proto");
+    const host = (req.header("host") || "").toLowerCase();
+    const isLocal = host.startsWith("localhost") || host.startsWith("127.0.0.1") || host.startsWith("0.0.0.0");
+    if (process.env.NODE_ENV === "production" && !isLocal && proto === "http") {
+      res.redirect(301, `https://${req.header("host")}${req.originalUrl}`);
+      return;
+    }
+    next();
+  });
+
+  // Apply HSTS, CSP, Referrer-Policy, X-Content-Type-Options across all routes
+  app.use(securityHeadersMiddleware);
 
   // Create API backend app
   const apiApp = createApiApp();

@@ -72,6 +72,23 @@ export const SearchView: React.FC<SearchViewProps> = ({
   const isFestival = currentTheme === "festival";
   const isAmethyst = currentTheme === "amethyst";
 
+  const [queryError, setQueryError] = useState<string | null>(null);
+
+  const handleSearchInputChange = (rawVal: string) => {
+    if (/[<>]/.test(rawVal)) {
+      setQueryError("Angle brackets (<, >) are not supported in scripture queries.");
+      setSearchTerm(rawVal.replace(/[<>]/g, ""));
+      return;
+    }
+    if (rawVal.length > 160) {
+      setQueryError("Search query trimmed to the 160-character maximum.");
+      setSearchTerm(rawVal.slice(0, 160));
+      return;
+    }
+    setQueryError(null);
+    setSearchTerm(rawVal);
+  };
+
   const filteredVerses = verses.filter((v) => {
     if (!v) return false;
     const authorStr = (v.metadata?.author || (v as any).source || v.title || "").toLowerCase();
@@ -147,29 +164,58 @@ export const SearchView: React.FC<SearchViewProps> = ({
         </div>
 
         {/* Search Input Bar */}
-        <div className="relative">
-          <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isLight ? "text-[#b8801f]" : "text-amber-500"}`} />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Type a Sanskrit shloka, keyword (e.g., 'detachment', 'chitta', 'dharma', 'Gita 2.47')..."
-            className={`w-full pl-12 pr-12 py-3.5 rounded-full text-sm focus:outline-none shadow-xs border transition-all ${
-              isLight
-                ? "bg-[#f7f6fb] border-[#cfcbe0] focus:border-[#d9a441] text-[#1d1b2e] placeholder-[#55526b]"
-                : "bg-stone-950/90 border-stone-800 focus:border-amber-500/60 text-stone-100 placeholder-stone-500"
-            }`}
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm("")}
-              className={`absolute right-4 top-1/2 -translate-y-1/2 text-xs transition-colors cursor-pointer ${
-                isLight ? "text-[#55526b] hover:text-[#1b1740]" : "text-stone-400 hover:text-stone-200"
+        <div className="space-y-1.5">
+          <div className="relative">
+            <Search
+              aria-hidden="true"
+              className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isLight ? "text-[#b8801f]" : "text-amber-500"}`}
+            />
+            <input
+              type="text"
+              value={searchTerm}
+              maxLength={161}
+              aria-label="Search Sanskrit shlokas or keywords"
+              aria-invalid={!!queryError}
+              aria-describedby="search-validation-hint"
+              onChange={(e) => handleSearchInputChange(e.target.value)}
+              placeholder="Type a Sanskrit shloka, keyword (e.g., 'detachment', 'chitta', 'dharma', 'Gita 2.47')..."
+              className={`w-full pl-12 pr-14 py-3.5 rounded-full text-sm focus:outline-none shadow-xs border transition-all ${
+                queryError
+                  ? "border-red-500 focus:border-red-500"
+                  : isLight
+                  ? "bg-[#f7f6fb] border-[#cfcbe0] focus:border-[#d9a441] text-[#1d1b2e] placeholder-[#55526b]"
+                  : "bg-stone-950/90 border-stone-800 focus:border-amber-500/60 text-stone-100 placeholder-stone-500"
               }`}
-            >
-              Clear
-            </button>
-          )}
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQueryError(null);
+                  setSearchTerm("");
+                }}
+                className={`absolute right-4 top-1/2 -translate-y-1/2 text-xs transition-colors cursor-pointer ${
+                  isLight ? "text-[#55526b] hover:text-[#1b1740]" : "text-stone-400 hover:text-stone-200"
+                }`}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <div id="search-validation-hint" className="flex items-center justify-between px-3 text-[11px]">
+            {queryError ? (
+              <span role="alert" className={isLight ? "text-red-700 font-semibold" : "text-red-300 font-semibold"}>
+                {queryError}
+              </span>
+            ) : (
+              <span className={isLight ? "text-[#55526b]" : "text-stone-400"}>
+                Supports Devanagari, IAST, and English philosophical terms
+              </span>
+            )}
+            <span className={`font-mono ${isLight ? "text-[#55526b]" : "text-stone-400"}`}>
+              {searchTerm.length}/160
+            </span>
+          </div>
         </div>
 
         {/* Suggested Spiritual Queries */}

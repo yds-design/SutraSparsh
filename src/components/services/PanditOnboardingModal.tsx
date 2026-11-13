@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { panditService } from "../../services/pandit.service";
 import type { AppTheme } from "../../types";
+import { validateSubmissionGuard } from "../../utils/spamProtection";
 
 export interface PanditOnboardingModalProps {
   isOpen: boolean;
@@ -74,8 +75,13 @@ export const PanditOnboardingModal: React.FC<PanditOnboardingModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState("");
 
   if (!isOpen) return null;
+
+  const phoneDigits = phone.replace(/\D/g, "");
+  const phoneInvalid = phone.length > 0 && phoneDigits.length < 10;
+  const emailInvalid = email.trim().length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
   const toggleRitual = (ritual: string) => {
     setSelectedRituals((prev) =>
@@ -107,6 +113,10 @@ export const PanditOnboardingModal: React.FC<PanditOnboardingModalProps> = ({
       setError("Please enter a valid 10-digit WhatsApp / phone number.");
       return;
     }
+    if (emailInvalid) {
+      setError("Please enter a valid email address or leave it blank.");
+      return;
+    }
     if (!city.trim() || !state.trim()) {
       setError("Please specify your primary city and state.");
       return;
@@ -117,6 +127,19 @@ export const PanditOnboardingModal: React.FC<PanditOnboardingModalProps> = ({
     }
     if (selectedRituals.length === 0) {
       setError("Please select at least one sacred ritual you perform.");
+      return;
+    }
+
+    const spamGuard = validateSubmissionGuard({
+      actionKey: "pandit_onboarding",
+      honeypotValue: honeypot,
+      maxRequests: 3,
+      windowMs: 60_000,
+      text: `${name} ${bio}`,
+      maxUrls: 2,
+    });
+    if (!spamGuard.ok) {
+      setError(spamGuard.error || "Please wait before submitting another application.");
       return;
     }
 
@@ -225,7 +248,21 @@ export const PanditOnboardingModal: React.FC<PanditOnboardingModalProps> = ({
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            {/* Hidden Honeypot Anti-Spam Field (#18) */}
+            <div className="sr-only" aria-hidden="true">
+              <label htmlFor="pandit-website-hp">Leave this field empty</label>
+              <input
+                id="pandit-website-hp"
+                name="company_url"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+            </div>
+
             {/* Header */}
             <div className="space-y-1 pr-8">
               <div className="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-amber-500/15 text-amber-500 border border-amber-500/30">
@@ -249,8 +286,16 @@ export const PanditOnboardingModal: React.FC<PanditOnboardingModalProps> = ({
             </div>
 
             {error && (
-              <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div
+                role="alert"
+                aria-live="assertive"
+                className={`p-3 rounded-xl border text-xs flex items-center space-x-2 ${
+                  isLight
+                    ? "bg-red-50 border-red-300 text-red-800"
+                    : "bg-red-950/60 border-red-500/50 text-red-200"
+                }`}
+              >
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
                 <span>{error}</span>
               </div>
             )}
@@ -347,15 +392,26 @@ export const PanditOnboardingModal: React.FC<PanditOnboardingModalProps> = ({
                       type="tel"
                       required
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      aria-invalid={phoneInvalid}
+                      onChange={(e) => {
+                        setPhone(e.target.value);
+                        if (error) setError(null);
+                      }}
                       placeholder="+91 98765 43210"
                       className={`w-full pl-8 pr-3 py-2 rounded-xl text-xs border focus:outline-none focus:ring-1 focus:ring-amber-500 ${
-                        isLight
+                        phoneInvalid
+                          ? "border-red-500"
+                          : isLight
                           ? "bg-white border-stone-200 text-stone-900"
                           : "bg-stone-800 border-stone-700 text-stone-100"
                       }`}
                     />
                   </div>
+                  {phoneInvalid && (
+                    <p role="alert" className="text-[10px] text-red-500 mt-1 font-medium">
+                      Enter at least 10 digits ({phoneDigits.length}/10)
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold mb-1 opacity-90">
@@ -364,14 +420,25 @@ export const PanditOnboardingModal: React.FC<PanditOnboardingModalProps> = ({
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    aria-invalid={emailInvalid}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (error) setError(null);
+                    }}
                     placeholder="purohit@example.com"
                     className={`w-full px-3 py-2 rounded-xl text-xs border focus:outline-none focus:ring-1 focus:ring-amber-500 ${
-                      isLight
+                      emailInvalid
+                        ? "border-red-500"
+                        : isLight
                         ? "bg-white border-stone-200 text-stone-900"
                         : "bg-stone-800 border-stone-700 text-stone-100"
                     }`}
                   />
+                  {emailInvalid && (
+                    <p role="alert" className="text-[10px] text-red-500 mt-1 font-medium">
+                      Please enter a valid email format
+                    </p>
+                  )}
                 </div>
               </div>
 

@@ -1,38 +1,27 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { Search, Filter, Sparkles, BookOpen, Sun, Activity, Bookmark, Flame, RefreshCw, Smartphone, Crown, Heart, Zap, ShieldCheck, Compass, Play, ArrowRight, AlertCircle } from "lucide-react";
 import type { ContentItem, ContentResponse, JournalEntry } from "./types";
 import { Header, type NavTab } from "./components/Header";
 import { VerseCard } from "./components/VerseCard";
 import { VerseCardSkeletonGrid } from "./components/VerseCardSkeleton";
 import { VerseModal } from "./components/VerseModal";
-import { DailySutra } from "./components/DailySutra";
-import { WisdomJournal } from "./components/WisdomJournal";
-import { SutraSparshAdminApp } from "./admin/SutraSparshAdminApp";
 import { DailyShlokaMobile } from "./components/DailyShlokaMobile";
 import { MyJourneyView } from "./components/MyJourneyView";
 import { SearchView } from "./components/SearchView";
 import { MobileBottomNav } from "./components/MobileBottomNav";
-import { PricingModal } from "./components/PricingModal";
 import { PaywallModal } from "./components/PaywallModal";
-import { DonationModal } from "./components/DonationModal";
-import { SubscriptionManagementPanel } from "./components/SubscriptionManagementPanel";
-import { MoreView } from "./components/MoreView";
 import { SadhakaProfileModal } from "./components/SadhakaProfileModal";
 import { AuthModal } from "./components/AuthModal";
-import { PrivacyPolicyModal } from "./components/PrivacyPolicyModal";
-import { StoreAssetsViewer } from "./components/StoreAssetsViewer";
 import { DailyPromoPopup } from "./components/DailyPromoPopup";
 import { AtmosphereCrossfadeBackdrop, ATMOSPHERE_CONFIGS } from "./components/AtmosphereCrossfadeBackdrop";
+import { CookieConsentBanner } from "./components/CookieConsentBanner";
 import { soundEngine } from "./utils/audio";
-import type { SubscriptionPlanId } from "./types/monetization";
 import type { AppTheme } from "./types";
 import { themeConfigService, themeObserver } from "./services/theme-config.service";
 import { useFeatureFlags } from "./services/feature-flags.service";
 import { firestoreSyncService } from "./services/firestore-sync.service";
 import { authService, type SeekerUser } from "./services/auth.service";
 import { DynamicMetadata } from "./components/DynamicMetadata";
-import { CommunityBoardView } from "./components/community/CommunityBoardView";
-import { PanditServicesView } from "./components/services/PanditServicesView";
 import { getDailyShlokaForDate } from "./data/scriptureCorpus";
 import {
   WordExplorer,
@@ -42,6 +31,43 @@ import {
 } from "./features/wordExplorer";
 import { useDailyWisdom } from "./services/daily-wisdom.service";
 import { Chip } from "./components/Chip";
+import { analyticsService } from "./services/analytics.service";
+import { consentService } from "./services/consent.service";
+
+// Code-split secondary routes, community/directory views, and heavy modals (#13)
+const SutraSparshAdminApp = React.lazy(() =>
+  import("./admin/SutraSparshAdminApp").then((m) => ({ default: m.SutraSparshAdminApp }))
+);
+const PrivacyPolicyPage = React.lazy(() =>
+  import("./components/legal/PrivacyPolicyPage").then((m) => ({ default: m.PrivacyPolicyPage }))
+);
+const TermsPage = React.lazy(() =>
+  import("./components/legal/TermsPage").then((m) => ({ default: m.TermsPage }))
+);
+const NotFoundPage = React.lazy(() =>
+  import("./components/NotFoundPage").then((m) => ({ default: m.NotFoundPage }))
+);
+const StoreAssetsViewer = React.lazy(() =>
+  import("./components/StoreAssetsViewer").then((m) => ({ default: m.StoreAssetsViewer }))
+);
+const PrivacyPolicyModal = React.lazy(() =>
+  import("./components/PrivacyPolicyModal").then((m) => ({ default: m.PrivacyPolicyModal }))
+);
+const PricingModal = React.lazy(() =>
+  import("./components/PricingModal").then((m) => ({ default: m.PricingModal }))
+);
+const DonationModal = React.lazy(() =>
+  import("./components/DonationModal").then((m) => ({ default: m.DonationModal }))
+);
+const MoreView = React.lazy(() =>
+  import("./components/MoreView").then((m) => ({ default: m.MoreView }))
+);
+const CommunityBoardView = React.lazy(() =>
+  import("./components/community/CommunityBoardView").then((m) => ({ default: m.CommunityBoardView }))
+);
+const PanditServicesView = React.lazy(() =>
+  import("./components/services/PanditServicesView").then((m) => ({ default: m.PanditServicesView }))
+);
 
 const TRADITIONS = ["All", "Bhagavad Gita", "Patanjali", "Upanishads", "Vedas"];
 const INITIAL_VERSES: ContentItem[] = [
@@ -103,7 +129,21 @@ const INITIAL_VERSES: ContentItem[] = [
 
 const CATEGORIES = ["All", "Karma Yoga", "Raja Yoga", "Mind & Meditation", "Jnana / Vedanta", "Vedic Chants"];
 
+const normalizeRoutePath = (rawPath: string): string => {
+  if (!rawPath || rawPath === "/") return "/";
+  const trimmed = rawPath.replace(/\/+$/, "");
+  return trimmed || "/";
+};
+
 export default function App() {
+  const [routePath, setRoutePath] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return normalizeRoutePath(window.location.pathname);
+    }
+    return "/";
+  });
+  const [verseNotFound, setVerseNotFound] = useState(false);
+
   // App Mode Separation (Phase 22, M38-M46): 'user' (sutrasparsh.in) vs 'admin' (admin.sutrasparsh.in)
   const [appMode, setAppMode] = useState<"user" | "admin">(() => {
     if (typeof window !== "undefined") {
@@ -604,12 +644,48 @@ export default function App() {
     }
   };
 
+  const navigateToRoute = React.useCallback((targetPath: string, nextTab?: NavTab) => {
+    const normalized = normalizeRoutePath(targetPath);
+    setVerseNotFound(false);
+    setRoutePath(normalized);
+    if (nextTab) {
+      setActiveTab(nextTab);
+    }
+    if (typeof window !== "undefined") {
+      try {
+        const dest = nextTab && nextTab !== "today" && normalized === "/" ? `/?tab=${nextTab}` : normalized;
+        window.history.pushState({}, "", dest);
+      } catch {
+        // Ignore iframe restrictions
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, []);
+
+  const handleSelectTab = React.useCallback((tab: NavTab) => {
+    setVerseNotFound(false);
+    if (routePath !== "/" && routePath !== "/index.html") {
+      setRoutePath("/");
+      if (typeof window !== "undefined") {
+        try {
+          const dest = tab === "today" ? "/" : `/?tab=${tab}`;
+          window.history.pushState({}, "", dest);
+        } catch {
+          // Ignore
+        }
+      }
+    }
+    setActiveTab(tab);
+  }, [routePath]);
+
   // Sync popstate for browser back/forward navigation
   useEffect(() => {
     const handlePopState = () => {
       const search = new URLSearchParams(window.location.search);
-      const path = window.location.pathname;
+      const path = normalizeRoutePath(window.location.pathname);
       const host = window.location.hostname;
+      setRoutePath(path);
+      setVerseNotFound(false);
       if (
         search.get("mode") === "admin" ||
         search.get("view") === "admin" ||
@@ -627,9 +703,65 @@ export default function App() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  // Sync activeTab with URL query parameter for clean, shareable & indexable URLs
+  // Resolve /verse/:id direct route (#16)
+  const verseRouteMatch = routePath.match(/^\/verse\/([^/]+)$/);
+  const requestedVerseId = verseRouteMatch ? decodeURIComponent(verseRouteMatch[1]) : null;
+
   useEffect(() => {
-    if (typeof window !== "undefined" && appMode === "user") {
+    if (!requestedVerseId) {
+      setVerseNotFound(false);
+      return;
+    }
+
+    const foundLocal = activeVerses.find((v) => v.id === requestedVerseId);
+    if (foundLocal) {
+      setSelectedVerse(foundLocal);
+      setIsModalOpen(true);
+      setVerseNotFound(false);
+      return;
+    }
+
+    let cancelled = false;
+    fetch(`/api/content/${encodeURIComponent(requestedVerseId)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((payload) => {
+        if (cancelled) return;
+        const item = payload?.data || (payload?.id ? payload : null);
+        if (item && item.id) {
+          setSelectedVerse(item);
+          setIsModalOpen(true);
+          setVerseNotFound(false);
+        } else {
+          setVerseNotFound(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setVerseNotFound(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [requestedVerseId, activeVerses]);
+
+  const isPrivacyRoute = routePath === "/privacy-policy";
+  const isTermsRoute = routePath === "/terms";
+  const isKnownRoute =
+    routePath === "/" ||
+    routePath === "/index.html" ||
+    routePath.startsWith("/admin") ||
+    isPrivacyRoute ||
+    isTermsRoute ||
+    (Boolean(verseRouteMatch) && !verseNotFound);
+  const isNotFoundRoute = appMode === "user" && !isKnownRoute;
+
+  // Sync activeTab with URL query parameter only on root '/'
+  useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      appMode === "user" &&
+      (routePath === "/" || routePath === "/index.html")
+    ) {
       const search = new URLSearchParams(window.location.search);
       try {
         if (activeTab === "today") {
@@ -650,14 +782,55 @@ export default function App() {
         // Silently handle iframes with restricted History API permissions
       }
     }
-  }, [activeTab, appMode]);
+  }, [activeTab, appMode, routePath]);
 
-  // Dynamic SEO Metadata for top-level non-today tabs
-  const tabMetadata = React.useMemo(() => {
+  // Dynamic Route-Specific SEO Metadata (Titles 50-60 chars, Descriptions 140-160 chars) (#9, #10)
+  const routeMetadata = React.useMemo(() => {
+    if (isNotFoundRoute) {
+      return {
+        title: "Page Not Found (404) – Sanctuary Path | SutraSparsh",
+        description:
+          "The requested SutraSparsh page could not be found. Return to the daily Sanskrit shloka, explore scriptures, or launch our sacred TTS audio studio.",
+        keywords: "SutraSparsh 404, page not found, Sanskrit sanctuary",
+        canonicalUrl: "https://sutrasparsh.com/",
+        robots: "noindex, nofollow",
+        ogType: "website" as const,
+      };
+    }
+    if (isPrivacyRoute) {
+      return {
+        title: "Privacy Policy & TTS Data Protection | SutraSparsh",
+        description:
+          "Read SutraSparsh's DPDP Act 2023 and GDPR privacy policy covering transient Bhashini and Google Cloud TTS audio processing and data sovereignty.",
+        keywords: "SutraSparsh privacy policy, Bhashini TTS privacy, DPDP Act 2023, GDPR, voice data safety",
+        canonicalUrl: "https://sutrasparsh.com/privacy-policy",
+        ogType: "website" as const,
+      };
+    }
+    if (isTermsRoute) {
+      return {
+        title: "Terms of Service & TTS Acceptable Use | SutraSparsh",
+        description:
+          "Review SutraSparsh Terms of Service, acceptable use guidelines for Sanskrit Text-to-Speech synthesis, and intellectual property rights for audio.",
+        keywords: "SutraSparsh terms of service, TTS acceptable use, Sanskrit audio rights, EULA",
+        canonicalUrl: "https://sutrasparsh.com/terms",
+        ogType: "website" as const,
+      };
+    }
+    if (requestedVerseId && selectedVerse?.id === requestedVerseId) {
+      return {
+        title: `${selectedVerse.title} – Sanskrit Shloka & Meaning | SutraSparsh`.slice(0, 60),
+        description: (selectedVerse.meaning || selectedVerse.commentary || "Explore sacred Sanskrit shloka recitation, word breakdown, and commentary on SutraSparsh.").slice(0, 160),
+        keywords: `${selectedVerse.title}, Sanskrit shloka, verse commentary, SutraSparsh`,
+        canonicalUrl: `https://sutrasparsh.com/verse/${encodeURIComponent(requestedVerseId)}`,
+        ogType: "article" as const,
+      };
+    }
     if (activeTab === "explore" || activeTab === "explorer") {
       return {
-        title: "Sacred Scriptures Library - Bhagavad Gita, Upanishads & Yoga Sutras | SutraSparsh",
-        description: "Explore the comprehensive Sanskrit corpus: Bhagavad Gita, Patanjali Yoga Sutras, and principal Upanishads with English translations, transliterations, and commentary.",
+        title: "Sacred Scriptures Library: Gita & Vedas | SutraSparsh",
+        description:
+          "Explore authentic verses from the Bhagavad Gita, Patanjali Yoga Sutras, Upanishads, and Vedas with Sanskrit text, commentary, and audio chants.",
         keywords: "Bhagavad Gita, Yoga Sutras, Upanishads, Sanskrit library, Vedic scriptures, sacred texts",
         canonicalUrl: "https://sutrasparsh.com/?tab=explore",
         ogType: "website" as const,
@@ -665,18 +838,22 @@ export default function App() {
     }
     if (activeTab === "search") {
       return {
-        title: "Search Sanskrit Shlokas & Sacred Corpus | SutraSparsh",
-        description: "Search across the entire Sanskrit corpus by Sanskrit keywords, English terms, and philosophical concepts. Discover relevant shlokas, meanings, and audio recitations.",
+        title: "Search Sanskrit Shlokas & Sacred Texts | SutraSparsh",
+        description:
+          "Search sacred Sanskrit shlokas by Devanagari script, IAST transliteration, or English philosophical concepts with instant commentary and recitations.",
         keywords: "search shloka, Sanskrit search, Gita search, Yoga Sutras search, dharma, karma, moksha",
-        canonicalUrl: searchTerm.trim() ? `https://sutrasparsh.com/?tab=search&q=${encodeURIComponent(searchTerm.trim())}` : "https://sutrasparsh.com/?tab=search",
+        canonicalUrl: searchTerm.trim()
+          ? `https://sutrasparsh.com/?tab=search&q=${encodeURIComponent(searchTerm.trim())}`
+          : "https://sutrasparsh.com/?tab=search",
         ogType: "website" as const,
       };
     }
     if (activeTab === "services") {
       return {
         title: "Vedic Purohit Directory & Ritual Services | SutraSparsh",
-        description: "Directly connect with verified Vedic Panditjis for Pujas, Griha Pravesha, Homa, and Samskaras. 100% Zero Platform Fees, peer-endorsed priests.",
-        keywords: "Vedic Pandit, Purohit directory, Griha Pravesh puja, Satyanarayan katha, Rudrabhishek, Vedic rituals, zero fee priests",
+        description:
+          "Connect directly with verified Vedic Panditjis for Pujas, Griha Pravesha, Homa, and Samskaras with 100% zero platform fees and peer endorsements.",
+        keywords: "Vedic Pandit, Purohit directory, Griha Pravesh puja, Satyanarayan katha, Rudrabhishek, zero fee priests",
         canonicalUrl: "https://sutrasparsh.com/?tab=services",
         ogType: "website" as const,
       };
@@ -684,41 +861,64 @@ export default function App() {
     if (activeTab === "community") {
       return {
         title: "Community Satsang & Spiritual Discussions | SutraSparsh",
-        description: "Engage in sacred Satsang dialogues, ask questions on Bhagavad Gita and Yoga Sutras, and share authentic sadhana realizations.",
-        keywords: "satsang community, spiritual discussion, Gita forum, yoga sutras Q&A, Vedic community, sadhana board",
+        description:
+          "Join respectful Satsang dialogues on the Bhagavad Gita and Yoga Sutras, ask contemplation questions, and share authentic daily sadhana insights.",
+        keywords: "satsang community, spiritual discussion, Gita forum, yoga sutras Q&A, Vedic community",
         canonicalUrl: "https://sutrasparsh.com/?tab=community",
         ogType: "website" as const,
       };
     }
     if (activeTab === "my-journey" || activeTab === "journal") {
       return {
-        title: "My Sādhana Journey, Daily Study Goals & Streaks | SutraSparsh",
-        description: "Track your 15-minute daily study goals, Brahma Muhurta sadhana streaks, reading milestones, and contemplative spiritual evolution.",
-        keywords: "sadhana tracker, daily study goal, 15 minute study target, spiritual journey, meditation streak, Brahma Muhurta",
+        title: "My Sadhana Journey, Study Goals & Streaks | SutraSparsh",
+        description:
+          "Track your 15-minute daily study goal, Brahma Muhurta sadhana streaks, bookmarked verses, and contemplative wisdom journal entries on SutraSparsh.",
+        keywords: "sadhana tracker, daily study goal, 15 minute study target, spiritual journey, meditation streak",
         canonicalUrl: "https://sutrasparsh.com/?tab=my-journey",
         ogType: "website" as const,
       };
     }
     if (activeTab === "preferences") {
       return {
-        title: "Atmosphere & Audio Preferences | SutraSparsh",
-        description: "Customize your temple sanctuary atmosphere, sound frequencies, font sizes, and theme preferences.",
-        keywords: "temple preferences, audio settings, sanctuary theme, Sanskrit chanting options",
+        title: "TTS Recitation Studio & Sound Settings | SutraSparsh",
+        description:
+          "Customize sanctuary themes, 432Hz soundscapes, and synthesize spoken Sanskrit recitations safely through our server-proxied Bhashini and Google TTS.",
+        keywords: "TTS studio, Bhashini Sanskrit voice, Google Neural2 TTS, sanctuary theme, 432Hz soundscape",
         canonicalUrl: "https://sutrasparsh.com/?tab=preferences",
         ogType: "website" as const,
       };
     }
     if (activeTab === "membership") {
       return {
-        title: "Temple Seeker Patronage & Membership | SutraSparsh",
-        description: "Support open Sanskrit heritage preservation and unlock advanced contemplative sadhana tools.",
+        title: "Sadhaka Patronage & Sanctuary Support | SutraSparsh",
+        description:
+          "Support open Sanskrit heritage preservation, offline scripture access, and sacred voice technology while unlocking advanced contemplative tools.",
         keywords: "SutraSparsh membership, patron support, Sanskrit preservation, Vedic wisdom donation",
         canonicalUrl: "https://sutrasparsh.com/?tab=membership",
         ogType: "website" as const,
       };
     }
-    return null;
-  }, [activeTab, searchTerm]);
+    return {
+      title: "SutraSparsh – Daily Sanskrit Shloka & Audio Wisdom",
+      description:
+        "Discover today's sacred Sanskrit shloka with 432Hz audio recitation, Paninian grammar insights, and meditative sadhana tracking on SutraSparsh.",
+      keywords: "SutraSparsh, daily shloka, Sanskrit wisdom, Bhagavad Gita, 432Hz audio, Brahma Muhurta",
+      canonicalUrl: "https://sutrasparsh.com/",
+      ogType: "website" as const,
+    };
+  }, [activeTab, searchTerm, isNotFoundRoute, isPrivacyRoute, isTermsRoute, requestedVerseId, selectedVerse]);
+
+  // Consent-gated Analytics page view tracking (#19)
+  useEffect(() => {
+    if (appMode !== "user") return;
+    const virtualPath =
+      routePath !== "/" && routePath !== "/index.html"
+        ? routePath
+        : activeTab === "today"
+        ? "/"
+        : `/?tab=${activeTab}`;
+    analyticsService.trackPageView(virtualPath, routeMetadata.title);
+  }, [appMode, routePath, activeTab, routeMetadata.title]);
 
   if (appMode === "admin") {
     if (!isScreenDevice) {
@@ -752,7 +952,9 @@ export default function App() {
           description="SutraSparsh Temple Operations, Sanskrit Corpus Management, and Analytics Console."
           robots="noindex, nofollow"
         />
-        <SutraSparshAdminApp onSwitchToUserApp={handleSwitchToUserApp} />
+        <Suspense fallback={<div className="min-h-screen bg-stone-950 text-amber-200 flex items-center justify-center text-sm">Loading Sanctuary Console...</div>}>
+          <SutraSparshAdminApp onSwitchToUserApp={handleSwitchToUserApp} />
+        </Suspense>
       </>
     );
   }
@@ -777,22 +979,21 @@ export default function App() {
           : "text-stone-100 selection:bg-amber-500/40 selection:text-amber-100"
       }`}
     >
-      {tabMetadata && (
-        <DynamicMetadata
-          title={tabMetadata.title}
-          description={tabMetadata.description}
-          keywords={tabMetadata.keywords}
-          canonicalUrl={tabMetadata.canonicalUrl}
-          ogType={tabMetadata.ogType}
-        />
-      )}
+      <DynamicMetadata
+        title={routeMetadata.title}
+        description={routeMetadata.description}
+        keywords={routeMetadata.keywords}
+        canonicalUrl={routeMetadata.canonicalUrl}
+        robots={routeMetadata.robots}
+        ogType={routeMetadata.ogType}
+      />
       {/* Ambient Dual-Layer Cross-Fade Backdrop */}
       <AtmosphereCrossfadeBackdrop theme={theme} />
 
       {/* Top Navigation */}
       <Header
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleSelectTab}
         savedCount={bookmarks.length}
         backendOnline={backendOnline}
         theme={theme}
@@ -866,6 +1067,34 @@ export default function App() {
           </div>
         )}
 
+        {/* Route-Based Pages (/privacy-policy, /terms, 404) */}
+        {isPrivacyRoute ? (
+          <Suspense fallback={<div className="py-12 text-center text-xs opacity-70">Loading Privacy Policy...</div>}>
+            <PrivacyPolicyPage
+              theme={theme}
+              onNavigateHome={() => navigateToRoute("/", "today")}
+              onNavigateTerms={() => navigateToRoute("/terms")}
+            />
+          </Suspense>
+        ) : isTermsRoute ? (
+          <Suspense fallback={<div className="py-12 text-center text-xs opacity-70">Loading Terms of Service...</div>}>
+            <TermsPage
+              theme={theme}
+              onNavigateHome={() => navigateToRoute("/", "today")}
+              onNavigatePrivacy={() => navigateToRoute("/privacy-policy")}
+            />
+          </Suspense>
+        ) : isNotFoundRoute ? (
+          <Suspense fallback={<div className="py-12 text-center text-xs opacity-70">Loading...</div>}>
+            <NotFoundPage
+              theme={theme}
+              requestedPath={routePath}
+              onNavigateHome={() => navigateToRoute("/", "today")}
+              onNavigateTab={(tab) => navigateToRoute("/", tab)}
+            />
+          </Suspense>
+        ) : (
+        <>
         {/* 1. TODAY: Daily Habit & First Value Aha Moment */}
         {(activeTab === "today" || activeTab === "daily-app" || activeTab === "daily") && (
           <div className="space-y-8 animate-fadeIn">
@@ -874,7 +1103,7 @@ export default function App() {
               theme={theme}
               onSelectTheme={handleSelectTheme}
               initialSubScreen="none"
-              onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
+              onNavigateTab={(tab) => handleSelectTab(tab as NavTab)}
             />
           </div>
         )}
@@ -1204,23 +1433,27 @@ export default function App() {
 
         {/* 3b. COMMUNITY: Satsang Mandali & Spiritual Discussions */}
         {activeTab === "community" && (
-          <CommunityBoardView
-            theme={theme}
-            initialPostId={
-              typeof window !== "undefined"
-                ? new URLSearchParams(window.location.search).get("post") || undefined
-                : undefined
-            }
-            onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
-          />
+          <Suspense fallback={<VerseCardSkeletonGrid count={3} theme={theme} />}>
+            <CommunityBoardView
+              theme={theme}
+              initialPostId={
+                typeof window !== "undefined"
+                  ? new URLSearchParams(window.location.search).get("post") || undefined
+                  : undefined
+              }
+              onNavigateTab={(tab) => handleSelectTab(tab as NavTab)}
+            />
+          </Suspense>
         )}
 
         {/* 3c. SERVICES: Zero-Fee Vedic Pandit Directory & Direct WhatsApp Connect */}
         {activeTab === "services" && (
-          <PanditServicesView
-            theme={theme}
-            onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
-          />
+          <Suspense fallback={<VerseCardSkeletonGrid count={3} theme={theme} />}>
+            <PanditServicesView
+              theme={theme}
+              onNavigateTab={(tab) => handleSelectTab(tab as NavTab)}
+            />
+          </Suspense>
         )}
 
         {/* 4. MY JOURNEY: Personal Sanctuary, Habits, Saved, Journal & Membership */}
@@ -1235,7 +1468,7 @@ export default function App() {
             onOpenVerseModal={handleOpenVerse}
             onOpenPricing={() => setIsPricingOpen(true)}
             onOpenDonation={() => setIsDonationOpen(true)}
-            onNavigateTab={(tab) => setActiveTab(tab)}
+            onNavigateTab={(tab) => handleSelectTab(tab)}
             onManualSync={handleManualSync}
             theme={theme}
           />
@@ -1244,25 +1477,29 @@ export default function App() {
         {/* 5. PREFERENCES & SACRED ATMOSPHERE (Accessible via More / Settings) */}
         {activeTab === "preferences" && (
           <div className="space-y-8 animate-fadeIn">
-            <MoreView
-              theme={theme}
-              onSelectTheme={handleSelectTheme}
-              onOpenProfile={() => setIsProfileOpen(true)}
-              onOpenPricing={() => setIsPricingOpen(true)}
-              onOpenDonation={() => setIsDonationOpen(true)}
-              onOpenAdminConsole={handleOpenAdminConsole}
-              onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
-              savedCount={bookmarks.length}
-              journalCount={journalEntries.length}
-            />
+            <Suspense fallback={<div className="py-12 text-center text-xs opacity-70">Loading Studio & Preferences...</div>}>
+              <MoreView
+                theme={theme}
+                onSelectTheme={handleSelectTheme}
+                onOpenProfile={() => setIsProfileOpen(true)}
+                onOpenPricing={() => setIsPricingOpen(true)}
+                onOpenDonation={() => setIsDonationOpen(true)}
+                onOpenAdminConsole={handleOpenAdminConsole}
+                onNavigateTab={(tab) => handleSelectTab(tab as NavTab)}
+                savedCount={bookmarks.length}
+                journalCount={journalEntries.length}
+              />
+            </Suspense>
           </div>
+        )}
+        </>
         )}
       </main>
 
       {/* Mobile Bottom Navigation (Visible on mobile/tablet screens < 768px) */}
       <MobileBottomNav
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleSelectTab}
         savedCount={bookmarks.length}
         theme={theme}
       />
@@ -1312,25 +1549,38 @@ export default function App() {
       />
 
       {/* Legal Privacy Policy Modal */}
-      <PrivacyPolicyModal
-        isOpen={isPrivacyOpen}
-        onClose={() => setIsPrivacyOpen(false)}
-        theme={theme}
-      />
+      {isPrivacyOpen && (
+        <Suspense fallback={null}>
+          <PrivacyPolicyModal
+            isOpen={isPrivacyOpen}
+            onClose={() => setIsPrivacyOpen(false)}
+            theme={theme}
+          />
+        </Suspense>
+      )}
 
       {/* Store Assets & App Icon Showcase Modal (1024x1024 Icon & Screenshots) */}
-      <StoreAssetsViewer
-        isOpen={isAssetsOpen}
-        onClose={() => setIsAssetsOpen(false)}
-        theme={theme}
-      />
+      {isAssetsOpen && (
+        <Suspense fallback={null}>
+          <StoreAssetsViewer
+            isOpen={isAssetsOpen}
+            onClose={() => setIsAssetsOpen(false)}
+            theme={theme}
+          />
+        </Suspense>
+      )}
 
       {/* Verse Detail Reader Modal */}
       <VerseModal
         item={selectedVerse}
         isOpen={isModalOpen}
         isBookmarked={selectedVerse ? bookmarks.includes(selectedVerse.id) : false}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          if (requestedVerseId) {
+            navigateToRoute("/", activeTab);
+          }
+        }}
         onToggleBookmark={toggleBookmark}
         onSaveJournalNote={handleSaveJournalNote}
         onOpenWord={(surface) => wordExplorer.openWord(surface)}
@@ -1367,19 +1617,27 @@ export default function App() {
       />
 
       {/* Global Monetization & Billing Modals (Phase 2 Features: Gated by Feature Flags) */}
-      <PricingModal
-        isOpen={isPricingOpen && isSadhakaEnabled}
-        onClose={() => setIsPricingOpen(false)}
-        onSuccessSubscription={() => {
-          setActiveTab("my-journey");
-        }}
-      />
+      {isPricingOpen && isSadhakaEnabled && (
+        <Suspense fallback={null}>
+          <PricingModal
+            isOpen={isPricingOpen && isSadhakaEnabled}
+            onClose={() => setIsPricingOpen(false)}
+            onSuccessSubscription={() => {
+              handleSelectTab("my-journey");
+            }}
+          />
+        </Suspense>
+      )}
 
       {/* Donation Modal */}
-      <DonationModal
-        isOpen={isDonationOpen && isGurudakshinaEnabled}
-        onClose={() => setIsDonationOpen(false)}
-      />
+      {isDonationOpen && isGurudakshinaEnabled && (
+        <Suspense fallback={null}>
+          <DonationModal
+            isOpen={isDonationOpen && isGurudakshinaEnabled}
+            onClose={() => setIsDonationOpen(false)}
+          />
+        </Suspense>
+      )}
 
       {/* Paywall Modal */}
       <PaywallModal
@@ -1390,6 +1648,12 @@ export default function App() {
         }}
         featureTitle={paywallFeature.title}
         featureDescription={paywallFeature.description}
+      />
+
+      {/* DPDP/GDPR Cookie & Analytics Consent Banner (#4, #19) */}
+      <CookieConsentBanner
+        theme={theme}
+        onNavigateRoute={(p) => navigateToRoute(p)}
       />
 
       {/* Footer */}
@@ -1495,22 +1759,41 @@ export default function App() {
             Store Assets (1024x1024 Icon & Screens)
           </button>
           <span>•</span>
-          <button
-            type="button"
-            onClick={() => setIsPrivacyOpen(true)}
-            className="hover:text-amber-300 transition-colors cursor-pointer"
+          <a
+            href="/privacy-policy"
+            onClick={(e) => {
+              e.preventDefault();
+              navigateToRoute("/privacy-policy");
+            }}
+            className={`transition-colors underline-offset-2 hover:underline ${
+              theme === "light" ? "hover:text-[#A64E04]" : "hover:text-amber-300"
+            }`}
           >
             Privacy Policy
-          </button>
+          </a>
           <span>•</span>
           <a
-            href="/terms.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-amber-300 transition-colors"
+            href="/terms"
+            onClick={(e) => {
+              e.preventDefault();
+              navigateToRoute("/terms");
+            }}
+            className={`transition-colors underline-offset-2 hover:underline ${
+              theme === "light" ? "hover:text-[#A64E04]" : "hover:text-amber-300"
+            }`}
           >
             Terms of Service
           </a>
+          <span>•</span>
+          <button
+            type="button"
+            onClick={() => consentService.openPreferencesModal()}
+            className={`transition-colors cursor-pointer underline-offset-2 hover:underline ${
+              theme === "light" ? "hover:text-[#A64E04]" : "hover:text-amber-300"
+            }`}
+          >
+            Cookie Preferences
+          </button>
         </div>
       </footer>
     </div>

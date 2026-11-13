@@ -142,8 +142,8 @@ async function runSEOVerification() {
   assert("og:site_name is SutraSparsh", indexHtml.includes('property="og:site_name" content="SutraSparsh"'));
   assert("og:title is configured", indexHtml.includes('property="og:title"'));
   assert("og:description is configured and matches meta description", indexHtml.includes(`property="og:description" content="${descText}"`));
-  assert("og:image is configured with high-res icon", indexHtml.includes('property="og:image" content="https://sutrasparsh.com/icon-1024.png"'));
-  assert("og:image dimensions specified (1024x1024)", indexHtml.includes('property="og:image:width" content="1024"') && indexHtml.includes('property="og:image:height" content="1024"'));
+  assert("og:image is configured with 1200x630 OpenGraph banner", indexHtml.includes('property="og:image" content="https://sutrasparsh.com/og-image.png"'));
+  assert("og:image dimensions specified (1200x630)", indexHtml.includes('property="og:image:width" content="1200"') && indexHtml.includes('property="og:image:height" content="630"'));
   assert("twitter:card is summary_large_image", indexHtml.includes('name="twitter:card" content="summary_large_image"'));
   assert("twitter:title is configured", indexHtml.includes('name="twitter:title"'));
   assert("twitter:description is configured", indexHtml.includes('name="twitter:description"'));

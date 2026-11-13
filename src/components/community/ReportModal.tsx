@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Flag, X, ShieldAlert, Check } from "lucide-react";
 import { ModalPortal } from "../ModalPortal";
 import { communityService, type CommunityReport } from "../../services/community.service";
+import { validateSubmissionGuard } from "../../utils/spamProtection";
 
 interface ReportModalProps {
   isOpen: boolean;
@@ -32,11 +33,28 @@ export const ReportModal: React.FC<ReportModalProps> = ({
   const [blockAuthor, setBlockAuthor] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [resultMessage, setResultMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [honeypot, setHoneypot] = useState("");
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage("");
+
+    const spamGuard = validateSubmissionGuard({
+      actionKey: `community_report_${targetId}`,
+      honeypotValue: honeypot,
+      maxRequests: 4,
+      windowMs: 60_000,
+      text: note,
+      maxUrls: 2,
+    });
+    if (!spamGuard.ok) {
+      setErrorMessage(spamGuard.error || "Please wait before submitting another report.");
+      return;
+    }
+
     const res = communityService.reportContent({
       targetType,
       targetId,
@@ -89,7 +107,21 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               <p className="text-xs text-stone-400 max-w-xs mx-auto leading-relaxed">{resultMessage}</p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+              {/* Hidden Honeypot Anti-Spam Field (#18) */}
+              <div className="sr-only" aria-hidden="true">
+                <label htmlFor="report-website-hp">Leave this field empty</label>
+                <input
+                  id="report-website-hp"
+                  name="website_url"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                />
+              </div>
+
               <div className="flex items-center space-x-3 mb-2">
                 <div className="w-10 h-10 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center justify-center">
                   <ShieldAlert className="w-5 h-5" />
@@ -103,6 +135,12 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                   </h2>
                 </div>
               </div>
+
+              {errorMessage && (
+                <div role="alert" aria-live="assertive" className="p-2.5 rounded-xl bg-rose-950/70 border border-rose-500/60 text-rose-200 text-xs">
+                  {errorMessage}
+                </div>
+              )}
 
               <p className="text-xs text-stone-400 leading-relaxed">
                 Reports are confidential and reviewed promptly by our community moderators.
@@ -142,9 +180,10 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                 </label>
                 <textarea
                   rows={2}
+                  maxLength={500}
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="Provide context for our moderators..."
+                  placeholder="Provide context for our moderators (max 500 chars)..."
                   className="w-full px-3 py-2 rounded-xl bg-stone-900 border border-stone-800 text-xs focus:outline-hidden"
                 />
               </div>

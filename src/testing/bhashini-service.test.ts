@@ -27,28 +27,22 @@ async function runBhashiniServiceTests() {
   }
 
   // ---------------------------------------------------------------------------
-  // TEST 1: Credentials Initialization (FR-01)
+  // TEST 1: Server-Side Proxy Configuration & Zero Exposed Client Secrets (FR-01)
   // ---------------------------------------------------------------------------
-  console.log("--- 1. Testing Credential Loading & Auth Headers (FR-01) ---");
-  const creds = bhashiniService.getCredentials();
-  assert(Boolean(creds.userId), "Credentials contain userId", creds.userId);
-  assert(Boolean(creds.udyatKey), "Credentials contain udyatKey");
-  assert(Boolean(creds.inferenceKey), "Credentials contain inferenceKey");
+  console.log("--- 1. Testing Server-Proxy Mode & Zero Client Secrets (FR-01) ---");
+  const proxyConfig = bhashiniService.getProxyConfig();
+  assert(proxyConfig.mode === "server-proxy", "Bhashini operates in secure server-proxy mode");
+  assert(proxyConfig.proxyEndpoint === "/api/tts/synthesize", "Routes synthesis through /api/tts/synthesize");
+  assert(Boolean(proxyConfig.pipelineId), "Non-secret ULCA pipelineId metadata present");
 
   const configStatus = bhashiniService.isConfigured();
-  assert(configStatus.hasUserId, "User ID is detected and valid");
-  assert(configStatus.hasUdyatKey, "Udyat Key is detected and valid");
-  assert(configStatus.hasInferenceKey, "Inference Key is detected and valid");
-
-  const discoveryHeaders = bhashiniService.getAuthHeaders("discovery");
-  assert(discoveryHeaders["Content-Type"] === "application/json", "Discovery headers have JSON content-type");
-  assert(discoveryHeaders.userID === creds.userId, "Discovery headers have valid userID header");
-  assert(discoveryHeaders.ulcaApiKey === creds.udyatKey, "Discovery headers have valid ulcaApiKey header");
-
-  const inferenceHeaders = bhashiniService.getAuthHeaders("inference");
-  assert(inferenceHeaders["Content-Type"] === "application/json", "Inference headers have JSON content-type");
-  assert(inferenceHeaders.Authorization === creds.inferenceKey, "Inference headers have Authorization header");
-  assert(inferenceHeaders.ulcaApiKey === creds.udyatKey, "Inference headers have ulcaApiKey header");
+  assert(configStatus.isConfigured === true, "Service proxy is configured");
+  assert(configStatus.secretsExposedOnClient === false, "Zero Bhashini secrets exposed on client");
+  assert(
+    typeof (bhashiniService as any).getCredentials !== "function" &&
+      typeof (bhashiniService as any).getAuthHeaders !== "function",
+    "Client-side credential & auth header builders are removed"
+  );
 
   // ---------------------------------------------------------------------------
   // TEST 2: Language Code Validation & Mapping (FR-02)

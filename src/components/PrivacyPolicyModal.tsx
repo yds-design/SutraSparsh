@@ -152,10 +152,10 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({
           <div className="space-y-2">
             <h4 className="font-serif-sacred text-sm font-bold text-amber-400 flex items-center space-x-2">
               <Database className="w-4 h-4 text-amber-500" />
-              <span>3. Data Storage & Local Persistence</span>
+              <span>3. Transient TTS Processing &amp; Offline Storage</span>
             </h4>
             <p>
-              SutraSparsh stores all holy scripture corpora, transliterations, and audio assets offline on your client device. Even without internet connectivity, the entire library of 700 Bhagavad Gita verses, Patanjali Yoga Sutras, and Vedic peace mantras is accessible.
+              SutraSparsh stores core scripture corpora offline on your client device. When you play AI voice recitations, text snippets are transiently processed via our server-side proxy to Bhashini ULCA or Google Cloud Text-to-Speech with zero user voiceprint or biometric retention, and zero API secrets on the client.
             </p>
           </div>
 
@@ -163,15 +163,15 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({
           <div className="space-y-2">
             <h4 className="font-serif-sacred text-sm font-bold text-amber-400 flex items-center space-x-2">
               <Globe className="w-4 h-4 text-amber-500" />
-              <span>4. Your Data Rights & Deletion</span>
+              <span>4. DPDP, GDPR Rights &amp; Analytics Consent</span>
             </h4>
             <p>
-              You maintain full sovereignty over your data. Under <strong>Settings & Preferences → Backup & Data Sovereignty</strong>, you can:
+              Under India&apos;s DPDP Act 2023 and GDPR, non-essential telemetry remains blocked until you opt in via our Cookie Consent Banner. Under <strong>Settings &amp; Preferences → Backup &amp; Data Sovereignty</strong>, you can:
             </p>
             <ul className="list-disc list-inside pl-2 space-y-1">
               <li>Export a complete JSON archive of your reading progress and journal.</li>
-              <li>Clear local cache and delete all stored reading records at any time.</li>
-              <li>Sign off or request complete deletion of your account profile by contacting support.</li>
+              <li>Clear local cache and withdraw analytics consent at any time.</li>
+              <li>Request complete deletion of your account profile by contacting support.</li>
             </ul>
           </div>
 
@@ -208,12 +208,12 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({
           }}
         >
           <a
-            href="/privacy.html"
+            href="/privacy-policy"
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-amber-400 hover:text-amber-300 underline flex items-center space-x-1"
           >
-            <span>Open Standalone Web Policy</span>
+            <span>Open Full Privacy Policy Page</span>
             <ExternalLink className="w-3 h-3" />
           </a>
 

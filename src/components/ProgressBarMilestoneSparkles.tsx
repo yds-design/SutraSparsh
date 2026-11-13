@@ -142,7 +142,7 @@ export const ProgressBarMilestoneSparkles: React.FC<ProgressBarMilestoneSparkles
           transition={{ duration: 3.2, ease: "easeInOut" }}
           className="relative text-amber-300 drop-shadow-[0_0_8px_rgba(245,158,11,0.9)]"
         >
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
             <path d="M12 0L14.8 9.2L24 12L14.8 14.8L12 24L9.2 14.8L0 12L9.2 9.2L12 0Z" />
           </svg>
         </motion.div>
@@ -168,6 +168,7 @@ export const ProgressBarMilestoneSparkles: React.FC<ProgressBarMilestoneSparkles
             style={{ color: spark.color }}
           >
             <svg
+              aria-hidden="true"
               viewBox="0 0 24 24"
               width={10 * spark.scale}
               height={10 * spark.scale}

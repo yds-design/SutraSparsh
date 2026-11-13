@@ -9,6 +9,7 @@
  */
 
 import { resilientAudioPlayer } from "../utils/resilientAudioPlayer.js";
+import { analyticsService } from "./analytics.service.js";
 
 export type TtsProviderType = "bhashini" | "google";
 
@@ -76,10 +77,6 @@ const ACTIVE_VOICE_STORAGE_KEY = "sutrasparsh_active_neural2_voice";
 const BHASHINI_LANGUAGE_KEY = "sutrasparsh_bhashini_language";
 const BHASHINI_GENDER_KEY = "sutrasparsh_bhashini_gender";
 const BHASHINI_PACE_KEY = "sutrasparsh_bhashini_pace";
-const BHASHINI_USER_ID_KEY = "sutrasparsh_bhashini_user_id";
-const BHASHINI_API_KEY = "sutrasparsh_bhashini_api_key";
-const BHASHINI_INFERENCE_KEY = "sutrasparsh_bhashini_inference_key";
-const BHASHINI_PIPELINE_ID_KEY = "sutrasparsh_bhashini_pipeline_id";
 
 export class TtsService {
   private static instance: TtsService;
@@ -147,7 +144,7 @@ export class TtsService {
   }
 
   /**
-   * Gets Bhashini configuration preferences.
+   * Gets Bhashini recitation preferences (non-secret settings only; keys stay strictly server-side).
    */
   public getBhashiniPreferences() {
     if (typeof window === "undefined") {
@@ -155,10 +152,6 @@ export class TtsService {
         language: "sa" as "sa" | "hi",
         gender: "female" as "female" | "male",
         pace: 0.80,
-        userId: "89125c11d7c54f38b3428cce7114effe",
-        apiKey: "",
-        inferenceKey: "",
-        pipelineId: "64392f96daac500b55c543d6",
       };
     }
 
@@ -167,49 +160,29 @@ export class TtsService {
         language: (localStorage.getItem(BHASHINI_LANGUAGE_KEY) as "sa" | "hi") || "sa",
         gender: (localStorage.getItem(BHASHINI_GENDER_KEY) as "female" | "male") || "female",
         pace: parseFloat(localStorage.getItem(BHASHINI_PACE_KEY) || "0.80"),
-        userId: localStorage.getItem(BHASHINI_USER_ID_KEY) || (import.meta as any).env?.VITE_BHASHINI_USER_ID || "89125c11d7c54f38b3428cce7114effe",
-        apiKey:
-          localStorage.getItem(BHASHINI_API_KEY) ||
-          (import.meta as any).env?.VITE_BHASHINI_UDYAT_KEY ||
-          (import.meta as any).env?.VITE_BHASHINI_API_KEY ||
-          "",
-        inferenceKey: localStorage.getItem(BHASHINI_INFERENCE_KEY) || (import.meta as any).env?.VITE_BHASHINI_INFERENCE_KEY || "",
-        pipelineId: localStorage.getItem(BHASHINI_PIPELINE_ID_KEY) || (import.meta as any).env?.VITE_BHASHINI_PIPELINE_ID || "64392f96daac500b55c543d6",
       };
     } catch {
       return {
         language: "sa" as "sa" | "hi",
         gender: "female" as "female" | "male",
         pace: 0.80,
-        userId: "89125c11d7c54f38b3428cce7114effe",
-        apiKey: "",
-        inferenceKey: "",
-        pipelineId: "64392f96daac500b55c543d6",
       };
     }
   }
 
   /**
-   * Sets Bhashini configuration preferences.
+   * Sets non-secret Bhashini recitation preferences.
    */
   public setBhashiniPreferences(prefs: {
     language?: "sa" | "hi";
     gender?: "female" | "male";
     pace?: number;
-    userId?: string;
-    apiKey?: string;
-    inferenceKey?: string;
-    pipelineId?: string;
   }): void {
     if (typeof window === "undefined") return;
     try {
       if (prefs.language) localStorage.setItem(BHASHINI_LANGUAGE_KEY, prefs.language);
       if (prefs.gender) localStorage.setItem(BHASHINI_GENDER_KEY, prefs.gender);
       if (typeof prefs.pace === "number") localStorage.setItem(BHASHINI_PACE_KEY, prefs.pace.toString());
-      if (prefs.userId !== undefined) localStorage.setItem(BHASHINI_USER_ID_KEY, prefs.userId);
-      if (prefs.apiKey !== undefined) localStorage.setItem(BHASHINI_API_KEY, prefs.apiKey);
-      if (prefs.inferenceKey !== undefined) localStorage.setItem(BHASHINI_INFERENCE_KEY, prefs.inferenceKey);
-      if (prefs.pipelineId !== undefined) localStorage.setItem(BHASHINI_PIPELINE_ID_KEY, prefs.pipelineId);
 
       window.dispatchEvent(new CustomEvent("sutrasparsh:bhashini_prefs_changed"));
     } catch {
@@ -414,6 +387,13 @@ export class TtsService {
         // LocalStorage may be full; graceful fallback to memory blob cache
       }
     }
+
+    analyticsService.trackTtsSynthesize({
+      provider: data.provider || activeProvider,
+      language,
+      characterCount: data.characterCount || sanskritText.length,
+      cached: Boolean(data.cached),
+    });
 
     return {
       audioUrl: blobUrl,

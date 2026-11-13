@@ -509,7 +509,7 @@ export const MyJourneyView: React.FC<MyJourneyViewProps> = ({
               {/* Radial Meter SVG */}
               <div className="flex items-center space-x-6">
                 <div className="relative w-32 h-32 flex-shrink-0 flex items-center justify-center">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                  <svg aria-hidden="true" className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
                     {/* Background Track Circle */}
                     <circle
                       cx="60"

@@ -16,6 +16,7 @@ import type { PanditProfile, PanditReview, PanditBooking } from "../../types/pan
 import { panditService } from "../../services/pandit.service";
 import { authService } from "../../services/auth.service";
 import type { AppTheme } from "../../types";
+import { validateSubmissionGuard } from "../../utils/spamProtection";
 
 export interface PanditReviewModalProps {
   pandit: PanditProfile | null;
@@ -74,6 +75,9 @@ export const PanditReviewModal: React.FC<PanditReviewModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState("");
+
+  const commentTooShort = comment.length > 0 && comment.trim().length < 15;
 
   // Handle manual booking verification (e.g. devotee who connected via WhatsApp)
   const handleVerifyManualBooking = () => {
@@ -109,6 +113,19 @@ export const PanditReviewModal: React.FC<PanditReviewModalProps> = ({
 
     if (comment.trim().length < 15) {
       setError("Please provide at least 15 characters of detailed feedback.");
+      return;
+    }
+
+    const spamGuard = validateSubmissionGuard({
+      actionKey: `pandit_review_${pandit.id}`,
+      honeypotValue: honeypot,
+      maxRequests: 3,
+      windowMs: 60_000,
+      text: `${title} ${comment}`,
+      maxUrls: 1,
+    });
+    if (!spamGuard.ok) {
+      setError(spamGuard.error || "Please wait before submitting another review.");
       return;
     }
 
@@ -336,7 +353,21 @@ export const PanditReviewModal: React.FC<PanditReviewModalProps> = ({
           </div>
         ) : (
           /* Active Review Form for Verified Yajamāna */
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            {/* Hidden Honeypot Anti-Spam Field (#18) */}
+            <div className="sr-only" aria-hidden="true">
+              <label htmlFor="review-website-hp">Leave this field empty</label>
+              <input
+                id="review-website-hp"
+                name="website_url"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+            </div>
+
             <div className="space-y-1 pr-6">
               <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
                 <CheckCircle2 className="w-3.5 h-3.5" />
@@ -354,8 +385,16 @@ export const PanditReviewModal: React.FC<PanditReviewModalProps> = ({
             </div>
 
             {error && (
-              <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div
+                role="alert"
+                aria-live="assertive"
+                className={`p-3 rounded-xl border text-xs flex items-center space-x-2 ${
+                  isLight
+                    ? "bg-red-50 border-red-300 text-red-800"
+                    : "bg-red-950/60 border-red-500/50 text-red-200"
+                }`}
+              >
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
                 <span>{error}</span>
               </div>
             )}
@@ -487,15 +526,28 @@ export const PanditReviewModal: React.FC<PanditReviewModalProps> = ({
               <textarea
                 rows={3}
                 required
+                maxLength={1000}
                 value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                aria-invalid={commentTooShort}
+                onChange={(e) => {
+                  setComment(e.target.value);
+                  if (error) setError(null);
+                }}
                 placeholder="Describe how Panditji conducted the ceremony, adherence to Vidhi, phonetic clarity, and how it blessed your family..."
                 className={`w-full px-3 py-2 rounded-xl text-xs border focus:outline-none focus:ring-1 focus:ring-amber-500 ${
-                  isLight
+                  commentTooShort
+                    ? "border-red-500"
+                    : isLight
                     ? "bg-white border-stone-200 text-stone-900"
                     : "bg-stone-800 border-stone-700 text-stone-100"
                 }`}
               />
+              <div className="flex justify-between text-[10px] font-mono mt-1">
+                <span className={commentTooShort ? "text-red-500 font-semibold" : "text-stone-500"}>
+                  {commentTooShort ? "Minimum 15 characters required" : "Authentic Yajamāna experience"}
+                </span>
+                <span className="text-stone-500">{comment.length}/1000</span>
+              </div>
             </div>
 
             {/* Submit Action */}

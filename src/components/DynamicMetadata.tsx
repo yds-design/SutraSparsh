@@ -32,7 +32,7 @@ export const DynamicMetadata: React.FC<DynamicMetadataProps> = ({
   useEffect(() => {
     if (typeof document === "undefined") return;
 
-    const defaultImage = "https://sutrasparsh.com/icon-1024.png";
+    const defaultImage = "https://sutrasparsh.com/og-image.png";
     const resolvedImage = imageUrl || defaultImage;
     const resolvedImageAlt = imageAlt || "SutraSparsh - Sacred Vedic Wisdom Platform";
 
@@ -58,9 +58,11 @@ export const DynamicMetadata: React.FC<DynamicMetadataProps> = ({
     if (keywords) {
       setMetaTag("name", "keywords", keywords);
     }
-    if (robots) {
-      setMetaTag("name", "robots", robots);
-    }
+    setMetaTag(
+      "name",
+      "robots",
+      robots || "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    );
 
     // 3. Open Graph Tags (Facebook, LinkedIn, Messaging Apps)
     setMetaTag("property", "og:title", formattedTitle);
@@ -126,7 +128,7 @@ export const DynamicMetadata: React.FC<DynamicMetadataProps> = ({
     };
 
     jsonLdScript.textContent = JSON.stringify(defaultSchema);
-  }, [title, description, keywords, ogType, canonicalUrl, imageUrl, imageAlt, structuredData]);
+  }, [title, description, keywords, robots, ogType, canonicalUrl, imageUrl, imageAlt, structuredData]);
 
   return null;
 };
