@@ -1,6 +1,6 @@
 # SutraSparsh (सूत्रस्पर्श) — System Architecture Specification
 
-**Platform Version:** v1.8.0 (Production Launch Certified)  
+**Platform Version:** v1.0.6 (Web Production Compliance & Runtime Hardened)  
 **Corpus Domain:** Sacred Sanskrit Scriptures & Classical Vedic Wisdom  
 **Stack:** React 19, TypeScript 6.0, Tailwind CSS 4.3, Vite 8.2, Express 5.2, Firebase Firestore, Bhashini ULCA Indic-TTS, Google Cloud Neural2 TTS, Web Audio API  
 
@@ -79,15 +79,18 @@ SutraSparsh is built on four architectural pillars:
 
 ### 3.1 Component Hierarchy & State Management
 - **Root Entry Point (`src/main.tsx` & `src/App.tsx`)**:
-  - Initializes the top-level **React `ErrorBoundary`** (`src/components/ErrorBoundary.tsx`), providing an authentic SutraSparsh recovery interface with instant reload and session clear buttons, preventing component exceptions from unmounting the page into a blank screen.
-  - Initial `index.html` markup pre-declares `data-theme="light"` and Parchment Dawn canvas tokens (`theme-light light-mode parchment-dawn bg-[#f7f6fb] text-[#1d1b2e]`) to eliminate cold-start dark flashes.
-  - Houses the dynamic application router rendering either the Seeker Sanctuary or Admin Console based on active route and RBAC permissions.
+  - Initializes the top-level **React `ErrorBoundary`** (`src/components/ErrorBoundary.tsx`), providing an authentic SutraSparsh recovery interface with instant reload and session clear buttons.
+  - Initial `index.html` markup pre-declares `data-theme="light"`, pinch-to-zoom viewport (`width=device-width, initial-scale=1.0`), `1200x630` OpenGraph card (`/og-image.png`), favicons (`/favicon.svg`, `/apple-touch-icon.png`, `/site.webmanifest`), and WCAG AA `<noscript>` fallback styling.
+  - Houses clean pathname routing in `App.tsx` for `/`, `/privacy-policy`, `/terms`, `/verse/:id`, and `noindex` 404 recovery (`NotFoundPage.tsx`), with `React.lazy` + `<Suspense>` code splitting for secondary routes and modals.
 - **Seeker Sanctuary (`src/SutraSparshTempleApp.tsx`)**:
-  - Coordinates header navigation, the featured Daily Shloka Rotation card, quick access tiles, the primary content view, and the mobile bottom navigation bar (`MobileBottomNav.tsx`).
-- **State Management**:
-  - Modular stores & custom hooks manage persistent client state:
+  - Coordinates header navigation (with `showLookCloserInToolbar={false}` keeping the top toolbar streamlined), the `DailyWisdomService` SSOT Daily Shloka Rotation card, quick access tiles, the primary content view, and the mobile bottom navigation bar (`MobileBottomNav.tsx`).
+- **State Management & Design System**:
+  - Modular stores, services, & hooks manage persistent client state:
     - `authService`: Seeker profile, guest identity, and authentication tokens.
-    - `themeConfigService` & `themeObserver`: Whitelisted theme lifecycle (`light` / `golden-hour`) with instant DOM root synchronization across all browser navigation events.
+    - `dailyWisdomService` (`useDailyWisdom`): Single Source of Truth synchronizing daily shloka state across Home, Explore banner, Look Closer studio, and `/api/v1/wisdom/*`.
+    - `themeConfigService` & `themeObserver`: Whitelisted theme lifecycle (`light` / `golden-hour` / etc.) with instant DOM root synchronization across browser navigation events.
+    - `consentService` & `analyticsService`: Explicit DPDP/GDPR opt-in cookie consent gating GA4 script injection and custom telemetry (`page_view`, `tts_synthesize`, `tts_playback_complete`, `verse_view`, `search_query`).
+    - `<Chip />` & CSS glow tokens (`--chip-glow-active`, `--chip-transition: 180ms cubic-bezier(0.4, 0, 0.2, 1)`): Subtle selected luminescence across light/dark modes with `prefers-reduced-motion` and `prefers-contrast: more` accessibility overrides.
     - `useAudioStore`: Active shloka audio, 432Hz drone volume, tempo scaling, and continuous loop state.
     - `progressService`: Daily reading minutes, completed verses, bookmarks, and streak calculations.
     - `useFeatureFlags`: Phase 1 sanctuary lockdown vs Phase 2 dynamic monetization gates.
@@ -129,13 +132,13 @@ The linguistic engine parses sacred Sanskrit verses into constituent elements wi
   - `<prosody rate="0.9" pitch="-1st">` for deliberate, reverent chanting cadence.
 - **Graceful Fallback**: Automatically invokes browser `window.speechSynthesis` when network connectivity is lost or cloud quotas are exceeded.
 
-### 4.3 Bhashini ULCA Voice Intelligence Module (`bhashiniService.js`)
-- **MeitY ULCA Architecture**: Connects directly to the National Language Translation Mission pipeline compute services.
+### 4.3 Bhashini ULCA Server-Proxy Voice Intelligence Module (`bhashiniService.js`)
+- **Zero-Secret Server-Proxy Architecture**: Client synthesis calls route exclusively through Express `POST /api/tts/synthesize` (strictly capped at 1,000 characters), keeping all `BHASHINI_*` and Google Cloud TTS credentials exclusively server-side (`VITE_BHASHINI_*` completely removed from client bundles). `POST /api/tts/bhashini/config` accepts only non-secret voice preferences (`defaultLanguage`, `defaultGender`, `pace`, `sampleRate`).
 - **Sacred Voice Archetypes**:
   - `female` (*Devī Saraswatī*): Devotional, clear, high-cadence meditation audio with delicate consonant articulation.
   - `male` (*Sage Vyāsa*): Deep, resonant, steady Vedic rhythm suitable for liturgical chanting.
 - **Pacing Calibration**: Default shloka pacing scaled to `0.80x` for reverent metric contemplation, with support for `0.70x`, `0.90x`, and `1.00x`.
-- **Automatic Dual-Engine Failover**: Intercepts upstream HTTP 500/503 errors, socket timeouts, and malformed payloads, instantly transferring recitation execution to Google Cloud Neural2 with non-blocking UI notifications.
+- **Automatic Dual-Engine Failover**: Intercepts upstream HTTP 500/503 errors, socket timeouts, and malformed payloads, instantly transferring recitation execution to Google Cloud Neural2 with non-blocking UI notifications. Transient audio processing with zero biometric voiceprint retention is disclosed in `/privacy-policy`.
 
 ### 4.4 Resilient Audio Player Lifecycle & Memory Management (`resilientAudioPlayer.js`)
 - **Source Pre-validation Guard**: Validates audio source presence, string integrity, Blob MIME typing (`audio/wav`, `audio/mpeg`), and byte counts before instantiating or attaching to `new Audio()`. Prevents browser "Failed to load because no supported source was found" runtime exceptions.
@@ -198,7 +201,7 @@ The linguistic engine parses sacred Sanskrit verses into constituent elements wi
 
 ## 7. Testing & Quality Assurance Architecture
 
-The test suite is structured into 14 decoupled validation suites totaling 509 assertions:
+The master test suite (`npm test`) executes 18 automated validation suites plus additional auxiliary audio, pulse, enhancement, and fallback suites:
 
 1. **System Testing Matrix (`system-testing-matrix.test.ts`)**: 54 assertions testing visual design tokens, responsive layout, fault injection, fluid typography, WCAG accessibility, state persistence, Purohit signals, PWA standards, and React hook rules.
 2. **API Endpoints Test (`api-endpoints.test.ts`)**: 27 assertions verifying live Express REST routes, security headers, and JSON responses.
@@ -207,23 +210,29 @@ The test suite is structured into 14 decoupled validation suites totaling 509 as
 5. **Theme Restriction Test (`theme-restriction-and-community.test.ts`)**: 66 assertions ensuring theme whitelist compliance and contrast rules.
 6. **Community Board Test (`community-board.test.ts`)**: 49 assertions validating spiritual satsang posts, replies, and anumodana votes.
 7. **Daily Goal Celebration Test (`daily-goal-celebration.test.ts`)**: 32 assertions testing 15-minute sadhana thresholds and confetti particle states.
-8. **SEO Compliance Test (`seo-compliance.test.ts`)**: 41 assertions validating OpenGraph, Twitter Cards, Schema.org JSON-LD, robots.txt, and sitemap.xml.
-9. **Phase 12 Release Gate (`phase12-release-gate.ts`)**: Enforces 5 non-negotiable exit criteria.
-10. **CI/CD Verification Runner (`scripts/ci-verify.ts`)**: 10-Stage compilation, security threat scan, and 8-node production smoke test.
-11. **Bhashini Voice Intelligence Integration (`bhashini-service.test.ts`)**: 33 assertions validating Bhashini ULCA pipeline compute payloads, Saraswati/Vyasa voice archetypes, shloka pace scaling, and RIFF/WAV packing.
-12. **Bhashini 500 Simulation & Google Cloud TTS Failover (`tts-fallback.test.ts`)**: 21 assertions simulating Bhashini HTTP 500 errors and verifying automatic switching to Google Cloud Neural2 with non-blocking toast notifications.
-13. **Resilient Audio Player & Memory Disposal (`resilient-audio-player.test.ts`)**: 29 assertions verifying pre-flight audio source validation, WAV MIME typing, deterministic `URL.revokeObjectURL()` disposal on ended/error, and zero memory leaks.
-14. **Parchment Dawn Contrast & Infinite Scroll Memo (`parchment-dawn-contrast-and-memo.test.ts`)**: 45 assertions ensuring WCAG 2.1 AAA contrast tokens across all components and `React.memo` / `useMemo` infinite scroll optimization.
+8. **SEO Compliance Test (`seo-compliance.test.ts`)**: 41 assertions validating OpenGraph (`1200x630` `og-image.png`), Twitter Cards, Schema.org JSON-LD, `robots.txt`, and `sitemap.xml`.
+9. **Ambient Soundscape & Drone (`soundscape-selector.test.ts`)**: 52 assertions verifying Temple Bell, Himalayan Breeze, River Ganga, and Tanpura drone defaults.
+10. **Unified ThemeObserver (`theme-observer.test.ts`)**: 68 assertions verifying DOM root theme class synchronization across navigation events.
+11. **Chip Selected Glow Design System (`chip-glow.test.ts`)**: 35 assertions verifying CSS tokens, WCAG 2.2 AA/AAA contrast, reduced-motion/high-contrast overrides, `<Chip />` API, and overflow padding.
+12. **Split Null-Safety Regression (`split-null-safety.test.ts`)**: 6 regression checks validating null/undefined `.split()` safety across WordExplorer, SearchEngine, Tithi calendar, SharingService, and Header.
+13. **Shloka State Synchrony (`shloka-state-synchrony.test.ts`)**: 3 suites verifying `DailyWisdomService` SSOT and `/api/v1/wisdom/*` parity.
+14. **Top Toolbar Look Closer Visibility (`toolbar-look-closer-visibility.test.ts`)**: 4 checks verifying `showLookCloserInToolbar={false}` while preserving modal/banner entry points.
+15. **19-Point Web Production Compliance (`web-compliance-19pt.test.ts`)**: 39 assertions auditing zero client secrets, HTTPS/HSTS/CSP/Permissions-Policy, spam honeypot & throttling, `/privacy-policy`, `/terms`, Cookie Consent gating, clean routing, 404 `noindex`, zoomable viewport, `aria-hidden` SVGs, `role="alert"` validation, `React.lazy`, and Workbox precache exclusions.
+16. **Bhashini Server-Proxy & Indic-TTS (`bhashini-service.test.ts`)**: 27 assertions validating `/api/tts/synthesize` server-proxy mode, zero client secrets, retries, and latency cache.
+17. **Phase 12 Release Gate (`phase12-release-gate.ts`)**: Enforces 5 non-negotiable exit criteria.
+18. **CI/CD Verification Runner (`scripts/ci-verify.ts`)**: 10-Stage compilation, security threat scan, and 8-node production smoke test.
+19. **Auxiliary Suites (`test:player`, `test:fallback`, `test:enhancements`, `test:pulse`)**: Resilient audio Blob lifecycle (`URL.revokeObjectURL`), Bhashini 500 -> Google Cloud Neural2 failover, daily affirmations/sync enhancements (68 assertions), and first-time 15m goal streak pulse (21 assertions).
 
 ---
 
 ## 8. Security Boundaries & Threat Defense
 
+- **Zero Client Secrets**: Server-only environment variables (`BHASHINI_*`, Google Cloud keys, `ADMIN_SECRET_KEY`) never leak into Vite client bundles.
 - **Timing-Safe Authentication**: Administrative headers are validated using cryptographic constant-time comparison algorithms to mitigate side-channel timing attacks.
-- **Content Security Policy (CSP)**: Disallows unauthorized third-party scripts and framing (`X-Frame-Options: DENY`).
+- **Production HTTPS & Security Headers (`security-headers.middleware.ts` & `firebase.json`)**: Enforces `trust proxy` HTTPS redirects in production plus `Strict-Transport-Security`, `Permissions-Policy`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, and `Content-Security-Policy` (`frame-ancestors *` for embedded preview compatibility, `script-src` permitting consent-gated `googletagmanager.com`).
+- **Anti-Spam & Rate Limiting (`spamProtection.ts` & `rate-limiter.middleware.ts`)**: Token-bucket API rate limiting paired with hidden `sr-only` honeypot fields, sliding-window submission throttling, URL-spam caps, and a 1,000-character synthesis limit.
 - **Strict Input Sanitization**: Strips script tags and malicious attributes while preserving Devanagari Unicode characters, Vedic accents (*Svaras*), and IAST diacritics.
-- **In-Memory Rate Limiting**: Token-bucket algorithm protects public endpoints from distributed denial-of-service attempts.
 
 ---
 
-*Certified against production codebase v1.8.0 (Release Tag: v1.8.0-parchment-dawn-bhashini).*
+*Certified against production codebase v1.0.6 (Release Tag: v1.0.6-web-compliant).*

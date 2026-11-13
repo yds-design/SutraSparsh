@@ -136,3 +136,46 @@ SutraSparsh v1.8.0 delivers the integration of India's National Bhashini ULCA In
   - Suite 14 (Parchment Dawn Contrast & Infinite Scroll Memo): 45/45 passed
 - **CI/CD Gates:** All 10 CI stages and 15 E2E workflows passed.
 
+---
+
+# SUTRASPARSH RELEASE NOTES — v1.0.6
+
+**Version:** `v1.0.6`  
+**Release Date:** `2026-11-13`  
+**Release Tag:** `v1.0.6-web-compliant`  
+**Release Status:** `PRODUCTION_RELEASED` ✅  
+**Target Platform:** Web / PWA / Express 5 Full-Stack Container  
+
+---
+
+## 1. Executive Summary
+
+SutraSparsh v1.0.6 completes the **19-Point Web Production Launch & Compliance Audit**, introduces the global **Subtle Glow Selected Chip Design System**, stabilizes cross-flow **Shloka State Synchrony**, eliminates undefined `.split()` runtime errors in Explore and Search, and streamlines the top navigation toolbar by hiding the duplicate **Look Closer** trigger (`showLookCloserInToolbar={false}`).
+
+---
+
+## 2. Major Features & Remediation Delivered
+
+1. **19-Point Web Production Compliance (`web-compliance-19pt.test.ts` — 39/39)**
+   - **Security**: Removed all `VITE_BHASHINI_*` client references and redundant Firebase key literals; locked `POST /api/tts/bhashini/config` to non-secret preferences; added Express `trust proxy` production HTTPS redirects, `Strict-Transport-Security`, `Permissions-Policy`, `CSP`, `X-Content-Type-Options`, and `Referrer-Policy` headers; integrated `spamProtection.ts` honeypots and rate limiting across forms plus a 1,000-character synthesis limit.
+   - **Legal, Privacy & Consent**: Added dedicated `/privacy-policy` and `/terms` views with DPDP Act 2023, GDPR, transient TTS, and audio IP disclosures; added DPDP/GDPR opt-in Cookie Consent banner gating Google Analytics telemetry (`consentService` + `analyticsService`).
+   - **SEO, Routing, A11y & Performance**: Added `1200x630` `og-image.png`, `180x180` `apple-touch-icon.png`, `favicon.svg`, `site.webmanifest`, clean `/privacy-policy`, `/terms`, and `/verse/:id` routing, custom `noindex` 404 recovery page, zoomable viewport, `aria-hidden="true"` decorative SVGs, WCAG AA `<noscript>` contrast, `role="alert"` validation, `React.lazy` code splitting, and Workbox precache exclusions.
+
+2. **Subtle Glow Selected Chip Design System (`chip-glow.test.ts` — 35/35)**
+   - Standardized `<Chip />` primitive and CSS tokens (`--chip-glow-active`, `--chip-transition: 180ms cubic-bezier(0.4, 0, 0.2, 1)`) across Light, Dark, Sandstone, Golden Hour, Amethyst, and Festival themes, with `prefers-reduced-motion`, `prefers-contrast: more`, and overflow-safe horizontal scroll padding.
+
+3. **Shloka State Synchrony, Null-Safety & Toolbar Decluttering**
+   - Unified `DailyWisdomService` SSOT and `/api/v1/wisdom/*` across Today, Explore banner, and Look Closer modal (`shloka-state-synchrony.test.ts`).
+   - Guarded `.split()` operations across WordExplorer, SearchEngine, Tithi calendar, SharingService, and Header (`split-null-safety.test.ts`).
+   - Set `showLookCloserInToolbar={false}` by default in `Header.tsx` and `App.tsx` (`toolbar-look-closer-visibility.test.ts`).
+
+---
+
+## 3. Verification Matrix
+
+- **Master Suite (`npm test`)**: **18/18 Suites Passed (100%)**.
+- **Auxiliary Suites (`test:player`, `test:fallback`, `test:enhancements`, `test:pulse`)**: **All Passed (100%)**.
+- **Compilation & Lint**: `vite build`, `esbuild server.ts`, and `tsc --noEmit` completed with **0 errors**.
+- **Live Server Smoke Check**: Port `3000` verified returning HTTP `200` and enforced security headers across `/`, `/privacy-policy`, `/terms`, `/og-image.png`, `/favicon.svg`, `/site.webmanifest`, `/robots.txt`, and `/sitemap.xml`.
+
+

@@ -4,7 +4,7 @@
 > *"Take refuge in Him alone with all your being."* — Bhagavad Gita 18.62
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0--parchment--dawn-gold.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-1.0.6--web--compliant-gold.svg)](package.json)
 [![Status](https://img.shields.io/badge/status-PRODUCTION_LAUNCH_CERTIFIED-success.svg)](TEST_RESULTS.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue.svg)](tsconfig.json)
 [![React](https://img.shields.io/badge/React-19.2-cyan.svg)](package.json)
@@ -95,6 +95,14 @@ SutraSparsh is a digital sanctuary engineered for the study, contemplation, and 
 - **Astronomical Synodic Moon Calculations**: Deterministic calculation of lunar phase, Paksha (*Shukla* / *Krishna*), and Tithi index ($1$ to $15$) using astronomical epoch JD $2451550.26$.
 - **Vedic Festival Catalog (2025–2027)**: Complete coverage of Ekadashis, Purnimas, Amavasyas, Pradosh Vrats, and major festivals (Diwali, Chhath Puja, Devuthani, Dev Deepawali).
 - **Interactive Reminders & Today Badge**: Sound-engine integrated bell reminder with persistent storage, and an animated "Today • अद्य" indicator for the current date.
+
+### 13. Subtle Glow Selected Chips, Shloka State Synchrony & Web Production Compliance (v1.0.6)
+- **Chip Selected Subtle Glow (`<Chip />`)**: Global design tokens (`--chip-glow-active`, `--chip-transition: 180ms cubic-bezier(0.4, 0, 0.2, 1)`) applying soft multi-layer luminescence across light and dark modes, with `@media (prefers-reduced-motion: reduce)`, `@media (prefers-contrast: more)`, and overflow-safe horizontal scroll buffers (`py-1 px-0.5`).
+- **Single Source of Truth Shloka Synchrony**: `DailyWisdomService` + `/api/v1/wisdom/*` synchronize daily shlokas across Today, Explore banner, and Look Closer studio, while keeping top-toolbar `Look Closer` hidden (`showLookCloserInToolbar={false}`) and safeguarding all `.split()` string operations against null/undefined fields.
+- **19-Point Web Production Launch & Compliance**:
+  - **Zero Client Secrets**: Bhashini ULCA & Google Cloud TTS credentials remain strictly server-side behind `/api/tts/synthesize` (1,000-character limit) and non-secret voice preference endpoints.
+  - **Legal, Privacy & Consent**: Clean pathname routes `/privacy-policy`, `/terms`, `/verse/:id`, and a `noindex` 404 page; DPDP Act 2023 & GDPR disclosures for transient TTS processing; explicit opt-in Cookie Consent banner gating Google Analytics telemetry.
+  - **SEO, Accessibility & Performance**: `1200x630` `og-image.png`, `apple-touch-icon.png`, `favicon.svg`, `site.webmanifest`, pinch-to-zoom viewport, `aria-hidden="true"` decorative SVGs, `role="alert"` validation with anti-spam honeypot/rate-limiting, `React.lazy` code splitting, and Workbox precache exclusions.
 
 ---
 
@@ -273,37 +281,34 @@ git status
 git add .
 
 # Create semantic commit with release labels
-git commit -m "feat(sutrasparsh): unify Parchment Dawn theme & harden full-stack dev runtime
+git commit -m "feat(sutrasparsh): v1.0.6 web compliance, chip glow, shloka synchrony & null safety
 
-- Unify Parchment Dawn palette across Explore, Search, Community Board, and Personal Sanctuary views
-- Align hero banners with pure white cards (#ffffff), Night Indigo typography (#1b1740), Soft Ink body (#55526b), and Diya Gold accents (#b8801f)
-- Add resilient React ErrorBoundary with SutraSparsh recovery UI
-- Restrict rateLimiterMiddleware, query sanitizer, and timeout middleware strictly to /api/* endpoints
-- Resolve HTTP 429 throttling on Vite development modules
-- Add frame-ancestors * and full media-src to Content-Security-Policy for seamless AI Studio iframe preview and 432Hz audio chants
-- Set Parchment Dawn default theme-color and body styles in index.html to eliminate dark flash
-- Verified with 51/51 automated test suites and Phase 12 release gate
+- Implement subtle glow selected chip design system (<Chip />) across Explore, Search, Modal & Soundscape filters with WCAG 2.2 AA/AAA contrast and reduced-motion/high-contrast overrides
+- Harden null-safety around .split() string operations across WordExplorer, SearchEngine, Tithi calendar, SharingService & Header
+- Unify DailyWisdomService SSOT & /api/v1/wisdom/* endpoints across Today, Explore & LookCloser flows; hide Look Closer from top toolbar (showLookCloserInToolbar={false})
+- Complete 19-point Web Production Compliance audit: server-only Bhashini/TTS secrets, HTTPS/HSTS/CSP/Permissions-Policy headers, honeypot & rate-limited forms, /privacy-policy & /terms pages, opt-in Cookie Consent & gated GA4 analytics, 1200x630 og-image.png, clean routes (/verse/:id, 404), React.lazy splitting & accessible aria/role='alert' validation
 
 Labels:
-- ui:parchment-dawn
-- theme:sutrasparsh
-- bugfix:vite-rate-limiting
-- security:csp-iframe-embed
-- resilience:error-boundary
-- status:production-ready
-- release:v1.0.0"
+- release:v1.0.6
+- compliance:19-point-web-launch
+- ui:chip-selected-glow
+- ui:toolbar-cleanup
+- bugfix:split-null-safety
+- sync:shloka-ssot
+- security:server-proxy-tts
+- status:production-ready"
 ```
 
 #### Apply Semantic Git Tags & Labels
 ```bash
 # Create annotated release tag
-git tag -a v1.0.0-parchment-dawn -m "Release v1.0.0: Parchment Dawn Unified Theme & Full-Stack Runtime Hardening"
+git tag -a v1.0.6-web-compliant -m "Release v1.0.6: 19-Point Web Compliance, Chip Glow UI, Shloka SSOT & Null-Safety"
 
 # Create categorized component/infrastructure labels
-git tag -a label/ui-parchment-dawn -m "Label: Parchment Dawn pure white surfaces & typography hierarchy"
-git tag -a label/stabilization -m "Label: Vite dev asset throttling resolution & rate limiter scope"
-git tag -a label/security-hardening -m "Label: CSP frame-ancestors & media-src alignment"
-git tag -a label/release-ready -m "Label: 100% CI/CD verification & Phase 12 release gate green"
+git tag -a label/web-compliance-19pt -m "Label: 19-point web production security, legal, SEO, A11y & telemetry compliance"
+git tag -a label/ui-chip-glow -m "Label: Subtle glow design tokens & <Chip /> primitive across all themes"
+git tag -a label/shloka-synchrony -m "Label: DailyWisdomService SSOT & toolbar Look Closer visibility=false"
+git tag -a label/release-ready -m "Label: 100% npm test (18 suites), lint & production build verified"
 
 # Verify all tags and labels
 git tag -l -n2
@@ -371,23 +376,31 @@ npm start
 
 ### 9. Testing & Quality Assurance Verification
 
-SutraSparsh features a comprehensive test automation suite with **51 automated test suites** across 10 distinct testing domains. All tests run headlessly in Node.js via `tsx`.
+SutraSparsh features a comprehensive automated test suite covering **18 core suites in `npm test`** plus dedicated audio, UI, and fallback suites running headlessly in Node.js via `tsx`.
 
 ```bash
-# Execute master test verification suite
+# Execute master test verification suite (18 suites + CI/CD release gate)
 npm test
 
 # Run individual test suites
-npm run test:system       # System Testing Matrix (TC-SYS-01 to TC-SYS-09)
-npm run test:api          # Live Express 5 REST API Endpoints
-npm run test:relocation   # Sanctuary Journey Consolidation & Hook Safety
-npm run test:services     # Vedic Purohit Directory & WhatsApp Integration
-npm run test:themes       # Theme Whitelist & Contrast Guards
-npm run test:community    # Community Board Satsang Discussions
-npm run test:goal         # 15-Minute Daily Sadhana Goal & Celebrations
-npm run test:seo          # Dynamic Head Metadata & Schema.org JSON-LD
-npm run test:gate         # Phase 12 Production Release Gate (5 Criteria)
-npm run ci:verify         # 10-Stage Pipeline, Smoke Tests & Launch Gate
+npm run test:system             # System Testing Matrix (TC-SYS-01 to TC-SYS-09)
+npm run test:api                # Live Express 5 REST API Endpoints
+npm run test:compliance         # 19-Point Web Production Launch & Compliance Audit
+npm run test:chip-glow          # Selected Chip Subtle Glow Tokens & A11y Audit
+npm run test:shloka-sync        # Shloka State Synchrony SSOT & /api/v1/wisdom/*
+npm run test:split-safety       # Null-Safe .split() Regression Suite
+npm run test:toolbar-visibility # Top Toolbar Look Closer Visibility (= false) Check
+npm run test:bhashini           # Bhashini Server-Proxy & Indic-TTS Unit Tests
+npm run test:soundscape         # Ambient Soundscape Selector & Tanpura Drone
+npm run test:theme-observer     # Unified ThemeObserver Root Synchronization
+npm run test:relocation         # Sanctuary Journey Consolidation & Hook Safety
+npm run test:services           # Vedic Purohit Directory & WhatsApp Integration
+npm run test:themes             # Theme Whitelist & Contrast Guards
+npm run test:community          # Community Board Satsang Discussions
+npm run test:goal               # 15-Minute Daily Sadhana Goal & Celebrations
+npm run test:seo                # Dynamic Head Metadata & Schema.org JSON-LD
+npm run test:gate               # Phase 12 Production Release Gate (5 Criteria)
+npm run ci:verify               # 10-Stage Pipeline, Smoke Tests & Launch Gate
 ```
 
 ---
@@ -395,10 +408,11 @@ npm run ci:verify         # 10-Stage Pipeline, Smoke Tests & Launch Gate
 ## 🔒 Security & Data Integrity
 
 - **Strict Role-Based Access Control (RBAC)**: Fine-grained permissions isolating administrative endpoints (`/admin`) from the public sanctuary.
+- **Zero Client Secrets**: Bhashini ULCA and Google Cloud TTS API credentials remain strictly server-side behind `/api/tts/synthesize` (bounded to 1,000 characters), with zero `VITE_BHASHINI_*` exposure in client bundles.
 - **Timing-Safe Token Verification**: Cryptographic constant-time comparison on administrative headers to defend against side-channel timing attacks.
-- **HTTP Security Headers**: Automated enforcement of Content Security Policy (CSP), Strict-Transport-Security (HSTS), `X-Content-Type-Options: nosniff`, and `X-Frame-Options: DENY`.
-- **In-Memory Rate Limiting**: Token-bucket algorithm safeguarding API and search routes from abusive traffic.
-- **Sanitized Devanagari Inputs**: Input sanitization preserving sacred Sanskrit diacritics while neutralizing potential XSS injection vectors.
+- **HTTP Security Headers & HTTPS Enforcement**: Express `trust proxy` HTTPS redirect in production plus automated injection of Content Security Policy (`CSP` with `frame-ancestors *` and opt-in GA4 `googletagmanager.com`), `Strict-Transport-Security` (HSTS), `Permissions-Policy`, `X-Content-Type-Options: nosniff`, and `Referrer-Policy`.
+- **Anti-Spam & Rate Limiting**: Token-bucket rate limiting on API routes alongside client/server honeypots, sliding-window throttling, and URL-spam guards on interactive forms.
+- **Consent-Gated Privacy & Sanitized Inputs**: DPDP Act 2023 & GDPR opt-in cookie consent gating analytics scripts, paired with input sanitization preserving sacred Sanskrit diacritics while neutralizing XSS vectors.
 
 ---
 

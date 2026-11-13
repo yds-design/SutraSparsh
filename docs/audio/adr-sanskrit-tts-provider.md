@@ -1,8 +1,8 @@
 # ADR: Sanskrit TTS Provider Architecture
 
 **Status:** IMPLEMENTED & PRODUCTION-CERTIFIED ✅  
-**Date:** 2026-11-04 (Updated from Pilot 2026-09-07)  
-**Context:** SutraSparsh Spiritual Wisdom Platform (Phases 26–27, v1.8.0)  
+**Date:** 2026-11-13 (Updated for v1.0.6 Server-Proxy Security & Compliance)  
+**Context:** SutraSparsh Spiritual Wisdom Platform (Phases 26–32, v1.0.6)  
 **Deciders:** Core Engineering, Voice Intelligence Lead & Sanskrit Linguistic Team
 
 ---
@@ -58,7 +58,7 @@ We implemented India's National Language Translation Mission **Bhashini ULCA Ind
 ```
 
 ### Key Tenets & Certified Architecture:
-1. **Bhashini ULCA as Primary Indic-TTS Engine:** Uses MeitY's Bhashini ULCA pipeline compute service (`src/services/bhashiniService.js`) configured for Sanskrit (`sa`) and Indo-Aryan acoustic models.
+1. **Server-Proxy Bhashini ULCA Architecture (Zero Client Secrets):** All `BHASHINI_*` and Google Cloud credentials reside strictly server-side (`server.ts` / `src/api/routes/tts.routes.ts`). `src/services/bhashiniService.js` operates exclusively in server-proxy mode via `POST /api/tts/synthesize` (bounded to 1,000 characters), and `POST /api/tts/bhashini/config` restricts client updates to non-secret preferences (`defaultLanguage`, `defaultGender`, `pace`, `sampleRate`).
 2. **Dual Sacred Voice Archetypes:**
    - **Devī Saraswatī (Female):** Meditative, clear female voice calibrated for devotional dhyāna.
    - **Sage Vyāsa (Male):** Deep, resonant, contemplative male voice with steady Vedic rhythm.
@@ -68,5 +68,5 @@ We implemented India's National Language Translation Mission **Bhashini ULCA Ind
    - **Pre-flight Validation:** Rejects empty or corrupt sources before `new Audio()` creation to eliminate "no supported source found" errors.
    - **WAV Packaging:** Strictly validates payload bytes and appends 44-byte RIFF headers to raw PCM streams with `audio/wav` MIME typing.
    - **Deterministic Disposal:** Calls `URL.revokeObjectURL(activeUrl)` immediately on `ended` and `error` events to prevent browser memory leaks.
-5. **Canonical Text Immutability:** Canonical Sanskrit Devanagari remains unaltered in Firestore. Preprocessing generates synthesis payloads dynamically without corrupting sacred source scripture.
-6. **Production Certification:** Verified 100% green across 83 automated test assertions in Suites 11, 12, and 13.
+5. **Canonical Text Immutability & Privacy Compliance:** Canonical Sanskrit Devanagari remains unaltered in Firestore. `/privacy-policy` discloses transient Bhashini ULCA & Google Cloud TTS processing with zero biometric voiceprint retention, and `/terms` covers synthesized audio IP and acceptable use.
+6. **Production Certification:** Verified 100% green across `test:bhashini` (27/27), `test:fallback` (21/21), `test:player` (29/29), and `test:compliance` (39/39).

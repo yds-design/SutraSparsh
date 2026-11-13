@@ -1,9 +1,9 @@
 # SutraSparsh — Phase-Wise Architecture & Status Report
 
-**Document Version:** 1.9.2  
-**Status:** All Phases 1–28 Completed & Production-Certified ✅  
+**Document Version:** 2.0.0 (`v1.0.6`)  
+**Status:** All Phases 1–32 Completed & Production-Certified ✅  
 **Active Production Governance:** Phase 1 Lockdown Active (Free, Pure Sanctuary on all client devices; Phase 2 Monetization dynamically controllable via Admin Console)  
-**Verification Level:** 100% Green CI/CD, 17 Test Suites & 638 Certified Assertions  
+**Verification Level:** 100% Green CI/CD, 18 `npm test` Suites + 4 Auxiliary Suites + 39-Check 19-Point Web Compliance Audit  
 
 ---
 
@@ -41,6 +41,8 @@
 | **Phase 28**| Daily Affirmations & Real-Time Sync | M55.1 – M55.4 | Daily Spiritual Affirmations, Firestore sync indicator, streak flame glow, journal search | **COMPLETED** ✅ | **PASSED** ✅ |
 | **Phase 29**| Parchment Dawn Theme & Runtime | M56.1 – M56.6 | Pure white card surfaces (#ffffff), React ErrorBoundary, rate limiter exemption for Vite, and CSP iframe embedding | **COMPLETED** ✅ | **PASSED** ✅ |
 | **Phase 30**| Dynamic Tithi Calendar & Admin Contrast | M57.1 – M57.6 | Dynamic rolling current month & next 30 days Tithis & Parvs, synodic lunar calculations, WordExplorer & Admin contrast | **COMPLETED** ✅ | **PASSED** ✅ |
+| **Phase 31**| Chip Glow, Shloka SSOT & Toolbar Cleanup | M58.1 – M58.4 | `<Chip />` selected subtle glow across themes & A11y, null-safe `.split()` hardening, `DailyWisdomService` SSOT & `/api/v1/wisdom/*`, `showLookCloserInToolbar={false}` | **COMPLETED** ✅ | **PASSED** ✅ |
+| **Phase 32**| 19-Point Web Production Compliance | M59.1 – M59.5 | Zero client secrets, HTTPS/HSTS/CSP/Permissions-Policy, honeypot/rate-limited forms, `/privacy-policy` & `/terms`, DPDP/GDPR Cookie Consent & gated GA4, `1200x630` `og-image.png`, clean routing & 404 `noindex`, `React.lazy`, A11y & Workbox fixes | **COMPLETED** ✅ | **PASSED** ✅ |
 
 ---
 
@@ -379,11 +381,17 @@
   [✔] Parchment Dawn & 60fps Scroll:    100% PASS (45 of 45 Assertions, TC-PARCHMENT-01..04)
   [✔] User Features Enhancement Suite:  100% PASS (68 of 68 Assertions, TC-ENHANCE-01..04)
   [✔] Streak 15-Minute Goal Pulse Suite: 100% PASS (21 of 21 Assertions, TC-PULSE-01..03)
-  [✔] Soundscape Selector & Drone Suite: 100% PASS (40 of 40 Assertions, TC-SOUNDSCAPE-01..05)
-  [✔] Security & Threat Hardening:      100% PASS (Zero High-Severity CVEs)
+  [✔] Soundscape Selector & Drone Suite: 100% PASS (52 of 52 Assertions, TC-SOUNDSCAPE-01..05)
+  [✔] Unified ThemeObserver Suite:      100% PASS (68 of 68 Assertions)
+  [✔] Chip Selected Glow Suite:         100% PASS (35 of 35 Assertions)
+  [✔] Split Null-Safety Suite:          100% PASS (6 of 6 Regression Groups)
+  [✔] Shloka State Synchrony SSOT:      100% PASS (3 of 3 Integration Suites)
+  [✔] Toolbar Look Closer Visibility:   100% PASS (4 of 4 Visibility Checks)
+  [✔] 19-Point Web Compliance Audit:    100% PASS (39 of 39 Compliance Assertions)
+  [✔] Security & Threat Hardening:      100% PASS (Zero High-Severity CVEs & Zero Client Secrets)
   [✔] Phase 1 Governance Lockdown:      100% ACTIVE (Client Devices Pure & Gated)
   [✔] Phase 2 Admin Gateways:           100% READY (Dynamic One-Click Activation)
-  [✔] Total Certified Assertions:       638 / 638 (100% Green across all 17 Suites)
+  [✔] Master Test Verification:         100% GREEN (`npm test` 18 Suites + Build + Lint + Live Port 3000)
 ================================================================================
 ```
 
@@ -427,7 +435,30 @@
   - Fixed `.admin-layout` selector in `src/styles/admin.css` to prevent overriding explicit Tailwind color utilities (`text-slate-800`, `text-amber-900`, etc.).
   - Enhanced contrast and typography across `JourneyView.tsx` (70:30 Principle banner, 7-Day Sādhana Streaks, Contemplation Notes, Natural Upgrade Triggers) and `ProductionHardeningPanel.tsx` (Production Release & Operations Command, Phase 14 Release Candidate Certification banner).
 - **Automated Verification**:
-  - 100% test pass rate in `src/testing/tithi-calendar.test.ts` (7/7 tests passed).
+  - 100% test pass rate in `src/testing/tithi-calendar.test.ts`.
   - Full system testing matrix and 10-stage CI/CD pipeline certified green.
+
+---
+
+## 7. Phase 31: Chip Selected Glow UI, Null-Safety & Shloka State Synchrony (v1.0.3 – v1.0.5)
+
+- **Subtle Glow Selected Chips (`src/components/ui/Chip.tsx`, `src/index.css`)**:
+  - Global CSS tokens (`--chip-glow-active`, `--chip-border-active`, `--chip-bg-active`, `--chip-text-active`, `--chip-transition: 180ms cubic-bezier(0.4, 0, 0.2, 1)`) unified across Light (`Parchment Dawn`), Dark, Sandstone, Golden Hour, Amethyst, and Festival themes.
+  - Applied `aria-pressed`, `@media (prefers-reduced-motion: reduce)`, `@media (prefers-contrast: more)`, and horizontal scroll overflow buffers (`py-1 px-0.5`, `py-2 px-1`). Verified 35/35 assertions in `src/testing/chip-glow.test.ts`.
+- **Null-Safe `.split()` Hardening (`src/testing/split-null-safety.test.ts`)**:
+  - Resolved `Cannot read properties of undefined (reading 'split')` crashes across `WordExplorerService`, `searchEngine`, `matchesSanskritQuery`, Tithi calendar formatting, `sharingService`, and `Header` email-only fallback display names.
+- **Single Source of Truth Shloka Synchrony (`src/testing/shloka-state-synchrony.test.ts`)**:
+  - Centralized active daily shloka state in `DailyWisdomService` (`useDailyWisdom`) and `/api/v1/wisdom/{daily,discovery,look-closer}`, removing hardcoded `bg_18_65` fallbacks in `LookCloserModal`.
+- **Top Toolbar Decluttering (`src/testing/toolbar-look-closer-visibility.test.ts`)**:
+  - Configured `showLookCloserInToolbar={false}` by default in `Header.tsx` and `App.tsx`, retaining Look Closer entry points on the Daily Wisdom card, Explore banner, and Sanskrit word chips.
+
+---
+
+## 8. Phase 32: 19-Point Web Production Launch & Compliance Remediation (v1.0.6)
+
+- **Security (#5, #7, #18)**: Removed all `VITE_BHASHINI_*` references and redundant API key literals from client code; constrained `POST /api/tts/bhashini/config` to non-secret preferences; added Express `trust proxy` HTTPS redirect + `Strict-Transport-Security`, `Permissions-Policy`, `CSP`, `X-Content-Type-Options`, and `Referrer-Policy` headers; integrated `spamProtection.ts` honeypots, rate limiting, and 1,000-char TTS limit.
+- **Legal, Privacy & Consent (#2, #3, #4, #19)**: Added `/privacy-policy` (`PrivacyPolicyPage.tsx`) and `/terms` (`TermsPage.tsx`) with DPDP Act 2023, GDPR, transient TTS processing, and audio IP disclosures; implemented explicit opt-in `consentService` + `CookieConsentBanner` gating GA4 script loading and `analyticsService` telemetry.
+- **SEO, Routing, Accessibility & Performance (#1, #6, #8–#17)**: Added `1200x630` `og-image.png`, `apple-touch-icon.png`, `favicon.svg`, `site.webmanifest`, `robots.txt` & `sitemap.xml` updates, clean `/privacy-policy`, `/terms`, `/verse/:id` routing, `noindex` `NotFoundPage`, zoomable viewport, `aria-hidden="true"` SVGs, accessible `<noscript>` contrast, `role="alert"` form validation, Workbox `globIgnores`, and `React.lazy` + `<Suspense>` code splitting.
+- **Automated Verification**: `src/testing/web-compliance-19pt.test.ts` passed **39/39** assertions alongside **18/18** `npm test` suites, `vite build`, `esbuild`, `tsc --noEmit`, and live port 3000 HTTP checks.
 
 

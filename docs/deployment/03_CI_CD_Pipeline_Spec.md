@@ -72,8 +72,10 @@ This specification defines the multi-phase Continuous Integration and Continuous
 
 | Stage | Command / Evaluator | Exit Criteria | Blocking Action |
 | :--- | :--- | :--- | :--- |
-| **Lint & Syntax** | `npm run lint` | 0 errors, 0 unresolved imports | Fails build |
-| **Type Check** | `npx tsc --noEmit` | Clean typecheck against TS strict | Fails build |
+| **Lint & Syntax** | `npm run lint` | 0 TypeScript/syntax errors, 0 unresolved imports | Fails build |
+| **Production Build** | `npm run build` | Clean Vite client + esbuild `dist/server.cjs` compilation | Fails build |
+| **Master Test Matrix** | `npm test` | All 18 verification suites (`test:system`, `test:api`, `test:compliance`, `test:chip-glow`, `test:shloka-sync`, `test:split-safety`, `test:toolbar-visibility`, `test:seo`, `test:gate`, `ci:verify`, etc.) PASSED | Blocks deployment |
+| **19-Pt Compliance** | `npm run test:compliance` | 39/39 assertions (zero client secrets, HSTS/CSP, DPDP/GDPR consent, SEO, A11y) PASSED | Blocks deployment |
 | **Security Suite** | `POST /api/tests/security` | 10/10 threat vectors PASSED | Blocks deployment |
 | **E2E Matrix** | `POST /api/tests/e2e` | 15/15 workflows PASSED | Blocks deployment |
 | **Performance SLA** | `POST /api/tests/performance` | Search P95 < 50ms, Read P95 < 30ms | Blocks deployment |

@@ -32,3 +32,20 @@
 | **D10** | **Timing Attack on Admin Key**: Side-channel measurement on API keys | Constant-time string comparison (`crypto.timingSafeEqual`) | **Timing Resistance Verified** |
 | **D11** | **History Mutation**: Attempting to alter timestamp or duration on past reading history | History immutability gate (`allow update: if false`) | **403 PERMISSION_DENIED** |
 | **D12** | **Error Stack Trace Leakage**: Triggering unexpected server exceptions | Masked API error response (`errorMiddleware`) | **Safe Error Code / Zero Leakage** |
+
+---
+
+## 3. Web Production Launch Security, Privacy & Anti-Spam Hardening (v1.0.6)
+
+1. **Zero Client-Exposed API Secrets**:
+   - All `BHASHINI_*` and Google Cloud Text-to-Speech credentials reside strictly in server environment variables and are never prefixed with `VITE_` or shipped in client bundles.
+   - `POST /api/tts/bhashini/config` restricts updates exclusively to non-secret playback preferences (`defaultLanguage`, `defaultGender`, `pace`, `sampleRate`), rejecting credential overwrites from clients.
+2. **Transport & HTTP Header Hardening (`server.ts`, `security-headers.middleware.ts`, `firebase.json`)**:
+   - Production HTTPS enforcement via `trust proxy` and `x-forwarded-proto` redirection for non-localhost traffic.
+   - Enforces `Strict-Transport-Security`, `Permissions-Policy`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Content-Security-Policy` (`frame-ancestors *` for embedded sanctuary preview and opt-in `https://www.googletagmanager.com`).
+3. **Form & Synthesis Anti-Spam Controls (`src/utils/spamProtection.ts` & `src/api/routes/tts.routes.ts`)**:
+   - Interactive community post, Purohit onboarding, Purohit review, and report forms include `sr-only` honeypot fields, sliding-window submission rate limiting, URL-spam thresholds, and accessible `role="alert"` error banners.
+   - `POST /api/tts/synthesize` enforces a hard **1,000-character** input ceiling per request.
+4. **Privacy Consent & Telemetry Gating (`consent.service.ts` & `analytics.service.ts`)**:
+   - DPDP Act 2023 and GDPR explicit opt-in consent gate blocks GA4 script injection and custom events until `consentService.hasAnalyticsConsent()` evaluates `true`.
+   - Dedicated `/privacy-policy` and `/terms` routes clearly document transient TTS processing and zero biometric voiceprint retention.

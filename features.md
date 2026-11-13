@@ -1,8 +1,8 @@
 # SutraSparsh (सूत्रस्पर्श) — Feature Catalog
 
-**Platform Version:** v1.8.0 (Bhashini Indic-TTS Voice Intelligence, Dual-Engine Failover, Parchment Dawn WCAG AAA Design Constitution & Infinite Scroll Optimization)  
+**Platform Version:** v1.0.6 (19-Point Web Production Compliance, Chip Glow Design System, Shloka State Synchrony & Null-Safety)  
 **Corpus Domain:** Sacred Sanskrit Scriptures & Classical Vedic Wisdom  
-**Architecture:** React 19, TypeScript 6, Vite, Tailwind CSS 4, Express 5, Firebase Firestore, Bhashini ULCA Indic-TTS, Google Cloud Neural2 TTS, Web Audio API  
+**Architecture:** React 19, TypeScript 6, Vite 8, Tailwind CSS 4, Express 5, Firebase Firestore, Bhashini ULCA Indic-TTS (Server-Proxy), Google Cloud Neural2 TTS, Web Audio API  
 **Operational Governance:** Phase 1 Sanctuary Mode (Free seeker sanctuary on client devices) with dynamic Phase 2 Monetization & Seva controls in Admin Console.
 
 ---
@@ -26,13 +26,16 @@
    - [2.14 Bhashini ULCA Indic-TTS & Voice Intelligence Module](#214-bhashini-ulca-indic-tts--voice-intelligence-module)
    - [2.15 Parchment Dawn WCAG 2.1 AAA Design Constitution & Infinite Scroll Optimization](#215-parchment-dawn-wcag-21-aaa-design-constitution--infinite-scroll-optimization)
    - [2.16 Dynamic Astronomical & Canonical Tithi & Parv Engine](#216-dynamic-astronomical--canonical-tithi--parv-engine-महत्वपूर्ण-तिथियाँ-एवं-पर्व)
+   - [2.17 Chip Selected Subtle Glow Design System](#217-chip-selected-subtle-glow-design-system)
+   - [2.18 Shloka State Synchrony (SSOT), Null-Safety & Toolbar Decluttering](#218-shloka-state-synchrony-ssot-null-safety--toolbar-decluttering)
+   - [2.19 19-Point Web Production Launch & Compliance Architecture](#219-19-point-web-production-launch--compliance-architecture)
 3. [Minor Features & Supporting Capabilities](#3-minor-features--supporting-capabilities)
    - [3.1 Sacred UI & Visual Ambience](#31-sacred-ui--visual-ambience)
    - [3.2 Audio & Acoustic Nuances](#32-audio--acoustic-nuances)
    - [3.3 Linguistic & Exegetical Utilities](#33-linguistic--exegetical-utilities)
    - [3.4 Security & Data Hardening](#34-security--data-hardening)
    - [3.5 Operational & Administrative Utilities](#35-operational--administrative-utilities)
-4. [Master Milestone Mapping (M0 – M54)](#4-master-milestone-mapping-m0--m54)
+4. [Master Milestone Mapping (M0 – M61)](#4-master-milestone-mapping-m0--m61)
 
 ---
 
@@ -209,7 +212,7 @@ The application follows an architectural separation between:
   - Formatted with ISO-8601 timestamps, change frequencies (`daily` for home/verse-of-the-day, `weekly` for corpus chapters), and priority weightings (1.0 for Sanctuary, 0.9 for Scriptures, 0.8 for search and glossary).
 - **Full Open Graph Protocol & Social Rich Previews**:
   - High-fidelity tags (`og:title`, `og:description`, `og:image`, `og:image:secure_url`, `og:type`, `og:url`, `og:site_name`, `og:locale`).
-  - High-resolution preview image (`public/icon-1024.png`) guaranteeing rich unfurls on WhatsApp, iMessage, Twitter/X, Facebook, LinkedIn, Telegram, and Discord.
+  - Dedicated `1200×630` preview image (`public/og-image.png`) plus `180×180` `apple-touch-icon.png`, `favicon.svg`, and `site.webmanifest` guaranteeing crisp unfurls on WhatsApp, iMessage, Twitter/X, Facebook, LinkedIn, Telegram, and Discord.
   - Multilingual locale alternates (`en_US`, `sa_IN`, `hi_IN`).
 - **Twitter / X Card Integration**:
   - Formatted with `summary_large_image` presentation, `@SutraSparsh` authorship attribution, and descriptive alt text for accessibility.
@@ -338,6 +341,33 @@ The application follows an architectural separation between:
 
 ---
 
+### 2.17 Chip Selected Subtle Glow Design System
+*Milestones: Phase 31, M58.1*
+
+- **Primitive `<Chip />` & Global CSS Tokens**: Standardized active chip tokens (`--chip-glow-active`, `--chip-border-active`, `--chip-bg-active`, `--chip-text-active`, `--chip-transition: 180ms cubic-bezier(0.4, 0, 0.2, 1)`) in `src/index.css` and `src/components/ui/Chip.tsx`.
+- **Cross-Theme Cohesion & Contrast**: Soft multi-layer ambient glow across Light (`Parchment Dawn`), Dark, Sandstone, Golden Hour, Amethyst, and Festival themes, meeting WCAG 2.2 AA/AAA contrast ratios.
+- **Accessibility & Overflow Safety**: Supports `@media (prefers-reduced-motion: reduce)` (instant state switch), `@media (prefers-contrast: more)` (2px solid high-contrast outline), `aria-pressed`, and overflow-safe scroll buffers (`py-1 px-0.5`, `py-2 px-1`) across Explore, Search, SoundscapeSelector, DailyGoalModal, VerseModal, and LookCloserModal.
+
+---
+
+### 2.18 Shloka State Synchrony (SSOT), Null-Safety & Toolbar Decluttering
+*Milestones: Phase 31, M58.2 – M58.4*
+
+- **Single Source of Truth (`DailyWisdomService`)**: Synchronizes active daily shloka state across Home, Explore banner, Look Closer studio, and `/api/v1/wisdom/{daily,discovery,look-closer}` without hardcoded `bg_18_65` drift.
+- **Null-Safe `.split()` Hardening**: Guards string tokenization and formatting in `WordExplorerService`, `searchEngine`, `matchesSanskritQuery`, Tithi calendar extraction, `sharingService`, and email-only user names in `Header`.
+- **Top Toolbar Visibility Control**: Sets `showLookCloserInToolbar={false}` in `Header.tsx` and `App.tsx`, streamlining top navigation while keeping Look Closer active on cards, Explore banners, and Sanskrit word chips.
+
+---
+
+### 2.19 19-Point Web Production Launch & Compliance Architecture
+*Milestones: Phase 32, M59.1 – M59.5, Release v1.0.6*
+
+- **Security (#5, #7, #18)**: Server-side-only Bhashini/Google TTS credentials behind `/api/tts/synthesize` (1,000-character bound); non-secret client config preferences; Express `trust proxy` production HTTPS redirects, `Strict-Transport-Security`, `Permissions-Policy`, `CSP`, `X-Content-Type-Options`, and `Referrer-Policy` headers; `spamProtection.ts` honeypot fields and sliding-window rate limits across interactive modals.
+- **Legal, Privacy & Consent (#2, #3, #4, #19)**: Clean `/privacy-policy` and `/terms` routes disclosing transient TTS processing, zero biometric voiceprint retention, DPDP Act 2023 & GDPR rights, and synthesized audio IP; explicit opt-in Cookie Consent banner gating Google Analytics 4 loading and telemetry.
+- **SEO, Routing, Accessibility & Performance (#1, #6, #8–#17)**: `1200×630` `og-image.png`, `180×180` `apple-touch-icon.png`, `favicon.svg`, `site.webmanifest`, `/verse/:id` deep links, `noindex` 404 recovery page, zoomable viewport, `aria-hidden="true"` decorative SVGs, accessible `<noscript>` contrast, `role="alert"` form feedback, Workbox precache exclusions, and `React.lazy` + `<Suspense>` code splitting.
+
+---
+
 ## 3. Minor Features & Supporting Capabilities
 
 ### 3.1 Sacred UI & Visual Ambience
@@ -453,7 +483,12 @@ The application follows an architectural separation between:
 | **M54 (Phase 27)** | Performance | **Major** | React.memo custom equality comparator and useMemo collection memoization for 60fps infinite scroll | **COMPLETE ✅** |
 | **M55 (Phase 28)** | Sync & Affirmations | **Major** | Daily Spiritual Affirmations, Firestore sync indicator, streak flame glow, journal search | **COMPLETE ✅** |
 | **M56 (Phase 29)** | Runtime Hardening | **Major** | Parchment Dawn unified card surfaces (#ffffff), React ErrorBoundary, Vite module rate-limiter exemption, and CSP iframe embedding | **COMPLETE ✅** |
+| **M57 (Phase 30)** | Dynamic Tithi Engine | **Major** | Dynamic rolling current month & next 30 days Tithis & Parvs, synodic lunar calculations, and Admin/WordExplorer contrast | **COMPLETE ✅** |
+| **M58 (Phase 31)** | Chip Glow & SSOT | **Major** | Chip selected subtle glow tokens, `.split()` null-safety, `DailyWisdomService` SSOT & `/api/v1/wisdom/*`, `showLookCloserInToolbar={false}` | **COMPLETE ✅** |
+| **M59 (Phase 32)** | Security & Anti-Spam | **Major** | Server-proxy TTS secret isolation, HTTPS/HSTS/Permissions-Policy headers, honeypot & rate-limited forms, 1,000-char TTS cap | **COMPLETE ✅** |
+| **M60 (Phase 32)** | Legal, SEO & Routing | **Major** | `/privacy-policy` & `/terms`, DPDP/GDPR Cookie Consent & gated GA4, `1200x630` `og-image.png`, `/verse/:id` & custom `noindex` 404 | **COMPLETE ✅** |
+| **M61 (Phase 32)** | A11y & Performance | **Major** | Pinch-to-zoom viewport, `aria-hidden="true"` SVGs, `<noscript>` contrast, `role="alert"` validation, `React.lazy` & Workbox exclusions | **COMPLETE ✅** |
 
 ---
 
-*Document compiled and certified against production codebase v1.0.0-parchment-dawn (Production Launch Certified).*
+*Document compiled and certified against production codebase v1.0.6 (`v1.0.6-web-compliant`, Production Launch Certified).*
