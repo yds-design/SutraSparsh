@@ -83,12 +83,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const textColor = isLight ? "#3A2818" : isGoldenHour ? "#FFF4D8" : "#F4E9D2";
 
   const isInIframe = typeof window !== "undefined" && window.self !== window.top;
-
-  const openAppInNewTab = () => {
-    if (typeof window !== "undefined") {
-      window.open(window.location.href, "_blank", "noopener,noreferrer");
-    }
-  };
+  const currentAppUrl = typeof window !== "undefined" ? window.location.href : "https://sutrasparsh.com";
+  const currentHost = typeof window !== "undefined" ? window.location.hostname : "sutrasparsh.com";
 
   const handleInstantSeekerSignIn = async (userEmail = "vishal.kr.gupta@gmail.com") => {
     setErrorMsg(null);
@@ -251,14 +247,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               errorMsg.includes("blocked") ||
               isInIframe) && (
               <div className="pt-2 border-t border-rose-800/60 flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={openAppInNewTab}
+                <a
+                  href={currentAppUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="px-3 py-1.5 rounded-xl bg-white text-stone-900 font-bold text-[11px] flex items-center space-x-1.5 hover:bg-stone-100 transition-colors shadow-sm cursor-pointer"
                 >
                   <ExternalLink className="w-3.5 h-3.5 text-amber-600" />
                   <span>Open in Dedicated Tab ↗</span>
-                </button>
+                </a>
 
                 <button
                   type="button"
@@ -391,13 +388,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       Embedded preview: If Google popup closes, open in a dedicated tab.
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={openAppInNewTab}
+                  <a
+                    href={currentAppUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="font-bold underline hover:opacity-80 shrink-0 text-amber-600 dark:text-amber-400 cursor-pointer"
                   >
                     Open Tab ↗
-                  </button>
+                  </a>
                 </div>
               )}
 
@@ -496,8 +494,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <span className="opacity-70">Auth Domain:</span>
                       <span>sutrasparsh-17a55.firebaseapp.com</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="opacity-70">Current Host:</span>
+                      <span className="truncate max-w-[200px]" title={currentHost}>{currentHost}</span>
+                    </div>
                     <p className="text-[10px] font-sans opacity-80 pt-1 border-t border-white/10">
-                      💡 <strong>Tip:</strong> In Firebase Console → Authentication → Sign-in method, ensure <em>Google</em> provider is enabled. In Authorized Domains, add custom domains as needed.
+                      💡 <strong>Firebase Console Checklist:</strong> (1) Enable <em>Google</em> under <strong>Authentication → Sign-in method</strong>. (2) Add <code>{currentHost}</code> under <strong>Authentication → Settings → Authorized domains</strong>. (3) If running inside an embedded preview iframe, click <strong>Open Tab ↗</strong> so cross-origin OAuth popups aren&apos;t blocked by browser framing rules.
                     </p>
                   </div>
                 )}
